@@ -16,6 +16,8 @@ class ConversationsSend extends StatefulWidget {
   final void Function(ConversationsChat) onCreateChat;
   final void Function() refreshSidebar;
   final VoidCallback closeChat;
+  final void Function(bool) updateShowStats;
+
   const ConversationsSend(
       {super.key,
       this.creationData,
@@ -23,6 +25,7 @@ class ConversationsSend extends StatefulWidget {
       this.title,
       required this.onCreateChat,
       required this.closeChat,
+      required this.updateShowStats,
       required this.refreshSidebar});
 
   @override
@@ -145,6 +148,7 @@ class _ConversationsSendState extends State<ConversationsSend> {
 
       widget.onCreateChat(ConversationsChat(
         key: Key(response.id!),
+        updateShowStats: widget.updateShowStats,
         title: widget.creationData!.subject,
         id: response.id!,
         isTablet: widget.isTablet,

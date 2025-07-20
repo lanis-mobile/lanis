@@ -29,6 +29,7 @@ class ConversationsChat extends StatefulWidget {
   final bool isTablet;
   final VoidCallback refreshSidebar;
   final VoidCallback closeChat;
+  final void Function(bool) updateShowStats;
 
   const ConversationsChat(
       {super.key,
@@ -38,10 +39,16 @@ class ConversationsChat extends StatefulWidget {
       required this.isTablet,
       required this.refreshSidebar,
       required this.closeChat,
-      this.hidden = false});
+      this.hidden = false,
+      required this.updateShowStats});
+
+  //bool get stateAreDetailesOpened => state
 
   ConversationsChat.fromEntry(OverviewEntry entry, this.isTablet,
-      {super.key, required this.refreshSidebar, required this.closeChat})
+      {super.key,
+      required this.refreshSidebar,
+      required this.closeChat,
+      required this.updateShowStats})
       : id = entry.id,
         title = entry.title,
         newSettings = null,
@@ -73,6 +80,7 @@ class _ConversationsChatState extends State<ConversationsChat>
   late ConversationSettings settings;
   late ParticipationStatistics? statistics;
 
+  bool showStats = false;
   late bool hidden;
   bool refreshing = false;
 
@@ -91,20 +99,6 @@ class _ConversationsChatState extends State<ConversationsChat>
         });
       }
     });
-  }
-
-  Widget statsWidget() {
-    return IconButton(
-      onPressed: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => StatisticWidget(
-                statistics: statistics!, conversationTitle: widget.title),
-          ),
-        );
-      },
-      icon: const Icon(Icons.people),
-    );
   }
 
   Widget backButton() {
@@ -437,8 +431,20 @@ class _ConversationsChatState extends State<ConversationsChat>
     }
 
     if (statistics != null) {
-      AppBarController.instance
-          .addAction('conversationsStatistics', statsWidget());
+      AppBarController.instance.addAction(
+        'conversationsStatistics',
+        IconButton(
+          icon: Icon(Icons.people),
+          onPressed: () {
+            setState(
+              () {
+                showStats = !showStats;
+              },
+            );
+            widget.updateShowStats(showStats);
+          },
+        ),
+      );
     }
   }
 
@@ -629,6 +635,19 @@ class _ConversationsChatState extends State<ConversationsChat>
                       ),
                     ),
                   ),
+                  Visibility(
+                    visible: showStats,
+                    child: StatisticWidget(
+                      statistics: statistics!,
+                      conversationTitle: widget.title,
+                      close: () {
+                        setState(() {
+                          showStats = false;
+                        });
+                        widget.updateShowStats(showStats);
+                      },
+                    ),
+                  ),
                 ],
               );
             }
@@ -646,9 +665,13 @@ class _ConversationsChatState extends State<ConversationsChat>
 class StatisticWidget extends StatelessWidget {
   final String conversationTitle;
   final ParticipationStatistics statistics;
+  final VoidCallback close;
 
   const StatisticWidget(
-      {super.key, required this.statistics, required this.conversationTitle});
+      {super.key,
+      required this.statistics,
+      required this.conversationTitle,
+      required this.close});
 
   Widget statisticsHeaderRow(
       BuildContext context, Icon icon, String title, int count) {
@@ -671,6 +694,10 @@ class StatisticWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.close),
+          onPressed: close,
+        ),
         title: Text(AppLocalizations.of(context).receivers),
       ),
       body: ListView(

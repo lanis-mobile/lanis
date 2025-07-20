@@ -9,7 +9,7 @@ import 'package:lanis/generated/l10n.dart';
 
 import 'package:flutter/material.dart';
 import 'package:lanis/utils/authentication_state.dart';
-import 'package:lanis/utils/bottom_nav_bar_change_notifier.dart';
+import 'package:lanis/utils/logger.dart';
 import 'package:lanis/utils/responsive.dart';
 import 'package:lanis/utils/whats_new.dart';
 import 'package:lanis/utils/cached_network_image.dart';
@@ -500,40 +500,23 @@ class HomePageState extends State<HomePage> {
                         return;
                       }
 
+                      if (_drawerKey.currentState?.isDrawerOpen ?? false) {
+                        _drawerKey.currentState?.closeDrawer();
+                        return;
+                      }
+
                       // First check if any widget can handle back navigation
                       if (await BackNavigationManager
                           .canHandleBackNavigation()) {
-                        await BackNavigationManager.handleBackNavigation();
+                        BackNavigationManager.handleBackNavigation();
                         return;
                       }
 
                       if (!isFirstLevelRoute) {
                         navigatorKey.currentState?.pop();
                         return;
-                      } else if (context.mounted &&
-                          !Responsive.isTablet(context) &&
-                          lastAppletWithBottomNavSupport != null) {
-                        // Navigate back to the last applet with bottom nav support using routes
-                        if (destinations[lastAppletWithBottomNavSupport!]
-                                .routeName !=
-                            null) {
-                          navigatorKey.currentState?.pushReplacementNamed(
-                            destinations[lastAppletWithBottomNavSupport!]
-                                .routeName!,
-                            arguments: lastAppletWithBottomNavSupport,
-                          );
-                          setState(() {
-                            selectedDestinationDrawer =
-                                lastAppletWithBottomNavSupport!;
-                          });
-                        }
                       } else {
-                        // close drawer first if open
-                        if (_drawerKey.currentState?.isDrawerOpen ?? false) {
-                          _drawerKey.currentState?.closeDrawer();
-                        } else {
-                          if (Platform.isAndroid) SystemNavigator.pop();
-                        }
+                        if (Platform.isAndroid) SystemNavigator.pop();
                       }
                     },
                     child: Navigator(

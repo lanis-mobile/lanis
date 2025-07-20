@@ -72,6 +72,7 @@ class _ConversationsViewState extends State<ConversationsView>
       ? (loadedWidget as ConversationsChat).id
       : null;
   List<String> noBadgeConversations = [];
+  bool chatIsShowingStats = false;
 
   @override
   Future<bool> canHandleBackNavigation() async {
@@ -83,38 +84,43 @@ class _ConversationsViewState extends State<ConversationsView>
 
   @override
   Future<bool> handleBackNavigation() async {
-    if (await canHandleBackNavigation() && mounted) {
-      final isTablet = Responsive.isTablet(context);
-      if (isTablet) {
-        if (toggleMode) {
-          closeToggleMode();
-          return true;
-        }
-        if (showCreateScreen) {
-          closeCreateScreen();
-          return true;
-        }
-        if (loadedWidget != null) {
-          setState(() {
-            loadedWidget = null;
-            noBadgeConversations.clear();
-          });
-          return true;
-        }
-      } else {
+    final isTablet = Responsive.isTablet(context);
+    if (isTablet) {
+      if (toggleMode) {
+        closeToggleMode();
+        return true;
+      }
+      if (showCreateScreen) {
+        closeCreateScreen();
+        return true;
+      }
+      if (loadedWidget != null) {
         setState(() {
           loadedWidget = null;
           noBadgeConversations.clear();
         });
+        return true;
       }
-
-      setState(() {
-        loadedWidget = null;
-        noBadgeConversations.clear();
-      });
-      return true;
+    } else {
+      if (loadedWidget != null) {
+        if ((loadedWidget is ConversationsChat) && chatIsShowingStats) {
+          return false;
+        }
+        setState(() {
+          loadedWidget = null;
+          noBadgeConversations.clear();
+        });
+        return true;
+      } else if (showCreateScreen) {
+        closeCreateScreen();
+        return true;
+      } else if (toggleMode) {
+        closeToggleMode();
+        return true;
+      }
     }
-    return false;
+
+    return true;
   }
 
   Widget toggleModeAppBar() {
@@ -451,6 +457,7 @@ class _ConversationsViewState extends State<ConversationsView>
     closeCreateScreen();
     setState(() {
       loadedWidget = ConversationsSend(
+        updateShowStats: (newValue) => chatIsShowingStats = newValue,
         creationData: chatData,
         isTablet: Responsive.isTablet(context),
         refreshSidebar: () =>
@@ -599,7 +606,6 @@ class _ConversationsViewState extends State<ConversationsView>
                                     checked:
                                         checkedTiles[data[index].id] ?? false,
                                     onTap: (entry) {
-                                      // TODO: revise, of makes sense to do this in chat.dart
                                       if (entry.unread == true) {
                                         sph!.parser.conversationsParser.filter
                                             .toggleEntry(entry.id,
@@ -615,6 +621,8 @@ class _ConversationsViewState extends State<ConversationsView>
                                           refreshSidebar: refresh,
                                           entry,
                                           isTablet,
+                                          updateShowStats: (newValue) =>
+                                              chatIsShowingStats = newValue,
                                           closeChat: () {
                                             setState(() {
                                               loadedWidget = null;
