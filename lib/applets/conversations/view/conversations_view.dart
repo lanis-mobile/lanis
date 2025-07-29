@@ -79,36 +79,34 @@ class _ConversationsViewState extends State<ConversationsView> {
   List<String> noBadgeConversations = [];
 
   Widget toggleModeAppBar() {
-    return SizedBox(
+    return Container(
+      color: Theme.of(context).colorScheme.surfaceDim,
       height: 64,
       width: double.infinity,
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 8.0),
-        child: Row(
-          children: [
-            IconButton(
-              icon: Icon(
-                Icons.close,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-              constraints: BoxConstraints.tightFor(
-                  width: kToolbarHeight, height: kToolbarHeight),
-              onPressed: () {
-                closeToggleMode();
-                for (final tile in checkedTiles.keys) {
-                  checkedTiles[tile] = false;
-                }
-              },
+      child: Row(
+        children: [
+          IconButton(
+            icon: Icon(
+              Icons.close,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
-            SizedBox(
-              width: 16,
-            ),
-            Text(
-              AppLocalizations.of(context).hideShowConversations,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-          ],
-        ),
+            constraints: BoxConstraints.tightFor(
+                width: kToolbarHeight, height: kToolbarHeight),
+            onPressed: () {
+              closeToggleMode();
+              for (final tile in checkedTiles.keys) {
+                checkedTiles[tile] = false;
+              }
+            },
+          ),
+          SizedBox(
+            width: 16,
+          ),
+          Text(
+            AppLocalizations.of(context).hideShowConversations,
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+        ],
       ),
     );
   }
@@ -1074,8 +1072,8 @@ class _ScrolledDownContainerState extends State<ScrolledDownContainer> {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-      ),
+          //color: Theme.of(context).colorScheme.surface,
+          ),
       child: widget.child,
     );
   }

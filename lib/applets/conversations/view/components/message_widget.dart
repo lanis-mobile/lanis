@@ -14,6 +14,12 @@ class MessageWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final double size = MediaQuery.sizeOf(context).width - 200;
 
+    final shadow = BoxShadow(
+      blurRadius: 2.5,
+      blurStyle: BlurStyle.outer,
+      color: Theme.of(context).colorScheme.shadow.withAlpha(90),
+    );
+
     return Padding(
       padding: BubbleStructure.getMargin(message.state),
       child: Column(
@@ -33,11 +39,7 @@ class MessageWidget extends StatelessWidget {
             clipper: message.state == MessageState.first
                 ? BubbleStructure.getFirstStateClipper(message.own)
                 : null,
-            shadow: BoxShadow(
-                blurRadius: 2.0,
-                blurStyle: BlurStyle.outer,
-                color:
-                    Theme.of(context).colorScheme.onSurface.withOpacity(0.2)),
+            shadow: shadow,
             child: ClipPath(
               child: ConstrainedBox(
                 constraints: BoxConstraints(
@@ -48,17 +50,6 @@ class MessageWidget extends StatelessWidget {
                     color: BubbleStyles.getStyle(message.own).mainColor,
                     borderRadius: message.state != MessageState.first
                         ? BubbleStructure.radius
-                        : null,
-                    boxShadow: message.state != MessageState.first
-                        ? [
-                            BoxShadow(
-                                blurRadius: 4.0,
-                                blurStyle: BlurStyle.outer,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurface
-                                    .withOpacity(0.2))
-                          ]
                         : null,
                   ),
                   child: Padding(
@@ -141,16 +132,23 @@ class ClipShadowPath extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      key: UniqueKey(),
-      painter: clipper != null
-          ? _ClipShadowShadowPainter(
-              clipper: clipper!,
-              shadow: shadow,
-            )
-          : null,
-      child: ClipPath(clipper: clipper, child: child),
-    );
+    if (clipper != null) {
+      return CustomPaint(
+        key: UniqueKey(),
+        painter: _ClipShadowShadowPainter(
+          clipper: clipper!,
+          shadow: shadow,
+        ),
+        child: ClipPath(clipper: clipper, child: child),
+      );
+    } else {
+      // No clipper: just paint shadow as a rectangle behind the child
+      return CustomPaint(
+        key: UniqueKey(),
+        painter: _RectShadowPainter(shadow: shadow),
+        child: child,
+      );
+    }
   }
 }
 
@@ -163,7 +161,6 @@ class _ClipShadowShadowPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     var paint = shadow.toPaint();
-
     var clipPath = clipper.getClip(size).shift(shadow.offset);
     canvas.drawPath(clipPath, paint);
   }
@@ -172,4 +169,24 @@ class _ClipShadowShadowPainter extends CustomPainter {
   bool shouldRepaint(CustomPainter oldDelegate) {
     return true;
   }
+}
+
+class _RectShadowPainter extends CustomPainter {
+  final Shadow shadow;
+
+  _RectShadowPainter({required this.shadow});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = shadow.toPaint();
+    final rect = Offset.zero & size;
+    final rrect = RRect.fromRectAndRadius(
+      rect.shift(shadow.offset),
+      const Radius.circular(20), // You can adjust the radius as needed
+    );
+    canvas.drawRRect(rrect, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => true;
 }

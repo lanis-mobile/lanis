@@ -80,20 +80,24 @@ class _RichChatTextEditorState extends State<RichChatTextEditor> {
               Padding(
                 padding:
                     const EdgeInsets.only(bottom: 2.0, left: 4.0, right: 4.0),
-                child: IconButton(
-                  iconSize: kToolbarHeight / 1.5,
-                  onPressed: () {
-                    setState(() {
-                      showToolbar = !showToolbar;
-                    });
-                    _notifyHeightChange();
-                  },
-                  icon: Icon(
-                    Icons.format_textdirection_l_to_r_outlined,
-                  ),
-                  color: Theme.of(context).colorScheme.onSecondary,
-                  style: IconButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.secondary,
+                child: Material(
+                  elevation: 2.0,
+                  borderRadius: BorderRadius.circular((kToolbarHeight / 1.5)),
+                  child: IconButton(
+                    iconSize: kToolbarHeight / 1.5,
+                    onPressed: () {
+                      setState(() {
+                        showToolbar = !showToolbar;
+                      });
+                      _notifyHeightChange();
+                    },
+                    icon: Icon(
+                      Icons.format_textdirection_l_to_r_outlined,
+                    ),
+                    color: Theme.of(context).colorScheme.onSecondary,
+                    style: IconButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.secondary,
+                    ),
                   ),
                 ),
               ),
@@ -107,8 +111,8 @@ class _RichChatTextEditorState extends State<RichChatTextEditor> {
                     boxShadow: [
                       BoxShadow(
                         color:
-                            Theme.of(context).colorScheme.shadow.withAlpha(100),
-                        blurRadius: 4.0,
+                            Theme.of(context).colorScheme.shadow.withAlpha(90),
+                        blurRadius: 3.0,
                         offset: const Offset(0, 2),
                       ),
                     ],
@@ -126,6 +130,11 @@ class _RichChatTextEditorState extends State<RichChatTextEditor> {
                           configurations: QuillEditorConfigurations(
                             controller: quillController,
                             placeholder: widget.tooltip,
+                            onTapOutside:
+                                (PointerDownEvent event, FocusNode focusNode) {
+                              focusNode.unfocus();
+                              FocusScope.of(context).unfocus();
+                            },
                             customStyles: DefaultStyles(
                               placeHolder: DefaultTextBlockStyle(
                                   TextStyle(
@@ -160,26 +169,30 @@ class _RichChatTextEditorState extends State<RichChatTextEditor> {
               Padding(
                 padding:
                     const EdgeInsets.only(bottom: 2.0, left: 4.0, right: 6.0),
-                child: IconButton(
-                  iconSize: kToolbarHeight / 1.5,
-                  onPressed: () async {
-                    final String text =
-                        FullScreenConversationsMessageInput.parseText(
-                            quillController.document.toDelta());
-                    if (text.isEmpty) return;
+                child: Material(
+                  elevation: 2.0,
+                  borderRadius: BorderRadius.circular((kToolbarHeight / 1.5)),
+                  child: IconButton(
+                    iconSize: kToolbarHeight / 1.5,
+                    onPressed: () async {
+                      final String text =
+                          FullScreenConversationsMessageInput.parseText(
+                              quillController.document.toDelta());
+                      if (text.isEmpty) return;
 
-                    quillController.clear();
-                    await widget.sendMessage(text);
-                    widget.scrollToBottom();
-                  },
-                  icon: Icon(
-                    Icons.send,
-                  ),
-                  color: quillController.document.isEmpty()
-                      ? Theme.of(context).colorScheme.onTertiary.withAlpha(80)
-                      : Theme.of(context).colorScheme.onTertiary,
-                  style: IconButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.tertiary,
+                      quillController.clear();
+                      await widget.sendMessage(text);
+                      widget.scrollToBottom();
+                    },
+                    icon: Icon(
+                      Icons.send,
+                    ),
+                    color: quillController.document.isEmpty()
+                        ? Theme.of(context).colorScheme.onTertiary.withAlpha(80)
+                        : Theme.of(context).colorScheme.onTertiary,
+                    style: IconButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.tertiary,
+                    ),
                   ),
                 ),
               ),

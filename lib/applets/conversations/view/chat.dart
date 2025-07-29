@@ -524,8 +524,10 @@ class _ConversationsChatState extends State<ConversationsChat>
                     decoration: BoxDecoration(
                       border: Border(
                         bottom: BorderSide(
-                          width: 0.5,
-                          color: Theme.of(context).colorScheme.outline,
+                          width: 1,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Theme.of(context).colorScheme.surfaceBright
+                              : Theme.of(context).colorScheme.surfaceDim,
                         ),
                       ),
                     ),
