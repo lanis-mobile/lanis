@@ -1,13 +1,14 @@
 import 'package:custom_refresh_indicator/custom_refresh_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:dart_date/dart_date.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:html/parser.dart';
 import 'package:intl/intl.dart';
 import 'package:lanis/applets/conversations/view/components/date_header_widget.dart';
 import 'package:lanis/applets/conversations/view/components/message_widget.dart';
 import 'package:lanis/applets/conversations/view/components/rich_chat_text_editor.dart';
+import 'package:lanis/applets/conversations/view/components/statistic_widget.dart';
 import 'package:lanis/generated/l10n.dart';
-import 'package:lanis/applets/conversations/view/send.dart';
 import 'dart:async';
 
 import '../../../core/sph/sph.dart';
@@ -155,11 +156,13 @@ class _ConversationsChatState extends State<ConversationsChat>
 
   void animateAppBarTitle() {
     const appBarHeight = 56.0;
+    final maxScrollExtent = scrollController.position.maxScrollExtent;
 
-    if (scrollController.offset >= appBarHeight &&
+    if (scrollController.offset <= maxScrollExtent - appBarHeight &&
         appBarController.value == 0) {
       appBarController.value = 1;
-    } else if (scrollController.offset == 0 && appBarController.value == 1) {
+    } else if (scrollController.offset == maxScrollExtent &&
+        appBarController.value == 1) {
       appBarController.reverse();
     }
   }
@@ -391,20 +394,6 @@ class _ConversationsChatState extends State<ConversationsChat>
     }
   }
 
-  Future<void> openSendPage(BuildContext context) async {
-    final result = await Navigator.of(context).push(MaterialPageRoute(
-        builder: (context) => ConversationsSend(
-              isTablet: widget.isTablet,
-              title: widget.title,
-            )));
-
-    if (result == null) return;
-
-    scrollController.jumpTo(scrollController.position.maxScrollExtent);
-
-    await sendMessage(result);
-  }
-
   String get tooltipMessage {
     if (settings.onlyPrivateAnswers && !settings.own) {
       return AppLocalizations.of(context).replyToPerson(settings.author!);
@@ -415,6 +404,152 @@ class _ConversationsChatState extends State<ConversationsChat>
     } else {
       return AppLocalizations.of(context).sendMessagePlaceholder;
     }
+  }
+
+  Widget appBar() {
+    return AppBar(
+      title: Animate(
+        effects: const [
+          FadeEffect(
+            curve: Curves.easeIn,
+          )
+        ],
+        value: 0,
+        autoPlay: false,
+        controller: appBarController,
+        child: Text(widget.title),
+      ),
+      actions: [
+        if (refreshing)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.5,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+          ),
+        if (settings.groupChat == false &&
+            settings.onlyPrivateAnswers == false &&
+            settings.noReply == false) ...[
+          IconButton(
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    icon: const Icon(Icons.groups),
+                    title: Text(AppLocalizations.of(context)
+                        .conversationTypeName(ChatType.openChat.name)),
+                    content: Text(AppLocalizations.of(context).openChatWarning),
+                    actions: [
+                      FilledButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        child: const Text("Ok"),
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+            icon: const Icon(Icons.warning),
+          ),
+        ],
+        if (!widget.isTablet)
+          IconButton(
+              onPressed: () async {
+                if (hidden == true) {
+                  bool result;
+                  try {
+                    result = await sph!.parser.conversationsParser
+                        .showConversation(widget.id);
+                  } on NoConnectionException {
+                    showNoInternetDialog();
+                    return;
+                  }
+
+                  if (!result) {
+                    showErrorDialog();
+                    return;
+                  } else {
+                    setState(() {
+                      hidden = false;
+                    });
+                    sph!.parser.conversationsParser.filter
+                        .toggleEntry(widget.id, hidden: true);
+                    sph!.parser.conversationsParser.filter.pushEntries();
+                  }
+
+                  return;
+                }
+
+                showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                          icon: const Icon(Icons.visibility_off),
+                          title: Text(
+                              AppLocalizations.of(context).conversationHide),
+                          content: Text(AppLocalizations.of(context).hideNote),
+                          actions: [
+                            OutlinedButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                                child: Text(AppLocalizations.of(context).back)),
+                            FilledButton(
+                                onPressed: () async {
+                                  bool result = false;
+                                  try {
+                                    result = await sph!
+                                        .parser.conversationsParser
+                                        .hideConversation(widget.id);
+                                  } on NoConnectionException {
+                                    showNoInternetDialog();
+                                    return;
+                                  }
+
+                                  if (!result) {
+                                    showErrorDialog();
+                                    return;
+                                  } else {
+                                    setState(() {
+                                      hidden = true;
+                                    });
+                                    sph!.parser.conversationsParser.filter
+                                        .toggleEntry(widget.id, hidden: true);
+                                  }
+
+                                  if (context.mounted)
+                                    Navigator.of(context).pop();
+                                },
+                                child: Text(AppLocalizations.of(context)
+                                    .conversationHide))
+                          ],
+                        ));
+              },
+              icon: hidden
+                  ? const Icon(Icons.visibility)
+                  : const Icon(Icons.visibility_off)),
+        if (statistics != null) ...[
+          IconButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => StatisticWidget(
+                      statistics: statistics!, conversationTitle: widget.title),
+                ),
+              );
+            },
+            icon: const Icon(Icons.people),
+          ),
+        ],
+      ],
+    );
   }
 
   @override
@@ -475,122 +610,135 @@ class _ConversationsChatState extends State<ConversationsChat>
                 }
               }
 
-              return Stack(
+              return Column(
                 children: [
-                  NotificationListener<ScrollMetricsNotification>(
-                    onNotification: (_) {
-                      toggleScrollToBottomFab();
-                      return false;
-                    },
-                    child: FetchMoreIndicator(
-                      controller: refreshIndicatorController,
-                      onAction: refreshConversation,
-                      child: CustomScrollView(
-                        controller: scrollController,
-                        reverse: true,
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        slivers: [
-                          SliverToBoxAdapter(
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              curve: Curves.easeInOut,
-                              height: richTextEditorSize + 10,
-                            ),
-                          ),
-                          SliverList.builder(
-                            itemCount: chat.length,
-                            itemBuilder: (context, index) {
-                              // Reverse the index to show messages in correct order
-                              final reversedIndex = chat.length - 1 - index;
-                              if (chat[reversedIndex] is Message) {
-                                return MessageWidget(
-                                    message: chat[reversedIndex],
-                                    textStyle:
-                                        textStyles[chat[reversedIndex].author]);
-                              } else {
-                                return DateHeaderWidget(
-                                    header: chat[reversedIndex]);
-                              }
-                            },
-                          ),
-                          SliverToBoxAdapter(
-                            child: Padding(
-                              padding: const EdgeInsets.only(bottom: 12.0),
-                              child: Column(
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Flexible(
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 12.0),
-                                          child: Text(
-                                            widget.title,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .headlineMedium,
-                                            textAlign: TextAlign.center,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
+                  appBar(),
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        NotificationListener<ScrollMetricsNotification>(
+                          onNotification: (_) {
+                            toggleScrollToBottomFab();
+                            return false;
+                          },
+                          child: FetchMoreIndicator(
+                            controller: refreshIndicatorController,
+                            onAction: refreshConversation,
+                            child: CustomScrollView(
+                              controller: scrollController,
+                              reverse: true,
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              slivers: [
+                                SliverToBoxAdapter(
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    curve: Curves.easeInOut,
+                                    height: richTextEditorSize + 10,
                                   ),
-                                  if (settings.onlyPrivateAnswers &&
-                                      !settings.own) ...[
-                                    Container(
-                                      alignment: Alignment.center,
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 8.0, horizontal: 12.0),
-                                      margin: const EdgeInsets.only(top: 16.0),
-                                      decoration: BoxDecoration(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .surfaceContainerHigh),
-                                      child: Text(
-                                        AppLocalizations.of(context)
-                                            .privateConversation(
-                                                settings.author!),
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyMedium,
-                                        textAlign: TextAlign.center,
-                                      ),
+                                ),
+                                SliverList.builder(
+                                  itemCount: chat.length,
+                                  itemBuilder: (context, index) {
+                                    // Reverse the index to show messages in correct order
+                                    final reversedIndex =
+                                        chat.length - 1 - index;
+                                    if (chat[reversedIndex] is Message) {
+                                      return MessageWidget(
+                                          message: chat[reversedIndex],
+                                          textStyle: textStyles[
+                                              chat[reversedIndex].author]);
+                                    } else {
+                                      return DateHeaderWidget(
+                                          header: chat[reversedIndex]);
+                                    }
+                                  },
+                                ),
+                                SliverToBoxAdapter(
+                                  child: Padding(
+                                    padding:
+                                        const EdgeInsets.only(bottom: 12.0),
+                                    child: Column(
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Flexible(
+                                              child: Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 12.0),
+                                                child: Text(
+                                                  widget.title,
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .headlineMedium,
+                                                  textAlign: TextAlign.center,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        if (settings.onlyPrivateAnswers &&
+                                            !settings.own) ...[
+                                          Container(
+                                            alignment: Alignment.center,
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 8.0,
+                                                horizontal: 12.0),
+                                            margin: const EdgeInsets.only(
+                                                top: 16.0),
+                                            decoration: BoxDecoration(
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .surfaceContainerHigh),
+                                            child: Text(
+                                              AppLocalizations.of(context)
+                                                  .privateConversation(
+                                                      settings.author!),
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyMedium,
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ),
+                                        ],
+                                      ],
                                     ),
-                                  ],
-                                ],
-                              ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Visibility(
-                    visible: settings.own || !settings.noReply,
-                    child: Align(
-                      alignment: Alignment.bottomCenter,
-                      child: RichChatTextEditor(
-                        scrollToBottom: scrollToBottom,
-                        sendMessage: sendMessage,
-                        tooltip: tooltipMessage,
-                        sending: isSendVisible.value,
-                        editorSizeChangeCallback: (height) {
-                          bool wasScrolledToBottom =
-                              scrollController.position.pixels <= 40;
-                          setState(() {
-                            richTextEditorSize = height;
-                          });
-                          if (wasScrolledToBottom &&
-                              scrollController.position.pixels != 0) {
-                            scrollController.animateTo(
-                              0,
-                              duration: Duration(milliseconds: 100),
-                              curve: Curves.easeInOut,
-                            );
-                          }
-                        },
-                      ),
+                        ),
+                        Visibility(
+                          visible: settings.own || !settings.noReply,
+                          child: Align(
+                            alignment: Alignment.bottomCenter,
+                            child: RichChatTextEditor(
+                              scrollToBottom: scrollToBottom,
+                              sendMessage: sendMessage,
+                              tooltip: tooltipMessage,
+                              sending: isSendVisible.value,
+                              editorSizeChangeCallback: (height) {
+                                bool wasScrolledToBottom =
+                                    scrollController.position.pixels <= 40;
+                                setState(() {
+                                  richTextEditorSize = height;
+                                });
+                                if (wasScrolledToBottom &&
+                                    scrollController.position.pixels != 0) {
+                                  scrollController.animateTo(
+                                    0,
+                                    duration: Duration(milliseconds: 100),
+                                    curve: Curves.easeInOut,
+                                  );
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],

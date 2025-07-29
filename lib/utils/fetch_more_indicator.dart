@@ -19,18 +19,18 @@ class FetchMoreIndicator extends StatelessWidget {
     return CustomRefreshIndicator(
       onRefresh: onAction,
       controller: controller,
-      trigger: IndicatorTrigger.trailingEdge,
-      trailingScrollIndicatorVisible: false,
-      leadingScrollIndicatorVisible: true,
+      trigger: IndicatorTrigger.leadingEdge,
+      trailingScrollIndicatorVisible: true,
+      leadingScrollIndicatorVisible: false,
       durations: const RefreshIndicatorDurations(
         completeDuration: Duration(milliseconds: 200),
       ),
       child: child,
       builder: (
-          BuildContext context,
-          Widget child,
-          IndicatorController controller,
-          ) {
+        BuildContext context,
+        Widget child,
+        IndicatorController controller,
+      ) {
         return AnimatedBuilder(
             animation: controller,
             builder: (context, _) {
@@ -51,18 +51,18 @@ class FetchMoreIndicator extends StatelessWidget {
                           IndicatorState.canceling ||
                           IndicatorState.armed ||
                           IndicatorState.settling =>
-                          const Icon(Icons.refresh),
+                            const Icon(Icons.refresh),
                           IndicatorState.loading => Container(
-                            margin: const EdgeInsets.only(bottom: 8.0),
-                            width: 16,
-                            height: 16,
-                            child: const CircularProgressIndicator(
-                              strokeWidth: 2,
+                              margin: const EdgeInsets.only(bottom: 8.0),
+                              width: 16,
+                              height: 16,
+                              child: const CircularProgressIndicator(
+                                strokeWidth: 2,
+                              ),
                             ),
-                          ),
                           IndicatorState.complete ||
                           IndicatorState.finalizing =>
-                          const Icon(Icons.check_circle, color: Colors.green),
+                            const Icon(Icons.check_circle, color: Colors.green),
                         }),
                   ),
                 ],
