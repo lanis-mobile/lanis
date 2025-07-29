@@ -61,7 +61,6 @@ dependencies:
   device_info_plus: ^10.1.0
   flutter_chat_bubble: ^2.0.2
   color_hash: ^1.0.1
-  flutter_animate: ^4.5.0
   flutter_quill: ^10.0.0
   quill_html_converter: ^9.3.2
   flutter_tagging_plus: ^4.0.2

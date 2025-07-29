@@ -1,7 +1,7 @@
 import 'package:custom_refresh_indicator/custom_refresh_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:dart_date/dart_date.dart';
-import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:html/parser.dart';
 import 'package:intl/intl.dart';
 import 'package:lanis/applets/conversations/view/components/date_header_widget.dart';
@@ -391,6 +391,8 @@ class _ConversationsChatState extends State<ConversationsChat>
   Widget appBar() {
     return AppBar(
       title: Text(widget.title),
+      scrolledUnderElevation: 0.0,
+      backgroundColor: Colors.transparent,
       actions: [
         if (refreshing)
           Padding(
@@ -444,6 +446,14 @@ class _ConversationsChatState extends State<ConversationsChat>
             icon: const Icon(Icons.people),
           ),
       ],
+    );
+  }
+
+  Widget triangularPattern({required Color lineColor}) {
+    return SvgPicture.asset(
+      "assets/triangle_pattern.svg",
+      fit: BoxFit.cover,
+      colorFilter: ColorFilter.mode(lineColor, BlendMode.srcIn),
     );
   }
 
@@ -508,9 +518,27 @@ class _ConversationsChatState extends State<ConversationsChat>
               return Column(
                 children: [
                   appBar(),
+                  Container(
+                    width: double.infinity,
+                    height: 1,
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          width: 0.5,
+                          color: Theme.of(context).colorScheme.outline,
+                        ),
+                      ),
+                    ),
+                  ),
                   Expanded(
                     child: Stack(
                       children: [
+                        triangularPattern(
+                          lineColor: Theme.of(context)
+                              .colorScheme
+                              .onSurfaceVariant
+                              .withValues(alpha: 0.07),
+                        ),
                         NotificationListener<ScrollMetricsNotification>(
                           onNotification: (_) {
                             toggleScrollToBottomFab();
