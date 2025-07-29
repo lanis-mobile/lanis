@@ -49,7 +49,6 @@ class ConversationsChat extends StatefulWidget {
 class _ConversationsChatState extends State<ConversationsChat>
     with SingleTickerProviderStateMixin {
   late final Future<void> _conversationFuture = initConversation();
-  late final AnimationController appBarController;
   Timer? _refreshTimer;
   int _lastRefresh = 0;
   final List<String> _messagesSendInThisSession = [];
@@ -94,19 +93,15 @@ class _ConversationsChatState extends State<ConversationsChat>
   @override
   void initState() {
     super.initState();
-    appBarController = AnimationController(vsync: this);
-    scrollController.addListener(animateAppBarTitle);
     scrollController.addListener(toggleScrollToBottomFab);
     hidden = widget.hidden;
 
-    // Initialize periodic refresh timer (every 1 minute)
     initRefreshTimer();
   }
 
   @override
   void dispose() {
     super.dispose();
-    appBarController.dispose();
     scrollController.dispose();
     _refreshTimer?.cancel();
   }
@@ -151,19 +146,6 @@ class _ConversationsChatState extends State<ConversationsChat>
           "Error while refreshing conversation. This can happen, when the user tuns off their phone or suspends the app.",
         );
       }
-    }
-  }
-
-  void animateAppBarTitle() {
-    const appBarHeight = 56.0;
-    final maxScrollExtent = scrollController.position.maxScrollExtent;
-
-    if (scrollController.offset <= maxScrollExtent - appBarHeight &&
-        appBarController.value == 0) {
-      appBarController.value = 1;
-    } else if (scrollController.offset == maxScrollExtent &&
-        appBarController.value == 1) {
-      appBarController.reverse();
     }
   }
 
@@ -408,17 +390,7 @@ class _ConversationsChatState extends State<ConversationsChat>
 
   Widget appBar() {
     return AppBar(
-      title: Animate(
-        effects: const [
-          FadeEffect(
-            curve: Curves.easeIn,
-          )
-        ],
-        value: 0,
-        autoPlay: false,
-        controller: appBarController,
-        child: Text(widget.title),
-      ),
+      title: Text(widget.title),
       actions: [
         if (refreshing)
           Padding(
@@ -434,7 +406,7 @@ class _ConversationsChatState extends State<ConversationsChat>
           ),
         if (settings.groupChat == false &&
             settings.onlyPrivateAnswers == false &&
-            settings.noReply == false) ...[
+            settings.noReply == false)
           IconButton(
             onPressed: () {
               showDialog(
@@ -459,83 +431,7 @@ class _ConversationsChatState extends State<ConversationsChat>
             },
             icon: const Icon(Icons.warning),
           ),
-        ],
-        if (!widget.isTablet)
-          IconButton(
-              onPressed: () async {
-                if (hidden == true) {
-                  bool result;
-                  try {
-                    result = await sph!.parser.conversationsParser
-                        .showConversation(widget.id);
-                  } on NoConnectionException {
-                    showNoInternetDialog();
-                    return;
-                  }
-
-                  if (!result) {
-                    showErrorDialog();
-                    return;
-                  } else {
-                    setState(() {
-                      hidden = false;
-                    });
-                    sph!.parser.conversationsParser.filter
-                        .toggleEntry(widget.id, hidden: true);
-                    sph!.parser.conversationsParser.filter.pushEntries();
-                  }
-
-                  return;
-                }
-
-                showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                          icon: const Icon(Icons.visibility_off),
-                          title: Text(
-                              AppLocalizations.of(context).conversationHide),
-                          content: Text(AppLocalizations.of(context).hideNote),
-                          actions: [
-                            OutlinedButton(
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                },
-                                child: Text(AppLocalizations.of(context).back)),
-                            FilledButton(
-                                onPressed: () async {
-                                  bool result = false;
-                                  try {
-                                    result = await sph!
-                                        .parser.conversationsParser
-                                        .hideConversation(widget.id);
-                                  } on NoConnectionException {
-                                    showNoInternetDialog();
-                                    return;
-                                  }
-
-                                  if (!result) {
-                                    showErrorDialog();
-                                    return;
-                                  } else {
-                                    setState(() {
-                                      hidden = true;
-                                    });
-                                    sph!.parser.conversationsParser.filter
-                                        .toggleEntry(widget.id, hidden: true);
-                                  }
-
-                                  if (context.mounted)
-                                    Navigator.of(context).pop();
-                                },
-                                child: Text(AppLocalizations.of(context)
-                                    .conversationHide))
-                          ],
-                        ));
-              },
-              icon: hidden
-                  ? const Icon(Icons.visibility)
-                  : const Icon(Icons.visibility_off)),
-        if (statistics != null) ...[
+        if (statistics != null)
           IconButton(
             onPressed: () {
               Navigator.of(context).push(
@@ -547,7 +443,6 @@ class _ConversationsChatState extends State<ConversationsChat>
             },
             icon: const Icon(Icons.people),
           ),
-        ],
       ],
     );
   }

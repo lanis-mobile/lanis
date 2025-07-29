@@ -163,8 +163,9 @@ class _RichChatTextEditorState extends State<RichChatTextEditor> {
                 child: IconButton(
                   iconSize: kToolbarHeight / 1.5,
                   onPressed: () async {
-                    final String text = ConversationsSend.parseText(
-                        quillController.document.toDelta());
+                    final String text =
+                        FullScreenConversationsMessageInput.parseText(
+                            quillController.document.toDelta());
                     if (text.isEmpty) return;
 
                     quillController.clear();
