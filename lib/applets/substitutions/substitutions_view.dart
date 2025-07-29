@@ -186,7 +186,10 @@ class _SubstitutionsViewState extends State<SubstitutionsView>
       settingsDefaults: substitutionDefinition.settingsDefaults,
       loadingAppBar: AppBar(
         title: Text(substitutionDefinition.label(context)),
-        leading: Icon(Icons.menu), // will be fixed with Builder Redesign
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
+          onPressed: () => widget.openDrawerCb!(),
+        ),
       ),
       builder: (context, data, accountType, settings, updateSetting, refresh) {
         if (data.days.isEmpty) {
