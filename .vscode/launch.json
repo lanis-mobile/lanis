@@ -1,0 +1,29 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Flutter Debug (Custom)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--no-enable-impeller",
+                "--dart-define=cronetHttpNoPlay=true"
+            ],
+            "flutterMode": "debug",
+            //"deviceId": "all"
+        },
+        {
+            "name": "Flutter Profile (no Impeller)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--no-enable-impeller",
+                "--dart-define=cronetHttpNoPlay=true"
+            ],
+            "flutterMode": "profile",
+            //"deviceId": "all"
+        },
+    ]
+}
