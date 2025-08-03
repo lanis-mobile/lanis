@@ -34,7 +34,8 @@ class SubstitutionListTile extends StatelessWidget {
               )
             ],
           ),
-              SubstitutionsFormattedText(value!, Theme.of(context).textTheme.bodyMedium!)
+          SubstitutionsFormattedText(
+              value!, Theme.of(context).textTheme.bodyMedium!)
         ]));
   }
 
@@ -42,7 +43,8 @@ class SubstitutionListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final maxClassWidth = constraints.maxWidth * 0.3; // Limit class width to 30% of the tile width
+        final maxClassWidth = constraints.maxWidth *
+            0.3; // Limit class width to 30% of the tile width
 
         return ListTile(
           dense: (doesNoticeExist(substitutionData.vertreter) &&
@@ -79,11 +81,11 @@ class SubstitutionListTile extends StatelessWidget {
                     getSubstitutionInfo(context, "Vertreter",
                             substitutionData.vertreter, Icons.person) ??
                         const SizedBox.shrink(),
-                    getSubstitutionInfo(context, "Lehrer", substitutionData.lehrer,
-                            Icons.school) ??
+                    getSubstitutionInfo(context, "Lehrer",
+                            substitutionData.lehrer, Icons.school) ??
                         const SizedBox.shrink(),
-                    getSubstitutionInfo(
-                            context, "Raum", substitutionData.raum, Icons.room) ??
+                    getSubstitutionInfo(context, "Raum", substitutionData.raum,
+                            Icons.room) ??
                         const SizedBox.shrink(),
                   ],
                 ),

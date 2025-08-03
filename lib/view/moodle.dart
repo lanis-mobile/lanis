@@ -237,7 +237,7 @@ class _MoodleWebViewState extends State<MoodleWebView> {
                     showWebView = false;
                   });
 
-                  if(context.mounted) Navigator.pop(context);
+                  if (context.mounted) Navigator.pop(context);
                 }
               },
               child: Visibility(
@@ -337,12 +337,15 @@ class _MoodleWebViewState extends State<MoodleWebView> {
                   onDownloadStartRequest: (controller, request) {
                     double fileSize = request.contentLength / 1000000;
 
-                    showFileModal(context, FileInfo(
-                      name: request.suggestedFilename ??
-                          sph!.storage.generateUniqueHash(request.url.rawValue),
-                      url: request.url,
-                      size: "(${fileSize.toStringAsFixed(2)} MB)",
-                    ));
+                    showFileModal(
+                        context,
+                        FileInfo(
+                          name: request.suggestedFilename ??
+                              sph!.storage
+                                  .generateUniqueHash(request.url.rawValue),
+                          url: request.url,
+                          size: "(${fileSize.toStringAsFixed(2)} MB)",
+                        ));
                   },
                 ),
               ),
@@ -477,9 +480,9 @@ class _MoodleWebViewState extends State<MoodleWebView> {
                                       .textTheme
                                       .labelLarge!
                                       .copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onPrimaryContainer),
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onPrimaryContainer),
                                 ),
                               ),
                             ),
@@ -547,7 +550,7 @@ class _MoodleWebViewState extends State<MoodleWebView> {
         ),
         bottomNavigationBar: isLoggedIn
             ? SafeArea(
-              child: Column(
+                child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     ValueListenableBuilder(
@@ -566,16 +569,18 @@ class _MoodleWebViewState extends State<MoodleWebView> {
                     Row(
                       children: [
                         IconButton(
-                            onPressed: refresh, icon: const Icon(Icons.refresh)),
+                            onPressed: refresh,
+                            icon: const Icon(Icons.refresh)),
                         IconButton(
                             onPressed: () async {
                               if (error != null) {
                                 await Clipboard.setData(ClipboardData(
-                                    text: errorUrl?.rawValue ?? "Unknown error"));
-              
+                                    text:
+                                        errorUrl?.rawValue ?? "Unknown error"));
+
                                 return;
                               }
-              
+
                               if (webViewController != null) {
                                 await Clipboard.setData(ClipboardData(
                                     text: (await webViewController!.getUrl())!
@@ -590,7 +595,8 @@ class _MoodleWebViewState extends State<MoodleWebView> {
                                   valueListenable: currentPageTitle,
                                   builder: (context, title, _) => Text(
                                     title,
-                                    style: Theme.of(context).textTheme.labelLarge,
+                                    style:
+                                        Theme.of(context).textTheme.labelLarge,
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ))
@@ -622,7 +628,7 @@ class _MoodleWebViewState extends State<MoodleWebView> {
                     ),
                   ],
                 ),
-            )
+              )
             : SizedBox.shrink());
   }
 }

@@ -4,7 +4,6 @@ import 'package:lanis/generated/l10n.dart';
 import '../../core/sph/sph.dart';
 import 'chips_input.dart';
 
-
 class SubstitutionsFilterSettings extends StatefulWidget {
   const SubstitutionsFilterSettings({super.key});
 
@@ -12,7 +11,8 @@ class SubstitutionsFilterSettings extends StatefulWidget {
   State<StatefulWidget> createState() => _SubstitutionsFilterSettingsState();
 }
 
-class _SubstitutionsFilterSettingsState extends State<SubstitutionsFilterSettings> {
+class _SubstitutionsFilterSettingsState
+    extends State<SubstitutionsFilterSettings> {
   bool loadingFilter = false;
   @override
   Widget build(BuildContext context) {
@@ -36,18 +36,22 @@ class _SubstitutionsFilterSettingsState extends State<SubstitutionsFilterSetting
             const SubstitutionFilterEditor(objKey: "Lehrer", title: 'Lehrer'),
             const SubstitutionFilterEditor(objKey: "Raum", title: 'Raum'),
             const SubstitutionFilterEditor(objKey: "Art", title: 'Art'),
-            const SubstitutionFilterEditor(objKey: "Vertreter", title: "Vertreter"),
-            const SubstitutionFilterEditor(objKey: "Lehrerkuerzel", title: "Lehrerkürzel"),
-            const SubstitutionFilterEditor(objKey: "Vertreterkuerzel", title: "Vertreterkürzel"),
+            const SubstitutionFilterEditor(
+                objKey: "Vertreter", title: "Vertreter"),
+            const SubstitutionFilterEditor(
+                objKey: "Lehrerkuerzel", title: "Lehrerkürzel"),
+            const SubstitutionFilterEditor(
+                objKey: "Vertreterkuerzel", title: "Vertreterkürzel"),
             const SubstitutionFilterEditor(objKey: "Hinweis", title: "Hinweis"),
-            const SubstitutionFilterEditor(objKey: "Fach_alt", title: "Fach (Alt)"),
-            const SubstitutionFilterEditor(objKey: "Raum_alt", title: "Raum (Alt)"),
+            const SubstitutionFilterEditor(
+                objKey: "Fach_alt", title: "Fach (Alt)"),
+            const SubstitutionFilterEditor(
+                objKey: "Raum_alt", title: "Raum (Alt)"),
             SafeArea(
               child: ListTile(
                   leading: const Icon(Icons.help),
                   title: Text(AppLocalizations.of(context).howItWorks),
-                  subtitle: Text(AppLocalizations.of(context).howItWorksText)
-              ),
+                  subtitle: Text(AppLocalizations.of(context).howItWorksText)),
             )
           ],
         ));
@@ -58,7 +62,8 @@ class SubstitutionFilterEditor extends StatefulWidget {
   final String objKey;
   final String title;
 
-  const SubstitutionFilterEditor({super.key, required this.objKey, required this.title});
+  const SubstitutionFilterEditor(
+      {super.key, required this.objKey, required this.title});
 
   @override
   State<SubstitutionFilterEditor> createState() =>
@@ -72,7 +77,9 @@ class _SubstitutionFilterEditorState extends State<SubstitutionFilterEditor> {
   @override
   void initState() {
     super.initState();
-    strict = sph!.parser.substitutionsParser.localFilter[widget.objKey]?["strict"] ?? false;
+    strict = sph!.parser.substitutionsParser.localFilter[widget.objKey]
+            ?["strict"] ??
+        false;
   }
 
   @override
@@ -92,40 +99,41 @@ class _SubstitutionFilterEditorState extends State<SubstitutionFilterEditor> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 8),
-                  child:
-                  Text(widget.title, style: const TextStyle(fontSize: 18)),
-                ),
-                ActionChip(
-                  label: strict ? const Text("All") : const Text("One"),
-                  padding: const EdgeInsets.only(top: 0, bottom: 0),
-                  onPressed: () {
-                    setState(() {
-                      strict = !strict;
-                      sph!.parser.substitutionsParser.localFilter[widget.objKey]
-                      ?["strict"] = strict;
-                      sph!.parser.substitutionsParser.saveFilterToStorage();
-                    });
-                  },
-                )
-              ],
-            ),
-            StringListEditor(
-              initialValues: sph!.parser.substitutionsParser.localFilter[widget.objKey]?["filter"]??[],
-              onChanged: (data) {
-                filterTags = data;
-                overrideFilter(data);
-              },
-            ),
-          ],
-        ),
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: Text(widget.title, style: const TextStyle(fontSize: 18)),
+              ),
+              ActionChip(
+                label: strict ? const Text("All") : const Text("One"),
+                padding: const EdgeInsets.only(top: 0, bottom: 0),
+                onPressed: () {
+                  setState(() {
+                    strict = !strict;
+                    sph!.parser.substitutionsParser.localFilter[widget.objKey]
+                        ?["strict"] = strict;
+                    sph!.parser.substitutionsParser.saveFilterToStorage();
+                  });
+                },
+              )
+            ],
+          ),
+          StringListEditor(
+            initialValues: sph!.parser.substitutionsParser
+                    .localFilter[widget.objKey]?["filter"] ??
+                [],
+            onChanged: (data) {
+              filterTags = data;
+              overrideFilter(data);
+            },
+          ),
+        ],
+      ),
     );
   }
 }

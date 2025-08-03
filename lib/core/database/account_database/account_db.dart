@@ -101,7 +101,8 @@ class AccountDatabase extends _$AccountDatabase {
       if (key != null) {
         await secureStorage.write(key: 'encryption_key', value: key);
         await FlutterKeychain.remove(key: 'encryption_key');
-        logger.i('Migrated encryption key from flutter_keychain to flutter_secure_storage.');
+        logger.i(
+            'Migrated encryption key from flutter_keychain to flutter_secure_storage.');
       } else {
         throw Exception('Encryption key not found');
       }
@@ -165,7 +166,8 @@ class AccountDatabase extends _$AccountDatabase {
                 expression: u.lastLogin,
                 mode: OrderingMode.desc,
                 nulls: NullsOrder.first),
-          ])).get();
+          ]))
+        .get();
     final account = account0.isNotEmpty ? account0.first : null;
     if (account == null) return null;
 

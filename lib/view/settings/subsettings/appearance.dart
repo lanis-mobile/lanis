@@ -233,12 +233,12 @@ class _AppearanceSettingsState
                     Text(
                       dynamicTheme == null
                           ? AppLocalizations.of(context)
-                          .settingsUnsupportedInfoAppearance
-                      : AppLocalizations.of(context)
-                          .settingsInfoDynamicColor,
+                              .settingsUnsupportedInfoAppearance
+                          : AppLocalizations.of(context)
+                              .settingsInfoDynamicColor,
                       style: Theme.of(context).textTheme.bodySmall!.copyWith(
                           color:
-                          Theme.of(context).colorScheme.onSurfaceVariant),
+                              Theme.of(context).colorScheme.onSurfaceVariant),
                     )
                   ],
                 )),

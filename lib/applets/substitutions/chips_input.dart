@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lanis/generated/l10n.dart';
 
-
 class StringListEditor extends StatefulWidget {
   final List<String> initialValues;
   final void Function(List<String> updatedList) onChanged;

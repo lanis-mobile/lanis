@@ -28,6 +28,7 @@ class SessionHandler {
   late CookieJar jar;
   final dio = Dio();
   Timer? preventLogoutTimer;
+
   /// a Map containing the user data parsed from
   /// 'https://start.schulportal.hessen.de/benutzerverwaltung.php?a=userData'
   Map<String, String> userData = {};
@@ -39,7 +40,10 @@ class SessionHandler {
 
   AccountType get accountType => _accountType ?? sph.account.accountType!;
 
-  SessionHandler({required this.sph, String? withLoginURL,});
+  SessionHandler({
+    required this.sph,
+    String? withLoginURL,
+  });
 
   Future<void> prepareDio() async {
     jar = CookieJar();
@@ -63,15 +67,15 @@ class SessionHandler {
       },
     ));
     dio.interceptors.add(InterceptorsWrapper(
-     onResponse: (Response response, ResponseInterceptorHandler handler) {
-       if (response.data is String) {
-         final contentType = response.headers.value('content-type');
-         if (contentType != null && contentType.contains('text/html')) {
-           final decryptedString = cryptor.decryptEncodedTags(response.data);
-           //response.data = unescape.convert(decryptedString);
+      onResponse: (Response response, ResponseInterceptorHandler handler) {
+        if (response.data is String) {
+          final contentType = response.headers.value('content-type');
+          if (contentType != null && contentType.contains('text/html')) {
+            final decryptedString = cryptor.decryptEncodedTags(response.data);
+            //response.data = unescape.convert(decryptedString);
             response.data = decryptedString;
-         }
-       }
+          }
+        }
         return handler.next(response);
       },
     ));
@@ -88,19 +92,20 @@ class SessionHandler {
     // ));
     dio.options.followRedirects = false;
     dio.options.connectTimeout = Duration(seconds: 8);
-    dio.options.validateStatus =
-        (status) => status != null && (status == 200 || status == 302 || status == 503);
+    dio.options.validateStatus = (status) =>
+        status != null && (status == 200 || status == 302 || status == 503);
   }
 
   ///Logs the user in and fetches the necessary metadata.
-  Future<void> authenticate({bool withoutData = false, String? withLoginUrl}) async {
+  Future<void> authenticate(
+      {bool withoutData = false, String? withLoginUrl}) async {
     if (!(await connectionChecker.connected)) {
       throw NoConnectionException();
     }
 
     jar.deleteAll();
-    dio.options.validateStatus =
-        (status) => status != null && (status == 200 || status == 302 || status == 503);
+    dio.options.validateStatus = (status) =>
+        status != null && (status == 200 || status == 302 || status == 503);
 
     late String loginURL;
 
@@ -112,14 +117,13 @@ class SessionHandler {
 
     await dio.get(loginURL);
 
-
     preventLogoutTimer?.cancel();
-    preventLogoutTimer = Timer.periodic(
-        const Duration(seconds: 10), (timer) => preventLogout());
+    preventLogoutTimer =
+        Timer.periodic(const Duration(seconds: 10), (timer) => preventLogout());
 
     travelMenu = await getFastTravelMenu();
     if (!withoutData) {
-      if(kReleaseMode) asyncLogRequest();
+      if (kReleaseMode) asyncLogRequest();
       accountDatabase.updateLastLogin(sph.account.localId);
 
       final response = await dio.get(
@@ -139,16 +143,24 @@ class SessionHandler {
   void asyncLogRequest() async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
     try {
-      String platform = Platform.isAndroid ? 'android' : Platform.isIOS ? 'ios' : 'unknown';
-      await dio.post("https://lanis-logger.orion.alessioc42.dev/api/log-login?schoolid=${sph.account.schoolID}&versioncode=${packageInfo.buildNumber}&platform=$platform");
-      logger.i('Logged account login to orion. (${sph.account.schoolID}, ${packageInfo.buildNumber})');
+      String platform = Platform.isAndroid
+          ? 'android'
+          : Platform.isIOS
+              ? 'ios'
+              : 'unknown';
+      await dio.post(
+          "https://lanis-logger.orion.alessioc42.dev/api/log-login?schoolid=${sph.account.schoolID}&versioncode=${packageInfo.buildNumber}&platform=$platform");
+      logger.i(
+          'Logged account login to orion. (${sph.account.schoolID}, ${packageInfo.buildNumber})');
     } catch (e) {
-      logger.w('Failed to log account login to orion. (${sph.account.schoolID}, ${packageInfo.buildNumber})');
+      logger.w(
+          'Failed to log account login to orion. (${sph.account.schoolID}, ${packageInfo.buildNumber})');
     }
   }
 
   Future<void> deAuthenticate() async {
-    logger.w('Deauthenticating user [${sph.account.localId}] ${sph.account.schoolID}.${sph.account.username}');
+    logger.w(
+        'Deauthenticating user [${sph.account.localId}] ${sph.account.schoolID}.${sph.account.username}');
     preventLogoutTimer?.cancel();
     await dio.get('https://start.schulportal.hessen.de/index.php?logout=all');
     jar.deleteAll();
@@ -163,8 +175,8 @@ class SessionHandler {
     dioHttp.httpClientAdapter = getNativeAdapterInstance();
     dioHttp.interceptors.add(CookieManager(cookieJar));
     dioHttp.options.followRedirects = false;
-    dioHttp.options.validateStatus =
-        (status) => status != null && (status == 200 || status == 302 || status == 503);
+    dioHttp.options.validateStatus = (status) =>
+        status != null && (status == 200 || status == 302 || status == 503);
 
     final response1 = await dioHttp.post(
         "https://login.schulportal.hessen.de/?i=${acc.schoolID}",
@@ -180,11 +192,11 @@ class SessionHandler {
     }
 
     final loginTimeout =
-    parse(response1.data).getElementById("authErrorLocktime");
+        parse(response1.data).getElementById("authErrorLocktime");
 
     if (response1.headers.value(HttpHeaders.locationHeader) != null) {
       final response2 =
-      await dioHttp.get("https://connect.schulportal.hessen.de");
+          await dioHttp.get("https://connect.schulportal.hessen.de");
 
       String location2 =
           response2.headers.value(HttpHeaders.locationHeader) ?? "";
@@ -212,14 +224,15 @@ class SessionHandler {
     }
     logger.i("Refreshing session");
     try {
-      var response = await dio.post("https://start.schulportal.hessen.de/ajax_login.php",
-          data: 'name=${Uri.encodeComponent(sid)}',
-          options: Options(
-            contentType: "application/x-www-form-urlencoded",
-            headers: {
-              'x-requested-with': 'XMLHttpRequest',
-            },
-          ),
+      var response = await dio.post(
+        "https://start.schulportal.hessen.de/ajax_login.php",
+        data: 'name=${Uri.encodeComponent(sid)}',
+        options: Options(
+          contentType: "application/x-www-form-urlencoded",
+          headers: {
+            'x-requested-with': 'XMLHttpRequest',
+          },
+        ),
       );
       if (response.statusCode == 503) {
         throw LanisDownException();
@@ -239,7 +252,7 @@ class SessionHandler {
   ///Parses the user data from the user data page.
   Map<String, String> parseUserData(Document document) {
     var userDataTableBody =
-    document.querySelector("div.col-md-12 table.table.table-striped tbody");
+        document.querySelector("div.col-md-12 table.table.table-striped tbody");
 
     if (userDataTableBody != null) {
       Map<String, String> result = {};
@@ -258,11 +271,11 @@ class SessionHandler {
     } else {
       return {};
     }
-
   }
 
   AccountType parseAccountType(Document document) {
-    final iconClassList = document.querySelector('.nav.navbar-nav.navbar-right>li>a>i')!.classes;
+    final iconClassList =
+        document.querySelector('.nav.navbar-nav.navbar-right>li>a>i')!.classes;
     if (iconClassList.contains('fa-child')) {
       return AccountType.student;
     } else if (iconClassList.contains('fa-user-circle')) {
@@ -275,13 +288,15 @@ class SessionHandler {
     }
   }
 
-  bool doesSupportFeature(AppletDefinition applet, {AccountType? overrideAccountType}) {
+  bool doesSupportFeature(AppletDefinition applet,
+      {AccountType? overrideAccountType}) {
     var app = travelMenu
-      .where((element) => element["link"].toString() == applet.appletPhpUrl)
-      .singleOrNull;
+        .where((element) => element["link"].toString() == applet.appletPhpUrl)
+        .singleOrNull;
     if (app == null) {
       return false;
     }
-    return applet.supportedAccountTypes.contains(overrideAccountType ?? accountType);
+    return applet.supportedAccountTypes
+        .contains(overrideAccountType ?? accountType);
   }
 }

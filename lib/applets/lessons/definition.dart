@@ -13,14 +13,19 @@ final lessonsDefinition = AppletDefinition(
   icon: const Icon(Icons.school),
   selectedIcon: const Icon(Icons.school_outlined),
   label: (context) => AppLocalizations.of(context).lessons,
-  supportedAccountTypes: [AccountType.student, AccountType.parent, AccountType.teacher],
+  supportedAccountTypes: [
+    AccountType.student,
+    AccountType.parent,
+    AccountType.teacher
+  ],
   allowOffline: false,
   settingsDefaults: {
     'showHomework': false,
   },
   refreshInterval: const Duration(minutes: 15),
   bodyBuilder: (context, accountType, openDrawerCb) {
-    if (accountType == AccountType.student || accountType == AccountType.parent) {
+    if (accountType == AccountType.student ||
+        accountType == AccountType.parent) {
       return LessonsStudentView(openDrawerCb: openDrawerCb);
     } else if (accountType == AccountType.teacher) {
       return LessonsTeacherView(openDrawerCb: openDrawerCb);

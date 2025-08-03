@@ -64,8 +64,11 @@ Future<ReleaseNotesScreen?> showLocalUpdateInfo(BuildContext context,
 
 void showUpdateInfoIfRequired(BuildContext context) async {
   final PackageInfo packageInfo = await PackageInfo.fromPlatform();
-  if (packageInfo.installerStore != "com.google.vending" && packageInfo.installerStore != null && Platform.isAndroid) {
-    logger.i("App was installed by: \"${packageInfo.installerStore}\"! Skipping version check.");
+  if (packageInfo.installerStore != "com.google.vending" &&
+      packageInfo.installerStore != null &&
+      Platform.isAndroid) {
+    logger.i(
+        "App was installed by: \"${packageInfo.installerStore}\"! Skipping version check.");
     return;
   }
   final latestReleaseInfo = await getReleaseInfo(null);
@@ -92,7 +95,8 @@ void showUpdateInfoIfRequired(BuildContext context) async {
     }
   }
 
-  if (compareVersions(latestReleaseTag, deviceReleaseTag) > 0 && context.mounted) {
+  if (compareVersions(latestReleaseTag, deviceReleaseTag) > 0 &&
+      context.mounted) {
     await showDialog(
       context: context,
       builder: (context) => NewUpdateAvailableDialog(
@@ -178,7 +182,8 @@ class ReleaseNotesScreen extends StatelessWidget {
               children: [
                 Padding(
                   padding: const EdgeInsets.only(top: 4.0),
-                  child: Text(AppLocalizations.of(context).contributors, style: Theme.of(context).textTheme.labelLarge),
+                  child: Text(AppLocalizations.of(context).contributors,
+                      style: Theme.of(context).textTheme.labelLarge),
                 ),
                 Padding(
                   padding: const EdgeInsets.only(
@@ -210,7 +215,8 @@ class ReleaseNotesScreen extends StatelessWidget {
               ],
             ),
           ),
-          Text(AppLocalizations.of(context).becomeContributor, style: Theme.of(context).textTheme.labelMedium),
+          Text(AppLocalizations.of(context).becomeContributor,
+              style: Theme.of(context).textTheme.labelMedium),
           const SizedBox(height: 32),
         ],
       ),
@@ -238,7 +244,10 @@ class NewUpdateAvailableDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      icon: const Icon(Icons.update, size: 56,),
+      icon: const Icon(
+        Icons.update,
+        size: 56,
+      ),
       title: Text(AppLocalizations.of(context).updateAvailable),
       content: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,

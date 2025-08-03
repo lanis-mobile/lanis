@@ -1,8 +1,4 @@
-enum FileActions { 
-  download,
-  upload,
-  delete
-}
+enum FileActions { download, upload, delete }
 
 class FileNode {
   final String name;
@@ -16,12 +12,12 @@ class FileNode {
 
   FileNode(
       {required this.name,
-        required this.id,
-        required this.downloadUrl,
-        this.aenderung = "",
-        this.groesse = "",
-        this.hinweis,
-        this.folderID});
+      required this.id,
+      required this.downloadUrl,
+      this.aenderung = "",
+      this.groesse = "",
+      this.hinweis,
+      this.folderID});
 
   String get fileExtension => name.split('.').last;
 }

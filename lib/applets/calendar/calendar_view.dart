@@ -10,7 +10,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'package:lanis/generated/l10n.dart';
 
-
 import '../../core/sph/sph.dart';
 import '../../models/calendar_event.dart';
 import '../../models/client_status_exceptions.dart';
@@ -322,15 +321,15 @@ class _CalendarViewState extends State<CalendarView> {
     try {
       var singleEvent = await fetchEvent(calendarData.id);
       if (singleEvent == null) return;
-      if(mounted) {
+      if (mounted) {
         await showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          useSafeArea: true,
-          showDragHandle: true,
-          builder: (context) {
-            return eventBottomSheet(calendarData, singleEvent);
-          });
+            context: context,
+            isScrollControlled: true,
+            useSafeArea: true,
+            showDragHandle: true,
+            builder: (context) {
+              return eventBottomSheet(calendarData, singleEvent);
+            });
       }
     } on NoConnectionException {
       if (mounted) {
@@ -544,131 +543,132 @@ class _CalendarViewState extends State<CalendarView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: widget.openDrawerCb != null
-          ? AppBar(
-              title: Text(calendarDefinition.label(context)),
-              leading: IconButton(
-                icon: const Icon(Icons.menu),
-                onPressed: () => widget.openDrawerCb!(),
-              ),
-            )
-          : null,
-      body: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Padding(
-          padding: EdgeInsets.only(bottom: 8, left: 8, right: 8),
-          child: Focus(
-            onFocusChange: (hasFocus) {
-              if (hasFocus == true && noTrigger == false) {
-                FocusManager.instance.primaryFocus?.consumeKeyboardToken();
+        appBar: widget.openDrawerCb != null
+            ? AppBar(
+                title: Text(calendarDefinition.label(context)),
+                leading: IconButton(
+                  icon: const Icon(Icons.menu),
+                  onPressed: () => widget.openDrawerCb!(),
+                ),
+              )
+            : null,
+        body: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: EdgeInsets.only(bottom: 8, left: 8, right: 8),
+              child: Focus(
+                onFocusChange: (hasFocus) {
+                  if (hasFocus == true && noTrigger == false) {
+                    FocusManager.instance.primaryFocus?.consumeKeyboardToken();
 
-                if (keyboardObserver.value == KeyboardStatus.closed) {
-                  FocusManager.instance.primaryFocus?.unfocus();
-                }
-              }
-            },
-            child: SearchAnchor.bar(
-              searchController: searchController,
-              isFullScreen: false,
-              viewLeading: IconButton(
-                  onPressed: () {
-                    searchController.closeView(null);
-                  },
-                  icon: Icon(Icons.arrow_back)),
-              barTrailing: [
-                if (!_selectedDay!.isSameDay(DateTime.now()))
-                  IconButton(
-                    icon: const Icon(Icons.restore),
-                    onPressed: () {
-                      setState(() {
-                        searchController.text = "";
-                        _selectedDay = DateTime.now();
-                        _focusedDay = DateTime.now();
-                      });
-                    },
-                  ),
-              ],
-              onSubmitted: (_) {
-                FocusManager.instance.primaryFocus?.unfocus();
-              },
-              suggestionsBuilder: (context, searchController) {
-                final results = fuzzySearchEventList(searchController.text);
-
-                return results
-                    .map(
-                      (event) => ListTile(
-                        title: Text(event.title),
-                        iconColor: event.color,
-                        subtitle: Text(
-                            '${event.startTime.format("E d MMM y", "de_DE")} - ${event.endTime.format("E d MMM y", "de_DE")}'),
-                        leading: event.endTime.isBefore(DateTime.now())
-                            ? const Icon(Icons.done)
-                            : const Icon(Icons.event),
-                        onTap: () async {
+                    if (keyboardObserver.value == KeyboardStatus.closed) {
+                      FocusManager.instance.primaryFocus?.unfocus();
+                    }
+                  }
+                },
+                child: SearchAnchor.bar(
+                  searchController: searchController,
+                  isFullScreen: false,
+                  viewLeading: IconButton(
+                      onPressed: () {
+                        searchController.closeView(null);
+                      },
+                      icon: Icon(Icons.arrow_back)),
+                  barTrailing: [
+                    if (!_selectedDay!.isSameDay(DateTime.now()))
+                      IconButton(
+                        icon: const Icon(Icons.restore),
+                        onPressed: () {
                           setState(() {
-                            _selectedDay = event.startTime;
-                            _focusedDay = event.startTime;
-                          });
-                          searchController.closeView(null);
-
-                          noTrigger = true;
-                          if (keyboardObserver.value == KeyboardStatus.closed) {
-                            FocusManager.instance.primaryFocus?.unfocus();
-                          }
-
-                          await openEventBottomSheet(event).whenComplete(() {
-                            FocusManager.instance.primaryFocus?.unfocus();
-                            noTrigger = false;
+                            searchController.text = "";
+                            _selectedDay = DateTime.now();
+                            _focusedDay = DateTime.now();
                           });
                         },
                       ),
-                    )
-                    .toList();
-              },
-            ),
-          ),
-        ),
-        Expanded(
-          child: CombinedAppletBuilder<List<CalendarEvent>>(
-            parser: sph!.parser.calendarParser,
-            phpUrl: calendarDefinition.appletPhpUrl,
-            settingsDefaults: calendarDefinition.settingsDefaults,
-            accountType: sph!.session.accountType,
-            builder:
-                (context, data, accountType, settings, updateSetting, refresh) {
-              eventList = data;
-              _selectedEvents.value = _getEventsForDay(_selectedDay!);
-
-              return LayoutBuilder(builder: (context, constrains) {
-                if (constrains.maxWidth > 550) {
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: _tableCalendar(context),
-                      ),
-                      const VerticalDivider(),
-                      Expanded(
-                        child: _itemsListView(context),
-                      ),
-                    ],
-                  );
-                }
-                return Column(
-                  children: [
-                    _tableCalendar(context),
-                    Expanded(
-                      child: _itemsListView(context),
-                    ),
                   ],
-                );
-              });
-            },
-          ),
-        ),
-      ],
-    )
-    );
+                  onSubmitted: (_) {
+                    FocusManager.instance.primaryFocus?.unfocus();
+                  },
+                  suggestionsBuilder: (context, searchController) {
+                    final results = fuzzySearchEventList(searchController.text);
+
+                    return results
+                        .map(
+                          (event) => ListTile(
+                            title: Text(event.title),
+                            iconColor: event.color,
+                            subtitle: Text(
+                                '${event.startTime.format("E d MMM y", "de_DE")} - ${event.endTime.format("E d MMM y", "de_DE")}'),
+                            leading: event.endTime.isBefore(DateTime.now())
+                                ? const Icon(Icons.done)
+                                : const Icon(Icons.event),
+                            onTap: () async {
+                              setState(() {
+                                _selectedDay = event.startTime;
+                                _focusedDay = event.startTime;
+                              });
+                              searchController.closeView(null);
+
+                              noTrigger = true;
+                              if (keyboardObserver.value ==
+                                  KeyboardStatus.closed) {
+                                FocusManager.instance.primaryFocus?.unfocus();
+                              }
+
+                              await openEventBottomSheet(event)
+                                  .whenComplete(() {
+                                FocusManager.instance.primaryFocus?.unfocus();
+                                noTrigger = false;
+                              });
+                            },
+                          ),
+                        )
+                        .toList();
+                  },
+                ),
+              ),
+            ),
+            Expanded(
+              child: CombinedAppletBuilder<List<CalendarEvent>>(
+                parser: sph!.parser.calendarParser,
+                phpUrl: calendarDefinition.appletPhpUrl,
+                settingsDefaults: calendarDefinition.settingsDefaults,
+                accountType: sph!.session.accountType,
+                builder: (context, data, accountType, settings, updateSetting,
+                    refresh) {
+                  eventList = data;
+                  _selectedEvents.value = _getEventsForDay(_selectedDay!);
+
+                  return LayoutBuilder(builder: (context, constrains) {
+                    if (constrains.maxWidth > 550) {
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: _tableCalendar(context),
+                          ),
+                          const VerticalDivider(),
+                          Expanded(
+                            child: _itemsListView(context),
+                          ),
+                        ],
+                      );
+                    }
+                    return Column(
+                      children: [
+                        _tableCalendar(context),
+                        Expanded(
+                          child: _itemsListView(context),
+                        ),
+                      ],
+                    );
+                  });
+                },
+              ),
+            ),
+          ],
+        ));
   }
 }

@@ -103,8 +103,7 @@ class _LessonsStudentViewState extends State<LessonsStudentView>
           if (globalUpdateSetting == null || globalSettings == null) {
             globalUpdateSetting = updateSetting;
             globalSettings = settings;
-            if (settings['showHomework'] == true &&
-                homeworkLessons!.isEmpty) {
+            if (settings['showHomework'] == true && homeworkLessons!.isEmpty) {
               updateSetting('showHomework', false);
             }
             WidgetsBinding.instance.addPostFrameCallback((_) {

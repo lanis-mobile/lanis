@@ -14,9 +14,10 @@ class ReceiverEntry extends Taggable {
   List<Object> get props => [name];
 
   ReceiverEntry.fromJson(Map<String, dynamic> json)
-    : id = json["id"] as String
-    , name = json["text"] as String
-    ,  isTeacher = json["type"] == "lul"; // TODO: Use PersonType in future when I have more info
+      : id = json["id"] as String,
+        name = json["text"] as String,
+        isTeacher = json["type"] ==
+            "lul"; // TODO: Use PersonType in future when I have more info
 }
 
 class ChatCreationData {
@@ -100,14 +101,16 @@ class ReplyToConversationResult {
   final bool success;
   final String messageId;
 
-  const ReplyToConversationResult({required this.success, required this.messageId});
+  const ReplyToConversationResult(
+      {required this.success, required this.messageId});
 }
 
 class ConversationsRefreshResult {
   final List<UnparsedMessage> messages;
   final int lastRefresh;
-  
-  const ConversationsRefreshResult({required this.messages, required this.lastRefresh});
+
+  const ConversationsRefreshResult(
+      {required this.messages, required this.lastRefresh});
 }
 
 class UnparsedMessage {
@@ -129,10 +132,7 @@ class KnownParticipant {
   final String name;
   final PersonType type;
 
-  const KnownParticipant({
-    required this.name,
-    required this.type
-  });
+  const KnownParticipant({required this.name, required this.type});
 
   // lazy way to make Set<> work.
   @override
@@ -166,13 +166,16 @@ class OverviewEntry {
   });
 
   OverviewEntry.fromJson(Map<String, dynamic> json)
-      : id = json["Uniquid"] as String
-      , title = unescape.convert(json["Betreff"] as String)
-      , shortName = unescape.convert(json["kuerzel"]) as String?
-      , fullName = unescape.convert(getUsernameInsideHTML.firstMatch((json["SenderName"] as String))?.group(1) as String)
-      , date = json["Datum"] as String
-      , unread = (json["unread"] as int?) != null && (json["unread"] as int?) == 1
-      , hidden = json["Papierkorb"] as String == "ja";
+      : id = json["Uniquid"] as String,
+        title = unescape.convert(json["Betreff"] as String),
+        shortName = unescape.convert(json["kuerzel"]) as String?,
+        fullName = unescape.convert(getUsernameInsideHTML
+            .firstMatch((json["SenderName"] as String))
+            ?.group(1) as String),
+        date = json["Datum"] as String,
+        unread =
+            (json["unread"] as int?) != null && (json["unread"] as int?) == 1,
+        hidden = json["Papierkorb"] as String == "ja";
 
   OverviewEntry copyWith({
     String? id,
@@ -182,15 +185,16 @@ class OverviewEntry {
     String? date,
     bool? unread,
     bool? hidden,
-  }) => OverviewEntry(
-      id: id ?? this.id,
-      title: title ?? this.title,
-      shortName: shortName ?? this.shortName,
-      fullName: fullName ?? this.fullName,
-      date: date ?? this.date,
-      unread: unread ?? this.unread,
-      hidden: hidden ?? this.hidden,
-  );
+  }) =>
+      OverviewEntry(
+        id: id ?? this.id,
+        title: title ?? this.title,
+        shortName: shortName ?? this.shortName,
+        fullName: fullName ?? this.fullName,
+        date: date ?? this.date,
+        unread: unread ?? this.unread,
+        hidden: hidden ?? this.hidden,
+      );
 
   @override
   bool operator ==(Object other) {
@@ -205,5 +209,4 @@ class OverviewEntry {
   int get hashCode {
     return id.hashCode;
   }
-
 }

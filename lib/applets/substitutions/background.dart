@@ -6,7 +6,8 @@ import '../../core/sph/sph.dart';
 import '../../models/account_types.dart';
 import '../../models/substitution.dart';
 
-Future<void> substitutionsBackgroundTask(SPH sph, AccountType accountType, BackgroundTaskToolkit tools) async {
+Future<void> substitutionsBackgroundTask(
+    SPH sph, AccountType accountType, BackgroundTaskToolkit tools) async {
   final vPlan = await sph.parser.substitutionsParser.getHome();
   List<Substitution> allSubstitutions = vPlan.allSubstitutions;
   String messageBody = "";
@@ -35,8 +36,7 @@ Future<void> substitutionsBackgroundTask(SPH sph, AccountType accountType, Backg
       message: messageBody,
       id: 0,
       importance: Importance.defaultImportance,
-      avoidDuplicateSending: true
-  );
+      avoidDuplicateSending: true);
 }
 
 String weekDayGer(String dateString) {

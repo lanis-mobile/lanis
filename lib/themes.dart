@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 enum AmoledColor {
   background,
   secondary,
@@ -20,9 +19,9 @@ class Themes {
     ThemeData basicTheme(Brightness brightness) {
       return ThemeData(
         colorScheme:
-          ColorScheme.fromSeed(seedColor: seedColor, brightness: brightness),
+            ColorScheme.fromSeed(seedColor: seedColor, brightness: brightness),
         inputDecorationTheme:
-          const InputDecorationTheme(border: OutlineInputBorder()),
+            const InputDecorationTheme(border: OutlineInputBorder()),
       );
     }
 
@@ -66,34 +65,33 @@ class Themes {
     return Themes(
       themes.lightTheme,
       themes.darkTheme?.copyWith(
-        // Amoled Background & Themes for required Components
-        scaffoldBackgroundColor: amoledColors[AmoledColor.background],
-        navigationBarTheme: NavigationBarThemeData(
-          backgroundColor: amoledColors[AmoledColor.background],
-        ),
-        navigationDrawerTheme: NavigationDrawerThemeData(
-          backgroundColor: amoledColors[AmoledColor.background],
-        ),
-        appBarTheme: AppBarTheme(
-          backgroundColor: amoledColors[AmoledColor.background],
-          surfaceTintColor: amoledColors[AmoledColor.background],
-        ),
-        dialogTheme: DialogThemeData(
-          backgroundColor: amoledColors[AmoledColor.secondary],
-          surfaceTintColor: amoledColors[AmoledColor.secondary],
-        ),
-        bottomSheetTheme: BottomSheetThemeData(
-          backgroundColor: amoledColors[AmoledColor.third],
-          surfaceTintColor: amoledColors[AmoledColor.third],
-        ),
-        colorScheme: themes.darkTheme?.colorScheme.copyWith(
-          surfaceContainer: amoledColors[AmoledColor.background],
-          surfaceContainerHighest: themes.darkTheme?.cardColor,
-          surfaceContainerHigh: amoledColors[AmoledColor.third],
-          surfaceContainerLow: amoledColors[AmoledColor.secondary],
-          surfaceContainerLowest: amoledColors[AmoledColor.third],
-        )
-      ),
+          // Amoled Background & Themes for required Components
+          scaffoldBackgroundColor: amoledColors[AmoledColor.background],
+          navigationBarTheme: NavigationBarThemeData(
+            backgroundColor: amoledColors[AmoledColor.background],
+          ),
+          navigationDrawerTheme: NavigationDrawerThemeData(
+            backgroundColor: amoledColors[AmoledColor.background],
+          ),
+          appBarTheme: AppBarTheme(
+            backgroundColor: amoledColors[AmoledColor.background],
+            surfaceTintColor: amoledColors[AmoledColor.background],
+          ),
+          dialogTheme: DialogThemeData(
+            backgroundColor: amoledColors[AmoledColor.secondary],
+            surfaceTintColor: amoledColors[AmoledColor.secondary],
+          ),
+          bottomSheetTheme: BottomSheetThemeData(
+            backgroundColor: amoledColors[AmoledColor.third],
+            surfaceTintColor: amoledColors[AmoledColor.third],
+          ),
+          colorScheme: themes.darkTheme?.colorScheme.copyWith(
+            surfaceContainer: amoledColors[AmoledColor.background],
+            surfaceContainerHighest: themes.darkTheme?.cardColor,
+            surfaceContainerHigh: amoledColors[AmoledColor.third],
+            surfaceContainerLow: amoledColors[AmoledColor.secondary],
+            surfaceContainerLowest: amoledColors[AmoledColor.third],
+          )),
     );
   }
 }

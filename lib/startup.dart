@@ -24,7 +24,8 @@ class StartupScreen extends StatefulWidget {
   State<StartupScreen> createState() => _StartupScreenState();
 }
 
-class _StartupScreenState extends State<StartupScreen> with TickerProviderStateMixin{
+class _StartupScreenState extends State<StartupScreen>
+    with TickerProviderStateMixin {
   void openWelcomeScreen() {
     Navigator.push(
       context,
@@ -37,7 +38,9 @@ class _StartupScreenState extends State<StartupScreen> with TickerProviderStateM
       context,
       MaterialPageRoute(
         builder: (context) => Scaffold(
-          body: LoginForm(showBackButton: false,),
+          body: LoginForm(
+            showBackButton: false,
+          ),
         ),
       ),
     );
@@ -60,8 +63,8 @@ class _StartupScreenState extends State<StartupScreen> with TickerProviderStateM
           context,
           MaterialPageRoute(
               builder: (context) => HomePage(
-                key: homeKey,
-              )),
+                    key: homeKey,
+                  )),
         );
         break;
 
@@ -102,25 +105,30 @@ class _StartupScreenState extends State<StartupScreen> with TickerProviderStateM
     if (status == PermissionStatus.granted) return;
     if (status.isDenied && !status.isPermanentlyDenied) {
       if (mounted) {
-        await showDialog(context: context, builder: (context) => AlertDialog(
-          icon: Icon(Icons.notifications_off),
-          title: Text(AppLocalizations.of(context).notifications),
-          content: Text(AppLocalizations.of(context).notificationPermanentlyDenied),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text(AppLocalizations.of(context).close),
-            ),
-            TextButton(
-              onPressed: () {
-                AppSettings.openAppSettings(asAnotherTask: false, type: AppSettingsType.notification);
-              },
-              child: Text(AppLocalizations.of(context).open),
-            ),
-          ],
-        ));
+        await showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+                  icon: Icon(Icons.notifications_off),
+                  title: Text(AppLocalizations.of(context).notifications),
+                  content: Text(AppLocalizations.of(context)
+                      .notificationPermanentlyDenied),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: Text(AppLocalizations.of(context).close),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        AppSettings.openAppSettings(
+                            asAnotherTask: false,
+                            type: AppSettingsType.notification);
+                      },
+                      child: Text(AppLocalizations.of(context).open),
+                    ),
+                  ],
+                ));
       }
     }
   }
@@ -132,7 +140,10 @@ class _StartupScreenState extends State<StartupScreen> with TickerProviderStateM
         return Text(
           "lanis-mobile ${packageInfo.data?.version}",
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4)),
+              color: Theme.of(context)
+                  .colorScheme
+                  .onSurface
+                  .withValues(alpha: 0.4)),
         );
       },
     );
@@ -243,14 +254,16 @@ class _StartupScreenState extends State<StartupScreen> with TickerProviderStateM
             children: [
               IconButton(
                 icon: const Icon(Icons.wifi_find_outlined),
-                onPressed: (){
+                onPressed: () {
                   launchUrl(Uri.parse(
                       "https://info.schulportal.hessen.de/status-des-schulportal-hessen/"));
                 },
                 tooltip: AppLocalizations.of(context).checkStatus,
               ),
               Icon(
-                authenticationState.exception.value is NoConnectionException ? Icons.wifi_off : Icons.error,
+                authenticationState.exception.value is NoConnectionException
+                    ? Icons.wifi_off
+                    : Icons.error,
                 size: 48,
               ),
               IconButton(
@@ -266,7 +279,8 @@ class _StartupScreenState extends State<StartupScreen> with TickerProviderStateM
           Center(
             child: Text(text),
           ),
-          if (authenticationState.exception.value is! NoConnectionException && authenticationState.exception.value is! LanisDownException)
+          if (authenticationState.exception.value is! NoConnectionException &&
+              authenticationState.exception.value is! LanisDownException)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12.0),
               child: Text.rich(
@@ -274,33 +288,38 @@ class _StartupScreenState extends State<StartupScreen> with TickerProviderStateM
                   text: AppLocalizations.of(context).startupErrorMessage,
                   children: [
                     TextSpan(
-                        text: "\n\n${authenticationState.exception.value.runtimeType}: ${authenticationState.exception.value?.cause}",
+                        text:
+                            "\n\n${authenticationState.exception.value.runtimeType}: ${authenticationState.exception.value?.cause}",
                         style: Theme.of(context).textTheme.labelLarge)
                   ],
                 ),
               ),
             ),
-          if (authenticationState.exception.value is WrongCredentialsException) Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: ElevatedButton.icon(
-              icon: Icon(Icons.lock_reset),
-              label: Text(AppLocalizations.of(context).resetAccount),
-              onPressed: () async {
-                await Navigator.of(context).push(
-                  MaterialPageRoute(
-                      builder: (context) => ResetAccountPage()
-                  ),
-                );
-              },
+          if (authenticationState.exception.value is WrongCredentialsException)
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: ElevatedButton.icon(
+                icon: Icon(Icons.lock_reset),
+                label: Text(AppLocalizations.of(context).resetAccount),
+                onPressed: () async {
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => ResetAccountPage()),
+                  );
+                },
+              ),
             ),
-          ),
           if (authenticationState.exception.value is LanisDownException)
-            Text.rich(TextSpan(children: [
+            Text.rich(
               TextSpan(
-                  text: AppLocalizations.of(context).lanisDownErrorMessage,
-                  style: Theme.of(context).textTheme.labelLarge)
-            ], ), ),
-            Flexible(child: SingleChildScrollView(
+                children: [
+                  TextSpan(
+                      text: AppLocalizations.of(context).lanisDownErrorMessage,
+                      style: Theme.of(context).textTheme.labelLarge)
+                ],
+              ),
+            ),
+          Flexible(
+            child: SingleChildScrollView(
               child: OfflineAvailableAppletsSection(),
             ),
           ),
@@ -316,50 +335,50 @@ class _StartupScreenState extends State<StartupScreen> with TickerProviderStateM
     QuickActionsStartUp.setNames(context);
     return MediaQuery.of(context).orientation == Orientation.portrait
         ? Column(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        appVersion(),
-        Column(
-          children: [
-            appLogo(80.0, 20.0),
-            tipText(
-                const EdgeInsets.symmetric(
-                    vertical: 10.0, horizontal: 12.0),
-                const EdgeInsets.symmetric(horizontal: 36.0),
-                null)
-          ],
-        ),
-        const LinearProgressIndicator()
-      ],
-    )
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              appVersion(),
+              Column(
+                children: [
+                  appLogo(80.0, 20.0),
+                  tipText(
+                      const EdgeInsets.symmetric(
+                          vertical: 10.0, horizontal: 12.0),
+                      const EdgeInsets.symmetric(horizontal: 36.0),
+                      null)
+                ],
+              ),
+              const LinearProgressIndicator()
+            ],
+          )
         : Stack(
-      alignment: Alignment.topCenter,
-      children: [
-        appVersion(),
-        Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                appLogo(0.0, 0.0),
-                SizedBox.fromSize(
-                  size: const Size(48.0, 0.0),
-                ),
-                tipText(
-                    const EdgeInsets.symmetric(
-                        vertical: 16.0, horizontal: 12.0),
-                    const EdgeInsets.only(),
-                    250)
-              ],
-            ),
-          ],
-        ),
-        const Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [LinearProgressIndicator()],
-        )
-      ],
-    );
+            alignment: Alignment.topCenter,
+            children: [
+              appVersion(),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      appLogo(0.0, 0.0),
+                      SizedBox.fromSize(
+                        size: const Size(48.0, 0.0),
+                      ),
+                      tipText(
+                          const EdgeInsets.symmetric(
+                              vertical: 16.0, horizontal: 12.0),
+                          const EdgeInsets.only(),
+                          250)
+                    ],
+                  ),
+                ],
+              ),
+              const Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [LinearProgressIndicator()],
+              )
+            ],
+          );
   }
 }

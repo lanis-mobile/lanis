@@ -206,7 +206,7 @@ class TimeTableView extends StatelessWidget {
   int getCurrentWeekNumber() {
     DateTime date = DateTime.now();
     int dayOfYear = int.parse(DateFormat("D").format(date));
-    int woy =  ((dayOfYear - date.weekday + 10) / 7).floor();
+    int woy = ((dayOfYear - date.weekday + 10) / 7).floor();
     if (woy < 1) {
       woy = numOfWeeks(date.year - 1);
     } else if (woy > numOfWeeks(date.year)) {

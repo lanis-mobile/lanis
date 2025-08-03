@@ -41,23 +41,23 @@ class SubstitutionsParser extends AppletParser<SubstitutionPlan> {
     await loadFilterFromStorage();
     String document = await getSubstitutionPlanDocument();
     Document parsedDocument = parse(document);
-    
+
     // Parse the last edit date from the HTML
     DateTime? lastEdit = parseLastEditDate(document);
-    
+
     var dates = getSubstitutionDates(document);
 
     // Create the plan with the extracted timestamp
     var fullPlan = SubstitutionPlan(lastUpdated: lastEdit);
-    
+
     if (dates.isEmpty) {
       fullPlan = parseSubstitutionsNonAJAX(parsedDocument);
-      
+
       // Make sure to preserve the timestamp even when using the non-AJAX format
       fullPlan.lastUpdated = lastEdit ?? DateTime.now();
     } else {
       List<Future<SubstitutionDay>> futures =
-      dates.map((date) => getSubstitutionsAJAX(date)).toList();
+          dates.map((date) => getSubstitutionsAJAX(date)).toList();
       List<SubstitutionDay> plans = await Future.wait(futures);
       for (SubstitutionDay day in plans) {
         fullPlan.add(day.withDayInfo(parseInformationTables(parsedDocument
@@ -91,8 +91,9 @@ class SubstitutionsParser extends AppletParser<SubstitutionPlan> {
     for (var date in dates) {
       DateTime parsedDate = entryFormat.parse(date);
       String parsedDateStr = parsedDate.format('dd.MM.yyyy');
-      SubstitutionDay substitutionDay =
-          SubstitutionDay(parsedDate: parsedDateStr, infos: parseInformationTables(document.getElementById('tag$date')!));
+      SubstitutionDay substitutionDay = SubstitutionDay(
+          parsedDate: parsedDateStr,
+          infos: parseInformationTables(document.getElementById('tag$date')!));
       final vtable = document.querySelector("#vtable$date");
       if (vtable == null) {
         return fullPlan;
@@ -107,7 +108,8 @@ class SubstitutionsParser extends AppletParser<SubstitutionPlan> {
         substitutionDay.add(Substitution(
             tag: parsedDate.format('dd.MM.yyyy'),
             tag_en: date,
-            stunde: SubstitutionsParser.parseHours(fields[headers.indexOf("Stunde")].text.trim()),
+            stunde: SubstitutionsParser.parseHours(
+                fields[headers.indexOf("Stunde")].text.trim()),
             fach: headers.contains("Fach")
                 ? fields[headers.indexOf("Fach")].text.trim()
                 : null,
@@ -219,7 +221,7 @@ class SubstitutionsParser extends AppletParser<SubstitutionPlan> {
     if (match == null) {
       return null;
     }
-    
+
     try {
       int day = int.parse(match.group(1) ?? "00");
       int month = int.parse(match.group(2) ?? "00");
@@ -227,7 +229,7 @@ class SubstitutionsParser extends AppletParser<SubstitutionPlan> {
       int hour = int.parse(match.group(4) ?? "00");
       int minute = int.parse(match.group(5) ?? "00");
       int second = int.parse(match.group(6) ?? "00");
-      
+
       final timestamp = DateTime(year, month, day, hour, minute, second);
       return timestamp;
     } catch (e) {

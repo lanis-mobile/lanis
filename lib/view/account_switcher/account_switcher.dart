@@ -41,21 +41,22 @@ class _AccountSwitcherState extends State<AccountSwitcher> {
                   }
                   await sph!.session.deAuthenticate();
                   await accountDatabase.setNextLogin(account.id);
-                  if(context.mounted) authenticationState.reset(context);
-                }, dbID: account.id,
+                  if (context.mounted) authenticationState.reset(context);
+                },
+                dbID: account.id,
               );
             },
           );
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => Scaffold(
-              body: LoginForm(showBackButton: true,),
+        onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+          builder: (context) => Scaffold(
+            body: LoginForm(
+              showBackButton: true,
             ),
-          )
-        ),
+          ),
+        )),
         label: Text('Add Account'),
         icon: Icon(Icons.person_add),
       ),

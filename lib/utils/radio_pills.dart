@@ -40,7 +40,8 @@ class RadioPill<T> extends StatelessWidget {
     this.groupValue,
     this.onChanged,
     this.leading,
-    this.border = RadioBorder.both, this.color,
+    this.border = RadioBorder.both,
+    this.color,
   })  : _variant = _RadioPillVariant.vertical,
         _trailing = null;
 
@@ -53,7 +54,8 @@ class RadioPill<T> extends StatelessWidget {
     this.onChanged,
     this.leading,
     Widget? trailing,
-    this.border = RadioBorder.both, this.color,
+    this.border = RadioBorder.both,
+    this.color,
   })  : _variant = _RadioPillVariant.horizontal,
         _trailing = trailing;
 
@@ -252,7 +254,11 @@ class RadioPillGroup<T> extends StatelessWidget {
   final ValueChanged<T>? onChanged;
 
   const RadioPillGroup(
-      {super.key, required this.pills, this.groupValue, this.onChanged, this.color})
+      {super.key,
+      required this.pills,
+      this.groupValue,
+      this.onChanged,
+      this.color})
       : _customPillBuilder = null,
         _variant = _RadioPillGroupVariant.row;
 
@@ -262,7 +268,8 @@ class RadioPillGroup<T> extends StatelessWidget {
       this.groupValue,
       this.onChanged,
       required Widget Function(T? groupValue, ValueChanged<T>? onChanged)
-          customPillBuilder, this.color})
+          customPillBuilder,
+      this.color})
       : _customPillBuilder = customPillBuilder,
         _variant = _RadioPillGroupVariant.large;
 
@@ -431,7 +438,8 @@ class RadioTrailingCircleGroup<T> extends StatelessWidget {
       this.groupValue,
       this.onChanged,
       required this.colors,
-      this.border = RadioBorder.all, this.color});
+      this.border = RadioBorder.all,
+      this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -440,7 +448,8 @@ class RadioTrailingCircleGroup<T> extends StatelessWidget {
         Expanded(
           child: DecoratedBox(
               decoration: BoxDecoration(
-                color: color ?? Theme.of(context).colorScheme.surfaceContainerLow,
+                color:
+                    color ?? Theme.of(context).colorScheme.surfaceContainerLow,
                 borderRadius: border.borderRadius,
               ),
               child: Padding(

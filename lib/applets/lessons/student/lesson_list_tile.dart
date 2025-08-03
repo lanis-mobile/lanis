@@ -80,15 +80,22 @@ class _LessonListTileState extends State<LessonListTile> {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  Icon(widget.lesson.teachers.length > 1 ? Icons.people : Icons.person, size: 16),
+                  Icon(
+                      widget.lesson.teachers.length > 1
+                          ? Icons.people
+                          : Icons.person,
+                      size: 16),
                   if (widget.lesson.teachers.length == 1)
-                  Text(
-                    " ${widget.lesson.teachers[0].teacher} (${widget.lesson.teachers[0].teacherKuerzel})",
-                  ) else Text(
-                    " ${widget.lesson.teachers.map((e) => e.teacherKuerzel).join(', ')}",
-                  ),
+                    Text(
+                      " ${widget.lesson.teachers[0].teacher} (${widget.lesson.teachers[0].teacherKuerzel})",
+                    )
+                  else
+                    Text(
+                      " ${widget.lesson.teachers.map((e) => e.teacherKuerzel).join(', ')}",
+                    ),
                   const Spacer(),
-                  Text('${dateFormat.format(widget.lesson.currentEntry?.topicDate ?? DateTime(0))} '),
+                  Text(
+                      '${dateFormat.format(widget.lesson.currentEntry?.topicDate ?? DateTime(0))} '),
                   const Icon(Icons.calendar_today, size: 16)
                 ],
               ),

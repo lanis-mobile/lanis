@@ -27,7 +27,9 @@ class FetcherResponse<T> {
   FetcherResponse(
       {required this.status,
       this.contentStatus = ContentStatus.online,
-      this.content, DateTime? fetchedAt }) : fetchedAt = fetchedAt ?? DateTime.now();
+      this.content,
+      DateTime? fetchedAt})
+      : fetchedAt = fetchedAt ?? DateTime.now();
 }
 
 class AppletParser<T> {
@@ -48,8 +50,7 @@ class AppletParser<T> {
     }
   }
 
-  void addResponse(final FetcherResponse<T> data) =>
-      _controller.sink.add(data);
+  void addResponse(final FetcherResponse<T> data) => _controller.sink.add(data);
 
   Future<void> fetchData(
       {bool forceRefresh = false, bool secondTry = false}) async {
@@ -101,12 +102,12 @@ class AppletParser<T> {
   }
 
   Future<T> _getHome() async {
-      final T value = await getHome();
-      if (appletDefinition.allowOffline) {
-        await sph.prefs
-            .setAppletData(appletDefinition.appletPhpUrl, jsonEncode(value));
-      }
-      return value;
+    final T value = await getHome();
+    if (appletDefinition.allowOffline) {
+      await sph.prefs
+          .setAppletData(appletDefinition.appletPhpUrl, jsonEncode(value));
+    }
+    return value;
   }
 
   T typeFromJson(String json) {

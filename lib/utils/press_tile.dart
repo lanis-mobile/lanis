@@ -23,14 +23,16 @@ class PressTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected ? Theme.of(context).colorScheme.primaryContainer : foregroundColor ?? Theme.of(context).colorScheme.surfaceContainerLow,
+      color: selected
+          ? Theme.of(context).colorScheme.primaryContainer
+          : foregroundColor ??
+              Theme.of(context).colorScheme.surfaceContainerLow,
       borderRadius: borderRadius ?? BorderRadius.circular(12.0),
       child: InkWell(
         onTap: onPressed,
         borderRadius: borderRadius ?? BorderRadius.circular(12.0),
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-              horizontal: 20.0, vertical: 12.0),
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
           child: Row(
             children: [
               Icon(

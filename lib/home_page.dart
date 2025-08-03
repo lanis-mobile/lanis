@@ -17,7 +17,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'applets/definitions.dart';
 import 'core/sph/sph.dart';
 
-const String surveyUrl = 'https://ruggmtk.edudocs.de/apps/forms/s/ScZp5xZMKYTksEcQMwgPHfFz';
+const String surveyUrl =
+    'https://ruggmtk.edudocs.de/apps/forms/s/ScZp5xZMKYTksEcQMwgPHfFz';
 
 typedef ActionFunction = void Function(BuildContext);
 
@@ -60,8 +61,7 @@ class Destination {
           : null,
       addDivider: appletDefinition.addDivider,
       isSupported: sph!.session.doesSupportFeature(appletDefinition),
-      enableBottomNavigation:
-          appletDefinition.appletType == AppletType.nested,
+      enableBottomNavigation: appletDefinition.appletType == AppletType.nested,
       enableDrawer: true,
       icon: appletDefinition.icon,
       selectedIcon: appletDefinition.selectedIcon,
@@ -155,18 +155,17 @@ class HomePageState extends State<HomePage> {
       ),
     ),
     Destination(
-      isSupported: true,
-      enableBottomNavigation: false,
-      enableDrawer: true,
-      icon: Icon(Icons.logout),
-      selectedIcon: Icon(Icons.logout_outlined),
-      label: (context) => AppLocalizations.of(context).logout,
-      action: (context) async {
-        await sph!.session.deAuthenticate();
-        await accountDatabase.deleteAccount(sph!.account.localId);
-        if(context.mounted) authenticationState.reset(context);
-      }
-    ),
+        isSupported: true,
+        enableBottomNavigation: false,
+        enableDrawer: true,
+        icon: Icon(Icons.logout),
+        selectedIcon: Icon(Icons.logout_outlined),
+        label: (context) => AppLocalizations.of(context).logout,
+        action: (context) async {
+          await sph!.session.deAuthenticate();
+          await accountDatabase.deleteAccount(sph!.account.localId);
+          if (context.mounted) authenticationState.reset(context);
+        }),
   ];
 
   void setDefaultDestination() {
@@ -300,28 +299,28 @@ class HomePageState extends State<HomePage> {
                       ),
                     ),
                     Padding(
-                        padding: const EdgeInsets.only(left: 24.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "${sph?.session.userData["nachname"]}, ${sph?.session.userData["vorname"]}",
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .headlineSmall
-                                  ?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: textColor),
-                            ),
-                            Text(
-                              sph!.account.schoolName,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleMedium
-                                  ?.copyWith(color: textColor),
-                            ),
-                          ],
-                        ),
+                      padding: const EdgeInsets.only(left: 24.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "${sph?.session.userData["nachname"]}, ${sph?.session.userData["vorname"]}",
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineSmall
+                                ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: textColor),
+                          ),
+                          Text(
+                            sph!.account.schoolName,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(color: textColor),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),

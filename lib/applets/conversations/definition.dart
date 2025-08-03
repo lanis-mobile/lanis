@@ -13,7 +13,11 @@ final conversationsDefinition = AppletDefinition(
   icon: const Icon(Icons.forum),
   selectedIcon: const Icon(Icons.forum_outlined),
   label: (context) => AppLocalizations.of(context).messages,
-  supportedAccountTypes: [AccountType.student, AccountType.teacher, AccountType.parent],
+  supportedAccountTypes: [
+    AccountType.student,
+    AccountType.teacher,
+    AccountType.parent
+  ],
   allowOffline: false,
   settingsDefaults: {},
   notificationTask: conversationsBackgroundTask,
@@ -21,5 +25,4 @@ final conversationsDefinition = AppletDefinition(
   bodyBuilder: (context, accountType, openDrawerCb) {
     return ConversationsView(openDrawerCb: openDrawerCb);
   },
-
 );

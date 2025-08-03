@@ -32,7 +32,8 @@ class _DataStorageNodeViewState extends State<DataStorageNodeView> {
 
   void loadItems() async {
     try {
-      final (fileList, folderList) = await sph!.parser.dataStorageParser.getNode(widget.nodeID);
+      final (fileList, folderList) =
+          await sph!.parser.dataStorageParser.getNode(widget.nodeID);
       files = fileList;
       folders = folderList;
 

@@ -237,7 +237,8 @@ class ItemBlock extends StatelessWidget {
                                 Wrap(
                                   runAlignment: WrapAlignment.spaceBetween,
                                   alignment: WrapAlignment.spaceBetween,
-                                  spacing: height % itemHeight >= 1.99 ? 99999 : 8.0,
+                                  spacing:
+                                      height % itemHeight >= 1.99 ? 99999 : 8.0,
                                   children: [
                                     Text(
                                       subject!.name ?? '',

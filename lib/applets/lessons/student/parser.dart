@@ -12,15 +12,14 @@ import '../../../utils/file_operations.dart';
 class LessonsStudentParser extends AppletParser<Lessons> {
   LessonsStudentParser(super.sph, super.appletDefinition);
 
-
   @override
   Future<Lessons> getHome() async {
     var lessons = <Lesson>[];
 
     int unixTime = DateTime.now().millisecondsSinceEpoch;
 
-    final response =
-    await sph.session.dio.get("https://start.schulportal.hessen.de/meinunterricht.php?cacheBreaker=$unixTime");
+    final response = await sph.session.dio.get(
+        "https://start.schulportal.hessen.de/meinunterricht.php?cacheBreaker=$unixTime");
     var document = parse(response.data);
 
     var kursmappenDOM = document.getElementById("mappen");
@@ -28,15 +27,19 @@ class LessonsStudentParser extends AppletParser<Lessons> {
     var mappen = row!.isEmpty ? null : row[0].children;
     if (mappen != null) {
       for (var mappe in mappen) {
-        String url = mappe.querySelector("a.btn.btn-primary")!.attributes["href"]!;
+        String url =
+            mappe.querySelector("a.btn.btn-primary")!.attributes["href"]!;
         lessons.add(Lesson(
           name: mappe.getElementsByTagName("h2")[0].text.trim(),
-          teachers: mappe.querySelectorAll("div.btn-group>button").map<LessonTeacher>(
-            (e) => LessonTeacher(
-              teacher: e.attributes["title"]?.split(" (")[0].trim(),
-              teacherKuerzel: e.text.trim(),
-            ),
-          ).toList(),
+          teachers: mappe
+              .querySelectorAll("div.btn-group>button")
+              .map<LessonTeacher>(
+                (e) => LessonTeacher(
+                  teacher: e.attributes["title"]?.split(" (")[0].trim(),
+                  teacherKuerzel: e.text.trim(),
+                ),
+              )
+              .toList(),
           courseURL: Uri.parse(url),
           courseID: url.split("id=")[1],
         ));
@@ -48,15 +51,19 @@ class LessonsStudentParser extends AppletParser<Lessons> {
     for (var schoolClass in schoolClasses) {
       if (schoolClass.querySelector(".datum") != null) {
         String? topicTitle = schoolClass.querySelector(".thema")?.text.trim();
-        String? topicDateString = schoolClass.querySelector(".datum")?.text.trim();
-        DateTime? topicDate = DateTime.parse(topicDateString!.split(".").reversed.join("-"));
-        String? courseURL = schoolClass.querySelector("td>h3>a")?.attributes["href"];
+        String? topicDateString =
+            schoolClass.querySelector(".datum")?.text.trim();
+        DateTime? topicDate =
+            DateTime.parse(topicDateString!.split(".").reversed.join("-"));
+        String? courseURL =
+            schoolClass.querySelector("td>h3>a")?.attributes["href"];
         int fileCount = schoolClass.getElementsByClassName('file').length;
 
         Homework? homework;
         if (schoolClass.querySelector('.homework') != null) {
           homework = Homework(
-            description: schoolClass.querySelector('.realHomework')!.text.trim(),
+            description:
+                schoolClass.querySelector('.realHomework')!.text.trim(),
             homeWorkDone: schoolClass.querySelector('.undone') == null,
           );
         }
@@ -71,7 +78,7 @@ class LessonsStudentParser extends AppletParser<Lessons> {
               topicDate: topicDate,
               homework: homework,
               uploads: const [],
-              files: List.generate(fileCount, (_)=> FileInfo()),
+              files: List.generate(fileCount, (_) => FileInfo()),
             );
             break;
           }
@@ -123,7 +130,8 @@ class LessonsStudentParser extends AppletParser<Lessons> {
 
     //sort lessons by date
     lessons.sort((a, b) {
-      if (a.currentEntry?.topicDate == null || b.currentEntry?.topicDate == null) {
+      if (a.currentEntry?.topicDate == null ||
+          b.currentEntry?.topicDate == null) {
         return 0;
       }
       return b.currentEntry!.topicDate!.compareTo(a.currentEntry!.topicDate!);
@@ -137,7 +145,7 @@ class LessonsStudentParser extends AppletParser<Lessons> {
       String courseID = url.split("id=")[1];
 
       final response =
-      await sph.session.dio.get("https://start.schulportal.hessen.de/$url");
+          await sph.session.dio.get("https://start.schulportal.hessen.de/$url");
       Document document = parse(response.data);
 
       //course name
@@ -148,7 +156,7 @@ class LessonsStudentParser extends AppletParser<Lessons> {
       Uri? semester1URL;
       //halbjahr2
       var halbJahrButtons =
-      document.getElementsByClassName("btn btn-default hidden-print");
+          document.getElementsByClassName("btn btn-default hidden-print");
       if (halbJahrButtons.length > 1) {
         if (halbJahrButtons[0].attributes["href"]!.contains("&halb=1")) {
           semester1URL = Uri.parse(halbJahrButtons[0].attributes["href"]!);
@@ -159,7 +167,8 @@ class LessonsStudentParser extends AppletParser<Lessons> {
       List<CurrentEntry> history = [];
 
       Element? historySection = document.getElementById("history");
-      List<Element>? historyTableRows = historySection?.querySelectorAll("table>tbody>tr");
+      List<Element>? historyTableRows =
+          historySection?.querySelectorAll("table>tbody>tr");
 
       historyTableRows?.forEach((tableRow) {
         tableRow.children[2]
@@ -176,8 +185,8 @@ class LessonsStudentParser extends AppletParser<Lessons> {
             .querySelector("span.homework + br + span.markup")
             ?.text
             .trim();
-        bool homeworkDone = tableRow.querySelectorAll("span.done.hidden").isEmpty;
-
+        bool homeworkDone =
+            tableRow.querySelectorAll("span.done.hidden").isEmpty;
 
         List<FileInfo> files = [];
         if (tableRow.children[1].querySelector("div.alert.alert-info") !=
@@ -188,13 +197,12 @@ class LessonsStudentParser extends AppletParser<Lessons> {
               .attributes["href"]!;
           baseURL = baseURL.replaceAll("&b=zip", "");
 
-          for (var fileDiv in tableRow.getElementsByClassName("files")[0].children) {
+          for (var fileDiv
+              in tableRow.getElementsByClassName("files")[0].children) {
             String? filename = fileDiv.attributes["data-file"];
             files.add(FileInfo(
               name: filename,
-              size: fileDiv
-                  .querySelector("a>small")
-                  ?.text,
+              size: fileDiv.querySelector("a>small")?.text,
               url: Uri.parse("$baseURL&f=$filename"),
             ));
           }
@@ -202,7 +210,7 @@ class LessonsStudentParser extends AppletParser<Lessons> {
 
         List<LessonUpload> uploads = [];
         final uploadGroups =
-        tableRow.children[1].querySelectorAll("div.btn-group");
+            tableRow.children[1].querySelectorAll("div.btn-group");
         for (final uploadGroup in uploadGroups) {
           final openUpload = uploadGroup.querySelector(".btn-warning");
           final closedUpload = uploadGroup.querySelector(".btn-default");
@@ -213,11 +221,18 @@ class LessonsStudentParser extends AppletParser<Lessons> {
             uploads.add(LessonUpload(
               name: openUpload.nodes[2].text!.trim(),
               status: "open",
-              url: Uri.parse(baseURL+uploadGroup.querySelector("ul.dropdown-menu li a")!.attributes["href"]!),
+              url: Uri.parse(baseURL +
+                  uploadGroup
+                      .querySelector("ul.dropdown-menu li a")!
+                      .attributes["href"]!),
               uploaded: openUpload.querySelector("span.badge")?.text,
-              date: openUpload.querySelector("small")?.text
+              date: openUpload
+                  .querySelector("small")
+                  ?.text
                   .replaceAll("\n", "")
-                  .replaceAll("                                                                ", "")
+                  .replaceAll(
+                      "                                                                ",
+                      "")
                   .replaceAll("bis ", "")
                   .replaceAll("um", ""),
             ));
@@ -225,30 +240,43 @@ class LessonsStudentParser extends AppletParser<Lessons> {
             uploads.add(LessonUpload(
               name: closedUpload.nodes[2].text!.trim(),
               status: "closed",
-              url: Uri.parse(baseURL+uploadGroup.querySelector("ul.dropdown-menu li a")!.attributes["href"]!),
+              url: Uri.parse(baseURL +
+                  uploadGroup
+                      .querySelector("ul.dropdown-menu li a")!
+                      .attributes["href"]!),
               uploaded: closedUpload.querySelector("span.badge")?.text,
             ));
           }
         }
 
-        List<String> dateInformation = tableRow.children[0].text.split("\n").map((e) => e.trim()).where((element) => element!="").toList();
+        List<String> dateInformation = tableRow.children[0].text
+            .split("\n")
+            .map((e) => e.trim())
+            .where((element) => element != "")
+            .toList();
 
         history.add(CurrentEntry(
           entryID: tableRow.attributes["data-entry"]!,
           topicTitle: tableRow.children[1].querySelector("td>b")?.text.trim(),
           description: description,
-          presence: tableRow.children[2].text.trim() == 'nicht erfasst' ? null : tableRow.children[2].text.trim(),
-          topicDate: DateTime.parse(dateInformation[0].split(".").reversed.join("-")),
+          presence: tableRow.children[2].text.trim() == 'nicht erfasst'
+              ? null
+              : tableRow.children[2].text.trim(),
+          topicDate:
+              DateTime.parse(dateInformation[0].split(".").reversed.join("-")),
           schoolHours: dateInformation[1].replaceAll("Stunde", "").trimRight(),
           files: files,
           uploads: uploads,
-          homework: (homework != null) ? Homework(description: homework, homeWorkDone: homeworkDone) : null,
+          homework: (homework != null)
+              ? Homework(description: homework, homeWorkDone: homeworkDone)
+              : null,
         ));
       });
 
       //anwesenheiten
       Element? presenceSection = document.getElementById("attendanceTable");
-      List<Element>? attendanceTableRows = presenceSection?.querySelectorAll("table>tbody>tr");
+      List<Element>? attendanceTableRows =
+          presenceSection?.querySelectorAll("table>tbody>tr");
 
       Map<String, String> attendances = {};
 
@@ -263,7 +291,7 @@ class LessonsStudentParser extends AppletParser<Lessons> {
       // Marks / Grades
       var marksSection = document.getElementById("marks");
       List markTableRows =
-      marksSection?.querySelectorAll("table>tbody>tr") as List;
+          marksSection?.querySelectorAll("table>tbody>tr") as List;
 
       List<LessonMark> marks = [];
 
@@ -299,8 +327,8 @@ class LessonsStudentParser extends AppletParser<Lessons> {
 
       List<LessonExam> lessonExams = [];
 
-      if (!(examSection?.children)![0].text.contains("Diese Kursmappe beinhaltet leider noch keine Leistungskontrollen!")) {
-
+      if (!(examSection?.children)![0].text.contains(
+          "Diese Kursmappe beinhaltet leider noch keine Leistungskontrollen!")) {
         for (var element in examSection?.children ?? []) {
           String exams = "";
 
@@ -311,7 +339,7 @@ class LessonsStudentParser extends AppletParser<Lessons> {
             var exam = element.text.trim().split(
                 "                                                                                                    ");
             exams +=
-            "${exam.first.trim()} ${exam.last != exam.first ? exam.last.trim() : ""}";
+                "${exam.first.trim()} ${exam.last != exam.first ? exam.last.trim() : ""}";
             if (element != elements.last) {
               exams += "\n";
             }
@@ -323,14 +351,17 @@ class LessonsStudentParser extends AppletParser<Lessons> {
           ));
         }
       }
-      final teacherButtons = document.getElementsByClassName("btn btn-primary dropdown-toggle btn-md");
+      final teacherButtons = document
+          .getElementsByClassName("btn btn-primary dropdown-toggle btn-md");
       return DetailedLesson(
         courseID: courseID,
         name: courseTitle!,
-        teachers: teacherButtons.map<LessonTeacher>((e) => LessonTeacher(
-          teacher: e.parent!.querySelector('ul>li>a')!.text.trim(),
-          teacherKuerzel: e.text.trim(),
-        )).toList(),
+        teachers: teacherButtons
+            .map<LessonTeacher>((e) => LessonTeacher(
+                  teacher: e.parent!.querySelector('ul>li>a')!.text.trim(),
+                  teacherKuerzel: e.text.trim(),
+                ))
+            .toList(),
         history: history,
         marks: marks,
         exams: lessonExams,
@@ -367,33 +398,33 @@ class LessonsStudentParser extends AppletParser<Lessons> {
 
   Future<String> deleteUploadedFile(
       {required String course,
-        required String entry,
-        required String upload,
-        required String file,
-        required String userPasswordEncrypted}) async {
+      required String entry,
+      required String upload,
+      required String file,
+      required String userPasswordEncrypted}) async {
     try {
-      final response = await sph.session.dio.post(
-          "https://start.schulportal.hessen.de/meinunterricht.php",
-          data: {
-            "a": "sus_abgabe",
-            "d": "delete",
-            "b": course,
-            "e": entry,
-            "id": upload,
-            "f": file,
-            "pw": userPasswordEncrypted
-          },
-          options: Options(
-            headers: {
-              "Accept": "*/*",
-              "Content-Type":
-              "application/x-www-form-urlencoded; charset=UTF-8",
-              "Sec-Fetch-Dest": "empty",
-              "Sec-Fetch-Mode": "cors",
-              "Sec-Fetch-Site": "same-origin",
-              "X-Requested-With": "XMLHttpRequest",
-            },
-          ));
+      final response = await sph.session.dio
+          .post("https://start.schulportal.hessen.de/meinunterricht.php",
+              data: {
+                "a": "sus_abgabe",
+                "d": "delete",
+                "b": course,
+                "e": entry,
+                "id": upload,
+                "f": file,
+                "pw": userPasswordEncrypted
+              },
+              options: Options(
+                headers: {
+                  "Accept": "*/*",
+                  "Content-Type":
+                      "application/x-www-form-urlencoded; charset=UTF-8",
+                  "Sec-Fetch-Dest": "empty",
+                  "Sec-Fetch-Mode": "cors",
+                  "Sec-Fetch-Site": "same-origin",
+                  "X-Requested-With": "XMLHttpRequest",
+                },
+              ));
 
       // "-1" Wrong password
       // "-2" Delete was not possible
@@ -413,7 +444,7 @@ class LessonsStudentParser extends AppletParser<Lessons> {
       final parsed = parse(response.data);
 
       final requirementsGroup =
-      parsed.querySelectorAll("div#content div.row div.col-md-12")[1];
+          parsed.querySelectorAll("div#content div.row div.col-md-12")[1];
 
       final String? start = requirementsGroup
           .querySelector("span.editable")
@@ -426,25 +457,25 @@ class LessonsStudentParser extends AppletParser<Lessons> {
           .trim()
           .replaceAll("  spätestens", "");
       final bool uploadMultipleFiles = requirementsGroup
-          .querySelectorAll(
-          "i.fa.fa-check-square-o.fa-fw + span.label.label-success")[0]
-          .text
-          .trim() ==
-          "erlaubt"
+                  .querySelectorAll(
+                      "i.fa.fa-check-square-o.fa-fw + span.label.label-success")[0]
+                  .text
+                  .trim() ==
+              "erlaubt"
           ? true
           : false;
       final bool uploadAnyNumberOfTimes = requirementsGroup
-          .querySelectorAll(
-          "i.fa.fa-check-square-o.fa-fw + span.label.label-success")[1]
-          .text
-          .trim() ==
-          "erlaubt"
+                  .querySelectorAll(
+                      "i.fa.fa-check-square-o.fa-fw + span.label.label-success")[1]
+                  .text
+                  .trim() ==
+              "erlaubt"
           ? true
           : false;
       final String? visibility = requirementsGroup
-          .querySelector("i.fa.fa-eye.fa-fw + span.label")
-          ?.text
-          .trim() ??
+              .querySelector("i.fa.fa-eye.fa-fw + span.label")
+              ?.text
+              .trim() ??
           requirementsGroup
               .querySelector("i.fa.fa-eye-slash.fa-fw + span.label")
               ?.text
@@ -469,7 +500,7 @@ class LessonsStudentParser extends AppletParser<Lessons> {
           .trim();
 
       final ownFilesGroup =
-      parsed.querySelectorAll("div#content div.row div.col-md-12")[2];
+          parsed.querySelectorAll("div#content div.row div.col-md-12")[2];
       final List<OwnFile> ownFiles = [];
       for (final group in ownFilesGroup.querySelectorAll("ul li")) {
         final fileIndex = RegExp(r"f=(\d+)");
@@ -477,7 +508,7 @@ class LessonsStudentParser extends AppletParser<Lessons> {
         ownFiles.add(OwnFile(
             name: group.querySelector("a")!.text.trim(),
             url:
-            "https://start.schulportal.hessen.de/${group.querySelector("a")!.attributes["href"]!}",
+                "https://start.schulportal.hessen.de/${group.querySelector("a")!.attributes["href"]!}",
             time: group.querySelector("small")!.text,
             index: fileIndex
                 .firstMatch(group.querySelector("a")!.attributes["href"]!)!
@@ -494,15 +525,15 @@ class LessonsStudentParser extends AppletParser<Lessons> {
 
       if (uploadForm != null) {
         courseId =
-        uploadForm.querySelector("input[name='b']")!.attributes["value"]!;
+            uploadForm.querySelector("input[name='b']")!.attributes["value"]!;
         entryId =
-        uploadForm.querySelector("input[name='e']")!.attributes["value"]!;
+            uploadForm.querySelector("input[name='e']")!.attributes["value"]!;
         uploadId =
-        uploadForm.querySelector("input[name='id']")!.attributes["value"]!;
+            uploadForm.querySelector("input[name='id']")!.attributes["value"]!;
       }
 
       final publicFilesGroup =
-      parsed.querySelector("div#content div.row div.col-md-5");
+          parsed.querySelector("div#content div.row div.col-md-5");
       final List<PublicFile> publicFiles = [];
 
       if (publicFilesGroup != null) {
@@ -512,7 +543,7 @@ class LessonsStudentParser extends AppletParser<Lessons> {
           publicFiles.add(PublicFile(
             name: group.querySelector("a")!.text.trim(),
             url:
-            "https://start.schulportal.hessen.de/${group.querySelector("a")!.attributes["href"]!}",
+                "https://start.schulportal.hessen.de/${group.querySelector("a")!.attributes["href"]!}",
             person: group.querySelector("span.label.label-info")!.text.trim(),
             index: fileIndex
                 .firstMatch(group.querySelector("a")!.attributes["href"]!)!
@@ -567,25 +598,25 @@ class LessonsStudentParser extends AppletParser<Lessons> {
         "file5": file5
       });
 
-      final response = await sph.session.dio.post(
-          "https://start.schulportal.hessen.de/meinunterricht.php",
-          data: uploadData,
-          options: Options(headers: {
-            "Accept": "*/*",
-            "Content-Type": "multipart/form-data;",
-            "Sec-Fetch-Dest": "document",
-            "Sec-Fetch-Mode": "navigate",
-            "Sec-Fetch-Site": "same-origin",
-          }));
+      final response = await sph.session.dio
+          .post("https://start.schulportal.hessen.de/meinunterricht.php",
+              data: uploadData,
+              options: Options(headers: {
+                "Accept": "*/*",
+                "Content-Type": "multipart/form-data;",
+                "Sec-Fetch-Dest": "document",
+                "Sec-Fetch-Mode": "navigate",
+                "Sec-Fetch-Site": "same-origin",
+              }));
 
       final parsed = parse(response.data);
 
       final statusMessagesGroup =
-      parsed.querySelectorAll("div#content div.col-md-12")[2];
+          parsed.querySelectorAll("div#content div.col-md-12")[2];
 
       final List<FileStatus> statusMessages = [];
       for (final statusMessage
-      in statusMessagesGroup.querySelectorAll("ul li")) {
+          in statusMessagesGroup.querySelectorAll("ul li")) {
         statusMessages.add(FileStatus(
           name: statusMessage.querySelector("b")!.text.trim(),
           status: statusMessage.querySelector("span.label")!.text.trim(),

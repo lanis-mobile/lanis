@@ -106,13 +106,13 @@ class _SettingsScreenState extends SettingsColoursState<SettingsScreen> {
               .get()
               .then((value) => value.length);
 
-          if(context.mounted) {
+          if (context.mounted) {
             Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) =>
-                    NotificationSettings(accountCount: accountCount)),
-          );
+              context,
+              MaterialPageRoute(
+                  builder: (context) =>
+                      NotificationSettings(accountCount: accountCount)),
+            );
           }
         },
       ),
@@ -134,11 +134,15 @@ class _SettingsScreenState extends SettingsColoursState<SettingsScreen> {
               )),
       SettingsTile(
         title: (context) => AppLocalizations.of(context).quickActions,
-        subtitle: (context) async => "${AppLocalizations.of(context).applets}, ${AppLocalizations.of(context).external}",
+        subtitle: (context) async =>
+            "${AppLocalizations.of(context).applets}, ${AppLocalizations.of(context).external}",
         icon: Icons.extension,
         screen: (context) => Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => QuickActions(showBackButton: true,)),
+          MaterialPageRoute(
+              builder: (context) => QuickActions(
+                    showBackButton: true,
+                  )),
         ),
       )
     ]),
@@ -159,15 +163,14 @@ class _SettingsScreenState extends SettingsColoursState<SettingsScreen> {
           ),
         if (sph!.session.doesSupportFeature(timeTableDefinition))
           SettingsTile(
-            title: (context) =>
-                AppLocalizations.of(context).customizeTimetable,
+            title: (context) => AppLocalizations.of(context).customizeTimetable,
             subtitle: (context) async =>
                 AppLocalizations.of(context).customizeTimetableDescription,
             icon: Icons.timelapse,
             screen: (context) => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const StudentTimetableSettings()),
+                  builder: (context) => const StudentTimetableSettings()),
             ),
           ),
       ]),
@@ -200,7 +203,8 @@ class _SettingsScreenState extends SettingsColoursState<SettingsScreen> {
         icon: Icons.question_mark,
         show: () async => true,
         title: (context) => AppLocalizations.of(context).inThisUpdate,
-        subtitle: (context) async => AppLocalizations.of(context).showReleaseNotesForThisVersion,
+        subtitle: (context) async =>
+            AppLocalizations.of(context).showReleaseNotesForThisVersion,
         screen: (context) async => showLocalUpdateInfo(context),
       )
     ]),
@@ -327,8 +331,7 @@ class _SettingsScreenState extends SettingsColoursState<SettingsScreen> {
                     appBar: LargeAppBar(
                         showBackButton: false,
                         backgroundColor: backgroundColor,
-                        title:
-                            Text(AppLocalizations.of(context).inThisUpdate)),
+                        title: Text(AppLocalizations.of(context).inThisUpdate)),
                     body: snapshot.data as Widget,
                   );
                 }

@@ -33,11 +33,11 @@ class StorageManager {
     var digest = sha256.convert(bytes);
 
     var shortHash =
-    digest.toString().replaceAll(RegExp(r'[^A-z0-9]'), '').substring(0, 12);
+        digest.toString().replaceAll(RegExp(r'[^A-z0-9]'), '').substring(0, 12);
 
     return shortHash;
   }
-  
+
   /// This function checks if a file exists in the temporary directory downloaded by [downloadFile]
   Future<bool> doesFileExist(String url, String filename) async {
     var tempDir = await getDocumentCacheDirectory();
@@ -53,7 +53,8 @@ class StorageManager {
   ///
   ///The file is stored in the temporary directory of the device.
   ///So calling the same URL twice will result in the same file and one Download.
-  Future<String> downloadFile(String url, String filename, {bool followRedirects = false}) async {
+  Future<String> downloadFile(String url, String filename,
+      {bool followRedirects = false}) async {
     try {
       var tempDir = await getDocumentCacheDirectory();
       String urlHash = generateUniqueHash(url);

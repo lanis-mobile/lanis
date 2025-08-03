@@ -62,18 +62,20 @@ class Callout extends StatelessWidget {
                     child: FilledButton(
                         onPressed: onPressed,
                         style: ButtonStyle(
-                          backgroundColor:
-                              onPressed != null ? WidgetStateColor.resolveWith((states) {
-                            if (states.contains(WidgetState.pressed)) {
-                              return foregroundColor?.withValues(alpha: 0.95) ??
-                                  Theme.of(context)
-                                      .colorScheme
-                                      .primary
-                                      .withValues(alpha: 0.95);
-                            }
-                            return foregroundColor ??
-                                Theme.of(context).colorScheme.primary;
-                          }) : null,
+                          backgroundColor: onPressed != null
+                              ? WidgetStateColor.resolveWith((states) {
+                                  if (states.contains(WidgetState.pressed)) {
+                                    return foregroundColor?.withValues(
+                                            alpha: 0.95) ??
+                                        Theme.of(context)
+                                            .colorScheme
+                                            .primary
+                                            .withValues(alpha: 0.95);
+                                  }
+                                  return foregroundColor ??
+                                      Theme.of(context).colorScheme.primary;
+                                })
+                              : null,
                         ),
                         child: DefaultTextStyle(
                             style: Theme.of(context)
@@ -85,7 +87,9 @@ class Callout extends StatelessWidget {
                                           .colorScheme
                                           .onSurfaceVariant
                                       : buttonTextColor ??
-                                        Theme.of(context).colorScheme.onPrimary,
+                                          Theme.of(context)
+                                              .colorScheme
+                                              .onPrimary,
                                 ),
                             child: buttonText)),
                   ),

@@ -6,9 +6,12 @@ import 'package:lanis/generated/l10n.dart';
 
 import '../../core/native_adapter_instance.dart';
 
-
 class SchoolSelector extends StatefulWidget {
-  const SchoolSelector({super.key, required this.controller, required this.outContext, required this.onSchoolSelected});
+  const SchoolSelector(
+      {super.key,
+      required this.controller,
+      required this.outContext,
+      required this.onSchoolSelected});
   final TextEditingController controller;
   final BuildContext outContext;
   final Function onSchoolSelected;
@@ -35,7 +38,8 @@ class _SchoolSelectorState extends State<SchoolSelector> {
       List<dynamic> data = jsonDecode(response.data);
       List<RemoteSchoolBezirk> result = [];
       for (var elem in data) {
-        var bezirk = RemoteSchoolBezirk(id: elem["Id"], name: elem["Name"], schools: []);
+        var bezirk =
+            RemoteSchoolBezirk(id: elem["Id"], name: elem["Name"], schools: []);
         for (var schule in elem['Schulen']) {
           bezirk.schools.add(
             RemoteSchool(
@@ -55,8 +59,7 @@ class _SchoolSelectorState extends State<SchoolSelector> {
       if (widget.outContext.mounted) {
         ScaffoldMessenger.of(widget.outContext).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations
-                .of(widget.outContext)
+            content: Text(AppLocalizations.of(widget.outContext)
                 .authFailedLoadingSchools),
             duration: const Duration(seconds: 10),
           ),
@@ -65,7 +68,6 @@ class _SchoolSelectorState extends State<SchoolSelector> {
       Future.delayed(const Duration(seconds: 10), loadSchoolList);
     }
   }
-
 
   List<RemoteSchoolBezirk> filterSchools(String query) {
     String sanitizedQuery = SchoolSelector.sanitize(query);
@@ -88,7 +90,6 @@ class _SchoolSelectorState extends State<SchoolSelector> {
     }).toList();
   }
 
-
   @override
   void initState() {
     super.initState();
@@ -99,92 +100,115 @@ class _SchoolSelectorState extends State<SchoolSelector> {
   Widget build(BuildContext context) {
     return ActionChip(
       avatar: const Icon(Icons.account_balance),
-        label: Text(selectedSchool != null ? "${selectedSchool!.name} - ${selectedSchool!.city}" : AppLocalizations.of(context).selectSchool),
-      onPressed: schoolBezirke != null ? () async {
-        showDialog(
-          context: context,
-          builder: (context) {
-            return Dialog.fullscreen(
-              child: Column(
-                children: [
-                  Padding(padding: const EdgeInsets.all(8.0),
-                    child: SearchBar(
-                      leading: const Padding(
-                        padding: EdgeInsets.only(left: 8.0),
-                        child: Icon(Icons.search),
-                      ),
-                      controller: searchController,
-                      hintText: AppLocalizations.of(context).searchSchools,
-                      autoFocus: true,
-                    ),
-                  ),
-                  Expanded(
-                    child: ListenableBuilder(
-                      listenable: searchController,
-                      builder: (context, listenable) {
-                        final filteredSchools = filterSchools(searchController.text);
-
-                        final List<ExpansionTile> tiles = [];
-                        for (var bezirk in filteredSchools) {
-                          if (bezirk.schools.isNotEmpty) {
-                            tiles.add(
-                                ExpansionTile(
-                                  key: PageStorageKey<String>("${bezirk.id}${searchController.text}"),
-                                  title: Text(
-                                    bezirk.name,
-                                    style: Theme.of(context).textTheme.titleMedium,
-                                  ),
-                                  subtitle: Text(AppLocalizations.of(context).schoolCountString(bezirk.schools.length),
-                                    style: Theme.of(context).textTheme.titleSmall,
-                                  ),
-                                  initiallyExpanded: bezirk.schools.length < 4,
-                                  children: bezirk.schools.map((school) {
-                                    return ListTile(
-                                      title: Text(school.name),
-                                      subtitle: Text(school.city),
-                                      trailing: Text(school.id),
-                                      onTap: () {
-                                        setState(() {
-                                          selectedSchool = school;
-                                          widget.controller.text = school.id;
-                                          searchController.clear();
-                                        });
-                                        widget.onSchoolSelected(school.name);
-                                        Navigator.pop(context);
-                                      },
-                                    );
-                                  }).toList(),
-                                ),
-                            );
-                          }
-                        }
-
-                        return tiles.isNotEmpty ? ListView(
-                          children: tiles,
-                        ) : Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.search_off, size: 60),
-                              Padding(
-                                padding: const EdgeInsets.all(20.0),
-                                child: Text(
-                                  AppLocalizations.of(context).noSchoolsFound,
-                                  style: Theme.of(context).textTheme.titleMedium,
-                                ),
+      label: Text(selectedSchool != null
+          ? "${selectedSchool!.name} - ${selectedSchool!.city}"
+          : AppLocalizations.of(context).selectSchool),
+      onPressed: schoolBezirke != null
+          ? () async {
+              showDialog(
+                  context: context,
+                  builder: (context) {
+                    return Dialog.fullscreen(
+                      child: Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: SearchBar(
+                              leading: const Padding(
+                                padding: EdgeInsets.only(left: 8.0),
+                                child: Icon(Icons.search),
                               ),
-                            ],
-                          )
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }
-        );
-      } : null,
+                              controller: searchController,
+                              hintText:
+                                  AppLocalizations.of(context).searchSchools,
+                              autoFocus: true,
+                            ),
+                          ),
+                          Expanded(
+                            child: ListenableBuilder(
+                              listenable: searchController,
+                              builder: (context, listenable) {
+                                final filteredSchools =
+                                    filterSchools(searchController.text);
+
+                                final List<ExpansionTile> tiles = [];
+                                for (var bezirk in filteredSchools) {
+                                  if (bezirk.schools.isNotEmpty) {
+                                    tiles.add(
+                                      ExpansionTile(
+                                        key: PageStorageKey<String>(
+                                            "${bezirk.id}${searchController.text}"),
+                                        title: Text(
+                                          bezirk.name,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleMedium,
+                                        ),
+                                        subtitle: Text(
+                                          AppLocalizations.of(context)
+                                              .schoolCountString(
+                                                  bezirk.schools.length),
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleSmall,
+                                        ),
+                                        initiallyExpanded:
+                                            bezirk.schools.length < 4,
+                                        children: bezirk.schools.map((school) {
+                                          return ListTile(
+                                            title: Text(school.name),
+                                            subtitle: Text(school.city),
+                                            trailing: Text(school.id),
+                                            onTap: () {
+                                              setState(() {
+                                                selectedSchool = school;
+                                                widget.controller.text =
+                                                    school.id;
+                                                searchController.clear();
+                                              });
+                                              widget.onSchoolSelected(
+                                                  school.name);
+                                              Navigator.pop(context);
+                                            },
+                                          );
+                                        }).toList(),
+                                      ),
+                                    );
+                                  }
+                                }
+
+                                return tiles.isNotEmpty
+                                    ? ListView(
+                                        children: tiles,
+                                      )
+                                    : Center(
+                                        child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          const Icon(Icons.search_off,
+                                              size: 60),
+                                          Padding(
+                                            padding: const EdgeInsets.all(20.0),
+                                            child: Text(
+                                              AppLocalizations.of(context)
+                                                  .noSchoolsFound,
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .titleMedium,
+                                            ),
+                                          ),
+                                        ],
+                                      ));
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  });
+            }
+          : null,
     );
   }
 }
@@ -194,7 +218,8 @@ class RemoteSchoolBezirk {
   final String name;
   final List<RemoteSchool> schools;
 
-  RemoteSchoolBezirk({required this.id, required this.name, required this.schools});
+  RemoteSchoolBezirk(
+      {required this.id, required this.name, required this.schools});
 }
 
 class RemoteSchool {

@@ -10,10 +10,7 @@ class ErrorView extends StatelessWidget {
   final bool showAppBar;
 
   const ErrorView(
-      {super.key,
-      required this.error,
-      this.showAppBar = false,
-      this.retry});
+      {super.key, required this.error, this.showAppBar = false, this.retry});
 
   @override
   Widget build(BuildContext context) {
@@ -26,10 +23,14 @@ class ErrorView extends StatelessWidget {
           Spacer(),
         ],
         Icon(
-          error is! NoConnectionException ? Icons.warning_rounded : Icons.wifi_off_rounded,
+          error is! NoConnectionException
+              ? Icons.warning_rounded
+              : Icons.wifi_off_rounded,
           size: 60,
         ),
-        const SizedBox(height: 16.0,),
+        const SizedBox(
+          height: 16.0,
+        ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10.0),
           child: Text(
@@ -38,19 +39,21 @@ class ErrorView extends StatelessWidget {
                   : AppLocalizations.of(context).noInternetConnection2,
               textAlign: TextAlign.center,
               style:
-              const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         ),
-        const SizedBox(height: 16.0,),
-        if (retry != null) Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            FilledButton(
-                onPressed: retry,
-                child: Text(AppLocalizations.of(context).tryAgain)
-            ),
-          ],
+        const SizedBox(
+          height: 16.0,
         ),
+        if (retry != null)
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              FilledButton(
+                  onPressed: retry,
+                  child: Text(AppLocalizations.of(context).tryAgain)),
+            ],
+          ),
         if (error is! NoConnectionException) ...[
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -59,10 +62,10 @@ class ErrorView extends StatelessWidget {
                 padding: const EdgeInsets.only(right: 8.0),
                 child: OutlinedButton(
                     onPressed: () {
-                      launchUrl(Uri.parse("https://github.com/alessioC42/lanis-mobile/issues"));
+                      launchUrl(Uri.parse(
+                          "https://github.com/alessioC42/lanis-mobile/issues"));
                     },
-                    child: const Text("GitHub")
-                ),
+                    child: const Text("GitHub")),
               ),
             ],
           )

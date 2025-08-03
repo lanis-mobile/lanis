@@ -39,7 +39,9 @@ class _WelcomeLoginScreenState extends State<WelcomeLoginScreen> {
       );
     } else if (currentPage == PageType.login) {
       return Scaffold(
-        body: LoginForm(showBackButton: false,),
+        body: LoginForm(
+          showBackButton: false,
+        ),
       );
     }
 

@@ -56,7 +56,8 @@ const storageChannel = MethodChannel('io.github.lanis-mobile/storage');
 //}
 
 /// Allows the user to pick multiple files using any supported method (only Gallery and File Manager support multiple files)
-Future<List<PickedFile>> pickMultipleFiles(BuildContext context, List<String>? allowedExtensions) async {
+Future<List<PickedFile>> pickMultipleFiles(
+    BuildContext context, List<String>? allowedExtensions) async {
   List<bool> allowedMethods = [true, true, true, true];
   return showPickerUI(context, allowedMethods, allowedExtensions);
 }
@@ -98,7 +99,8 @@ Future<List<PickedFile>> showPickerUI(BuildContext context,
                     if (allowedMethods[0])
                       (MenuItemButton(
                         onPressed: () async {
-                          pickedFiles.addAll(await pickFileUsingDocumentsUI(allowedExtensions));
+                          pickedFiles.addAll(await pickFileUsingDocumentsUI(
+                              allowedExtensions));
                           if (context.mounted && pickedFiles.isNotEmpty) {
                             Navigator.pop(context);
                           }
@@ -115,7 +117,8 @@ Future<List<PickedFile>> showPickerUI(BuildContext context,
                     if (allowedMethods[1] && documentScannerSupported)
                       (MenuItemButton(
                         onPressed: () async {
-                          final result = await pickFileUsingDocumentScanner(context);
+                          final result =
+                              await pickFileUsingDocumentScanner(context);
                           if (result != null) {
                             pickedFiles.add(result);
                           }
@@ -140,7 +143,7 @@ Future<List<PickedFile>> showPickerUI(BuildContext context,
                           if (result != null) {
                             pickedFiles.add(result);
                           }
-                          
+
                           if (context.mounted && pickedFiles.isNotEmpty) {
                             Navigator.pop(context);
                           }
@@ -154,12 +157,14 @@ Future<List<PickedFile>> showPickerUI(BuildContext context,
                           ],
                         ),
                       )),
-                    if (allowedMethods[3] && Platform.isIOS) // DocumentsUI supports galleries and the photo picker is horrible (from a user perspective)
-                      (
-                          MenuItemButton(
+                    if (allowedMethods[3] &&
+                        Platform
+                            .isIOS) // DocumentsUI supports galleries and the photo picker is horrible (from a user perspective)
+                      (MenuItemButton(
                         onPressed: () async {
-                          pickedFiles.addAll(await pickFilesUsingGallery(context));
-                          
+                          pickedFiles
+                              .addAll(await pickFilesUsingGallery(context));
+
                           if (context.mounted && pickedFiles.isNotEmpty) {
                             Navigator.pop(context);
                           }
@@ -186,22 +191,19 @@ Future<List<PickedFile>> showPickerUI(BuildContext context,
 Future<List<PickedFile>> pickFileUsingDocumentsUI(
     List<String>? allowedExtensions) async {
   FilePickerResult? result = await FilePicker.platform.pickFiles(
-    type: FileType.custom,
-    allowedExtensions: allowedExtensions,
-    allowMultiple: true
-  );
+      type: FileType.custom,
+      allowedExtensions: allowedExtensions,
+      allowMultiple: true);
   List<PickedFile> returnResult = [];
 
   if (result != null) {
     for (final file in result.files) {
-      returnResult.add(PickedFile(
-          name: file.name, path: file.path, size: file.size
-      ));
+      returnResult
+          .add(PickedFile(name: file.name, path: file.path, size: file.size));
     }
   }
 
-    
-    return returnResult;
+  return returnResult;
 }
 
 Future<PickedFile?> pickFileUsingCamera(BuildContext context) async {
@@ -224,7 +226,10 @@ Future<PickedFile?> pickFileUsingCamera(BuildContext context) async {
     String newPath = "${(await getApplicationCacheDirectory()).path}/$name";
     await moveFile(path, newPath);
 
-    return PickedFile(name: newPath.split("/").last, path: newPath, size: await File(newPath).length());
+    return PickedFile(
+        name: newPath.split("/").last,
+        path: newPath,
+        size: await File(newPath).length());
   }
 
   return null;
@@ -237,7 +242,6 @@ Future<List<PickedFile>> pickFilesUsingGallery(BuildContext context) async {
     final ImagePicker picker = ImagePicker();
     final List<XFile> images = await picker.pickMultiImage();
 
-
     if (context.mounted) {
       final name = await askFileName(context);
 
@@ -247,12 +251,14 @@ Future<List<PickedFile>> pickFilesUsingGallery(BuildContext context) async {
 
       for (final image in images) {
         final String extension = image.path.split(".").last;
-        final path = "${(await getApplicationCacheDirectory()).path}/$name.$extension";
+        final path =
+            "${(await getApplicationCacheDirectory()).path}/$name.$extension";
         await moveFile(image.path, path);
         final file = File(path);
         final size = await file.length();
 
-        result.add(PickedFile(name: file.path.split("/").last, size: size, path: file.path));
+        result.add(PickedFile(
+            name: file.path.split("/").last, size: size, path: file.path));
       }
     }
   }
@@ -301,10 +307,10 @@ Future<PickedFile?> pickFileUsingDocumentScanner(BuildContext context) async {
       }
     }
   } else if (Platform.isIOS) {
-
     dynamic scannedDocuments;
     try {
-      scannedDocuments = await FlutterDocScanner().getScannedDocumentAsImages(page: 4);
+      scannedDocuments =
+          await FlutterDocScanner().getScannedDocumentAsImages(page: 4);
     } on PlatformException {
       return null;
     }
@@ -341,7 +347,10 @@ Future<PickedFile?> pickFileUsingDocumentScanner(BuildContext context) async {
 
   File file = File(filePath);
 
-  PickedFile pickedFile = PickedFile(name: filePath.split("/").last, path: filePath, size: await file.length());
+  PickedFile pickedFile = PickedFile(
+      name: filePath.split("/").last,
+      path: filePath,
+      size: await file.length());
   return pickedFile;
 }
 
@@ -350,36 +359,37 @@ Future<String?> askFileName(BuildContext context) async {
   final TextEditingController controller = TextEditingController();
 
   await showDialog(
-  context: context,
-  builder: (context) {
-    return AlertDialog(
-      title: Text(AppLocalizations.of(context).filename),
-      content: TextField(
-        controller: controller,
-      ),
-      actions: [
-        TextButton(
-          child: Text(AppLocalizations.of(context).cancel),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: Text(AppLocalizations.of(context).filename),
+        content: TextField(
+          controller: controller,
         ),
-        FilledButton(
-          child: Text(AppLocalizations.of(context).confirm),
-          onPressed: () {
-            Navigator.of(context).pop();
-            result = controller.text;
-          },
-        ),
-      ],
-    );
-  },
+        actions: [
+          TextButton(
+            child: Text(AppLocalizations.of(context).cancel),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+          FilledButton(
+            child: Text(AppLocalizations.of(context).confirm),
+            onPressed: () {
+              Navigator.of(context).pop();
+              result = controller.text;
+            },
+          ),
+        ],
+      );
+    },
   );
 
   return result;
 }
 
-Future<String?> mergeImagesIntoPDF(List<String> paths, BuildContext context) async {
+Future<String?> mergeImagesIntoPDF(
+    List<String> paths, BuildContext context) async {
   String? pathName = await askFileName(context);
   if (pathName == null) {
     return null;
@@ -393,19 +403,15 @@ Future<String?> mergeImagesIntoPDF(List<String> paths, BuildContext context) asy
   for (String path in paths) {
     File file = File(path);
     final bytes = await file.readAsBytes();
-    pdf.addPage(
-      pw.Page(
-        build: (pw.Context context) {
-          return pw.Center(
-            child: pw.Image(
-              pw.MemoryImage(bytes)
-            ),
-            widthFactor: double.infinity,
-          );
-        },
-        margin: pw.EdgeInsets.zero,
-      )
-    );
+    pdf.addPage(pw.Page(
+      build: (pw.Context context) {
+        return pw.Center(
+          child: pw.Image(pw.MemoryImage(bytes)),
+          widthFactor: double.infinity,
+        );
+      },
+      margin: pw.EdgeInsets.zero,
+    ));
   }
 
   final cache = (await getApplicationCacheDirectory()).path;
@@ -416,7 +422,8 @@ Future<String?> mergeImagesIntoPDF(List<String> paths, BuildContext context) asy
   return path;
 }
 
-Future<List<String>?> imageCycler(BuildContext context, List<String> paths) async {
+Future<List<String>?> imageCycler(
+    BuildContext context, List<String> paths) async {
   return await Navigator.push(
     context,
     MaterialPageRoute(
@@ -481,15 +488,14 @@ class ImageCyclerScreenState extends State<ImageCyclerScreen> {
             children: [
               if (paths.isNotEmpty)
                 (Expanded(
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: InteractiveViewer(
-                      maxScale: 10,
-                      minScale: 1,
-                      child: Image.file(File(paths[currentIndex])),
-                    ),
-                  )
-                )),
+                    child: SizedBox(
+                  width: double.infinity,
+                  child: InteractiveViewer(
+                    maxScale: 10,
+                    minScale: 1,
+                    child: Image.file(File(paths[currentIndex])),
+                  ),
+                ))),
               Align(
                 alignment: Alignment.bottomCenter,
                 child: SizedBox(
@@ -498,36 +504,45 @@ class ImageCyclerScreenState extends State<ImageCyclerScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
                       Flexible(
-                          child: currentIndex > 0 ? IconButton(
-                            padding: EdgeInsets.all(0.0),
-                            icon: Icon(Icons.arrow_left_rounded, size: 48.0),
-                            tooltip: AppLocalizations.of(context).previousImage,
-                            onPressed: () {
-                              setState(() {
-                                currentIndex = currentIndex - 1;
-                              });
-                            },
-                          ) : SizedBox(width: 48.0)
-                      ),
+                          child: currentIndex > 0
+                              ? IconButton(
+                                  padding: EdgeInsets.all(0.0),
+                                  icon: Icon(Icons.arrow_left_rounded,
+                                      size: 48.0),
+                                  tooltip: AppLocalizations.of(context)
+                                      .previousImage,
+                                  onPressed: () {
+                                    setState(() {
+                                      currentIndex = currentIndex - 1;
+                                    });
+                                  },
+                                )
+                              : SizedBox(width: 48.0)),
                       Flexible(
-                          child: IconButton(
-                            padding: EdgeInsets.all(0.0),
-                            icon: Icon(Icons.delete_forever_rounded, size: 32.0,),
-                            tooltip: AppLocalizations.of(context).deleteImage,
-                            onPressed: () => removeImage(currentIndex),
-                          ),
-                      ),
-                      Flexible(
-                        child: currentIndex < paths.length - 1 ? IconButton(
+                        child: IconButton(
                           padding: EdgeInsets.all(0.0),
-                          icon: Icon(Icons.arrow_right_rounded, size: 48.0),
-                          tooltip: AppLocalizations.of(context).nextImage,
-                          onPressed: () {
-                            setState(() {
-                              currentIndex = currentIndex + 1;
-                            });
-                          },
-                        ) : SizedBox(width: 48.0),
+                          icon: Icon(
+                            Icons.delete_forever_rounded,
+                            size: 32.0,
+                          ),
+                          tooltip: AppLocalizations.of(context).deleteImage,
+                          onPressed: () => removeImage(currentIndex),
+                        ),
+                      ),
+                      Flexible(
+                        child: currentIndex < paths.length - 1
+                            ? IconButton(
+                                padding: EdgeInsets.all(0.0),
+                                icon:
+                                    Icon(Icons.arrow_right_rounded, size: 48.0),
+                                tooltip: AppLocalizations.of(context).nextImage,
+                                onPressed: () {
+                                  setState(() {
+                                    currentIndex = currentIndex + 1;
+                                  });
+                                },
+                              )
+                            : SizedBox(width: 48.0),
                       )
                     ],
                   ),

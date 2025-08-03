@@ -46,39 +46,40 @@ class _FocusedMenuState extends State<FocusedMenu> {
     return Padding(
       key: containerKey,
       padding: widget.margin,
-      child: Stack( // Dirty but needed to have a Ripple effect on every possible widget.
+      child: Stack(
+        // Dirty but needed to have a Ripple effect on every possible widget.
         children: [
           widget.child,
           Positioned.fill(
             child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(12.0),
-                onTap: () async {
-                  final dimensions = getDimensions();
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12.0),
+                  onTap: () async {
+                    final dimensions = getDimensions();
 
-                  if (dimensions == null) {
-                    return;
-                  }
+                    if (dimensions == null) {
+                      return;
+                    }
 
-                  showDialog(
-                    context: context,
-                    useSafeArea: false,
-                    builder: (context) {
-                      return FocusedMenuDetails(
-                        childOffset: dimensions.offset,
-                        childSize: dimensions.size,
-                        items: widget.items,
-                        margin: widget.margin,
-                        child: Padding(
-                          padding: widget.margin,
-                          child: widget.child,
-                        ),
-                      );
-                    },
-                  );
-                },
-              )),
+                    showDialog(
+                      context: context,
+                      useSafeArea: false,
+                      builder: (context) {
+                        return FocusedMenuDetails(
+                          childOffset: dimensions.offset,
+                          childSize: dimensions.size,
+                          items: widget.items,
+                          margin: widget.margin,
+                          child: Padding(
+                            padding: widget.margin,
+                            child: widget.child,
+                          ),
+                        );
+                      },
+                    );
+                  },
+                )),
           )
         ],
       ),

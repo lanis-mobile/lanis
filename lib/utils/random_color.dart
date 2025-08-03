@@ -5,7 +5,8 @@ import 'package:flutter/material.dart';
 class RandomColor {
   static Color random({int alpha = 255}) {
     final random = Random();
-    return Color.fromARGB(alpha, random.nextInt(255), random.nextInt(255), random.nextInt(255));
+    return Color.fromARGB(
+        alpha, random.nextInt(255), random.nextInt(255), random.nextInt(255));
   }
 
   static ColorPair bySeed(String seed) {
@@ -38,8 +39,11 @@ class RandomColor {
 
 class ColorPair {
   final Color primary;
-  Color get secondary => primary.computeLuminance() > 0.5 ? Colors.black : Colors.white;
-  Color get inversePrimary => Color.fromARGB(255, 255 - primary.r.toInt(), 255 - primary.g.toInt(), 255 - primary.b.toInt()).withValues(alpha: 0.75);
+  Color get secondary =>
+      primary.computeLuminance() > 0.5 ? Colors.black : Colors.white;
+  Color get inversePrimary => Color.fromARGB(255, 255 - primary.r.toInt(),
+          255 - primary.g.toInt(), 255 - primary.b.toInt())
+      .withValues(alpha: 0.75);
 
   ColorPair(this.primary);
 }

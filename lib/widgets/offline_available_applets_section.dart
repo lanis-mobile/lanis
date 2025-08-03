@@ -10,24 +10,30 @@ class OfflineAvailableAppletsSection extends StatefulWidget {
   const OfflineAvailableAppletsSection({super.key});
 
   @override
-  State<OfflineAvailableAppletsSection> createState() => _OfflineAvailableAppletsSectionState();
+  State<OfflineAvailableAppletsSection> createState() =>
+      _OfflineAvailableAppletsSectionState();
 }
 
-class _OfflineAvailableAppletsSectionState extends State<OfflineAvailableAppletsSection> {
+class _OfflineAvailableAppletsSectionState
+    extends State<OfflineAvailableAppletsSection> {
   bool _loading = true;
   List<OfflineApplet> possibleOfflineApplets = [];
 
   Future<void> loadPossibleOfflineApplets() async {
-    final accounts = await accountDatabase.select(accountDatabase.accountsTable).get();
+    final accounts =
+        await accountDatabase.select(accountDatabase.accountsTable).get();
     for (final account in accounts) {
       final userDatabase = AccountPreferencesDatabase(localId: account.id);
       final applets = await userDatabase.select(userDatabase.appletData).get();
       for (final applet in applets) {
         if (applet.json != null) {
-          possibleOfflineApplets.add(OfflineApplet(
-            localUserId: account.id,
-            userDisplayName: accounts.length > 1 ? "${account.schoolName} (${account.username})" : account.schoolName,
-            appletId: applet.appletId,
+          possibleOfflineApplets.add(
+            OfflineApplet(
+              localUserId: account.id,
+              userDisplayName: accounts.length > 1
+                  ? "${account.schoolName} (${account.username})"
+                  : account.schoolName,
+              appletId: applet.appletId,
             ),
           );
         }
@@ -57,25 +63,29 @@ class _OfflineAvailableAppletsSectionState extends State<OfflineAvailableApplets
     }
     return SafeArea(
       child: Column(
-        children: possibleOfflineApplets.map(
+        children: possibleOfflineApplets
+            .map(
               (offlineApplet) => ListTile(
-              title: Text(offlineApplet.definition.label(context)),
-              subtitle: Text(offlineApplet.userDisplayName),
-              leading: offlineApplet.definition.icon,
-              onTap: () async {
-                ClearTextAccount acc = await accountDatabase.getClearTextAccountFromId(offlineApplet.localUserId);
-                sph = SPH(account: acc);
-                if(context.mounted) {
-                  Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => offlineApplet.definition.bodyBuilder!(context, acc.accountType ?? AccountType.student, null),
-                  ),
-                );
-                }
-              }
-          ),
-        ).toList(growable: false),
+                  title: Text(offlineApplet.definition.label(context)),
+                  subtitle: Text(offlineApplet.userDisplayName),
+                  leading: offlineApplet.definition.icon,
+                  onTap: () async {
+                    ClearTextAccount acc = await accountDatabase
+                        .getClearTextAccountFromId(offlineApplet.localUserId);
+                    sph = SPH(account: acc);
+                    if (context.mounted) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              offlineApplet.definition.bodyBuilder!(context,
+                                  acc.accountType ?? AccountType.student, null),
+                        ),
+                      );
+                    }
+                  }),
+            )
+            .toList(growable: false),
       ),
     );
   }
@@ -89,7 +99,8 @@ class OfflineApplet {
   final String appletId;
   final AccountType? accountType;
 
-  int get _defIndex => _definitionIndex ??= AppDefinitions.getIndexByPhpIdentifier(appletId);
+  int get _defIndex =>
+      _definitionIndex ??= AppDefinitions.getIndexByPhpIdentifier(appletId);
 
   AppletDefinition get definition => AppDefinitions.applets[_defIndex];
 

@@ -67,17 +67,22 @@ void showFileModal(BuildContext context, FileInfo file) {
                       Icon(getIconByFileExtension(file.extension)),
                       const SizedBox(width: 10.0),
                       Expanded(
-                        child: Text(file.name ?? AppLocalizations.of(context).unknownFile, overflow: TextOverflow.ellipsis,),),
-                      Text(file.size ?? "", style: Theme.of(context).textTheme.labelMedium),
+                        child: Text(
+                          file.name ?? AppLocalizations.of(context).unknownFile,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Text(file.size ?? "",
+                          style: Theme.of(context).textTheme.labelMedium),
                       const SizedBox(width: 22.0),
                     ],
                   ),
-                  SizedBox(height: 8,),
+                  SizedBox(
+                    height: 8,
+                  ),
                   Divider(),
                   MenuItemButton(
-                    onPressed: () => {
-                      launchFile(context, file, () {})
-                    },
+                    onPressed: () => {launchFile(context, file, () {})},
                     child: Row(
                       children: [
                         Padding(padding: EdgeInsets.only(left: 10.0)),
@@ -87,11 +92,9 @@ void showFileModal(BuildContext context, FileInfo file) {
                       ],
                     ),
                   ),
-                  if (!Platform.isIOS && !file.isLocal) (
-                    MenuItemButton(
-                      onPressed: () => {
-                        saveFile(context, file, () {})
-                      },
+                  if (!Platform.isIOS && !file.isLocal)
+                    (MenuItemButton(
+                      onPressed: () => {saveFile(context, file, () {})},
                       child: Row(
                         children: [
                           Padding(padding: EdgeInsets.only(left: 10.0)),
@@ -100,13 +103,10 @@ void showFileModal(BuildContext context, FileInfo file) {
                           Text(AppLocalizations.of(context).saveFile)
                         ],
                       ),
-                    )
-                  ),
-                  if (!Platform.isLinux) (
-                    MenuItemButton(
-                      onPressed: () => {
-                        shareFile(context, file, () {})
-                      },
+                    )),
+                  if (!Platform.isLinux)
+                    (MenuItemButton(
+                      onPressed: () => {shareFile(context, file, () {})},
                       child: Row(
                         children: [
                           Padding(padding: EdgeInsets.only(left: 10.0)),
@@ -115,15 +115,13 @@ void showFileModal(BuildContext context, FileInfo file) {
                           Text(AppLocalizations.of(context).shareFile)
                         ],
                       ),
-                    )
-                  )
+                    ))
                 ],
               ),
             ),
           ),
         );
-      }
-  );
+      });
 }
 
 void launchFile(BuildContext context, FileInfo file, Function callback) {
@@ -133,7 +131,8 @@ void launchFile(BuildContext context, FileInfo file, Function callback) {
     // For local files, open directly
     OpenFile.open(file.localPath).then((result) {
       //sketchy, but "open_file" left us no other choice
-      if (result.message.contains("No APP found to open this file") && context.mounted) {
+      if (result.message.contains("No APP found to open this file") &&
+          context.mounted) {
         showDialog(
             context: context,
             builder: (context) => AlertDialog(
@@ -161,33 +160,33 @@ void launchFile(BuildContext context, FileInfo file, Function callback) {
       barrierDismissible: false,
       builder: (BuildContext context) => downloadDialog(context, file.size));
 
-  sph!.storage.downloadFile(file.url.toString(), filename).then((filepath) async {
-    if(context.mounted) Navigator.of(context).pop();
+  sph!.storage
+      .downloadFile(file.url.toString(), filename)
+      .then((filepath) async {
+    if (context.mounted) Navigator.of(context).pop();
 
     if (filepath == "" && context.mounted) {
-      showDialog(
-          context: context,
-          builder: (context) => errorDialog(context));
+      showDialog(context: context, builder: (context) => errorDialog(context));
     } else {
       final result = await OpenFile.open(filepath);
       //sketchy, but "open_file" left us no other choice
-      if (result.message.contains("No APP found to open this file") && context.mounted) {
+      if (result.message.contains("No APP found to open this file") &&
+          context.mounted) {
         showDialog(
             context: context,
             builder: (context) => AlertDialog(
-              title: Text("${AppLocalizations.of(context).error}!"),
-              icon: const Icon(Icons.error),
-              content: Text(
-                  AppLocalizations.of(context).noAppToOpen),
-              actions: [
-                FilledButton(
-                  child: const Text('Ok'),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
-              ],
-            ));
+                  title: Text("${AppLocalizations.of(context).error}!"),
+                  icon: const Icon(Icons.error),
+                  content: Text(AppLocalizations.of(context).noAppToOpen),
+                  actions: [
+                    FilledButton(
+                      child: const Text('Ok'),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                  ],
+                ));
       }
       callback();
     }
@@ -216,13 +215,13 @@ void saveFile(BuildContext context, FileInfo file, Function callback) {
       barrierDismissible: false,
       builder: (BuildContext context) => downloadDialog(context, file.size));
 
-  sph!.storage.downloadFile(file.url.toString(), filename).then((filepath) async {
-    if(context.mounted) Navigator.of(context).pop();
+  sph!.storage
+      .downloadFile(file.url.toString(), filename)
+      .then((filepath) async {
+    if (context.mounted) Navigator.of(context).pop();
 
     if (filepath == "" && context.mounted) {
-      showDialog(
-          context: context,
-          builder: (context) => errorDialog(context));
+      showDialog(context: context, builder: (context) => errorDialog(context));
     } else {
       await platform.invokeMethod('saveFile', {
         'fileName': filename,
@@ -232,7 +231,7 @@ void saveFile(BuildContext context, FileInfo file, Function callback) {
       callback();
     }
   });
-    }
+}
 
 void shareFile(BuildContext context, FileInfo file, Function callback) {
   final String filename = file.name ?? AppLocalizations.of(context).unknownFile;
@@ -241,9 +240,9 @@ void shareFile(BuildContext context, FileInfo file, Function callback) {
     // For local files, share directly
     Share.shareXFiles([XFile(file.localPath!)]).then((_) {
       callback();
-  });
+    });
     return;
-}
+  }
 
   // For remote files, download then share
   showDialog(
@@ -251,13 +250,13 @@ void shareFile(BuildContext context, FileInfo file, Function callback) {
       barrierDismissible: false,
       builder: (BuildContext context) => downloadDialog(context, file.size));
 
-  sph!.storage.downloadFile(file.url.toString(), filename).then((filepath) async {
-    if(context.mounted) Navigator.of(context).pop();
+  sph!.storage
+      .downloadFile(file.url.toString(), filename)
+      .then((filepath) async {
+    if (context.mounted) Navigator.of(context).pop();
 
     if (filepath == "" && context.mounted) {
-      showDialog(
-          context: context,
-          builder: (context) => errorDialog(context));
+      showDialog(context: context, builder: (context) => errorDialog(context));
     } else {
       await Share.shareXFiles([XFile(filepath)]);
       callback();
@@ -266,33 +265,33 @@ void shareFile(BuildContext context, FileInfo file, Function callback) {
 }
 
 AlertDialog errorDialog(BuildContext context) => AlertDialog(
-  title: Text("${AppLocalizations.of(context).error}!"),
-  icon: const Icon(Icons.error),
-  content: Text(
-      AppLocalizations.of(context).reportError),
-  actions: [
-    TextButton(
-        onPressed: () {
-          launchUrl(Uri.parse("https://github.com/alessioC42/lanis-mobile/issues"));
-        },
-        child: const Text("GitHub")
-    ),
-    FilledButton(
-      child: const Text('Ok'),
-      onPressed: () {
-        Navigator.of(context).pop();
-      },
-    ),
-  ],
-);
+      title: Text("${AppLocalizations.of(context).error}!"),
+      icon: const Icon(Icons.error),
+      content: Text(AppLocalizations.of(context).reportError),
+      actions: [
+        TextButton(
+            onPressed: () {
+              launchUrl(Uri.parse(
+                  "https://github.com/alessioC42/lanis-mobile/issues"));
+            },
+            child: const Text("GitHub")),
+        FilledButton(
+          child: const Text('Ok'),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+      ],
+    );
 
-AlertDialog downloadDialog(BuildContext context, String? fileSize) => AlertDialog(
-  title: Text("Download... ${fileSize ?? ""}"),
-  content: const Center(
-    heightFactor: 1.1,
-    child: CircularProgressIndicator(),
-  ),
-);
+AlertDialog downloadDialog(BuildContext context, String? fileSize) =>
+    AlertDialog(
+      title: Text("Download... ${fileSize ?? ""}"),
+      content: const Center(
+        heightFactor: 1.1,
+        child: CircularProgressIndicator(),
+      ),
+    );
 
 Future<File> moveFile(String originPath, String targetPath) async {
   final originFile = File.fromUri(Uri.file(originPath));

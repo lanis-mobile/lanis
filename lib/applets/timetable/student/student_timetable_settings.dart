@@ -192,7 +192,8 @@ class _StudentTimetableSettingsState
                   ),
                   ElevatedButton(
                       onPressed: (nameController.text.isNotEmpty &&
-                              hours.indexOf(startTime) <= hours.indexOf(endTime))
+                              hours.indexOf(startTime) <=
+                                  hours.indexOf(endTime))
                           ? () {
                               TimetableSubject newLesson = TimetableSubject(
                                   id:
@@ -273,7 +274,7 @@ class _StudentTimetableSettingsState
             }
 
             List<List<TimetableSubject>>? customLessons =
-            TimeTableHelper.getCustomLessons(settings);
+                TimeTableHelper.getCustomLessons(settings);
 
             List<String> weekDays =
                 DateFormat.EEEE(Platform.localeName).dateSymbols.WEEKDAYS;
@@ -287,9 +288,8 @@ class _StudentTimetableSettingsState
                   TabBar(
                     isScrollable: true,
                     tabAlignment: TabAlignment.center,
-                    tabs: weekDays
-                        .map((dayName) => Tab(text: dayName))
-                        .toList(),
+                    tabs:
+                        weekDays.map((dayName) => Tab(text: dayName)).toList(),
                   ),
                   Expanded(
                     child: TabBarView(
@@ -297,7 +297,7 @@ class _StudentTimetableSettingsState
                         final dayLessons =
                             lessons[weekDays.indexOf(dayName)] ?? [];
                         final List<TimetableSubject>? customDayLessons =
-                        customLessons?[weekDays.indexOf(dayName)];
+                            customLessons?[weekDays.indexOf(dayName)];
                         final currentDay = weekDays.indexOf(dayName);
                         return SingleChildScrollView(
                           child: Padding(
@@ -308,7 +308,7 @@ class _StudentTimetableSettingsState
                                 Card(
                                   child: Column(
                                     crossAxisAlignment:
-                                    CrossAxisAlignment.stretch,
+                                        CrossAxisAlignment.stretch,
                                     children: [
                                       Padding(
                                         padding: const EdgeInsets.all(8.0),
@@ -334,10 +334,8 @@ class _StudentTimetableSettingsState
                                                 setState(() {
                                                   updateSettings(
                                                       'hidden-lessons',
-                                                      settings[
-                                                      'hidden-lessons']
-                                                        ..remove(
-                                                            lesson.id));
+                                                      settings['hidden-lessons']
+                                                        ..remove(lesson.id));
                                                 });
                                               },
                                             ),
@@ -345,8 +343,7 @@ class _StudentTimetableSettingsState
                                         }),
                                       if (dayLessons.isEmpty)
                                         Padding(
-                                          padding:
-                                          const EdgeInsets.all(8.0),
+                                          padding: const EdgeInsets.all(8.0),
                                           child: Text(
                                             AppLocalizations.of(context)
                                                 .hiddenLessonsDescription,
@@ -354,9 +351,9 @@ class _StudentTimetableSettingsState
                                                 .textTheme
                                                 .bodySmall!
                                                 .copyWith(
-                                                color: Theme.of(context)
-                                                    .colorScheme
-                                                    .onSurfaceVariant),
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .onSurfaceVariant),
                                           ),
                                         )
                                     ],
@@ -365,7 +362,7 @@ class _StudentTimetableSettingsState
                                 Card(
                                   child: Column(
                                     crossAxisAlignment:
-                                    CrossAxisAlignment.stretch,
+                                        CrossAxisAlignment.stretch,
                                     children: [
                                       Padding(
                                         padding: const EdgeInsets.all(8.0),
@@ -387,8 +384,7 @@ class _StudentTimetableSettingsState
                                               "${lesson.startTime.format(context)} - ${lesson.endTime.format(context)}",
                                             ),
                                             trailing: Row(
-                                              mainAxisSize:
-                                              MainAxisSize.min,
+                                              mainAxisSize: MainAxisSize.min,
                                               children: [
                                                 IconButton(
                                                   icon: Icon(Icons.edit),
@@ -405,8 +401,7 @@ class _StudentTimetableSettingsState
                                                   icon: Icon(Icons.delete),
                                                   onPressed: () {
                                                     setState(() {
-                                                      customLessons![
-                                                      currentDay]
+                                                      customLessons![currentDay]
                                                           .remove(lesson);
                                                       updateSettings(
                                                           'custom-lessons',
@@ -455,9 +450,8 @@ class _StudentTimetableSettingsState
                           Icon(
                             Icons.info_outline_rounded,
                             size: 20.0,
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurfaceVariant,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                           SizedBox(
                             height: 8.0,
@@ -469,9 +463,9 @@ class _StudentTimetableSettingsState
                                 .textTheme
                                 .bodySmall!
                                 .copyWith(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant),
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant),
                           )
                         ],
                       )),

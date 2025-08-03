@@ -214,7 +214,7 @@ class SubstitutionPlan {
   final List<SubstitutionDay> days;
   DateTime lastUpdated;
 
-  SubstitutionPlan({List<SubstitutionDay>? days, DateTime? lastUpdated}) 
+  SubstitutionPlan({List<SubstitutionDay>? days, DateTime? lastUpdated})
       : days = days ?? [],
         lastUpdated = lastUpdated ?? DateTime.now();
 
@@ -271,5 +271,6 @@ class SubstitutionInfo {
 
   SubstitutionInfo.fromJson(Map<String, dynamic> json)
       : header = json['header'] as String,
-        values = (json['values'] as List<dynamic>).map((e) => e as String).toList();
+        values =
+            (json['values'] as List<dynamic>).map((e) => e as String).toList();
 }

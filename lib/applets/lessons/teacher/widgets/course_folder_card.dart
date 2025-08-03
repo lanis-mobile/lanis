@@ -42,8 +42,8 @@ class CourseFolderCard extends StatelessWidget {
                   Text(
                     courseFolder.topic,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                   SizedBox(width: 0),
                 ],

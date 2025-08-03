@@ -21,7 +21,8 @@ import 'package:stack_trace/stack_trace.dart';
 
 import 'applets/conversations/view/shared.dart';
 import 'background_service.dart';
-import 'core/database/account_database/account_db.dart' show secureStorage, accountDatabase, AccountDatabase;
+import 'core/database/account_database/account_db.dart'
+    show secureStorage, accountDatabase, AccountDatabase;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,37 +36,38 @@ void main() async {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
   accountDatabase = AccountDatabase();
 
-
-  if (((await secureStorage.read(key: 'encryption_key')) == null && (await accountDatabase.select(accountDatabase.accountsTable).get()).isNotEmpty)) {
-    logger.w('iOS build with old keychain detected, deleting all accounts and data.');
+  if (((await secureStorage.read(key: 'encryption_key')) == null &&
+      (await accountDatabase.select(accountDatabase.accountsTable).get())
+          .isNotEmpty)) {
+    logger.w(
+        'iOS build with old keychain detected, deleting all accounts and data.');
     await secureStorage.deleteAll();
     await secureStorage.write(
       key: 'ios-cert-ownership-transfer',
       value: 'done',
     );
     await accountDatabase.deleteAllAccounts();
-    
+
     final directory = await getTemporaryDirectory();
     final userDir = Directory(directory.path);
     if (userDir.existsSync()) {
       for (var entity in userDir.listSync(recursive: false)) {
-      entity.deleteSync(recursive: true);
+        entity.deleteSync(recursive: true);
       }
     }
     final directory3 = await getApplicationCacheDirectory();
     final userDir3 = Directory(directory3.path);
     if (userDir3.existsSync()) {
       for (var entity in userDir3.listSync(recursive: false)) {
-      entity.deleteSync(recursive: true);
+        entity.deleteSync(recursive: true);
       }
     }
   }
-  
 
   enableTransparentNavigationBar();
 
   authenticationState.login().then((v) {
-    if(sph?.session != null) QuickActionsStartUp();
+    if (sph?.session != null) QuickActionsStartUp();
   });
 
   await setupBackgroundService(accountDatabase);
@@ -104,17 +106,25 @@ class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder(
-      stream: accountDatabase.kv.subscribeMultiple(['color', 'theme', 'is-amoled']),
-      builder: (BuildContext context, AsyncSnapshot<Map<String, dynamic>> snapshot) {
+      stream:
+          accountDatabase.kv.subscribeMultiple(['color', 'theme', 'is-amoled']),
+      builder:
+          (BuildContext context, AsyncSnapshot<Map<String, dynamic>> snapshot) {
         late ThemeMode mode;
         late Themes theme;
         if (snapshot.hasData) {
-          mode = snapshot.data!['theme'] == 'system' ? ThemeMode.system : snapshot.data!['theme'] == 'dark' ? ThemeMode.dark : ThemeMode.light;
+          mode = snapshot.data!['theme'] == 'system'
+              ? ThemeMode.system
+              : snapshot.data!['theme'] == 'dark'
+                  ? ThemeMode.dark
+                  : ThemeMode.light;
 
           if (snapshot.data!['color'] == 'standard') {
             theme = Themes.standardTheme;
-          } else if (snapshot.data!['color'] != 'standard' && snapshot.data!['color'] != 'dynamic') {
-            if (Themes.flutterColorThemes.containsKey(snapshot.data!['color'])) {
+          } else if (snapshot.data!['color'] != 'standard' &&
+              snapshot.data!['color'] != 'dynamic') {
+            if (Themes.flutterColorThemes
+                .containsKey(snapshot.data!['color'])) {
               theme = Themes.flutterColorThemes[snapshot.data!['color']!]!;
             } else {
               theme = Themes.standardTheme;
@@ -140,10 +150,7 @@ class App extends StatelessWidget {
               darkTheme = Themes.getAmoledThemes(dynamicTheme).darkTheme;
             }
 
-            theme = Themes(
-              dynamicTheme.lightTheme,
-              darkTheme
-            );
+            theme = Themes(dynamicTheme.lightTheme, darkTheme);
           }
 
           if (mode == ThemeMode.light ||
@@ -155,7 +162,8 @@ class App extends StatelessWidget {
               mode == ThemeMode.system &&
                   MediaQuery.of(context).platformBrightness ==
                       Brightness.dark) {
-            BubbleStyles.init(theme.darkTheme ?? Themes.standardTheme.darkTheme!);
+            BubbleStyles.init(
+                theme.darkTheme ?? Themes.standardTheme.darkTheme!);
           }
 
           return MaterialApp(
@@ -181,7 +189,7 @@ class App extends StatelessWidget {
 }
 
 Widget errorWidget(FlutterErrorDetails details, {BuildContext? context}) {
-  if(context != null) AppLocalizations.of(context);
+  if (context != null) AppLocalizations.of(context);
 
   String error = details.exception.toString();
 
@@ -189,7 +197,9 @@ Widget errorWidget(FlutterErrorDetails details, {BuildContext? context}) {
     color: Color.fromARGB(255, 249, 222, 220),
     child: Padding(
       padding: const EdgeInsets.symmetric(
-          horizontal: 20.0, vertical: 32.0,),
+        horizontal: 20.0,
+        vertical: 32.0,
+      ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -199,18 +209,23 @@ Widget errorWidget(FlutterErrorDetails details, {BuildContext? context}) {
             size: 60,
             color: Color.fromARGB(255, 179, 38, 30),
           ),
-          SizedBox(height: 24,),
+          SizedBox(
+            height: 24,
+          ),
           DefaultTextStyle(
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
               color: Color.fromARGB(255, 179, 38, 30),
             ),
-            child: Text(AppLocalizations.current.errorOccurred,
-                textAlign: TextAlign.center,
+            child: Text(
+              AppLocalizations.current.errorOccurred,
+              textAlign: TextAlign.center,
             ),
           ),
-          SizedBox(height: 8,),
+          SizedBox(
+            height: 8,
+          ),
           DefaultTextStyle(
             style: const TextStyle(
               fontSize: 16,
@@ -221,7 +236,9 @@ Widget errorWidget(FlutterErrorDetails details, {BuildContext? context}) {
               textAlign: TextAlign.center,
             ),
           ),
-          SizedBox(height: 24,),
+          SizedBox(
+            height: 24,
+          ),
           FilledButton(
             onPressed: () async {
               await Clipboard.setData(ClipboardData(

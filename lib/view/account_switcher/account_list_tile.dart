@@ -36,16 +36,24 @@ class AccountListTile extends StatelessWidget {
       children: [
         Row(
           children: [
-            const SizedBox(width: 16,),
+            const SizedBox(
+              width: 16,
+            ),
             if (isLoggedInAccount)
-              Text('Active Account',
+              Text(
+                'Active Account',
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: Theme.of(context).colorScheme.tertiary,
-                ),
+                      color: Theme.of(context).colorScheme.tertiary,
+                    ),
               ),
             Spacer(),
-            Text(lastLoginInDays, style: Theme.of(context).textTheme.labelSmall,),
-            const SizedBox(width: 16,),
+            Text(
+              lastLoginInDays,
+              style: Theme.of(context).textTheme.labelSmall,
+            ),
+            const SizedBox(
+              width: 16,
+            ),
           ],
         ),
         ListTile(
@@ -74,7 +82,10 @@ class AccountListTile extends StatelessWidget {
             mainAxisSize: MainAxisSize.max,
             children: [
               Expanded(
-                child: Text(schoolName, overflow: TextOverflow.ellipsis,),
+                child: Text(
+                  schoolName,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
               Text(lastLoginInDays),
             ],
@@ -86,7 +97,8 @@ class AccountListTile extends StatelessWidget {
                 context: context,
                 builder: (context) => AlertDialog(
                   title: Text(AppLocalizations.of(context).logout),
-                  content: Text(AppLocalizations.of(context).logoutConfirmation),
+                  content:
+                      Text(AppLocalizations.of(context).logoutConfirmation),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context, false),

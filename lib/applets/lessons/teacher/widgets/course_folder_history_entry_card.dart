@@ -14,18 +14,26 @@ class CourseFolderHistoryEntryCard extends StatefulWidget {
   final CourseFolderHistoryEntry entry;
   final String courseId;
   final void Function() afterDeleted;
-  const CourseFolderHistoryEntryCard({super.key, required this.afterDeleted, required this.entry, required this.courseId});
+  const CourseFolderHistoryEntryCard(
+      {super.key,
+      required this.afterDeleted,
+      required this.entry,
+      required this.courseId});
 
   @override
-  State<CourseFolderHistoryEntryCard> createState() => _CourseFolderHistoryEntryCardState();
+  State<CourseFolderHistoryEntryCard> createState() =>
+      _CourseFolderHistoryEntryCardState();
 }
 
-class _CourseFolderHistoryEntryCardState extends State<CourseFolderHistoryEntryCard> {
+class _CourseFolderHistoryEntryCardState
+    extends State<CourseFolderHistoryEntryCard> {
   bool _showFiles = false;
 
   bool get _isToday {
     final now = DateTime.now();
-    return widget.entry.date.year == now.year && widget.entry.date.month == now.month && widget.entry.date.day == now.day;
+    return widget.entry.date.year == now.year &&
+        widget.entry.date.month == now.month &&
+        widget.entry.date.day == now.day;
   }
 
   bool _isDayInFuture(DateTime date) {
@@ -58,20 +66,21 @@ class _CourseFolderHistoryEntryCardState extends State<CourseFolderHistoryEntryC
       },
     );
     if (delete == true) {
-      final result = await sph!.parser.lessonsTeacherParser.deleteEntry(widget.courseId, widget.entry.id);
+      final result = await sph!.parser.lessonsTeacherParser
+          .deleteEntry(widget.courseId, widget.entry.id);
       if (result) {
-        if(mounted) {
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Eintrag gelöscht'),
-        ));
+            content: Text('Eintrag gelöscht'),
+          ));
         }
         await Future.delayed(Duration(seconds: 1));
         widget.afterDeleted();
       } else {
-        if(mounted) {
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Eintrag konnte nicht gelöscht werden'),
-        ));
+            content: Text('Eintrag konnte nicht gelöscht werden'),
+          ));
         }
       }
     }
@@ -99,7 +108,11 @@ class _CourseFolderHistoryEntryCardState extends State<CourseFolderHistoryEntryC
                           spacing: 4,
                           children: [
                             Icon(Icons.schedule, size: 18),
-                            Text(AppLocalizations.of(context).dateWithHours(DateFormat.yMEd(Localizations.localeOf(context).toString()).format(widget.entry.date), widget.entry.schoolHours)),
+                            Text(AppLocalizations.of(context).dateWithHours(
+                                DateFormat.yMEd(Localizations.localeOf(context)
+                                        .toString())
+                                    .format(widget.entry.date),
+                                widget.entry.schoolHours)),
                             if (_isToday)
                               Container(
                                 decoration: BoxDecoration(
@@ -107,8 +120,10 @@ class _CourseFolderHistoryEntryCardState extends State<CourseFolderHistoryEntryC
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                                  child: Text('Heute',
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 4.0),
+                                  child: Text(
+                                    'Heute',
                                     style: TextStyle(
                                       color: Colors.white,
                                     ),
@@ -122,17 +137,24 @@ class _CourseFolderHistoryEntryCardState extends State<CourseFolderHistoryEntryC
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 4.0),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     spacing: 4,
                                     children: [
-                                      Text('Vorab',
+                                      Text(
+                                        'Vorab',
                                         style: TextStyle(
                                           color: Colors.white,
                                         ),
                                       ),
-                                      Icon(widget.entry.isAvailableInAdvance ? Icons.visibility : Icons.visibility_off, size: 16, color: Colors.white),
+                                      Icon(
+                                          widget.entry.isAvailableInAdvance
+                                              ? Icons.visibility
+                                              : Icons.visibility_off,
+                                          size: 16,
+                                          color: Colors.white),
                                     ],
                                   ),
                                 ),
@@ -160,12 +182,15 @@ class _CourseFolderHistoryEntryCardState extends State<CourseFolderHistoryEntryC
                     }
                   },
                   itemBuilder: (BuildContext context) {
-                    return {'Eintrag löschen', 'Eintrag bearbeiten'}.map((String choice) {
+                    return {'Eintrag löschen', 'Eintrag bearbeiten'}
+                        .map((String choice) {
                       return PopupMenuItem<String>(
                         value: choice,
                         child: Row(
                           children: [
-                            Icon(choice == 'Eintrag löschen' ? Icons.delete : Icons.edit),
+                            Icon(choice == 'Eintrag löschen'
+                                ? Icons.delete
+                                : Icons.edit),
                             const SizedBox(width: 4.0),
                             Text(choice),
                           ],
@@ -177,7 +202,8 @@ class _CourseFolderHistoryEntryCardState extends State<CourseFolderHistoryEntryC
               ],
             ),
             Padding(
-              padding: const EdgeInsets.only(left: 12.0, right: 12.0, bottom: 8.0),
+              padding:
+                  const EdgeInsets.only(left: 12.0, right: 12.0, bottom: 8.0),
               child: Column(
                 children: [
                   if (widget.entry.content != null) ...[
@@ -189,24 +215,35 @@ class _CourseFolderHistoryEntryCardState extends State<CourseFolderHistoryEntryC
                         borderRadius: BorderRadius.only(
                           topLeft: Radius.circular(8),
                           topRight: Radius.circular(8),
-                          bottomLeft: widget.entry.homework == null ? Radius.circular(8) : Radius.zero,
-                          bottomRight: widget.entry.homework == null ? Radius.circular(8) : Radius.zero,
+                          bottomLeft: widget.entry.homework == null
+                              ? Radius.circular(8)
+                              : Radius.zero,
+                          bottomRight: widget.entry.homework == null
+                              ? Radius.circular(8)
+                              : Radius.zero,
                         ),
                       ),
                       padding: const EdgeInsets.all(8),
                       child: Row(
                         children: [
                           Icon(Icons.text_snippet_outlined,
-                              color: Theme.of(context).colorScheme.onTertiaryContainer),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onTertiaryContainer),
                           const SizedBox(width: 8),
                           Expanded(
                               child: LineConstraintText(
-                                data: widget.entry.content!,
-                                maxLines: 2,
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: Theme.of(context).colorScheme.onTertiaryContainer,
+                            data: widget.entry.content!,
+                            maxLines: 2,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onTertiaryContainer,
                                 ),
-                              ))
+                          ))
                         ],
                       ),
                     ),
@@ -217,8 +254,12 @@ class _CourseFolderHistoryEntryCardState extends State<CourseFolderHistoryEntryC
                       decoration: BoxDecoration(
                         color: Theme.of(context).colorScheme.primary,
                         borderRadius: BorderRadius.only(
-                          topLeft: widget.entry.content == null ? Radius.circular(8) : Radius.zero,
-                          topRight: widget.entry.content == null ? Radius.circular(8) : Radius.zero,
+                          topLeft: widget.entry.content == null
+                              ? Radius.circular(8)
+                              : Radius.zero,
+                          topRight: widget.entry.content == null
+                              ? Radius.circular(8)
+                              : Radius.zero,
                           bottomLeft: Radius.circular(8),
                           bottomRight: Radius.circular(8),
                         ),
@@ -233,9 +274,13 @@ class _CourseFolderHistoryEntryCardState extends State<CourseFolderHistoryEntryC
                             child: LineConstraintText(
                               data: widget.entry.homework!,
                               maxLines: 2,
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Theme.of(context).colorScheme.onPrimary,
-                              ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color:
+                                        Theme.of(context).colorScheme.onPrimary,
+                                  ),
                             ),
                           ),
                         ],
@@ -260,9 +305,15 @@ class _CourseFolderHistoryEntryCardState extends State<CourseFolderHistoryEntryC
                 ),
                 RightBottomCardButton(
                   text: 'Anwesenheiten️',
-                  icon: widget.entry.attendanceActionRequired ? Icons.error : Icons.list_alt,
-                  color: widget.entry.attendanceActionRequired ? Colors.red.shade100 : Colors.blue.shade100,
-                  onColor: widget.entry.attendanceActionRequired ? Colors.red.shade900 : Colors.blue.shade900,
+                  icon: widget.entry.attendanceActionRequired
+                      ? Icons.error
+                      : Icons.list_alt,
+                  color: widget.entry.attendanceActionRequired
+                      ? Colors.red.shade100
+                      : Colors.blue.shade100,
+                  onColor: widget.entry.attendanceActionRequired
+                      ? Colors.red.shade900
+                      : Colors.blue.shade900,
                   onTap: () {},
                   topLeftNotRounded: true,
                   bottomRightNotRounded: true,
@@ -291,33 +342,38 @@ class _CourseFolderHistoryEntryCardState extends State<CourseFolderHistoryEntryC
                 ),
               ],
             ),
-            if (_showFiles) ... [
+            if (_showFiles) ...[
               Divider(),
               Padding(
-                padding: const EdgeInsets.only(bottom: 8.0, right: 12.0, left: 12.0),
+                padding:
+                    const EdgeInsets.only(bottom: 8.0, right: 12.0, left: 12.0),
                 child: Wrap(
                   spacing: 4.0,
                   alignment: WrapAlignment.start,
                   children: [
-                    SizedBox(width: double.infinity,),
-                    ...widget.entry.files.map((file) => CourseFolderHistoryEntryFileChip(
-                      file: file,
-                      courseId: widget.courseId,
-                      onVisibilityChanged: (bool isVisible) {
-                        setState(() {
-                          file.isVisibleForStudents = isVisible;
-                        });
-                      },
-                      onFileDeleted: () {
-                        setState(() {
-                          widget.entry.files.remove(file);
-                        });
-                      },
-                    )),
+                    SizedBox(
+                      width: double.infinity,
+                    ),
+                    ...widget.entry.files
+                        .map((file) => CourseFolderHistoryEntryFileChip(
+                              file: file,
+                              courseId: widget.courseId,
+                              onVisibilityChanged: (bool isVisible) {
+                                setState(() {
+                                  file.isVisibleForStudents = isVisible;
+                                });
+                              },
+                              onFileDeleted: () {
+                                setState(() {
+                                  widget.entry.files.remove(file);
+                                });
+                              },
+                            )),
                     UploadFileToCourseChip(
                       courseId: widget.courseId,
                       entryId: widget.entry.id,
-                      onFileUploaded: (List<CourseFolderHistoryEntryFile> files) {
+                      onFileUploaded:
+                          (List<CourseFolderHistoryEntryFile> files) {
                         setState(() {
                           widget.entry.files.addAll(files);
                         });

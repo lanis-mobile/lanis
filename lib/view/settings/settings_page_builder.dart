@@ -5,8 +5,7 @@ abstract class SettingsColours extends StatefulWidget {
   const SettingsColours({super.key});
 }
 
-abstract class SettingsColoursState<T extends StatefulWidget>
-    extends State<T> {
+abstract class SettingsColoursState<T extends StatefulWidget> extends State<T> {
   Color foregroundColor = Colors.transparent;
   Color backgroundColor = Colors.transparent;
   Color sliderColor = Colors.transparent;
@@ -43,7 +42,7 @@ class SettingsPage extends StatelessWidget {
     this.contentPadding = EdgeInsets.zero,
     this.back,
     required this.children,
-    this.floatingActionButton, 
+    this.floatingActionButton,
     this.showBackButton = true,
   });
 
@@ -59,9 +58,11 @@ class SettingsPage extends StatelessWidget {
       ),
       body: Padding(
         padding: contentPadding,
-        child: children.length > 1 ? ListView(
-          children: children,
-        ) : children.first,
+        child: children.length > 1
+            ? ListView(
+                children: children,
+              )
+            : children.first,
       ),
       floatingActionButton: floatingActionButton,
     );
@@ -84,7 +85,7 @@ class SettingsPageWithRefreshIndicator extends StatelessWidget {
       this.contentPadding = EdgeInsets.zero,
       this.back,
       required this.onRefresh,
-      required this.children, 
+      required this.children,
       this.showBackButton = true});
 
   @override
@@ -123,14 +124,14 @@ class SettingsPageWithStreamBuilder extends StatelessWidget {
   final bool showBackButton;
 
   const SettingsPageWithStreamBuilder(
-    {super.key,
-    required this.backgroundColor,
-    required this.title,
-    this.contentPadding = EdgeInsets.zero,
-    this.back,
-    required this.subscription,
-    required this.builder,
-    this.showBackButton = true});
+      {super.key,
+      required this.backgroundColor,
+      required this.title,
+      this.contentPadding = EdgeInsets.zero,
+      this.back,
+      required this.subscription,
+      required this.builder,
+      this.showBackButton = true});
 
   @override
   Widget build(BuildContext context) {

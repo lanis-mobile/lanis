@@ -116,13 +116,14 @@ class _AsyncSearchAnchorState extends State<AsyncSearchAnchor> {
     }, suggestionsBuilder:
             (BuildContext context, SearchController controller) async {
       _searchingWithQuery = controller.text;
-      var options = await sph!.parser.dataStorageParser.searchFiles(_searchingWithQuery??'');
+      var options = await sph!.parser.dataStorageParser
+          .searchFiles(_searchingWithQuery ?? '');
 
       if (_searchingWithQuery != controller.text) {
         return _lastOptions;
       }
 
-      _lastOptions = List<Widget>.generate(options?.length??0, (int index) {
+      _lastOptions = List<Widget>.generate(options?.length ?? 0, (int index) {
         final Map item = options[index];
         return SearchFileListTile(
             context: context,
@@ -134,7 +135,9 @@ class _AsyncSearchAnchorState extends State<AsyncSearchAnchor> {
       if (_lastOptions.isEmpty) {
         _lastOptions = <Widget>[
           ListTile(
-            title: Text(context.mounted ? AppLocalizations.of(context).noResults : 'Error'),
+            title: Text(context.mounted
+                ? AppLocalizations.of(context).noResults
+                : 'Error'),
           )
         ];
       }

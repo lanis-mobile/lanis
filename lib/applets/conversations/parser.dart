@@ -40,36 +40,35 @@ class ConversationsParser extends AppletParser<List<OverviewEntry>> {
   /// Gets the entries which you can see in the overview.
   @override
   Future<List<OverviewEntry>> getHome() async {
-      final response =
-      await sph.session.dio.post("https://start.schulportal.hessen.de/nachrichten.php",
-          data: {
-            "a": "headers",
-            "getType": "All", // "unvisibleOnly", "visibleOnly" also possible
-            "last": "0"
+    final response = await sph.session.dio.post(
+        "https://start.schulportal.hessen.de/nachrichten.php",
+        data: {
+          "a": "headers",
+          "getType": "All", // "unvisibleOnly", "visibleOnly" also possible
+          "last": "0"
+        },
+        options: Options(
+          headers: {
+            "Accept": "*/*",
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "X-Requested-With": "XMLHttpRequest",
           },
-          options: Options(
-            headers: {
-              "Accept": "*/*",
-              "Content-Type":
-              "application/x-www-form-urlencoded; charset=UTF-8",
-              "Sec-Fetch-Dest": "empty",
-              "Sec-Fetch-Mode": "cors",
-              "Sec-Fetch-Site": "same-origin",
-              "X-Requested-With": "XMLHttpRequest",
-            },
-          ));
+        ));
 
-      final dynamic json = await compute(
-          computeJson, [response.toString(), sph.session.cryptor.key.bytes]);
+    final dynamic json = await compute(
+        computeJson, [response.toString(), sph.session.cryptor.key.bytes]);
 
-      List<OverviewEntry> entries = [];
-      for (final entry in json) {
-        entries.add(OverviewEntry.fromJson(entry));
-      }
+    List<OverviewEntry> entries = [];
+    for (final entry in json) {
+      entries.add(OverviewEntry.fromJson(entry));
+    }
 
-      filter.entries = entries;
+    filter.entries = entries;
 
-      return filter.filteredAndSearched(entries);
+    return filter.filteredAndSearched(entries);
   }
 
   // Move decrypting and decoding away from the main thread to avoid freezing.
@@ -84,7 +83,6 @@ class ConversationsParser extends AppletParser<List<OverviewEntry>> {
     }
 
     return jsonDecode(decryptedConversations);
-
   }
 
   /// Hides the conversation
@@ -95,21 +93,20 @@ class ConversationsParser extends AppletParser<List<OverviewEntry>> {
     }
 
     try {
-      final response = await sph.session.dio.post(
-          "https://start.schulportal.hessen.de/nachrichten.php",
-          data: {"a": "deleteAll", "uniqid": id},
-          options: Options(
-            headers: {
-              "Accept": "*/*",
-              "Content-Type":
-              "application/x-www-form-urlencoded; charset=UTF-8",
-              "Sec-Fetch-Dest": "empty",
-              "Sec-Fetch-Mode": "cors",
-              "Sec-Fetch-Site": "same-origin",
-              "X-Requested-With": "XMLHttpRequest",
-            },
-          )
-      );
+      final response = await sph.session.dio
+          .post("https://start.schulportal.hessen.de/nachrichten.php",
+              data: {"a": "deleteAll", "uniqid": id},
+              options: Options(
+                headers: {
+                  "Accept": "*/*",
+                  "Content-Type":
+                      "application/x-www-form-urlencoded; charset=UTF-8",
+                  "Sec-Fetch-Dest": "empty",
+                  "Sec-Fetch-Mode": "cors",
+                  "Sec-Fetch-Site": "same-origin",
+                  "X-Requested-With": "XMLHttpRequest",
+                },
+              ));
 
       return bool.parse(response.data);
     } on (SocketException, DioException) {
@@ -127,21 +124,20 @@ class ConversationsParser extends AppletParser<List<OverviewEntry>> {
     }
 
     try {
-      final response = await sph.session.dio.post(
-          "https://start.schulportal.hessen.de/nachrichten.php",
-          data: {"a": "recycleMsg", "uniqid": id},
-          options: Options(
-            headers: {
-              "Accept": "*/*",
-              "Content-Type":
-              "application/x-www-form-urlencoded; charset=UTF-8",
-              "Sec-Fetch-Dest": "empty",
-              "Sec-Fetch-Mode": "cors",
-              "Sec-Fetch-Site": "same-origin",
-              "X-Requested-With": "XMLHttpRequest",
-            },
-          )
-      );
+      final response = await sph.session.dio
+          .post("https://start.schulportal.hessen.de/nachrichten.php",
+              data: {"a": "recycleMsg", "uniqid": id},
+              options: Options(
+                headers: {
+                  "Accept": "*/*",
+                  "Content-Type":
+                      "application/x-www-form-urlencoded; charset=UTF-8",
+                  "Sec-Fetch-Dest": "empty",
+                  "Sec-Fetch-Mode": "cors",
+                  "Sec-Fetch-Site": "same-origin",
+                  "X-Requested-With": "XMLHttpRequest",
+                },
+              ));
 
       return bool.parse(response.data);
     } on (SocketException, DioException) {
@@ -169,36 +165,37 @@ class ConversationsParser extends AppletParser<List<OverviewEntry>> {
     try {
       final encryptedUniqueID = sph.session.cryptor.encryptString(uniqueID);
 
-      final response =
-      await sph.session.dio.post("https://start.schulportal.hessen.de/nachrichten.php",
-          queryParameters: {"a": "read", "msg": uniqueID},
-          data: {"a": "read", "uniqid": encryptedUniqueID},
-          options: Options(
-            headers: {
-              "Accept": "*/*",
-              "Content-Type":
-              "application/x-www-form-urlencoded; charset=UTF-8",
-              "Sec-Fetch-Dest": "empty",
-              "Sec-Fetch-Mode": "cors",
-              "Sec-Fetch-Site": "same-origin",
-              "X-Requested-With": "XMLHttpRequest",
-            },
-          ));
+      final response = await sph.session.dio
+          .post("https://start.schulportal.hessen.de/nachrichten.php",
+              queryParameters: {"a": "read", "msg": uniqueID},
+              data: {"a": "read", "uniqid": encryptedUniqueID},
+              options: Options(
+                headers: {
+                  "Accept": "*/*",
+                  "Content-Type":
+                      "application/x-www-form-urlencoded; charset=UTF-8",
+                  "Sec-Fetch-Dest": "empty",
+                  "Sec-Fetch-Mode": "cors",
+                  "Sec-Fetch-Site": "same-origin",
+                  "X-Requested-With": "XMLHttpRequest",
+                },
+              ));
 
       final Map<String, dynamic> encryptedJSON =
-      jsonDecode(response.toString());
+          jsonDecode(response.toString());
 
       final String? decryptedConversations =
-      sph.session.cryptor.decryptString(encryptedJSON["message"]);
+          sph.session.cryptor.decryptString(encryptedJSON["message"]);
 
       if (decryptedConversations == null) {
         throw UnsaltedOrUnknownException();
       }
 
-      final Map<String, dynamic> conversation = jsonDecode(decryptedConversations);
+      final Map<String, dynamic> conversation =
+          jsonDecode(decryptedConversations);
 
       final UnparsedMessage parent = UnparsedMessage(
-        id: conversation["Uniquid"],
+          id: conversation["Uniquid"],
           date: unescape.convert(conversation["Datum"]),
           author: unescape.convert(fixUsername(conversation["username"])),
           own: conversation["own"],
@@ -207,7 +204,7 @@ class ConversationsParser extends AppletParser<List<OverviewEntry>> {
       final List<UnparsedMessage> replies = [];
       for (dynamic reply in conversation["reply"]) {
         replies.add(UnparsedMessage(
-          id: reply["Uniquid"],
+            id: reply["Uniquid"],
             date: unescape.convert(reply["Datum"]),
             author: unescape.convert(fixUsername(reply["username"])),
             own: reply["own"],
@@ -228,31 +225,32 @@ class ConversationsParser extends AppletParser<List<OverviewEntry>> {
       final Set<KnownParticipant> knownParticipants = {
         KnownParticipant(
             name: unescape.convert(fixUsername(conversation["username"])),
-            type: PersonType.fromJson(conversation["SenderArt"])
-        )
+            type: PersonType.fromJson(conversation["SenderArt"]))
       };
 
       for (Map reply in conversation["reply"]) {
-        knownParticipants.add(
-            KnownParticipant(
-                name: unescape.convert(fixUsername(reply["username"])),
-                type: PersonType.fromJson(reply["SenderArt"])
-            )
-        );
+        knownParticipants.add(KnownParticipant(
+            name: unescape.convert(fixUsername(reply["username"])),
+            type: PersonType.fromJson(reply["SenderArt"])));
       }
 
       if (conversation["empf"] is List) {
         for (String receiver in conversation["empf"]) {
-          final String name = parse(receiver).querySelector("span")!.text.substring(1);
-          knownParticipants.add(KnownParticipant(name: unescape.convert(name), type: PersonType.other));
+          final String name =
+              parse(receiver).querySelector("span")!.text.substring(1);
+          knownParticipants.add(KnownParticipant(
+              name: unescape.convert(name), type: PersonType.other));
         }
       }
 
-      if (conversation["WeitereEmpfaenger"] != "" && conversation["WeitereEmpfaenger"] != null) {
+      if (conversation["WeitereEmpfaenger"] != "" &&
+          conversation["WeitereEmpfaenger"] != null) {
         final others =
-        parse(conversation["WeitereEmpfaenger"]).querySelectorAll("span");
+            parse(conversation["WeitereEmpfaenger"]).querySelectorAll("span");
         for (final other in others) {
-          knownParticipants.add(KnownParticipant(name: unescape.convert(other.text.trim()), type: PersonType.group));
+          knownParticipants.add(KnownParticipant(
+              name: unescape.convert(other.text.trim()),
+              type: PersonType.group));
         }
       }
 
@@ -266,8 +264,7 @@ class ConversationsParser extends AppletParser<List<OverviewEntry>> {
           countParents: countParents,
           knownParticipants: knownParticipants.toList(),
           replies: replies,
-          msgLastRefresh: encryptedJSON["time"]
-      );
+          msgLastRefresh: encryptedJSON["time"]);
     } on (SocketException, DioException) {
       throw NetworkException();
     } on LanisException {
@@ -277,37 +274,37 @@ class ConversationsParser extends AppletParser<List<OverviewEntry>> {
     }
   }
 
-  Future<ConversationsRefreshResult> refreshConversation(String uniqID, int lastRefresh) async {
+  Future<ConversationsRefreshResult> refreshConversation(
+      String uniqID, int lastRefresh) async {
     try {
-      final response = await sph.session.dio.post(
-          "https://start.schulportal.hessen.de/nachrichten.php",
-          data: {
-            "a": "refresh",
-            "last": "$lastRefresh",
-            "uniqid": sph.session.cryptor.encryptString(uniqID),
-          },
-          options: Options(
-            headers: {
-              "Accept": "*/*",
-              "Content-Type":
-              "application/x-www-form-urlencoded; charset=UTF-8",
-              "Sec-Fetch-Dest": "empty",
-              "Sec-Fetch-Mode": "cors",
-              "Sec-Fetch-Site": "same-origin",
-              "X-Requested-With": "XMLHttpRequest",
-            },
-          )
-      );
+      final response = await sph.session.dio
+          .post("https://start.schulportal.hessen.de/nachrichten.php",
+              data: {
+                "a": "refresh",
+                "last": "$lastRefresh",
+                "uniqid": sph.session.cryptor.encryptString(uniqID),
+              },
+              options: Options(
+                headers: {
+                  "Accept": "*/*",
+                  "Content-Type":
+                      "application/x-www-form-urlencoded; charset=UTF-8",
+                  "Sec-Fetch-Dest": "empty",
+                  "Sec-Fetch-Mode": "cors",
+                  "Sec-Fetch-Site": "same-origin",
+                  "X-Requested-With": "XMLHttpRequest",
+                },
+              ));
 
       final decodedResponse = jsonDecode(response.data);
-      final messages = jsonDecode(sph.session.cryptor.decryptString(decodedResponse['reply'])!);
+      final messages = jsonDecode(
+          sph.session.cryptor.decryptString(decodedResponse['reply'])!);
       final int newLastRefresh = decodedResponse['time'];
-
 
       return ConversationsRefreshResult(
         messages: messages.map<UnparsedMessage>((dynamic message) {
           return UnparsedMessage(
-            id: message["Uniquid"],
+              id: message["Uniquid"],
               date: unescape.convert(message["Datum"]),
               author: unescape.convert(fixUsername(message["username"])),
               own: message["own"],
@@ -338,8 +335,12 @@ class ConversationsParser extends AppletParser<List<OverviewEntry>> {
   /// [message] supports Lanis-styled text.
   ///
   /// If successful, it returns `true`.
-  Future<ReplyToConversationResult> replyToConversation(String headId, String sender,
-      String groupOnly, String privateAnswerOnly, String message) async {
+  Future<ReplyToConversationResult> replyToConversation(
+      String headId,
+      String sender,
+      String groupOnly,
+      String privateAnswerOnly,
+      String message) async {
     try {
       final Map replyData = {
         "to": sender,
@@ -349,25 +350,26 @@ class ConversationsParser extends AppletParser<List<OverviewEntry>> {
         "replyToMsg": headId,
       };
 
-      String encrypted = sph.session.cryptor.encryptString(json.encode(replyData));
+      String encrypted =
+          sph.session.cryptor.encryptString(json.encode(replyData));
 
-      final response =
-      await sph.session.dio.post("https://start.schulportal.hessen.de/nachrichten.php",
-          data: {
-            "a": "reply",
-            "c": encrypted,
-          },
-          options: Options(
-            headers: {
-              "Accept": "*/*",
-              "Content-Type":
-              "application/x-www-form-urlencoded; charset=UTF-8",
-              "Sec-Fetch-Dest": "empty",
-              "Sec-Fetch-Mode": "cors",
-              "Sec-Fetch-Site": "same-origin",
-              "X-Requested-With": "XMLHttpRequest",
-            },
-          ));
+      final response = await sph.session.dio
+          .post("https://start.schulportal.hessen.de/nachrichten.php",
+              data: {
+                "a": "reply",
+                "c": encrypted,
+              },
+              options: Options(
+                headers: {
+                  "Accept": "*/*",
+                  "Content-Type":
+                      "application/x-www-form-urlencoded; charset=UTF-8",
+                  "Sec-Fetch-Dest": "empty",
+                  "Sec-Fetch-Mode": "cors",
+                  "Sec-Fetch-Site": "same-origin",
+                  "X-Requested-With": "XMLHttpRequest",
+                },
+              ));
 
       final jsonDecode = json.decode(response.data);
 
@@ -420,25 +422,26 @@ class ConversationsParser extends AppletParser<List<OverviewEntry>> {
         createData.add({"name": "to[]", "value": receiver});
       }
 
-      String encrypted = sph.session.cryptor.encryptString(json.encode(createData));
+      String encrypted =
+          sph.session.cryptor.encryptString(json.encode(createData));
 
-      final response =
-      await sph.session.dio.post("https://start.schulportal.hessen.de/nachrichten.php",
-          data: {
-            "a": "newmessage",
-            "c": encrypted,
-          },
-          options: Options(
-            headers: {
-              "Accept": "*/*",
-              "Content-Type":
-              "application/x-www-form-urlencoded; charset=UTF-8",
-              "Sec-Fetch-Dest": "empty",
-              "Sec-Fetch-Mode": "cors",
-              "Sec-Fetch-Site": "same-origin",
-              "X-Requested-With": "XMLHttpRequest",
-            },
-          ));
+      final response = await sph.session.dio
+          .post("https://start.schulportal.hessen.de/nachrichten.php",
+              data: {
+                "a": "newmessage",
+                "c": encrypted,
+              },
+              options: Options(
+                headers: {
+                  "Accept": "*/*",
+                  "Content-Type":
+                      "application/x-www-form-urlencoded; charset=UTF-8",
+                  "Sec-Fetch-Dest": "empty",
+                  "Sec-Fetch-Mode": "cors",
+                  "Sec-Fetch-Site": "same-origin",
+                  "X-Requested-With": "XMLHttpRequest",
+                },
+              ));
 
       final Map decoded = json.decode(response.data);
 
@@ -464,16 +467,16 @@ class ConversationsParser extends AppletParser<List<OverviewEntry>> {
     }
 
     try {
-      final html =
-      await sph.session.dio.get("https://start.schulportal.hessen.de/nachrichten.php",
-          options: Options(
-            headers: {
-              "Accept": "*/*",
-              "Sec-Fetch-Dest": "document",
-              "Sec-Fetch-Mode": "navigate",
-              "Sec-Fetch-Site": "none",
-            },
-          ));
+      final html = await sph.session.dio
+          .get("https://start.schulportal.hessen.de/nachrichten.php",
+              options: Options(
+                headers: {
+                  "Accept": "*/*",
+                  "Sec-Fetch-Dest": "document",
+                  "Sec-Fetch-Mode": "navigate",
+                  "Sec-Fetch-Site": "none",
+                },
+              ));
 
       final document = parse(html.data);
 
@@ -496,17 +499,17 @@ class ConversationsParser extends AppletParser<List<OverviewEntry>> {
     }
 
     try {
-      final response =
-      await sph.session.dio.get("https://start.schulportal.hessen.de/nachrichten.php",
-          queryParameters: {"a": "searchRecipt", "q": name},
-          options: Options(
-            headers: {
-              "Accept": "*/*",
-              "Sec-Fetch-Dest": "document",
-              "Sec-Fetch-Mode": "navigate",
-              "Sec-Fetch-Site": "none",
-            },
-          ));
+      final response = await sph.session.dio
+          .get("https://start.schulportal.hessen.de/nachrichten.php",
+              queryParameters: {"a": "searchRecipt", "q": name},
+              options: Options(
+                headers: {
+                  "Accept": "*/*",
+                  "Sec-Fetch-Dest": "document",
+                  "Sec-Fetch-Mode": "navigate",
+                  "Sec-Fetch-Site": "none",
+                },
+              ));
 
       /// total_count (don't need), incomplete_results (?, don't need),
       /// items => type: (lul, sus for students?, parents?, groups?),
@@ -551,8 +554,8 @@ enum SearchFunction {
     SearchFunction.subject: (OverviewEntry entry, String search) =>
         entry.title.toLowerCase().contains(search.toLowerCase()),
     SearchFunction.name: (OverviewEntry entry, String search) =>
-    (entry.shortName != null &&
-        entry.shortName!.toLowerCase().contains(search.toLowerCase())) ||
+        (entry.shortName != null &&
+            entry.shortName!.toLowerCase().contains(search.toLowerCase())) ||
         entry.fullName.toLowerCase().contains(search.toLowerCase()),
     SearchFunction.schedule: (OverviewEntry entry, String search) =>
         entry.date.toLowerCase().contains(search.toLowerCase()),
@@ -567,9 +570,9 @@ enum SearchFunction {
 /// so it's fast.
 class OverviewFiltering {
   late ConversationsParser parser;
-  
+
   OverviewFiltering(this.parser);
-  
+
   /// Cached overview entries set by a [getOverview] call.
   List<OverviewEntry> entries = [];
 
@@ -585,7 +588,6 @@ class OverviewFiltering {
     SearchFunction.schedule: "",
   };
 
-
   /// Pushes entries to the fetcher using the current settings.
   void pushEntries() {
     parser.addData(filteredAndSearched(entries));
@@ -593,10 +595,14 @@ class OverviewFiltering {
 
   void toggleEntry(String id, {bool? hidden, bool? unread}) {
     final index = entries.indexWhere((entry) => entry.id == id);
-    entries.replaceRange(index, index + 1, [entries[index].copyWith(
-      hidden: hidden == null || hidden == false ? null : !entries[index].hidden,
-      unread: unread == null || unread == false ? null : !entries[index].unread,
-    )]);
+    entries.replaceRange(index, index + 1, [
+      entries[index].copyWith(
+        hidden:
+            hidden == null || hidden == false ? null : !entries[index].hidden,
+        unread:
+            unread == null || unread == false ? null : !entries[index].unread,
+      )
+    ]);
   }
 
   List<OverviewEntry> filteredAndSearched(List<OverviewEntry> entries) {
@@ -612,8 +618,11 @@ class OverviewFiltering {
     return entries.where((entry) => entry.hidden == false).toList();
   }
 
-  List<OverviewEntry> advancedSearched(List<OverviewEntry> entries, SearchFunction function) {
-    return entries.where((entry) => function.call(entry, advancedSearch[function]!)).toList();
+  List<OverviewEntry> advancedSearched(
+      List<OverviewEntry> entries, SearchFunction function) {
+    return entries
+        .where((entry) => function.call(entry, advancedSearch[function]!))
+        .toList();
   }
 
   List<OverviewEntry> searched(List<OverviewEntry> entries) {

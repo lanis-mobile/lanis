@@ -44,10 +44,12 @@ class CalendarEvent {
   Color get color => category?.color ?? const Color(0xFF4242FC);
 
   ///Parses the response of the AJAX SPH events and returns a CalendarEvent object
-  factory CalendarEvent.fromLanisJson(Map<String, dynamic> json, List<CalendarEventCategory> categories) {
+  factory CalendarEvent.fromLanisJson(
+      Map<String, dynamic> json, List<CalendarEventCategory> categories) {
     final formatter = DateFormat('yyyy-MM-dd HH:mm:ss');
     final int? categoryId = int.tryParse('${json['category']}');
-    CalendarEventCategory? parsedCategory = categories.where((element) => element.id == categoryId).firstOrNull;
+    CalendarEventCategory? parsedCategory =
+        categories.where((element) => element.id == categoryId).firstOrNull;
     final data = CalendarEvent(
       startTime: formatter.parse(json['Anfang']),
       endTime: formatter.parse(json['Ende']),
@@ -56,7 +58,9 @@ class CalendarEvent {
       secret: json['Geheim'] != 'nein',
       id: json['Id'],
       schoolID: json['Institution'],
-      lastModified: json['LetzteAenderung'] != null ? formatter.parse(json['LetzteAenderung']) : null,
+      lastModified: json['LetzteAenderung'] != null
+          ? formatter.parse(json['LetzteAenderung'])
+          : null,
       isNew: json['Neu'] != 'nein',
       public: json['Oeffentlich'] != 'nein',
       place: json['Ort'],

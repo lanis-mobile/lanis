@@ -78,9 +78,12 @@ class _CacheSettingsState extends SettingsColoursState<CacheSettings> {
         ),
         Callout(
           leading: Icon(Icons.delete_forever_rounded),
-          title: Text(AppLocalizations.of(context).questionPermanentlyEmptyCache),
+          title:
+              Text(AppLocalizations.of(context).questionPermanentlyEmptyCache),
           buttonText: Text(
-            cacheStats['fileNum'] != 0 ? AppLocalizations.of(context).clearCache : AppLocalizations.of(context).cacheEmpty,
+            cacheStats['fileNum'] != 0
+                ? AppLocalizations.of(context).clearCache
+                : AppLocalizations.of(context).cacheEmpty,
           ),
           onPressed: cacheStats['fileNum'] != 0
               ? () {
@@ -139,8 +142,8 @@ class _CacheSettingsState extends SettingsColoursState<CacheSettings> {
           TextSpan(
             children: [
               TextSpan(
-                text:
-                AppLocalizations.of(context).otherStorageSettingsAvailablePart1,
+                text: AppLocalizations.of(context)
+                    .otherStorageSettingsAvailablePart1,
                 style: Theme.of(context).textTheme.bodySmall!.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
@@ -157,7 +160,8 @@ class _CacheSettingsState extends SettingsColoursState<CacheSettings> {
                   },
               ),
               TextSpan(
-                text: AppLocalizations.of(context).otherStorageSettingsAvailablePart2,
+                text: AppLocalizations.of(context)
+                    .otherStorageSettingsAvailablePart2,
                 style: Theme.of(context).textTheme.bodySmall!.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),

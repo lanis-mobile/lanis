@@ -12,7 +12,11 @@ final calendarDefinition = AppletDefinition(
   icon: const Icon(Icons.calendar_today),
   selectedIcon: const Icon(Icons.calendar_today_outlined),
   label: (context) => AppLocalizations.of(context).calendar,
-  supportedAccountTypes: [AccountType.student, AccountType.teacher, AccountType.parent],
+  supportedAccountTypes: [
+    AccountType.student,
+    AccountType.teacher,
+    AccountType.parent
+  ],
   allowOffline: false,
   settingsDefaults: {},
   refreshInterval: const Duration(hours: 1),

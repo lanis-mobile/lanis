@@ -110,7 +110,8 @@ class LessonsTeacherParser extends AppletParser<LessonsTeacherHome> {
         date: DateFormat('dd.MM.yyyy').parse(dateStr),
         schoolHours: SubstitutionsParser.parseHours(
             entryRow.children[0].getElementsByTagName('small')[0].text.trim()),
-        isAvailableInAdvance: entryRow.children[0].querySelector('i.fa.fa-child') != null,
+        isAvailableInAdvance:
+            entryRow.children[0].querySelector('i.fa.fa-child') != null,
         files: remoteFiles,
         attendanceActionRequired: entryRow.children[3]
             .querySelectorAll('div.btn-group')
@@ -236,11 +237,13 @@ class LessonsTeacherParser extends AppletParser<LessonsTeacherHome> {
             "Origin": "https://start.schulportal.hessen.de",
             "Pragma": "no-cache",
             "Priority": "u=0",
-            "Referer": "https://start.schulportal.hessen.de/meinunterricht.php?a=view&id=3",
+            "Referer":
+                "https://start.schulportal.hessen.de/meinunterricht.php?a=view&id=3",
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "no-cors",
             "Sec-Fetch-Site": "same-origin",
-            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:133.0) Gecko/20100101 Firefox/133.0",
+            "User-Agent":
+                "Mozilla/5.0 (X11; Linux x86_64; rv:133.0) Gecko/20100101 Firefox/133.0",
             "X-Requested-With": "XMLHttpRequest"
           },
         ),
@@ -264,7 +267,10 @@ class LessonsTeacherParser extends AppletParser<LessonsTeacherHome> {
     };
 
     // password has to be encoded correctly, du to special characters
-    final encodedData = data.entries.map((e) => '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}').join('&');
+    final encodedData = data.entries
+        .map((e) =>
+            '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}')
+        .join('&');
 
     final response = await sph.session.dio.post(
       "https://start.schulportal.hessen.de/meinunterricht.php",
@@ -272,7 +278,8 @@ class LessonsTeacherParser extends AppletParser<LessonsTeacherHome> {
       options: Options(
         contentType: "application/x-www-form-urlencoded; charset=UTF-8",
         headers: {
-          "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:133.0) Gecko/20100101 Firefox/133.0",
+          "User-Agent":
+              "Mozilla/5.0 (X11; Linux x86_64; rv:133.0) Gecko/20100101 Firefox/133.0",
           "Accept": "*/*",
           "Accept-Language": "en-US,en;q=0.5",
           "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
@@ -287,7 +294,8 @@ class LessonsTeacherParser extends AppletParser<LessonsTeacherHome> {
           "Accept-Encoding": "gzip, deflate, br, zstd",
           "Origin": "https://start.schulportal.hessen.de",
           "Connection": "keep-alive",
-          "Referer": "https://start.schulportal.hessen.de/meinunterricht.php?a=view&id=$courseId",
+          "Referer":
+              "https://start.schulportal.hessen.de/meinunterricht.php?a=view&id=$courseId",
         },
       ),
     );

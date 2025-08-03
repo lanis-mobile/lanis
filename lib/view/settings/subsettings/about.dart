@@ -77,7 +77,10 @@ class AboutLink {
   final IconData iconData;
 
   const AboutLink(
-      {required this.title, required this.onTap, required this.iconData, this.onLongPress});
+      {required this.title,
+      required this.onTap,
+      required this.iconData,
+      this.onLongPress});
 }
 
 class AboutSettings extends SettingsColours {
@@ -99,8 +102,8 @@ class _AboutSettingsState extends SettingsColoursState<AboutSettings> {
     });
 
     try {
-      final response = await sph!.session.dio.get(
-          'https://api.github.com/repos/lanis-mobile/lanis/contributors');
+      final response = await sph!.session.dio
+          .get('https://api.github.com/repos/lanis-mobile/lanis/contributors');
       setState(() {
         contributors = response.data;
       });
@@ -148,27 +151,26 @@ class _AboutSettingsState extends SettingsColoursState<AboutSettings> {
       onTap: (context) async => showLicensePage(context: context),
     ),
     AboutLink(
-      title: (context) => AppLocalizations.of(context).buildInformation,
-      iconData: Icons.build_outlined,
-      onTap: (context) async {
-        final packageInfo = await PackageInfo.fromPlatform();
+        title: (context) => AppLocalizations.of(context).buildInformation,
+        iconData: Icons.build_outlined,
+        onTap: (context) async {
+          final packageInfo = await PackageInfo.fromPlatform();
 
-        if(context.mounted) {
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: Text(AppLocalizations.of(context).appInformation),
-                content: Text(
-                    "appName: ${packageInfo.appName}\npackageName: ${packageInfo.packageName}\nversion: ${packageInfo.version}\nbuildNumber: ${packageInfo.buildNumber}\nisDebug: $kDebugMode\nisProfile: $kProfileMode\nisRelease: $kReleaseMode\n"),
-              );
-            });
-        }
-      },
-      onLongPress: (context) => Navigator.of(context).push(
-        MaterialPageRoute(builder: (context) => DebugExport(),)
-      )
-    ),
+          if (context.mounted) {
+            showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text(AppLocalizations.of(context).appInformation),
+                    content: Text(
+                        "appName: ${packageInfo.appName}\npackageName: ${packageInfo.packageName}\nversion: ${packageInfo.version}\nbuildNumber: ${packageInfo.buildNumber}\nisDebug: $kDebugMode\nisProfile: $kProfileMode\nisRelease: $kReleaseMode\n"),
+                  );
+                });
+          }
+        },
+        onLongPress: (context) => Navigator.of(context).push(MaterialPageRoute(
+              builder: (context) => DebugExport(),
+            ))),
   ];
 
   @override
@@ -345,7 +347,7 @@ class _AboutSettingsState extends SettingsColoursState<AboutSettings> {
               leading: Icon(link.iconData),
               title: Text(link.title(context)),
               onTap: () => link.onTap(context),
-              onLongPress: () =>  link.onLongPress?.call(context),
+              onLongPress: () => link.onLongPress?.call(context),
             ),
           if (error) ...[
             SizedBox(

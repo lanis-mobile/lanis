@@ -7,7 +7,8 @@ import 'package:lanis/models/datastorage.dart';
 import '../../core/applet_parser.dart';
 import '../../models/client_status_exceptions.dart';
 
-class DataStorageParser extends AppletParser<(List<FileNode>, List<FolderNode>)> {
+class DataStorageParser
+    extends AppletParser<(List<FileNode>, List<FolderNode>)> {
   DataStorageParser(super.sph, super.appletDefinition);
 
   @override

@@ -15,9 +15,7 @@ class CustomConnectionChecker {
   Stream<ConnectionStatus> get statusStream => _statusController.stream;
 
   CustomConnectionChecker() {
-    dio = Dio(
-        BaseOptions(validateStatus: (status) => status != null)
-    );
+    dio = Dio(BaseOptions(validateStatus: (status) => status != null));
     dio.httpClientAdapter = getNativeAdapterInstance();
 
     testConnection();
@@ -43,7 +41,6 @@ class CustomConnectionChecker {
   void dispose() {
     _statusController.close();
   }
-
 
   Future<bool> testConnection() async {
     try {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-class KeyboardObserver extends ValueNotifier<KeyboardStatus> with WidgetsBindingObserver {
+class KeyboardObserver extends ValueNotifier<KeyboardStatus>
+    with WidgetsBindingObserver {
   KeyboardObserver({
     KeyboardStatus value = KeyboardStatus.unknown,
   }) : super(KeyboardStatus.unknown);
