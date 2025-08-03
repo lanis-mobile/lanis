@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:lanis/applets/conversations/view/new_conversation_configurator.dart';
+import 'package:lanis/applets/conversations/view/send.dart';
+import 'package:lanis/applets/conversations/view/shared.dart';
+import 'package:lanis/core/connection_checker.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/applets/conversations/definition.dart';
 import 'package:lanis/applets/conversations/parser.dart';
@@ -9,10 +13,8 @@ import '../../../models/client_status_exceptions.dart';
 import '../../../models/conversations.dart';
 import '../../../utils/keyboard_observer.dart';
 import 'chat.dart';
-import 'overview_dialogs.dart';
 
 const double tileSize = 80.0;
-
 
 class CheckTileNotification extends Notification {
   final String? id;
@@ -28,7 +30,7 @@ class JumpToNotification extends Notification {
 
 class ConversationsView extends StatefulWidget {
   final Function? openDrawerCb;
-  const ConversationsView({super.key, this.openDrawerCb });
+  const ConversationsView({super.key, this.openDrawerCb});
 
   @override
   State<StatefulWidget> createState() => _ConversationsViewState();
@@ -77,36 +79,34 @@ class _ConversationsViewState extends State<ConversationsView> {
   List<String> noBadgeConversations = [];
 
   Widget toggleModeAppBar() {
-    return SizedBox(
+    return Container(
+      color: Theme.of(context).colorScheme.surfaceDim,
       height: 64,
       width: double.infinity,
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 8.0),
-        child: Row(
-          children: [
-            IconButton(
-              icon: Icon(
-                Icons.close,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-              constraints: BoxConstraints.tightFor(
-                  width: kToolbarHeight, height: kToolbarHeight),
-              onPressed: () {
-                closeToggleMode();
-                for (final tile in checkedTiles.keys) {
-                  checkedTiles[tile] = false;
-                }
-              },
+      child: Row(
+        children: [
+          IconButton(
+            icon: Icon(
+              Icons.close,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
-            SizedBox(
-              width: 16,
-            ),
-            Text(
-              AppLocalizations.of(context).hideShowConversations,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-          ],
-        ),
+            constraints: BoxConstraints.tightFor(
+                width: kToolbarHeight, height: kToolbarHeight),
+            onPressed: () {
+              closeToggleMode();
+              for (final tile in checkedTiles.keys) {
+                checkedTiles[tile] = false;
+              }
+            },
+          ),
+          SizedBox(
+            width: 16,
+          ),
+          Text(
+            AppLocalizations.of(context).hideShowConversations,
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+        ],
       ),
     );
   }
@@ -250,7 +250,6 @@ class _ConversationsViewState extends State<ConversationsView> {
                           ? const Icon(Icons.visibility_off)
                           : const Icon(Icons.visibility),
                       onPressed: () {
-
                         setState(() {
                           if (showHidden) {
                             loadedConversation = null;
@@ -259,14 +258,16 @@ class _ConversationsViewState extends State<ConversationsView> {
                           showHidden = !showHidden;
                         });
 
-                        final oldEntries = sph!.parser.conversationsParser.stream.value.content;
+                        final oldEntries = sph!
+                            .parser.conversationsParser.stream.value.content;
 
                         filter.showHidden = showHidden;
                         filter.pushEntries();
 
                         jumpToTopTile(
-                            sph!.parser.conversationsParser.stream.value.content!, oldEntries!);
-
+                            sph!.parser.conversationsParser.stream.value
+                                .content!,
+                            oldEntries!);
                       },
                       child: Text(showHidden
                           ? AppLocalizations.of(context).showOnlyVisible
@@ -276,12 +277,15 @@ class _ConversationsViewState extends State<ConversationsView> {
                     MenuItemButton(
                       leadingIcon: Icon(Icons.restore_from_trash),
                       onPressed: () {
-                        final oldEntries = sph!.parser.conversationsParser.stream.value.content;
+                        final oldEntries = sph!
+                            .parser.conversationsParser.stream.value.content;
 
                         openToggleMode();
 
                         jumpToTopTile(
-                            sph!.parser.conversationsParser.stream.value.content!, oldEntries!);
+                            sph!.parser.conversationsParser.stream.value
+                                .content!,
+                            oldEntries!);
                       },
                       child: Text(AppLocalizations.of(context).hideShow),
                     ),
@@ -302,11 +306,11 @@ class _ConversationsViewState extends State<ConversationsView> {
       "assets/undraw/chat/undraw_chatting_5u5z.svg",
       "assets/undraw/chat/undraw_chat_qmyo.svg",
     ];
-    noConversationAsset ??= assets[(DateTime.now().millisecondsSinceEpoch / 1000).toInt() % assets.length];
+    noConversationAsset ??= assets[
+        (DateTime.now().millisecondsSinceEpoch / 1000).toInt() % assets.length];
 
     return Center(
-      child: SvgPicture.asset(noConversationAsset!,
-          height: 175.0),
+      child: SvgPicture.asset(noConversationAsset!, height: 175.0),
     );
   }
 
@@ -369,7 +373,8 @@ class _ConversationsViewState extends State<ConversationsView> {
 
     sph!.parser.conversationsParser.toggleSuspend();
 
-    jumpToTopTile(sph!.parser.conversationsParser.stream.value.content!, oldEntries!);
+    jumpToTopTile(
+        sph!.parser.conversationsParser.stream.value.content!, oldEntries!);
   }
 
   @override
@@ -402,11 +407,145 @@ class _ConversationsViewState extends State<ConversationsView> {
     scrollController.dispose();
   }
 
+  void openCreateConversation() async {
+    bool? canChooseType = sph!.parser.conversationsParser.cachedCanChooseType;
+
+    if (canChooseType == null) {
+      setState(() {
+        loadingCreateButton = true;
+      });
+
+      try {
+        canChooseType = await sph!.parser.conversationsParser.canChooseType();
+      } on NoConnectionException {
+        setState(() {
+          loadingCreateButton = false;
+        });
+        return;
+      }
+
+      setState(() {
+        loadingCreateButton = false;
+      });
+    }
+
+    if (mounted) {
+      ChatCreationData? chatData = await Navigator.of(context)
+          .push<ChatCreationData?>(MaterialPageRoute(
+              builder: (context) => NewConversationConfigurator()));
+      if (chatData == null) return;
+      String? text = await Navigator.of(context).push<String>(MaterialPageRoute(
+          builder: (context) => FullScreenConversationsMessageInput(
+                creationData: chatData,
+              )));
+      if (text == null || text.trim().isEmpty) return;
+      if (mounted) {
+        newConversation(text, chatData);
+      }
+    }
+  }
+
+  Future<void> newConversation(
+      String text, ChatCreationData creationData) async {
+    final bool status = await connectionChecker.connected;
+    if (!status) {
+      if (mounted) {
+        showDialog(
+            context: context,
+            builder: (context) {
+              return AlertDialog(
+                icon: const Icon(Icons.wifi_off),
+                title: Text(AppLocalizations.of(context).noInternetConnection2),
+                actions: [
+                  FilledButton(
+                      onPressed: () async {
+                        Navigator.pop(context);
+                      },
+                      child: const Text("Ok")),
+                ],
+              );
+            });
+      }
+      return;
+    }
+
+    final textMessage = Message(
+      text: text,
+      own: true,
+      date: DateTime.now(),
+      author: null,
+      state: MessageState.first,
+      status: MessageStatus.sent,
+    );
+
+    final CreationResponse response = await sph!.parser.conversationsParser
+        .createConversation(creationData.receivers, creationData.type?.name,
+            creationData.subject, text);
+
+    if (response.success) {
+      sph!.parser.conversationsParser.fetchData(forceRefresh: true);
+
+      if (mounted) {
+        final ConversationsChat chat = ConversationsChat(
+          title: creationData.subject,
+          id: response.id!,
+          isTablet: tabletMode!,
+          refreshSidebar: () {},
+          newSettings: NewConversationSettings(
+            firstMessage: textMessage,
+            settings: ConversationSettings(
+                id: response.id!,
+                groupChat: creationData.type == ChatType.groupOnly,
+                onlyPrivateAnswers:
+                    creationData.type == ChatType.privateAnswerOnly,
+                noReply: creationData.type == ChatType.noAnswerAllowed,
+                own: true),
+          ),
+        );
+
+        if (tabletMode!) {
+          setState(() {
+            noBadgeConversations.add(response.id!);
+            loadedConversation = chat;
+            loadedConversationId = response.id!;
+          });
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => chat,
+            ),
+          );
+        }
+      }
+    } else {
+      if (mounted) {
+        showDialog(
+            context: context,
+            builder: (context) {
+              return AlertDialog(
+                icon: const Icon(Icons.error),
+                title: Text(
+                    AppLocalizations.of(context).errorCreatingConversation),
+                actions: [
+                  FilledButton(
+                      onPressed: () async {
+                        Navigator.pop(context);
+                      },
+                      child: const Text("Ok")),
+                ],
+              );
+            });
+      }
+    }
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    final mediaQueryData = MediaQueryData.fromView(WidgetsBinding.instance.platformDispatcher.views.first);
+    final mediaQueryData = MediaQueryData.fromView(
+        WidgetsBinding.instance.platformDispatcher.views.first);
     tabletMode ??= !(mediaQueryData.size.shortestSide < 550);
   }
 
@@ -416,13 +555,15 @@ class _ConversationsViewState extends State<ConversationsView> {
     int widthParts = deviceWidth ~/ 350 == 0 ? 1 : deviceWidth ~/ 350;
 
     return Scaffold(
-      appBar: widget.openDrawerCb != null ? AppBar(
-        title: Text(conversationsDefinition.label(context)),
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () => widget.openDrawerCb!(),
-        ),
-      ) : null,
+      appBar: widget.openDrawerCb != null
+          ? AppBar(
+              title: Text(conversationsDefinition.label(context)),
+              leading: IconButton(
+                icon: const Icon(Icons.menu),
+                onPressed: () => widget.openDrawerCb!(),
+              ),
+            )
+          : null,
       body: NotificationListener(
         onNotification: (notification) {
           if (notification is CheckTileNotification) {
@@ -432,7 +573,7 @@ class _ConversationsViewState extends State<ConversationsView> {
 
             setState(() {
               checkedTiles[notification.id!] =
-              !(checkedTiles[notification.id!] ?? false);
+                  !(checkedTiles[notification.id!] ?? false);
             });
             return true;
           } else if (notification is JumpToNotification) {
@@ -446,268 +587,247 @@ class _ConversationsViewState extends State<ConversationsView> {
           children: [
             Expanded(
               flex: widthParts >= 3 ? 1 : 4,
-                child: Scaffold(
+              child: Scaffold(
                 body: CombinedAppletBuilder<List<OverviewEntry>>(
                     parser: sph!.parser.conversationsParser,
                     phpUrl: conversationsDefinition.appletPhpUrl,
                     settingsDefaults: conversationsDefinition.settingsDefaults,
                     accountType: sph!.session.accountType,
-                    builder: (context, data, accountType, settings, updateSetting, refresh) {
+                    builder: (context, data, accountType, settings,
+                        updateSetting, refresh) {
                       noBadgeConversations = [];
                       return RefreshIndicator(
-                          key: _refreshKey,
-                          edgeOffset: advancedSearch && !toggleMode ? 256 : 64,
-                          onRefresh: refresh!,
-                          child: CustomScrollView(
-                            controller: scrollController,
-                            physics: AlwaysScrollableScrollPhysics(),
-                            slivers: [
-                              SliverFloatingHeader(
-                                child: ScrolledDownContainer(
-                                    child: toggleMode
-                                        ? toggleModeAppBar()
-                                        : searchWidget()),
-                              ),
-                              SliverVariedExtentList.builder(
-                                itemCount: data.length + 1,
-                                itemExtentBuilder: (index, _) {
-                                  if (index > data.length - 1) {
-                                    return tileSize * 2.5;
-                                  }
+                        key: _refreshKey,
+                        edgeOffset: advancedSearch && !toggleMode ? 256 : 64,
+                        onRefresh: refresh!,
+                        child: CustomScrollView(
+                          controller: scrollController,
+                          physics: AlwaysScrollableScrollPhysics(),
+                          slivers: [
+                            SliverFloatingHeader(
+                              child: ScrolledDownContainer(
+                                  child: toggleMode
+                                      ? toggleModeAppBar()
+                                      : searchWidget()),
+                            ),
+                            SliverVariedExtentList.builder(
+                              itemCount: data.length + 1,
+                              itemExtentBuilder: (index, _) {
+                                if (index > data.length - 1) {
+                                  return tileSize * 2.5;
+                                }
 
-                                  return tileSize;
-                                },
-                                itemBuilder: (context, index) {
-                                  if (index > data.length - 1) {
-                                    return Padding(
-                                      padding: const EdgeInsets.only(
-                                          top: 12.0, left: 12.0, right: 12.0),
-                                      child: ListTile(
-                                        title: Text(
-                                          AppLocalizations.of(context)
-                                              .noFurtherEntries,
-                                          textAlign: TextAlign.center,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .titleLarge,
-                                        ),
-                                        subtitle: Text(
-                                          AppLocalizations.of(context)
-                                              .conversationNote,
-                                          textAlign: TextAlign.center,
-                                        ),
+                                return tileSize;
+                              },
+                              itemBuilder: (context, index) {
+                                if (index > data.length - 1) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(
+                                        top: 12.0, left: 12.0, right: 12.0),
+                                    child: ListTile(
+                                      title: Text(
+                                        AppLocalizations.of(context)
+                                            .noFurtherEntries,
+                                        textAlign: TextAlign.center,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleLarge,
                                       ),
-                                    );
-                                  }
+                                      subtitle: Text(
+                                        AppLocalizations.of(context)
+                                            .conversationNote,
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                  );
+                                }
 
-                                  return ConversationTile(
-                                    entry: data[index],
-                                    isOpen: loadedConversationId == data[index].id,
-                                    toggleMode: toggleMode,
-                                    loadedConversationId: loadedConversationId,
-                                    noBadgeConversations: noBadgeConversations,
-                                    checked: checkedTiles[data[index].id] ??
-                                        false,
-                                    onTap: (entry) {
-                                      if (tabletMode!) {
-                                        setState(() {
-                                          noBadgeConversations.add(entry.id);
-                                          loadedConversation = ConversationsChat.fromEntry(
-                                              key: Key(entry.id),
-                                              refreshSidebar: refresh,
-                                              entry,
-                                            tabletMode!
-                                          );
-                                          loadedConversationId = entry.id;
-                                        });
-                                      } else {
-                                        Navigator.push(
+                                return ConversationTile(
+                                  entry: data[index],
+                                  isOpen:
+                                      loadedConversationId == data[index].id,
+                                  toggleMode: toggleMode,
+                                  loadedConversationId: loadedConversationId,
+                                  noBadgeConversations: noBadgeConversations,
+                                  checked:
+                                      checkedTiles[data[index].id] ?? false,
+                                  onTap: (entry) {
+                                    if (tabletMode!) {
+                                      setState(() {
+                                        noBadgeConversations.add(entry.id);
+                                        loadedConversation =
+                                            ConversationsChat.fromEntry(
+                                                key: Key(entry.id),
+                                                refreshSidebar: refresh,
+                                                entry,
+                                                tabletMode!);
+                                        loadedConversationId = entry.id;
+                                      });
+                                    } else {
+                                      Navigator.push(
                                         context,
                                         MaterialPageRoute(
                                           builder: (context) {
                                             if (entry.unread == true) {
-                                              sph!.parser.conversationsParser.filter
-                                                  .toggleEntry(entry.id, unread: true);
-                                              sph!.parser.conversationsParser.filter.pushEntries();
+                                              sph!.parser.conversationsParser
+                                                  .filter
+                                                  .toggleEntry(entry.id,
+                                                      unread: true);
+                                              sph!.parser.conversationsParser
+                                                  .filter
+                                                  .pushEntries();
                                             }
-                                            return ConversationsChat.fromEntry(refreshSidebar: refresh, entry, tabletMode!);
+                                            return ConversationsChat.fromEntry(
+                                                refreshSidebar: refresh,
+                                                entry,
+                                                tabletMode!);
                                           },
                                         ),
-                                        );
-                                      }
-                                    },
-                                  );
-                                },
-                              )
-                            ],
-                          ),
+                                      );
+                                    }
+                                  },
+                                );
+                              },
+                            )
+                          ],
+                        ),
                       );
                     }),
                 floatingActionButton: toggleMode
                     ? disableToggleButton
-                    ? FloatingActionButton(
-                    onPressed: null,
-                    child: SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: const CircularProgressIndicator(),
-                    ))
-                    : FloatingActionButton.extended(
-                    icon: Icon(Icons.visibility),
-                    label: Text(AppLocalizations.of(context).hideShow),
-                    onPressed: () async {
-                      setState(() {
-                        disableToggleButton = true;
-                        loadedConversationId = null;
-                        loadedConversation = null;
-                      });
+                        ? FloatingActionButton(
+                            onPressed: null,
+                            child: SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: const CircularProgressIndicator(),
+                            ))
+                        : FloatingActionButton.extended(
+                            icon: Icon(Icons.visibility),
+                            label: Text(AppLocalizations.of(context).hideShow),
+                            onPressed: () async {
+                              setState(() {
+                                disableToggleButton = true;
+                                loadedConversationId = null;
+                                loadedConversation = null;
+                              });
 
-                      // So you don't see each tile being toggled
-                      Map<String, bool> toggled = {};
+                              // So you don't see each tile being toggled
+                              Map<String, bool> toggled = {};
 
+                              for (final tile in checkedTiles.entries) {
+                                if (tile.value == true) {
+                                  final isHidden = filter.entries
+                                      .where(
+                                          (element) => element.id == tile.key)
+                                      .first
+                                      .hidden;
 
-                      for (final tile in checkedTiles.entries) {
-                        if (tile.value == true) {
-                          final isHidden = filter.entries
-                              .where((element) => element.id == tile.key)
-                              .first
-                              .hidden;
+                                  late bool result;
+                                  try {
+                                    if (isHidden) {
+                                      result = await sph!
+                                          .parser.conversationsParser
+                                          .showConversation(tile.key);
+                                    } else {
+                                      result = await sph!
+                                          .parser.conversationsParser
+                                          .hideConversation(tile.key);
+                                    }
+                                  } on NoConnectionException {
+                                    setState(() {
+                                      disableToggleButton = false;
+                                    });
 
-                            late bool result;
-                          try {
-                            if (isHidden) {
-                              result = await sph!.parser.conversationsParser
-                                  .showConversation(tile.key);
-                            } else {
-                              result = await sph!.parser.conversationsParser
-                                  .hideConversation(tile.key);
-                            }
-                          } on NoConnectionException {
-                            setState(() {
-                              disableToggleButton = false;
-                            });
+                                    if (context.mounted) {
+                                      showDialog(
+                                          context: context,
+                                          builder: (context) => AlertDialog(
+                                                icon:
+                                                    const Icon(Icons.wifi_off),
+                                                title: Text(
+                                                    AppLocalizations.of(context)
+                                                        .noInternetConnection2),
+                                                actions: [
+                                                  FilledButton(
+                                                      onPressed: () {
+                                                        Navigator.pop(context);
+                                                      },
+                                                      child: Text(
+                                                          AppLocalizations.of(
+                                                                  context)
+                                                              .back))
+                                                ],
+                                              ));
+                                    }
+                                    return;
+                                  }
 
-                            if(context.mounted) {
-                              showDialog(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    icon: const Icon(Icons.wifi_off),
-                                    title: Text(
-                                        AppLocalizations.of(context)
-                                            .noInternetConnection2),
-                                    actions: [
-                                      FilledButton(
-                                          onPressed: () {
-                                            Navigator.pop(context);
-                                          },
-                                          child: Text(
-                                              AppLocalizations.of(context)
-                                                  .back))
-                                    ],
-                                  ));
-                            }
-                            return;
-                          }
+                                  if (!result) {
+                                    setState(() {
+                                      disableToggleButton = false;
+                                    });
 
-                          if (!result) {
-                            setState(() {
-                              disableToggleButton = false;
-                            });
+                                    if (context.mounted) {
+                                      showDialog(
+                                          context: context,
+                                          builder: (context) => AlertDialog(
+                                                icon: const Icon(Icons.error),
+                                                title: Text(
+                                                    AppLocalizations.of(context)
+                                                        .errorOccurred),
+                                                actions: [
+                                                  FilledButton(
+                                                      onPressed: () {
+                                                        Navigator.pop(context);
+                                                      },
+                                                      child: Text(
+                                                          AppLocalizations.of(
+                                                                  context)
+                                                              .back))
+                                                ],
+                                              ));
+                                    }
+                                    return;
+                                  }
 
-                            if(context.mounted) {
-                              showDialog(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    icon: const Icon(Icons.error),
-                                    title: Text(
-                                        AppLocalizations.of(context)
-                                            .errorOccurred),
-                                    actions: [
-                                      FilledButton(
-                                          onPressed: () {
-                                            Navigator.pop(context);
-                                          },
-                                          child: Text(
-                                              AppLocalizations.of(context)
-                                                  .back))
-                                    ],
-                                  ));
-                            }
-                            return;
-                          }
+                                  toggled.addEntries([tile]);
+                                  checkedTiles[tile.key] = false;
+                                }
+                              }
 
-                          toggled.addEntries([tile]);
-                          checkedTiles[tile.key] = false;
-                        }
-                      }
+                              for (final id in toggled.keys) {
+                                filter.toggleEntry(id, hidden: true);
+                              }
 
-                      for (final id in toggled.keys) {
-                        filter.toggleEntry(id, hidden: true);
-                      }
-
-                      filter.pushEntries();
-                      closeToggleMode();
-                    })
+                              filter.pushEntries();
+                              closeToggleMode();
+                            })
                     : FloatingActionButton(
-                  onPressed: () async {
-                    if (sph!.parser.conversationsParser.cachedCanChooseType != null) {
-                      Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-                        if (sph!.parser.conversationsParser.cachedCanChooseType!) {
-                          return TypeChooser(isTablet: tabletMode!,);
-                        }
-                        return CreateConversation(chatType: null, isTablet: tabletMode!,);
-                      }));
-                      return;
-                    }
-
-                    setState(() {
-                      loadingCreateButton = true;
-                    });
-
-                    bool canChooseType;
-                    try {
-                      canChooseType =
-                      await sph!.parser.conversationsParser.canChooseType();
-                    } on NoConnectionException {
-                      setState(() {
-                        loadingCreateButton = false;
-                      });
-                      return;
-                    }
-
-                    setState(() {
-                      loadingCreateButton = false;
-                    });
-
-                    if(context.mounted) {
-                      Navigator.of(context)
-                          .push(MaterialPageRoute(builder: (context) {
-                        if (canChooseType) {
-                          return TypeChooser(isTablet: tabletMode!,);
-                        }
-                        return CreateConversation(chatType: null, isTablet: tabletMode!,);
-                      }));
-                    }
-                  },
-                  child: loadingCreateButton
-                      ? SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: const CircularProgressIndicator(),
-                  )
-                      : const Icon(Icons.edit),
-                ),
+                        onPressed: openCreateConversation,
+                        child: loadingCreateButton
+                            ? SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: const CircularProgressIndicator(),
+                              )
+                            : const Icon(Icons.edit),
+                      ),
               ),
             ),
-            if (tabletMode!) Container(
-              height: double.infinity,
-              width: 1,
-              color: Theme.of(context).colorScheme.outline,
-            ),
-            if (tabletMode!) Expanded(
-              flex: widthParts >= 3 ? 2 : 6,
-              child: loadedConversation == null ? sideBarNoConversationsLoaded() : loadedConversation!,
-            )
+            if (tabletMode!)
+              Container(
+                height: double.infinity,
+                width: 1,
+                color: Theme.of(context).colorScheme.outline,
+              ),
+            if (tabletMode!)
+              Expanded(
+                flex: widthParts >= 3 ? 2 : 6,
+                child: loadedConversation == null
+                    ? sideBarNoConversationsLoaded()
+                    : loadedConversation!,
+              )
           ],
         ),
       ),
@@ -732,8 +852,7 @@ class ConversationTile extends StatelessWidget {
       required this.onTap,
       required this.isOpen,
       required this.loadedConversationId,
-      required this.noBadgeConversations
-      });
+      required this.noBadgeConversations});
 
   @override
   Widget build(BuildContext context) {
@@ -758,9 +877,8 @@ class ConversationTile extends StatelessWidget {
                     width: 10,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary,
-                      borderRadius: BorderRadius.circular(8.0)
-                    ),
+                        color: Theme.of(context).colorScheme.primary,
+                        borderRadius: BorderRadius.circular(8.0)),
                   )
                 ],
               )
@@ -768,125 +886,136 @@ class ConversationTile extends StatelessWidget {
             Stack(
               alignment: Alignment.center,
               children: [
-              if (entry.hidden) ...[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(right: 64.0),
-                      child: Icon(
-                        Icons.visibility_off,
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Theme.of(context)
-                                .colorScheme
-                                .onSurfaceVariant
-                                .withValues(alpha: 0.05)
-                            : Theme.of(context)
-                                .colorScheme
-                                .surfaceContainerLow
-                                .withValues(alpha: 0.8),
-                        size: 65,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-              Badge(
-                smallSize: (entry.unread && entry.id != loadedConversationId || noBadgeConversations.contains(entry.id)) ? 9 : 0,
-                child: InkWell(
-                  onTap: () {
-                    if (toggleMode) {
-                      CheckTileNotification(id: entry.id).dispatch(context);
-                      return;
-                    }
-                    onTap(entry);
-                  },
-                  onLongPress: () async {
-                    // Try to let the tile be in same place as in the old list.
-                    if (!toggleMode) {
-                      final List<OverviewEntry> oldEntries = sph!.parser.conversationsParser.stream.value.content!;
-                      final oldPosition = oldEntries.indexOf(entry) * tileSize;
-
-                      CheckTileNotification(id: entry.id).dispatch(context);
-
-                      final List<OverviewEntry> entries = sph!.parser.conversationsParser.stream.value.content!;
-
-                      final index = entries.indexOf(entry);
-                      final position = index * tileSize;
-                      final offset =
-                          Scrollable.of(context).deltaToScrollOrigin.dy;
-
-                      final newOffset = position + (offset - oldPosition);
-                      JumpToNotification(position: newOffset).dispatch(context);
-                    }
-                  },
-                  customBorder: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
+                if (entry.hidden) ...[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Visibility(
-                          visible: toggleMode,
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 12.0),
-                            child: Icon(
-                              checked
-                                  ? Icons.check_box
-                                  : Icons.check_box_outline_blank,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                          )),
-                      Expanded(
-                        child: ListTile(
-                          title: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Flexible(
-                                flex: 3,
-                                child: Text(
-                                  entry.title,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context).textTheme.bodyLarge,
-                                ),
-                              ),
-                              if (entry.shortName != null) ...[
-                                Flexible(
-                                  child: Text(
-                                    entry.shortName!,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: entry.shortName != null
-                                        ? Theme.of(context).textTheme.titleMedium
-                                        : Theme.of(context)
-                                            .textTheme
-                                            .titleMedium!
-                                            .copyWith(
-                                                color: Theme.of(context)
-                                                    .colorScheme
-                                                    .error),
-                                  ),
-                                ),
-                              ]
-                            ],
-                          ),
-                          subtitle: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                entry.date,
-                              ),
-                              Text(
-                                entry.fullName,
-                              ),
-                            ],
-                          ),
+                      Padding(
+                        padding: const EdgeInsets.only(right: 64.0),
+                        child: Icon(
+                          Icons.visibility_off,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant
+                                  .withValues(alpha: 0.05)
+                              : Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerLow
+                                  .withValues(alpha: 0.8),
+                          size: 65,
                         ),
                       ),
                     ],
                   ),
+                ],
+                Badge(
+                  smallSize:
+                      (entry.unread && entry.id != loadedConversationId ||
+                              noBadgeConversations.contains(entry.id))
+                          ? 9
+                          : 0,
+                  child: InkWell(
+                    onTap: () {
+                      if (toggleMode) {
+                        CheckTileNotification(id: entry.id).dispatch(context);
+                        return;
+                      }
+                      onTap(entry);
+                    },
+                    onLongPress: () async {
+                      // Try to let the tile be in same place as in the old list.
+                      if (!toggleMode) {
+                        final List<OverviewEntry> oldEntries = sph!
+                            .parser.conversationsParser.stream.value.content!;
+                        final oldPosition =
+                            oldEntries.indexOf(entry) * tileSize;
+
+                        CheckTileNotification(id: entry.id).dispatch(context);
+
+                        final List<OverviewEntry> entries = sph!
+                            .parser.conversationsParser.stream.value.content!;
+
+                        final index = entries.indexOf(entry);
+                        final position = index * tileSize;
+                        final offset =
+                            Scrollable.of(context).deltaToScrollOrigin.dy;
+
+                        final newOffset = position + (offset - oldPosition);
+                        JumpToNotification(position: newOffset)
+                            .dispatch(context);
+                      }
+                    },
+                    customBorder: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Visibility(
+                            visible: toggleMode,
+                            child: Padding(
+                              padding: const EdgeInsets.only(left: 12.0),
+                              child: Icon(
+                                checked
+                                    ? Icons.check_box
+                                    : Icons.check_box_outline_blank,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            )),
+                        Expanded(
+                          child: ListTile(
+                            title: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Flexible(
+                                  flex: 3,
+                                  child: Text(
+                                    entry.title,
+                                    overflow: TextOverflow.ellipsis,
+                                    style:
+                                        Theme.of(context).textTheme.bodyLarge,
+                                  ),
+                                ),
+                                if (entry.shortName != null) ...[
+                                  Flexible(
+                                    child: Text(
+                                      entry.shortName!,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: entry.shortName != null
+                                          ? Theme.of(context)
+                                              .textTheme
+                                              .titleMedium
+                                          : Theme.of(context)
+                                              .textTheme
+                                              .titleMedium!
+                                              .copyWith(
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .error),
+                                    ),
+                                  ),
+                                ]
+                              ],
+                            ),
+                            subtitle: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  entry.date,
+                                ),
+                                Text(
+                                  entry.fullName,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              ],
             )
           ],
         ),
@@ -943,8 +1072,8 @@ class _ScrolledDownContainerState extends State<ScrolledDownContainer> {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-      ),
+          //color: Theme.of(context).colorScheme.surface,
+          ),
       child: widget.child,
     );
   }

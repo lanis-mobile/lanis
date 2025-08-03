@@ -6,6 +6,7 @@ import 'package:drift/drift.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_executor/flutter_background_executor.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:lanis/core/connection_checker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:lanis/applets/definitions.dart';
 import 'package:lanis/models/account_types.dart';
@@ -16,7 +17,6 @@ import 'core/database/account_database/account_db.dart'
 import 'core/sph/sph.dart' show SPH;
 
 Future<void> setupBackgroundService(AccountDatabase accountDatabase) async {
-
   if ((await Permission.notification.isDenied)) {
     logger.d("User disallowed notifications");
     await FlutterBackgroundExecutor().cancelAllTasks();
@@ -39,9 +39,10 @@ Future<void> setupBackgroundService(AccountDatabase accountDatabase) async {
     return;
   }
 
-  final int targetIntervalMinutes = await accountDatabase.kv
-      .get('notifications-target-interval-minutes');
-  logger.i('Setting up background task with interval of $targetIntervalMinutes minutes');
+  final int targetIntervalMinutes =
+      await accountDatabase.kv.get('notifications-target-interval-minutes');
+  logger.i(
+      'Setting up background task with interval of $targetIntervalMinutes minutes');
   if (Platform.isAndroid) {
     await FlutterBackgroundExecutor().createRefreshTask(
       callback: callbackDispatcher,
@@ -64,9 +65,10 @@ Future<void> setupBackgroundService(AccountDatabase accountDatabase) async {
 
   if (Platform.isIOS) {
     try {
-      await bgf.BackgroundFetch.configure(bgf.BackgroundFetchConfig(
-          minimumFetchInterval: targetIntervalMinutes
-      ), (String taskId) async {
+      await bgf.BackgroundFetch.configure(
+          bgf.BackgroundFetchConfig(
+              minimumFetchInterval: targetIntervalMinutes),
+          (String taskId) async {
         try {
           await callbackDispatcher();
         } finally {
@@ -76,10 +78,8 @@ Future<void> setupBackgroundService(AccountDatabase accountDatabase) async {
         bgf.BackgroundFetch.finish(taskId);
       });
 
-      await bgf.BackgroundFetch.scheduleTask(bgf.TaskConfig(
-          taskId: "com.transistorsoft.notftask",
-          delay: 10000
-      ));
+      await bgf.BackgroundFetch.scheduleTask(
+          bgf.TaskConfig(taskId: "com.transistorsoft.notftask", delay: 10000));
     } catch (e, s) {
       backgroundLogger.e(e, stackTrace: s);
     }
@@ -116,14 +116,19 @@ Future<void> callbackDispatcher() async {
       return;
     }
 
+    if (!await connectionChecker.connected) {
+      backgroundLogger.w('No network connection, aborting background fetch');
+      return;
+    }
+
     final accounts =
-    await (accountDatabase.select(accountDatabase.accountsTable)).get();
+        await (accountDatabase.select(accountDatabase.accountsTable)).get();
 
     List<Future> accountBackgroundTasks = [];
 
     for (final account in accounts) {
       final ClearTextAccount clearTextAccount =
-      await AccountDatabase.getAccountFromTableData(account);
+          await AccountDatabase.getAccountFromTableData(account);
       final sph = SPH(account: clearTextAccount);
       if (!await sph.prefs.kv.get('notifications-allow')) {
         sph.prefs.close();
@@ -132,10 +137,10 @@ Future<void> callbackDispatcher() async {
       accountBackgroundTasks.add(() async {
         List<Future> appletTasks = [];
         bool authenticated = false;
-        for (final applet
-        in AppDefinitions.applets.where((a) => a.notificationTask != null)) {
+        for (final applet in AppDefinitions.applets
+            .where((a) => a.notificationTask != null)) {
           if (applet.supportedAccountTypes
-              .contains(clearTextAccount.accountType) &&
+                  .contains(clearTextAccount.accountType) &&
               (await sph.prefs.kv.get('notification-${applet.appletPhpUrl}') ??
                   true)) {
             if (!authenticated) {

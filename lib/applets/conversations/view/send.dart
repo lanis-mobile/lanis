@@ -3,26 +3,19 @@ import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
 import 'package:lanis/generated/l10n.dart';
 
-import '../../../core/connection_checker.dart';
-import '../../../core/sph/sph.dart';
 import '../../../models/conversations.dart';
-import 'chat.dart';
-import 'shared.dart';
 
-class ConversationsSend extends StatefulWidget {
+class FullScreenConversationsMessageInput extends StatefulWidget {
   final ChatCreationData? creationData;
-  final bool isTablet;
   final String? title;
-  const ConversationsSend({super.key, this.creationData, required this.isTablet, this.title});
+  const FullScreenConversationsMessageInput(
+      {super.key, this.creationData, this.title});
 
   @override
-  State<ConversationsSend> createState() => _ConversationsSendState();
-}
+  State<FullScreenConversationsMessageInput> createState() =>
+      _FullScreenConversationsMessageInputState();
 
-class _ConversationsSendState extends State<ConversationsSend> {
-  final QuillController _controller = QuillController.basic();
-
-  String parseText(Delta delta) {
+  static String parseText(Delta delta) {
     String text = "";
 
     List<Operation> operations = delta.operations;
@@ -89,138 +82,46 @@ class _ConversationsSendState extends State<ConversationsSend> {
 
     return text.substring(0, text.length - 1);
   }
+}
 
-  Future<void> newConversation(String text) async {
-    final bool status = await connectionChecker.connected;
-    if (!status) {
-      if(mounted) {
-        showDialog(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              icon: const Icon(Icons.wifi_off),
-              title: Text(AppLocalizations.of(context).noInternetConnection2),
-              actions: [
-                FilledButton(
-                    onPressed: () async {
-                      Navigator.pop(context);
-                    },
-                    child: const Text("Ok")),
-              ],
-            );
-          });
-      }
-      return;
-    }
-
-    final textMessage = Message(
-      text: text,
-      own: true,
-      date: DateTime.now(),
-      author: null,
-      state: MessageState.first,
-      status: MessageStatus.sent,
-    );
-
-    final CreationResponse response = await sph!.parser.conversationsParser
-        .createConversation(
-            widget.creationData!.receivers,
-            widget.creationData!.type?.name,
-            widget.creationData!.subject,
-            text);
-
-    if (response.success) {
-      sph!.parser.conversationsParser.fetchData(forceRefresh: true);
-
-      if(mounted) {
-        Navigator.pop(context);
-        Navigator.pop(context);
-        if (!widget.isTablet) {
-          Navigator.pop(context);
-          Navigator.of(context).push(MaterialPageRoute(
-              builder: (context) =>
-                  ConversationsChat(
-                      title: widget.creationData!.subject,
-                      id: response.id!,
-                      isTablet: widget.isTablet,
-                      refreshSidebar: () {},
-                      newSettings: NewConversationSettings(
-                          firstMessage: textMessage,
-                          settings: ConversationSettings(
-                              id: response.id!,
-                              groupChat:
-                              widget.creationData!.type == ChatType.groupOnly,
-                              onlyPrivateAnswers: widget.creationData!.type ==
-                                  ChatType.privateAnswerOnly,
-                              noReply: widget.creationData!.type ==
-                                  ChatType.noAnswerAllowed,
-                              own: true),
-                      ),
-                  ),
-          ),
-          );
-        }
-      }
-    } else {
-      if(mounted) {
-        showDialog(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              icon: const Icon(Icons.error),
-              title:
-                  Text(AppLocalizations.of(context).errorCreatingConversation),
-              actions: [
-                FilledButton(
-                    onPressed: () async {
-                      Navigator.pop(context);
-                    },
-                    child: const Text("Ok")),
-              ],
-            );
-          });
-      }
-    }
-  }
+class _FullScreenConversationsMessageInputState
+    extends State<FullScreenConversationsMessageInput> {
+  final QuillController _controller = QuillController.basic();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text(
-            widget.creationData?.subject ?? widget.title!
+      appBar: AppBar(
+        title: Text(widget.creationData?.subject ?? widget.title!),
+        actions: [
+          IconButton(
+            onPressed: () {
+              _controller.clear();
+            },
+            icon: const Icon(Icons.delete_forever),
           ),
-          actions: [
-            IconButton(
-              onPressed: () {
-                _controller.clear();
-              },
-              icon: const Icon(Icons.delete_forever),
-            ),
-            IconButton(
-              onPressed: () {
-                final String text = parseText(_controller.document.toDelta());
+          IconButton(
+            onPressed: () {
+              final String text = FullScreenConversationsMessageInput.parseText(
+                  _controller.document.toDelta());
 
-                if (text.isEmpty) return;
+              if (text.isEmpty) return;
 
-                if (widget.creationData != null) {
-                  newConversation(text);
-                } else {
-                  Navigator.pop(context, text);
-                }
-              },
-              icon: const Icon(Icons.send),
-            ),
-          ],
-        ),
-        body: SafeArea(child: Column(
+              Navigator.pop(context, text);
+            },
+            icon: const Icon(Icons.send),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: Column(
           children: [
             Expanded(
               child: QuillEditor.basic(
                   configurations: QuillEditorConfigurations(
                       controller: _controller,
                       placeholder:
-                      AppLocalizations.of(context).sendMessagePlaceholder,
+                          AppLocalizations.of(context).sendMessagePlaceholder,
                       padding: const EdgeInsets.symmetric(horizontal: 16.0))),
             ),
             QuillToolbar(
@@ -279,6 +180,8 @@ class _ConversationsSendState extends State<ConversationsSend> {
               ),
             ),
           ],
-        )));
+        ),
+      ),
+    );
   }
 }

@@ -8,10 +8,7 @@ app/dist/
 .idea/*
 .idea/libraries/Dart_Packages.xml
 .idea/workspace.xml
-.vscode/*
-.vscode/launch.json
-.vscode/settings.json
-.vscode/tasks.json
+
 
 # Miscellaneous
 *.class
