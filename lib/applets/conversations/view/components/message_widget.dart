@@ -15,9 +15,9 @@ class MessageWidget extends StatelessWidget {
     final double size = MediaQuery.sizeOf(context).width - 200;
 
     final shadow = BoxShadow(
-      blurRadius: 2.5,
+      blurRadius: 2,
       blurStyle: BlurStyle.outer,
-      color: Theme.of(context).colorScheme.shadow.withAlpha(90),
+      color: Theme.of(context).colorScheme.shadow.withAlpha(45),
     );
 
     return Padding(

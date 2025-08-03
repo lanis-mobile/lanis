@@ -10,6 +10,7 @@ import 'package:lanis/applets/conversations/view/components/rich_chat_text_edito
 import 'package:lanis/applets/conversations/view/components/statistic_widget.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'dart:async';
+import 'package:flutter/services.dart';
 
 import '../../../core/sph/sph.dart';
 import '../../../models/client_status_exceptions.dart';
@@ -541,98 +542,106 @@ class _ConversationsChatState extends State<ConversationsChat>
                               .onSurfaceVariant
                               .withValues(alpha: 0.07),
                         ),
-                        NotificationListener<ScrollMetricsNotification>(
-                          onNotification: (_) {
-                            toggleScrollToBottomFab();
-                            return false;
-                          },
-                          child: FetchMoreIndicator(
-                            controller: refreshIndicatorController,
-                            onAction: refreshConversation,
-                            child: CustomScrollView(
-                              controller: scrollController,
-                              reverse: true,
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              slivers: [
-                                SliverToBoxAdapter(
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 200),
-                                    curve: Curves.easeInOut,
-                                    height: richTextEditorSize + 10,
+                        GestureDetector(
+                          onTap: () => SystemChannels.textInput
+                              .invokeMethod('TextInput.hide'),
+                          behavior: HitTestBehavior.deferToChild,
+                          child:
+                              NotificationListener<ScrollMetricsNotification>(
+                            onNotification: (_) {
+                              toggleScrollToBottomFab();
+                              return false;
+                            },
+                            child: FetchMoreIndicator(
+                              controller: refreshIndicatorController,
+                              onAction: refreshConversation,
+                              child: CustomScrollView(
+                                controller: scrollController,
+                                reverse: true,
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                slivers: [
+                                  SliverToBoxAdapter(
+                                    child: AnimatedContainer(
+                                      duration:
+                                          const Duration(milliseconds: 200),
+                                      curve: Curves.easeInOut,
+                                      height: richTextEditorSize + 10,
+                                    ),
                                   ),
-                                ),
-                                SliverList.builder(
-                                  itemCount: chat.length,
-                                  itemBuilder: (context, index) {
-                                    // Reverse the index to show messages in correct order
-                                    final reversedIndex =
-                                        chat.length - 1 - index;
-                                    if (chat[reversedIndex] is Message) {
-                                      return MessageWidget(
-                                          message: chat[reversedIndex],
-                                          textStyle: textStyles[
-                                              chat[reversedIndex].author]);
-                                    } else {
-                                      return DateHeaderWidget(
-                                          header: chat[reversedIndex]);
-                                    }
-                                  },
-                                ),
-                                SliverToBoxAdapter(
-                                  child: Padding(
-                                    padding:
-                                        const EdgeInsets.only(bottom: 12.0),
-                                    child: Column(
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            Flexible(
-                                              child: Padding(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        horizontal: 12.0),
-                                                child: Text(
-                                                  widget.title,
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .headlineMedium,
-                                                  textAlign: TextAlign.center,
+                                  SliverList.builder(
+                                    itemCount: chat.length,
+                                    itemBuilder: (context, index) {
+                                      // Reverse the index to show messages in correct order
+                                      final reversedIndex =
+                                          chat.length - 1 - index;
+                                      if (chat[reversedIndex] is Message) {
+                                        return MessageWidget(
+                                            message: chat[reversedIndex],
+                                            textStyle: textStyles[
+                                                chat[reversedIndex].author]);
+                                      } else {
+                                        return DateHeaderWidget(
+                                            header: chat[reversedIndex]);
+                                      }
+                                    },
+                                  ),
+                                  SliverToBoxAdapter(
+                                    child: Padding(
+                                      padding:
+                                          const EdgeInsets.only(bottom: 12.0),
+                                      child: Column(
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Flexible(
+                                                child: Padding(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                      horizontal: 12.0),
+                                                  child: Text(
+                                                    widget.title,
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .headlineMedium,
+                                                    textAlign: TextAlign.center,
+                                                  ),
                                                 ),
+                                              ),
+                                            ],
+                                          ),
+                                          if (settings.onlyPrivateAnswers &&
+                                              !settings.own) ...[
+                                            Container(
+                                              alignment: Alignment.center,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 8.0,
+                                                      horizontal: 12.0),
+                                              margin: const EdgeInsets.only(
+                                                  top: 16.0),
+                                              decoration: BoxDecoration(
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .surfaceContainerHigh),
+                                              child: Text(
+                                                AppLocalizations.of(context)
+                                                    .privateConversation(
+                                                        settings.author!),
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodyMedium,
+                                                textAlign: TextAlign.center,
                                               ),
                                             ),
                                           ],
-                                        ),
-                                        if (settings.onlyPrivateAnswers &&
-                                            !settings.own) ...[
-                                          Container(
-                                            alignment: Alignment.center,
-                                            padding: const EdgeInsets.symmetric(
-                                                vertical: 8.0,
-                                                horizontal: 12.0),
-                                            margin: const EdgeInsets.only(
-                                                top: 16.0),
-                                            decoration: BoxDecoration(
-                                                color: Theme.of(context)
-                                                    .colorScheme
-                                                    .surfaceContainerHigh),
-                                            child: Text(
-                                              AppLocalizations.of(context)
-                                                  .privateConversation(
-                                                      settings.author!),
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .bodyMedium,
-                                              textAlign: TextAlign.center,
-                                            ),
-                                          ),
                                         ],
-                                      ],
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         ),
