@@ -130,11 +130,6 @@ class _RichChatTextEditorState extends State<RichChatTextEditor> {
                           configurations: QuillEditorConfigurations(
                             controller: quillController,
                             placeholder: widget.tooltip,
-                            onTapOutside:
-                                (PointerDownEvent event, FocusNode focusNode) {
-                              focusNode.unfocus();
-                              FocusScope.of(context).unfocus();
-                            },
                             customStyles: DefaultStyles(
                               placeHolder: DefaultTextBlockStyle(
                                   TextStyle(
