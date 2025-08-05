@@ -39,8 +39,10 @@ elif [ "$OS" == "Linux" ]; then
     mv build/app/outputs/bundle/release/app-release.aab artifacts/app-release.aab
 
     echo ">>> build apk"
-    flutter build apk --dart-define=cronetHttpNoPlay=true
-    mv build/app/outputs/flutter-apk/app-release.apk artifacts/app-release-selfsigned.apk
+    flutter build apk --split-per-abi --dart-define=cronetHttpNoPlay=true
+    mv build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk artifacts/app-armeabi-v7a-release-selfsigned.apk
+    mv build/app/outputs/flutter-apk/app-arm64-v8a-release.apk artifacts/app-arm64-v8a-release-selfsigned.apk
+    mv build/app/outputs/flutter-apk/app-x86_64-release.apk artifacts/app-x86_64-release-selfsigned.apk
 
     xdg-open artifacts
 
