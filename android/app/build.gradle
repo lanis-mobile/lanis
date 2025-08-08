@@ -83,6 +83,11 @@ android {
         all*.exclude group: 'com.google.android.datatransport'
     }
 
+    // Disables dependency metadata
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
 }
 
 flutter {
