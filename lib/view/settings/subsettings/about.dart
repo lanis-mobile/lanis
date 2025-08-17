@@ -142,8 +142,8 @@ class _AboutSettingsState extends SettingsColoursState<AboutSettings> {
     AboutLink(
       title: (context) => AppLocalizations.of(context).privacyPolicy,
       iconData: Icons.security_outlined,
-      onTap: (context) => launchUrl(Uri.parse(
-          "https://github.com/alessioC42/lanis-mobile/blob/main/SECURITY.md")),
+      onTap: (context) =>
+          launchUrl(Uri.parse("https://lanis-mobile.alessioc42.dev/policy/")),
     ),
     AboutLink(
       title: (context) => AppLocalizations.of(context).openSourceLicenses,
