@@ -53,17 +53,13 @@ Scheue dich nicht, einen Bug-Report zu erstellen, wenn du einen Fehler findest. 
 
 Bug-Reports können auch an <a href="mailto:lanis-mobile@alessioc42.dev">diese</a> E-Mail-Adresse gesendet werden, falls kein Github-Konto vorhanden ist.
 
-## How to build (Linux)
+## How to build (Linux/Darwin)
 1. Setup Flutter in Android Studio
-2. Install JDK 17 with your package manager
 ```shell
-# 3. Configure flutter to use JDK 17 and not the Android Studio JDK, otherwise the Project won't compile
-flutter config --jdk-dir=/usr/lib/jvm/java-17-openjdk # The path may differ based on your distro
-
-# 4. Generate the code
+# 2. Generate the code
 dart run build_runner build
 dart run intl_utils:generate
 
-# 5. Build
+# 3. Build
 flutter build YOUR_PLATFORM --release --dart-define=cronetHttpNoPlay=true # For release mode signing is required
 ```
