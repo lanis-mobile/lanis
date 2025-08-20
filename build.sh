@@ -14,7 +14,7 @@ flutter clean
 echo ">>> pub get"
 flutter pub get
 echo ">>> pub upgrade"
-flutter pub upgrade
+flutter pub upgrade --major-versions
 echo " pub outdated"
 flutter pub outdated
 echo ""
