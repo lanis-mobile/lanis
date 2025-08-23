@@ -102,11 +102,11 @@ class AccountListTile extends StatelessWidget {
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context, false),
-                      child: const Text('Cancel'),
+                      child: Text(AppLocalizations.of(context).cancel),
                     ),
                     TextButton(
                       onPressed: () => Navigator.pop(context, true),
-                      child: const Text('Logout'),
+                      child: Text(AppLocalizations.of(context).logout),
                     ),
                   ],
                 ),

@@ -1,11 +1,8 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:dart_date/dart_date.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:intl/intl.dart';
-import 'package:lanis/applets/conversations/view/shared.dart';
 import 'package:lanis/applets/timetable/definition.dart';
 import 'package:lanis/applets/timetable/student/student_timetable_item.dart';
 import 'package:lanis/applets/timetable/student/timetable_helper.dart';

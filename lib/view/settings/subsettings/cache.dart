@@ -62,7 +62,7 @@ class _CacheSettingsState extends SettingsColoursState<CacheSettings> {
   Widget build(BuildContext context) {
     return SettingsPage(
       backgroundColor: backgroundColor,
-      title: Text(AppLocalizations.of(context)!.clearCache),
+      title: Text(AppLocalizations.of(context).clearCache),
       showBackButton: widget.showBackButton,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16.0),
       children: [
