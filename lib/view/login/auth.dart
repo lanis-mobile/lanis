@@ -235,7 +235,7 @@ class LoginFormState extends State<LoginForm> {
                         const SizedBox(
                           height: padding,
                         ),
-                        ElevatedButton(
+                        FilledButton(
                           onPressed: dseAgree
                               ? () {
                                   if (_formKey.currentState!.validate()) {

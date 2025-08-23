@@ -392,5 +392,9 @@
   "ignoreBatteryOptimizationPart1": "If you do not recieve notifications, this can be due to manufacturer-specific battery optimizations. You can disable them for this app in the ",
   "ignoreBatteryOptimizationSettings": "Battery optimization settings",
   "ignoreBatteryOptimizationGranted": "Successfully granted the battery optimization permission.",
-  "ignoreBatteryOptimizationDenied": "Failed to grant the battery optimization permission. Please try again or do it manually in the system settings."
+  "ignoreBatteryOptimizationDenied": "Failed to grant the battery optimization permission. Please try again or do it manually in the system settings.",
+  "switchAccount": "Switch Account",
+  "activeAccount": "Active Account",
+  "addAccount": "Add Account",
+  "lastSeen": "{days, plural, =0{Today} one{Yesterday} other{{days} days ago}}"
 }

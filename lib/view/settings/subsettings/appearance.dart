@@ -33,7 +33,7 @@ class _AppearanceSettingsState
   Widget build(BuildContext context) {
     return SettingsPageWithStreamBuilder(
         backgroundColor: backgroundColor,
-        title: Text(AppLocalizations.of(context)!.appearance),
+        title: Text(AppLocalizations.of(context).appearance),
         showBackButton: widget.showBackButton,
         subscription: accountDatabase.kv
             .subscribeMultiple(['color', 'theme', 'is-amoled']),
