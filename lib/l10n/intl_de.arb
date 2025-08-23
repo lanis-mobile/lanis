@@ -348,6 +348,9 @@
   "ignoreBatteryOptimizationPart1": "Wenn Sie keine Benachrichtigungen erhalten, kann dies an herstellerspezifischen Akku-Optimierungen liegen. Sie können diese hier deaktivieren, um sicherzustellen, dass die App im Hintergrund ordnungsgemäß funktioniert. ",
   "ignoreBatteryOptimizationSettings": "Batterie Einstellungen",
   "ignoreBatteryOptimizationGranted": "Die Genehmigung zur Batterieoptimierung wurde erfolgreich erteilt.",
-  "ignoreBatteryOptimizationDenied": "Die Berechtigung zur Batterieoptimierung konnte nicht erteilt werden. Bitte versuchen Sie es noch einmal oder nehmen Sie es manuell in den Systemeinstellungen vor."
-
+  "ignoreBatteryOptimizationDenied": "Die Berechtigung zur Batterieoptimierung konnte nicht erteilt werden. Bitte versuchen Sie es noch einmal oder nehmen Sie es manuell in den Systemeinstellungen vor.",
+  "switchAccount": "Account wechseln",
+  "activeAccount": "Aktiver Account",
+  "addAccount": "Account hinzufügen",
+  "lastSeen": "{days, plural, =0{Heute} one{Gestern} other{{days} Tage her}}"
 }

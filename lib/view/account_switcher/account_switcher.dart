@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lanis/core/database/account_database/account_db.dart';
+import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/view/login/auth.dart';
 
 import '../../core/sph/sph.dart';
@@ -18,7 +19,7 @@ class _AccountSwitcherState extends State<AccountSwitcher> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Switch Account'),
+        title: Text(AppLocalizations.of(context).switchAccount),
       ),
       body: StreamBuilder(
         stream: accountDatabase.select(accountDatabase.accountsTable).watch(),
@@ -57,7 +58,7 @@ class _AccountSwitcherState extends State<AccountSwitcher> {
             ),
           ),
         )),
-        label: Text('Add Account'),
+        label: Text(AppLocalizations.of(context).addAccount),
         icon: Icon(Icons.person_add),
       ),
     );

@@ -22,7 +22,7 @@ class AccountListTile extends StatelessWidget {
 
   String get lastLoginInDays {
     final days = DateTime.now().difference(lastLogin).inDays;
-    return days == 0 ? 'Today' : '$days days ago';
+    return AppLocalizations.current.lastSeen(days);
   }
 
   bool get isLoggedInAccount => sph?.account.localId == dbID;
@@ -41,7 +41,7 @@ class AccountListTile extends StatelessWidget {
             ),
             if (isLoggedInAccount)
               Text(
-                'Active Account',
+                AppLocalizations.of(context).activeAccount,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: Theme.of(context).colorScheme.tertiary,
                     ),
