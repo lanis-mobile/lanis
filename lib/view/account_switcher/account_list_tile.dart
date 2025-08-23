@@ -20,9 +20,9 @@ class AccountListTile extends StatelessWidget {
       required this.dbID,
       this.onTap});
 
-  String get lastLoginInDays {
+  String lastLoginInDays(BuildContext context) {
     final days = DateTime.now().difference(lastLogin).inDays;
-    return AppLocalizations.current.lastSeen(days);
+    return AppLocalizations.of(context).lastSeen(days);
   }
 
   bool get isLoggedInAccount => sph?.account.localId == dbID;
@@ -48,7 +48,7 @@ class AccountListTile extends StatelessWidget {
               ),
             Spacer(),
             Text(
-              lastLoginInDays,
+              lastLoginInDays(context),
               style: Theme.of(context).textTheme.labelSmall,
             ),
             const SizedBox(
@@ -87,7 +87,7 @@ class AccountListTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              Text(lastLoginInDays),
+              Text(lastLoginInDays(context)),
             ],
           ),
           trailing: IconButton(
