@@ -26,7 +26,7 @@ class StudyGroupsStudentParser extends AppletParser<List<StudentStudyGroups>> {
     Element? courses = document.getElementById('LGs');
     Element? exams = document.getElementById('klausuren');
 
-    StudentStudyGroupsData examData = parseExams(exams!);
+    StudentStudyGroupsData? examData = exams != null ? parseExams(exams) : null;
     StudentStudyGroupsData courseData = parseCourses(courses!);
 
     List<StudentStudyGroups> studyGroups = [];
@@ -41,7 +41,7 @@ class StudyGroupsStudentParser extends AppletParser<List<StudentStudyGroups>> {
       Uri? email = data[6].isNotEmpty ? Uri.parse(data[6]) : null;
 
       // Filters mapped by courseName
-      List<List<String>> examsInCourse = examData.data
+      List<List<String>>? examsInCourse = examData?.data
           .where((element) => element[1].contains(courseName))
           .toList();
 
@@ -53,7 +53,7 @@ class StudyGroupsStudentParser extends AppletParser<List<StudentStudyGroups>> {
         picture: picture != null ? (name: fileName!, url: picture) : null,
         email: email,
         exams: examsInCourse
-            .map((e) => StudentExam(
+            ?.map((e) => StudentExam(
                   date: DateTime.parse(
                       e[0].split(', ')[1].split('.').reversed.join('-')),
                   time: e[3],
@@ -120,19 +120,24 @@ class StudyGroupsStudentParser extends AppletParser<List<StudentStudyGroups>> {
       if (linkElement != null) {
         final emailTextElement = teacherElement.querySelector("a small");
 
-        email = "mailto:${emailTextElement!.text.trim()}";
-        emailTextElement.remove();
-        teacher = teacherElement.text.trim();
+        teacher = "";
+        if (emailTextElement != null) {
+          email = "mailto:${emailTextElement.text.trim()}";
+          emailTextElement.remove();
+          teacher = teacherElement.text.trim();
+        }
         courseRow.add(teacher);
       } else {
         courseRow.add(teacherElement.text.trim());
       }
 
-      courseRow.add(row.children[3].innerHtml
-          .split('<br>')
-          .map((e) => e.trim())
-          .where((e) => e.isNotEmpty)
-          .join('|'));
+      courseRow.add(row.children.length > 3
+          ? row.children[3].innerHtml
+              .split('<br>')
+              .map((e) => e.trim())
+              .where((e) => e.isNotEmpty)
+              .join('|')
+          : "");
 
       final imageElement = row.children[2].querySelector("img");
       if (imageElement != null) {

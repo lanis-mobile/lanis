@@ -3,7 +3,7 @@ class StudentStudyGroups {
   final String courseName;
   final String teacher;
   final String teacherKuerzel;
-  final List<StudentExam> exams;
+  final List<StudentExam>? exams;
   final Uri? email;
   final ({String name, String url})? picture;
 
@@ -47,7 +47,7 @@ class StudentStudyGroups {
             }
           : null,
       'email': email?.path,
-      'exams': exams.map((e) => e.toJson()).toList(),
+      'exams': exams?.map((e) => e.toJson()).toList(),
     };
   }
 }

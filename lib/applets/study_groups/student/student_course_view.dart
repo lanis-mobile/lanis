@@ -146,31 +146,33 @@ class StudentCourseView extends StatelessWidget {
                         ),
                       ],
                     ),
-                    if (exams.isNotEmpty)
+                    if (exams != null && exams.isNotEmpty)
                       SizedBox(
                         height: 8.0,
                       ),
-                    for (int i = 0; i < exams.length; i++)
-                      Card.filled(
-                        margin: EdgeInsets.zero,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: getRadius(i, exams.length),
+                    if (exams != null)
+                      for (int i = 0; i < exams.length; i++)
+                        Card.filled(
+                          margin: EdgeInsets.zero,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: getRadius(i, exams.length),
+                          ),
+                          child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(exams[i].type),
+                                  exams[i].duration.isEmpty
+                                      ? Text(exams[i].time)
+                                      : Text(
+                                          '${exams[i].time} (${exams[i].duration})'),
+                                  Text(DateFormat('dd.MM.yy')
+                                      .format(exams[i].date)),
+                                ],
+                              )),
                         ),
-                        child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(exams[i].type),
-                                exams[i].duration.isEmpty
-                                    ? Text(exams[i].time)
-                                    : Text(
-                                        '${exams[i].time} (${exams[i].duration})'),
-                                Text(DateFormat('dd.MM.yy')
-                                    .format(exams[i].date)),
-                              ],
-                            )),
-                      ),
                   ],
                 ),
               ),
