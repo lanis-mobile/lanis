@@ -75,11 +75,14 @@ class _CombinedAppletBuilderState<T> extends State<CombinedAppletBuilder<T>> {
       builder: (context, snapshot) {
         if (snapshot.hasError || snapshot.data?.status == FetcherStatus.error) {
           return Scaffold(
-            body: ErrorView(
+            body: AppletErrorView(
               showAppBar: widget.showErrorAppBar,
               error: snapshot.data!.contentStatus == ContentStatus.offline
                   ? NoConnectionException()
-                  : UnknownException(),
+                  : snapshot.data!.error != null
+                      ? snapshot.data!.error!.exception
+                      : UnknownException(),
+              stack: snapshot.data!.error?.stackTrace,
               retry: snapshot.data!.contentStatus == ContentStatus.online
                   ? () => widget.parser.fetchData(forceRefresh: true)
                   : null,

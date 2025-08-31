@@ -3,14 +3,16 @@ import 'package:lanis/generated/l10n.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/client_status_exceptions.dart';
+import '../utils/mono_text_viewer.dart';
 
-class ErrorView extends StatelessWidget {
+class AppletErrorView extends StatelessWidget {
   final Exception error;
   final void Function()? retry;
   final bool showAppBar;
+  final StackTrace? stack;
 
-  const ErrorView(
-      {super.key, required this.error, this.showAppBar = false, this.retry});
+  const AppletErrorView(
+      {super.key, required this.error, this.showAppBar = false, this.retry, this.stack});
 
   @override
   Widget build(BuildContext context) {
@@ -58,15 +60,30 @@ class ErrorView extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: OutlinedButton(
-                    onPressed: () {
-                      launchUrl(Uri.parse(
-                          "https://github.com/alessioC42/lanis-mobile/issues"));
-                    },
-                    child: const Text("GitHub")),
-              ),
+              OutlinedButton(
+                  onPressed: () {
+                    launchUrl(Uri.parse(
+                        "https://github.com/alessioC42/lanis/issues"));
+                  },
+                  child: const Text("GitHub"))
+            ],
+          )
+        ],
+        if (stack != null) ...[
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              OutlinedButton(
+                  onPressed: () {
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (context) => MonoTextViewer(
+                              report: stack.toString(),
+                              title: "Stack Trace",
+                              fileNameStart: "stack_trace_applet",
+                            )));
+                  },
+                  child: const Text("Stack Trace")),
             ],
           )
         ],
@@ -75,3 +92,5 @@ class ErrorView extends StatelessWidget {
     );
   }
 }
+
+// test weather the exeptoin stack is present here...

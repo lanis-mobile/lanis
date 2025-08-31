@@ -341,7 +341,7 @@ class _CalendarViewState extends State<CalendarView> {
           context: context,
           showDragHandle: true,
           builder: (context) {
-            return ErrorView(
+            return AppletErrorView(
               error: ex,
             );
           },

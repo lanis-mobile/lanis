@@ -540,7 +540,7 @@ class ConversationsParser extends AppletParser<List<OverviewEntry>> {
   /// Force pushes new data for the stream.
   void addData(final List<OverviewEntry> content) {
     addResponse(FetcherResponse<List<OverviewEntry>>(
-        status: FetcherStatus.done, content: content));
+        status: FetcherStatus.done, content: content, error: null));
   }
 }
 

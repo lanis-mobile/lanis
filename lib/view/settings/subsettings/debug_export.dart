@@ -4,10 +4,10 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:lanis/utils/file_operations.dart';
 
 import '../../../core/sph/sph.dart';
 import '../../../utils/logger.dart';
+import '../../../utils/mono_text_viewer.dart';
 
 class DebugExport extends StatefulWidget {
   const DebugExport({super.key});
@@ -68,7 +68,7 @@ class _DebugExportState extends State<DebugExport> {
                         labelText: 'HTTP Method',
                         border: OutlineInputBorder(),
                       ),
-                      value: 'GET',
+                      initialValue: 'GET',
                       items: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
                           .map((method) => DropdownMenuItem(
                                 value: method,
@@ -139,57 +139,11 @@ class _DebugExportState extends State<DebugExport> {
                           // show full screen dialog with report as scrollable text
                           if (context.mounted) {
                             Navigator.of(context).push(MaterialPageRoute(
-                                builder: (context) => Scaffold(
-                                      appBar: AppBar(
-                                          title: Text('Debug Export Report')),
-                                      body: SingleChildScrollView(
-                                        padding: const EdgeInsets.only(
-                                            left: 8.0,
-                                            right: 8.0,
-                                            top: 8.0,
-                                            bottom: 100.0),
-                                        child: SelectableText(report,
-                                            style: TextStyle(
-                                                fontFamily: 'monospace',
-                                                fontSize: 10)),
-                                      ),
-                                      floatingActionButton:
-                                          FloatingActionButton.extended(
-                                        label: Text('Export Report File'),
-                                        icon: Icon(Icons.save_alt),
-                                        onPressed: () {
-                                          final fileName =
-                                              'lanis_mobile_debug_export_${DateTime.now().toIso8601String()}.txt';
-                                          final file = File(
-                                              '${Directory.systemTemp.path}/$fileName');
-                                          file.writeAsString(report).then((_) {
-                                            if (context.mounted) {
-                                              ScaffoldMessenger.of(context)
-                                                  .showSnackBar(
-                                                SnackBar(
-                                                    content: Text(
-                                                        'Report saved to ${file.path}')),
-                                              );
-                                            }
-                                          }).catchError((e) {
-                                            if (context.mounted) {
-                                              ScaffoldMessenger.of(context)
-                                                  .showSnackBar(
-                                                SnackBar(
-                                                    content: Text(
-                                                        'Failed to save report: $e')),
-                                              );
-                                            }
-                                          });
-                                          showFileModal(
-                                              context,
-                                              FileInfo.local(
-                                                  filePath: file.path,
-                                                  name: fileName,
-                                                  size: ""));
-                                        },
-                                      ),
-                                    )));
+                                builder: (context) => MonoTextViewer(
+                                    report: report,
+                                  title: "Debug Export Preview",
+                                  fileNameStart: "lanis_mobile_debug_export"
+                                )));
                           }
                         }
                       },

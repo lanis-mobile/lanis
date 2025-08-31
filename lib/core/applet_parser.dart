@@ -18,15 +18,24 @@ enum ContentStatus {
   offline,
 }
 
+class ExceptionWithStackTrace {
+  final Exception exception;
+  final StackTrace stackTrace;
+
+  ExceptionWithStackTrace({required this.exception, required this.stackTrace});
+}
+
 class FetcherResponse<T> {
   final FetcherStatus status;
   final T? content;
   final ContentStatus contentStatus;
   final DateTime fetchedAt;
+  final ExceptionWithStackTrace? error;
 
   FetcherResponse(
       {required this.status,
       this.contentStatus = ContentStatus.online,
+      required this.error,
       this.content,
       DateTime? fetchedAt})
       : fetchedAt = fetchedAt ?? DateTime.now();
@@ -65,6 +74,7 @@ class AppletParser<T> {
               contentStatus: ContentStatus.offline,
               content: typeFromJson(offlineData.json!),
               fetchedAt: offlineData.timestamp,
+              error: null
             ),
           );
         } else {
@@ -72,6 +82,7 @@ class AppletParser<T> {
             FetcherResponse(
               status: FetcherStatus.error,
               contentStatus: ContentStatus.offline,
+              error: null
             ),
           );
         }
@@ -81,11 +92,11 @@ class AppletParser<T> {
     }
 
     if (isEmpty || forceRefresh) {
-      addResponse(FetcherResponse(status: FetcherStatus.fetching));
+      addResponse(FetcherResponse(status: FetcherStatus.fetching, error: null));
 
       _getHome().then((data) async {
         addResponse(
-            FetcherResponse<T>(status: FetcherStatus.done, content: data));
+            FetcherResponse<T>(status: FetcherStatus.done, content: data, error: null));
         isEmpty = false;
       }).catchError((ex, stack) async {
         logger.e(ex, stackTrace: stack);
@@ -95,7 +106,10 @@ class AppletParser<T> {
           return;
         }
         addResponse(
-          FetcherResponse<T>(status: FetcherStatus.error),
+          FetcherResponse<T>(
+            status: FetcherStatus.error,
+            error: ExceptionWithStackTrace(exception: ex, stackTrace: stack)
+          ),
         );
       });
     }

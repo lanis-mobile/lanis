@@ -499,7 +499,7 @@ class _ConversationsChatState extends State<ConversationsChat>
               // Error content
               if (snapshot.hasError) {
                 if (snapshot.error is LanisException) {
-                  return ErrorView(
+                  return AppletErrorView(
                     error: snapshot.error as LanisException,
                     showAppBar: true,
                     retry: () {
