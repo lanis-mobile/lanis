@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:dio/dio.dart';
 import 'package:html/dom.dart';
@@ -112,23 +113,24 @@ class StudyGroupsStudentParser extends AppletParser<List<StudentStudyGroups>> {
       courseRow.add(row.children[0].text.trim());
       courseRow.add(row.children[1].text.trim());
 
-      final teacherElement = row.children[2];
+      final teacherElement = row.children[2].getElementsByTagName('div').first;
+      log(teacherElement.text);
       final linkElement = teacherElement.querySelector("a");
-      String teacher = "";
       String? email;
 
       if (linkElement != null) {
         final emailTextElement = teacherElement.querySelector("a small");
 
-        teacher = "";
         if (emailTextElement != null) {
           email = "mailto:${emailTextElement.text.trim()}";
           emailTextElement.remove();
-          teacher = teacherElement.text.trim();
         }
-        courseRow.add(teacher);
+
+        courseRow.add(
+            "${linkElement.text.trim()}(${teacherElement.text.trim().split(' ')[0]})");
       } else {
-        courseRow.add(teacherElement.text.trim());
+        courseRow.add(
+            "${teacherElement.text.trim().split(' ')[1].trim()}(${teacherElement.text.trim().split(' ')[0]})");
       }
 
       courseRow.add(row.children.length > 3
