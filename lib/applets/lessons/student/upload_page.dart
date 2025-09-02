@@ -108,7 +108,7 @@ class _UploadScreenState extends State<UploadScreen> {
                 appBar: AppBar(
                   title: Text(widget.name),
                 ),
-                body: ErrorView(
+                body: AppletErrorView(
                   error: snapshot.error as LanisException,
                 ),
               );
@@ -204,7 +204,7 @@ class _UploadScreenState extends State<UploadScreen> {
                                           MaterialPageRoute(builder: (context) {
                                         return Scaffold(
                                           appBar: AppBar(),
-                                          body: ErrorView(
+                                          body: AppletErrorView(
                                             error: ex,
                                           ),
                                         );
@@ -710,7 +710,7 @@ class _UploadScreenState extends State<UploadScreen> {
                                                                     (context) {
                                                           return Scaffold(
                                                             appBar: AppBar(),
-                                                            body: ErrorView(
+                                                            body: AppletErrorView(
                                                               error: ex,
                                                             ),
                                                           );

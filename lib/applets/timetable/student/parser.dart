@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart' show TimeOfDay;
 import 'package:html/dom.dart';
 import 'package:html/parser.dart';
-import 'package:lanis/applets/timetable/student/student_timetable_better_view.dart';
 import 'package:lanis/core/applet_parser.dart';
 import 'package:lanis/models/client_status_exceptions.dart';
 import 'package:uuid/uuid.dart';

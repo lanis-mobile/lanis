@@ -36,7 +36,7 @@ Future<ReleaseNotesScreen?> showLocalUpdateInfo(BuildContext context,
         barrierDismissible: false,
         context: context,
         builder: (context) => SimpleDialog(
-              title: Text(AppLocalizations.of(context)!.loading),
+              title: Text(AppLocalizations.of(context).loading),
               children: [
                 Center(
                   child: CircularProgressIndicator(),
@@ -224,7 +224,7 @@ class ReleaseNotesScreen extends StatelessWidget {
           ? FloatingActionButton.extended(
               onPressed: () => Navigator.of(context).pop(),
               icon: const Icon(Icons.done),
-              label: Text(AppLocalizations.of(context)!.done),
+              label: Text(AppLocalizations.of(context).done),
             )
           : null,
     );

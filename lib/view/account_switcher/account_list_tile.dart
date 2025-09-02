@@ -20,9 +20,9 @@ class AccountListTile extends StatelessWidget {
       required this.dbID,
       this.onTap});
 
-  String get lastLoginInDays {
+  String lastLoginInDays(BuildContext context) {
     final days = DateTime.now().difference(lastLogin).inDays;
-    return days == 0 ? 'Today' : '$days days ago';
+    return AppLocalizations.of(context).lastSeen(days);
   }
 
   bool get isLoggedInAccount => sph?.account.localId == dbID;
@@ -41,14 +41,14 @@ class AccountListTile extends StatelessWidget {
             ),
             if (isLoggedInAccount)
               Text(
-                'Active Account',
+                AppLocalizations.of(context).activeAccount,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: Theme.of(context).colorScheme.tertiary,
                     ),
               ),
             Spacer(),
             Text(
-              lastLoginInDays,
+              lastLoginInDays(context),
               style: Theme.of(context).textTheme.labelSmall,
             ),
             const SizedBox(
@@ -87,7 +87,7 @@ class AccountListTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              Text(lastLoginInDays),
+              Text(lastLoginInDays(context)),
             ],
           ),
           trailing: IconButton(
@@ -102,11 +102,11 @@ class AccountListTile extends StatelessWidget {
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context, false),
-                      child: const Text('Cancel'),
+                      child: Text(AppLocalizations.of(context).cancel),
                     ),
                     TextButton(
                       onPressed: () => Navigator.pop(context, true),
-                      child: const Text('Logout'),
+                      child: Text(AppLocalizations.of(context).logout),
                     ),
                   ],
                 ),

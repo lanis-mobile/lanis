@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:lanis/utils/mono_text_viewer.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:lanis/core/sph/sph.dart';
 import 'package:lanis/generated/l10n.dart';
@@ -243,6 +244,14 @@ Widget errorWidget(FlutterErrorDetails details, {BuildContext? context}) {
             onPressed: () async {
               await Clipboard.setData(ClipboardData(
                   text: Trace.from(details.stack!).terse.toString()));
+              if (context!.mounted) {
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => MonoTextViewer(
+                    report: details.stack.toString(),
+                    title: "Stack Trace",
+                    fileNameStart: "stack_trace_default",
+                  )));
+              }
             },
             style: ButtonStyle(
               backgroundColor: WidgetStateProperty.resolveWith((states) {

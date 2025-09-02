@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lanis/applets/timetable/student/student_timetable_better_view.dart';
 import 'package:lanis/utils/extensions.dart';
 
 class TimetableSubject {
