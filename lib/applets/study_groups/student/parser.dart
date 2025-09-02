@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:developer';
 
 import 'package:dio/dio.dart';
 import 'package:html/dom.dart';
@@ -114,7 +113,6 @@ class StudyGroupsStudentParser extends AppletParser<List<StudentStudyGroups>> {
       courseRow.add(row.children[1].text.trim());
 
       final teacherElement = row.children[2].getElementsByTagName('div').first;
-      log(teacherElement.text);
       final linkElement = teacherElement.querySelector("a");
       String? email;
 
