@@ -1,23 +1,14 @@
-import 'dart:convert';
-
 import 'package:dio/dio.dart';
 import 'package:html/dom.dart';
 import 'package:html/parser.dart';
 import 'package:lanis/core/applet_parser.dart';
 import 'package:lanis/models/study_groups.dart';
 
-class StudyGroupsStudentParser extends AppletParser<List<StudentStudyGroups>> {
+class StudyGroupsStudentParser extends AppletParser<StudentStudyGroups> {
   StudyGroupsStudentParser(super.sph, super.appletDefinition);
 
   @override
-  List<StudentStudyGroups> typeFromJson(String json) {
-    return (jsonDecode(json) as List)
-        .map((item) => StudentStudyGroups.fromJson(item))
-        .toList();
-  }
-
-  @override
-  Future<List<StudentStudyGroups>> getHome() async {
+  Future<StudentStudyGroups> getHome() async {
     Response response = await sph.session.dio
         .get('https://start.schulportal.hessen.de/lerngruppen.php');
 
@@ -26,128 +17,111 @@ class StudyGroupsStudentParser extends AppletParser<List<StudentStudyGroups>> {
     Element? courses = document.getElementById('LGs');
     Element? exams = document.getElementById('klausuren');
 
-    StudentStudyGroupsData examData = parseExams(exams!);
-    StudentStudyGroupsData courseData = parseCourses(courses!);
+    List<StudentStudyGroupExam> studyGroupExams = [];
+    if (exams != null) {
+      List<String> examTableHead = [];
+      exams.querySelectorAll('thead tr th').forEach((element) {
+        examTableHead.add(element.text.trim());
+      });
 
-    List<StudentStudyGroups> studyGroups = [];
-    for (int i = 0; i < courseData.data.length; i++) {
-      List<String> data = courseData.data[i];
+      for (final Element examTableRow in exams
+          .querySelectorAll('tbody tr')
+          .where((row) => row.attributes['data-type'] == 'klausur')) {
+        String courseId = examTableRow.attributes['data-lerngruppe']!;
+        String id = examTableRow.attributes['data-id']!;
 
-      String courseName = data[1].split('(')[0].trim();
-      String teacher = data[2].split('(')[0].trim();
-      String teacherKuerzel = data[2].split('(')[1].split(')')[0].trim();
-      String? picture = data[4].isNotEmpty ? data[4] : null;
-      String? fileName = data[5].isNotEmpty ? data[5] : null;
-      Uri? email = data[6].isNotEmpty ? Uri.parse(data[6]) : null;
+        Element? elementInRow(String key) {
+          int index = examTableHead.indexOf(key);
+          if (index == -1) return null;
+          if (index >= examTableRow.children.length) return null;
+          return examTableRow.children[index];
+        }
 
-      // Filters mapped by courseName
-      List<List<String>> examsInCourse = examData.data
-          .where((element) => element[1].contains(courseName))
-          .toList();
-
-      studyGroups.add(StudentStudyGroups(
-        halfYear: data[0],
-        courseName: courseName,
-        teacher: teacher,
-        teacherKuerzel: teacherKuerzel,
-        picture: picture != null ? (name: fileName!, url: picture) : null,
-        email: email,
-        exams: examsInCourse
-            .map((e) => StudentExam(
-                  date: DateTime.parse(
-                      e[0].split(', ')[1].split('.').reversed.join('-')),
-                  time: e[3],
-                  type: e[2],
-                  duration: e[4],
-                ))
-            .toList(),
-      ));
+        RegExp dateRegex = RegExp(r'.\d{2}\.\d{2}\.\d{4}');
+        String dateString =
+            dateRegex.stringMatch(elementInRow('Datum')!.text.trim())!.trim();
+        dateString = dateString.split('.').reversed.join('-');
+        elementInRow('Kurs')?.querySelector('small')?.innerHtml = '';
+        studyGroupExams.add(StudentStudyGroupExam(
+            id: id,
+            courseId: courseId,
+            courseName: elementInRow('Kurs')?.text.trim() ?? "Unbekannt",
+            date: DateTime.parse(dateString),
+            type: elementInRow('Art')?.text.trim() ?? "Unbekannt",
+            durationLabel: elementInRow('Dauer')?.text.trim(),
+            hoursOfDay: elementInRow('Stunden')?.text.trim()));
+      }
     }
 
-    return studyGroups;
-  }
+    List<StudentStudyGroup> studyGroups = [];
+    if (courses != null) {
+      List<String> courseTableHead = [];
+      courses.querySelectorAll('thead tr th').forEach((element) {
+        courseTableHead.add(element.text.trim());
+      });
 
-  StudentStudyGroupsData parseExams(Element exams) {
-    List<String> examHeaders = [];
-    Element? examTable = exams.querySelector('table');
-    examTable!.querySelectorAll('thead tr th').forEach((element) {
-      examHeaders.add(element.text.trim());
-    });
+      for (final Element courseTableRow
+          in courses.querySelectorAll('tbody tr')) {
+        final String? id = courseTableRow.attributes['data-id'];
+        if (id == null) continue;
 
-    // Exams parse tbody
-    List<List<String>> examData = [];
-    RegExp dateRegex = RegExp(r'.{2}, \d{2}\.\d{2}\.\d{4}');
-    examTable.querySelectorAll('tbody tr').forEach((element) {
-      List<String> examRow = [];
-      // Check if first element contains a date
-      if (element.querySelector('td')!.text.trim().contains(dateRegex)) {
-        element.querySelectorAll('td').asMap().forEach((index, element) {
-          if (index == 0) {
-            RegExpMatch? match = dateRegex.firstMatch(element.text.trim());
-            // Match must be true, because of above if
-            examRow.add(match!.group(0)!);
-          } else {
-            examRow.add(element.text.trim());
+        Element? elementInRow(String key) {
+          int index = courseTableHead.indexOf(key);
+          if (index == -1) return null;
+          if (index >= courseTableRow.children.length) return null;
+          return courseTableRow.children[index];
+        }
+
+        List<StudentStudyGroupTeacher> teachers = [];
+        final teacherElement = elementInRow('Lehrkraft');
+        if (teacherElement != null) {
+          for (final Element teacherButton in teacherElement.children) {
+            String teacherName = teacherButton
+                .querySelector(
+                    'ul.dropdown-menu > li > a > i.fa.fa-user.fa-fw')!
+                .parent!
+                .text
+                .trim();
+            List<String> teacherNameSplit = teacherName.split(',');
+            teachers.add(
+              StudentStudyGroupTeacher(
+                firstName: teacherNameSplit.length > 1
+                    ? teacherNameSplit[1].trim()
+                    : "",
+                lastName: teacherNameSplit.isNotEmpty
+                    ? teacherNameSplit[0].trim()
+                    : "",
+                krz: teacherButton
+                        .querySelector(
+                            'button.btn.btn-primary.dropdown-toggle.btn-md')
+                        ?.text
+                        .trim() ??
+                    "",
+                email: teacherButton
+                    .querySelector(
+                        'ul.dropdown-menu > li > a > i.fa.fa-at.fa-fw')
+                    ?.parent
+                    ?.text
+                    .trim(),
+              ),
+            );
           }
-        });
-        examData.add(examRow);
+        }
+
+        String sysId =
+            elementInRow('Kursname')!.querySelector('small')!.text.trim();
+        elementInRow('Kursname')?.querySelector('small')?.innerHtml = '';
+        studyGroups.add(StudentStudyGroup(
+          id: id,
+          semester: elementInRow('Halbjahr')?.text.trim() ?? "Fehler",
+          courseName: elementInRow('Kursname')?.text.trim() ?? "Fehler",
+          courseSysId: sysId.substring(1, sysId.length - 1),
+          teachers: teachers,
+          exams: studyGroupExams.where((exam) => exam.courseId == id).toList(),
+        ));
       }
-    });
+    }
 
-    return StudentStudyGroupsData(examHeaders, examData);
-  }
-
-  StudentStudyGroupsData parseCourses(Element courses) {
-    List<String> courseHeaders = [];
-    courses.querySelectorAll('thead tr th').forEach((element) {
-      courseHeaders.add(element.text.trim());
-    });
-
-    // Courses parse tbody
-    List<List<String>> courseData = [];
-
-    courses.querySelectorAll('tbody tr').forEach((row) {
-      List<String> courseRow = [];
-
-      courseRow.add(row.children[0].text.trim());
-      courseRow.add(row.children[1].text.trim());
-
-      final teacherElement = row.children[2];
-      final linkElement = teacherElement.querySelector("a");
-      String teacher = "";
-      String? email;
-
-      if (linkElement != null) {
-        final emailTextElement = teacherElement.querySelector("a small");
-
-        email = "mailto:${emailTextElement!.text.trim()}";
-        emailTextElement.remove();
-        teacher = teacherElement.text.trim();
-        courseRow.add(teacher);
-      } else {
-        courseRow.add(teacherElement.text.trim());
-      }
-
-      courseRow.add(row.children[3].innerHtml
-          .split('<br>')
-          .map((e) => e.trim())
-          .where((e) => e.isNotEmpty)
-          .join('|'));
-
-      final imageElement = row.children[2].querySelector("img");
-      if (imageElement != null) {
-        courseRow.add(
-            "https://start.schulportal.hessen.de/benutzerverwaltung.php?a=userFoto&b=show&&t=l&p=${imageElement.attributes["src"]!.split("-")[2]}");
-        courseRow.add(imageElement.attributes["src"]!);
-      } else {
-        courseRow.addAll(["", ""]);
-      }
-
-      courseRow.add(email ?? "");
-
-      courseData.add(courseRow);
-    });
-
-    return StudentStudyGroupsData(courseHeaders, courseData);
+    return StudentStudyGroups(groups: studyGroups, exams: studyGroupExams);
   }
 }
