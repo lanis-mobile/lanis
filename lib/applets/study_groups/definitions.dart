@@ -13,7 +13,7 @@ final studyGroupsDefinition = AppletDefinition(
   selectedIcon: const Icon(Icons.groups_outlined),
   label: (context) => AppLocalizations.of(context).studyGroups,
   supportedAccountTypes: [AccountType.student],
-  allowOffline: true,
+  allowOffline: false,
   settingsDefaults: {
     'showExams': 'true',
   },

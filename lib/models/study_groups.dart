@@ -1,106 +1,62 @@
 class StudentStudyGroups {
-  final String halfYear;
-  final String courseName;
-  final String teacher;
-  final String teacherKuerzel;
-  final List<StudentExam> exams;
-  final Uri? email;
-  final ({String name, String url})? picture;
+  final List<StudentStudyGroup> groups;
+  final List<StudentStudyGroupExam> exams;
 
-  StudentStudyGroups(
-      {required this.halfYear,
-      required this.courseName,
-      required this.teacher,
-      required this.teacherKuerzel,
-      required this.exams,
-      this.email,
-      this.picture});
+  StudentStudyGroups({required this.groups, required this.exams});
 
-  factory StudentStudyGroups.fromJson(Map<String, dynamic> json) {
-    return StudentStudyGroups(
-      halfYear: json['halfYear'],
-      courseName: json['courseName'],
-      teacher: json['teacher'],
-      teacherKuerzel: json['teacherKuerzel'],
-      picture: json['picture'] != null
-          ? (
-              name: json['picture']['name'],
-              url: json['picture']['url'],
-            )
-          : null,
-      email: json['email'] != null ? Uri.parse(json['email']) : null,
-      exams:
-          (json['exams'] as List).map((e) => StudentExam.fromJson(e)).toList(),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'halfYear': halfYear,
-      'courseName': courseName,
-      'teacher': teacher,
-      'teacherKuerzel': teacherKuerzel,
-      'picture': picture != null
-          ? {
-              'name': picture!.name,
-              'url': picture!.url,
-            }
-          : null,
-      'email': email?.path,
-      'exams': exams.map((e) => e.toJson()).toList(),
-    };
+  List<StudentStudyGroupExam> get sortedExams {
+    return exams..sort((a, b) => a.date.compareTo(b.date));
   }
 }
 
-class StudentExam {
+class StudentStudyGroup {
+  final String id;
+  final String semester;
+  final String courseName;
+  final String courseSysId;
+  final List<StudentStudyGroupTeacher> teachers;
+  final List<StudentStudyGroupExam> exams;
+
+  StudentStudyGroup({
+    required this.id,
+    required this.semester,
+    required this.courseName,
+    required this.teachers,
+    required this.exams,
+    required this.courseSysId,
+  });
+}
+
+class StudentStudyGroupTeacher {
+  final String krz;
+  final String firstName;
+  final String lastName;
+  final String? email;
+
+  StudentStudyGroupTeacher({
+    required this.krz,
+    required this.firstName,
+    required this.lastName,
+    this.email,
+  });
+}
+
+class StudentStudyGroupExam {
+  final String id;
+  final String courseId;
+  final String courseName;
   final DateTime date;
-  final String time;
+  final String? durationLabel;
+  final String? hoursOfDay;
   final String type;
-  final String duration;
 
-  StudentExam(
-      {required this.date,
-      required this.time,
-      required this.type,
-      required this.duration});
-
-  factory StudentExam.fromJson(Map<String, dynamic> json) {
-    return StudentExam(
-      date: DateTime.parse(json['day']),
-      duration: json['duration'],
-      time: json['time'],
-      type: json['type'],
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'day': date.toIso8601String(),
-      'duration': duration,
-      'time': time,
-      'type': type,
-    };
-  }
-}
-
-class StudentStudyGroupsContainer {
-  final String halfYear;
-  final String courseName;
-  final String teacher;
-  final String teacherKuerzel;
-  final StudentExam exam;
-
-  StudentStudyGroupsContainer(
-      {required this.halfYear,
-      required this.courseName,
-      required this.teacher,
-      required this.teacherKuerzel,
-      required this.exam});
-}
-
-class StudentStudyGroupsData {
-  final List<String> headers;
-  final List<List<String>> data;
-
-  StudentStudyGroupsData(this.headers, this.data);
+  StudentStudyGroupExam({
+    required this.id,
+    required this.courseId,
+    required this.date,
+    required this.courseName,
+    this.durationLabel,
+    this.hoursOfDay,
+    required this.type,
+  });
 }

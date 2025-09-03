@@ -1,15 +1,12 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:lanis/core/sph/sph.dart';
 import 'package:lanis/models/study_groups.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class StudentCourseView extends StatelessWidget {
-  final List<StudentStudyGroups> studyData;
+  final List<StudentStudyGroup> studyGroup;
 
-  const StudentCourseView({super.key, required this.studyData});
+  const StudentCourseView({super.key, required this.studyGroup});
 
   BorderRadius getRadius(final int index, final int length) {
     if (length == 1) {
@@ -29,155 +26,149 @@ class StudentCourseView extends StatelessWidget {
     }
   }
 
-  Future<File> getImage(
-      BuildContext context, ({String name, String url}) picture) async {
-    String path = await sph!.storage.downloadFile(picture.url, picture.name);
-    return File(path);
+  List<StudentStudyGroupBySemester> groupBySemester() {
+    Map<String, List<StudentStudyGroup>> grouped = {};
+    for (var group in studyGroup) {
+      grouped.putIfAbsent(group.semester, () => []).add(group);
+    }
+    return grouped.entries
+        .map((entry) => StudentStudyGroupBySemester(
+            studyGroup: entry.value, semester: entry.key))
+        .toList();
+  }
+
+  Widget studyGroupTile(BuildContext context, StudentStudyGroup studyGroup) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          children: [
+            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+              Text(studyGroup.courseName,
+                  style: Theme.of(context).textTheme.titleSmall),
+              Text(studyGroup.courseSysId,
+                  style: Theme.of(context).textTheme.bodySmall)
+            ]),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Wrap(
+                alignment: WrapAlignment.start,
+                crossAxisAlignment: WrapCrossAlignment.start,
+                children: studyGroup.teachers
+                    .map((teacher) => Padding(
+                          padding: const EdgeInsets.all(1.0),
+                          child: TeacherChip(teacher: teacher),
+                        ))
+                    .toList(),
+              ),
+            ),
+            if (studyGroup.exams.isNotEmpty)
+              ...studyGroup.exams.asMap().entries.map((entry) {
+                final i = entry.key;
+                final e = entry.value;
+                return Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: getRadius(i, studyGroup.exams.length),
+                    color: i % 2 == 0
+                        ? Theme.of(context).colorScheme.primaryContainer
+                        : Theme.of(context).colorScheme.tertiaryContainer,
+                  ),
+                  child: Row(
+                    spacing: 4.0,
+                    children: [
+                      Text(e.type),
+                      Spacer(),
+                      Text(DateFormat('EEE, dd.MM.yyyy').format(e.date)),
+                      Icon(
+                        Icons.date_range,
+                        size: 14,
+                      ),
+                    ],
+                  ),
+                );
+              }),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    Map<int, String> years = {};
-
-    for (int i = 0; i < studyData.length; i++) {
-      if (!years.containsValue(studyData[i].halfYear)) {
-        years[i] = studyData[i].halfYear;
-      }
-    }
+    final groupedStudyGroups = groupBySemester();
 
     return ListView.builder(
-      itemCount: studyData.length,
+      itemCount: groupedStudyGroups.length,
       itemBuilder: (context, index) {
-        final exams = studyData[index].exams;
-
+        final semesterStudyGroups = groupedStudyGroups[index];
         return Column(
           children: [
-            if (years.containsKey(index))
-              Padding(
-                padding: const EdgeInsets.only(
-                  left: 8.0,
-                  right: 8.0,
-                  top: 16.0,
-                  bottom: 8.0,
-                ),
-                child: Row(
-                  spacing: 8,
-                  children: [
-                    Text(
-                      studyData[index].halfYear,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    Expanded(
-                      child: Divider(),
-                    )
-                  ],
-                ),
-              )
-            else
-              SizedBox(
-                height: 8.0,
-              ),
-            Card(
-              margin: EdgeInsets.symmetric(horizontal: 8.0),
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  spacing: 2.0,
-                  children: [
-                    if (studyData[index].picture != null) ...[
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          FutureBuilder(
-                            future:
-                                getImage(context, studyData[index].picture!),
-                            builder: (context, snapshot) {
-                              if (snapshot.connectionState !=
-                                      ConnectionState.done ||
-                                  snapshot.data == null ||
-                                  snapshot.hasError) {
-                                return CircleAvatar(
-                                  radius: 25.0,
-                                  child: Icon(Icons.person),
-                                );
-                              }
-
-                              return CircleAvatar(
-                                radius: 25.0,
-                                child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(100.0),
-                                    child: Image.file(snapshot.data!)),
-                              );
-                            },
-                          ),
-                          if (studyData[index].email != null)
-                            IconButton.filledTonal(
-                              onPressed: () {
-                                launchUrl(studyData[index].email!);
-                              },
-                              icon: Icon(Icons.email_rounded),
-                            ),
-                        ],
-                      ),
-                      SizedBox(
-                        height: 8.0,
-                      )
-                    ],
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(studyData[index].courseName,
-                            style: Theme.of(context).textTheme.titleMedium),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        Text(
-                          "${studyData[index].teacher} (${studyData[index].teacherKuerzel})",
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium!
-                              .copyWith(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant),
-                        ),
-                      ],
-                    ),
-                    if (exams.isNotEmpty)
-                      SizedBox(
-                        height: 8.0,
-                      ),
-                    for (int i = 0; i < exams.length; i++)
-                      Card.filled(
-                        margin: EdgeInsets.zero,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: getRadius(i, exams.length),
-                        ),
-                        child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(exams[i].type),
-                                exams[i].duration.isEmpty
-                                    ? Text(exams[i].time)
-                                    : Text(
-                                        '${exams[i].time} (${exams[i].duration})'),
-                                Text(DateFormat('dd.MM.yy')
-                                    .format(exams[i].date)),
-                              ],
-                            )),
-                      ),
-                  ],
-                ),
-              ),
+            Text(semesterStudyGroups.semester),
+            Column(
+              children: semesterStudyGroups.studyGroup.map((group) {
+                return studyGroupTile(context, group);
+              }).toList(),
             ),
           ],
         );
       },
     );
   }
+}
+
+class TeacherChip extends StatefulWidget {
+  final StudentStudyGroupTeacher teacher;
+
+  const TeacherChip({super.key, required this.teacher});
+
+  @override
+  State<TeacherChip> createState() => _TeacherChipState();
+}
+
+class _TeacherChipState extends State<TeacherChip> {
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        if (widget.teacher.email == null) return;
+
+        final Uri emailLaunchUri = Uri(
+          scheme: 'mailto',
+          path: widget.teacher.email,
+        );
+        launchUrl(emailLaunchUri, mode: LaunchMode.externalApplication);
+      },
+      behavior: HitTestBehavior.deferToChild,
+      child: Chip(
+        visualDensity: VisualDensity.compact,
+        label: Row(
+          mainAxisSize: MainAxisSize.min,
+          spacing: 4.0,
+          children: [
+            Icon(Icons.person, size: 16),
+            Text(
+                "${widget.teacher.lastName}, ${widget.teacher.firstName} (${widget.teacher.krz})"),
+            if (widget.teacher.email != null)
+              Icon(
+                Icons.email,
+                size: 16,
+                color: Theme.of(context).colorScheme.primary,
+              )
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class StudentStudyGroupBySemester {
+  List<StudentStudyGroup> studyGroup;
+  String semester;
+
+  StudentStudyGroupBySemester(
+      {required this.studyGroup, required this.semester});
 }

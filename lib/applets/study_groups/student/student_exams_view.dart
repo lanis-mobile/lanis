@@ -7,21 +7,20 @@ import 'package:lanis/models/study_groups.dart';
 import '../../../utils/focused_menu.dart';
 
 class StudentExamsView extends StatelessWidget {
-  final List<StudentStudyGroupsContainer> studyData;
+  final List<StudentStudyGroupExam> exams;
 
-  const StudentExamsView({super.key, required this.studyData});
+  const StudentExamsView({super.key, required this.exams});
 
   @override
   Widget build(BuildContext context) {
     DateTime today = DateTime.now();
     bool todayMarkerShown = false;
     return ListView.separated(
-      itemCount: studyData.length,
+      itemCount: exams.length,
       itemBuilder: (context, index) {
-        bool showMarker =
-            !todayMarkerShown && studyData[index].exam.date.isAfter(today);
-        int difference =
-            (studyData[index].exam.date.differenceInHours(today) / 24).ceil();
+        final exam = exams[index];
+        bool showMarker = !todayMarkerShown && exam.date.isAfter(today);
+        int difference = (exam.date.differenceInHours(today) / 24).ceil();
         if (showMarker) todayMarkerShown = true;
         return Column(
           children: [
@@ -65,14 +64,12 @@ class StudentExamsView extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(studyData[index].courseName,
+                          Text(exams[index].courseName,
                               style: Theme.of(context).textTheme.labelLarge),
                           Row(
                             spacing: 4,
                             children: [
-                              Text(
-                                  DateFormat('dd.MM.yy')
-                                      .format(studyData[index].exam.date),
+                              Text(DateFormat('dd.MM.yy').format(exam.date),
                                   style:
                                       Theme.of(context).textTheme.labelLarge),
                               Icon(Icons.calendar_today, size: 16),
@@ -80,17 +77,16 @@ class StudentExamsView extends StatelessWidget {
                           ),
                         ],
                       ),
-                      Wrap(
-                        alignment: WrapAlignment.spaceBetween,
-                        runAlignment: WrapAlignment.spaceBetween,
-                        crossAxisAlignment: WrapCrossAlignment.start,
-                        direction: Axis.horizontal,
+                      Row(
                         children: [
-                          Text(studyData[index].exam.type),
-                          studyData[index].exam.duration.isEmpty
-                              ? Text(studyData[index].exam.time)
-                              : Text(
-                                  '${studyData[index].exam.time} (${studyData[index].exam.duration})'),
+                          Text(exam.type),
+                          Spacer(),
+                          if (exam.hoursOfDay != null &&
+                              exam.durationLabel != "") ...[
+                            Text(
+                                '${exam.hoursOfDay} ${exam.durationLabel != '' ? '(${exam.durationLabel})' : ""}'),
+                            Icon(Icons.access_time, size: 16),
+                          ]
                         ],
                       ),
                     ],
