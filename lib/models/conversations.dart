@@ -166,16 +166,17 @@ class OverviewEntry {
   });
 
   OverviewEntry.fromJson(Map<String, dynamic> json)
-      : id = json["Uniquid"] as String,
-        title = unescape.convert(json["Betreff"] as String),
-        shortName = unescape.convert(json["kuerzel"]) as String?,
+      : id = (json["Uniquid"] ?? "") as String,
+        title = unescape.convert((json["Betreff"] ?? "") as String),
+        shortName = unescape.convert((json["kuerzel"] ?? "") as String),
         fullName = unescape.convert(getUsernameInsideHTML
-            .firstMatch((json["SenderName"] as String))
-            ?.group(1) as String),
-        date = json["Datum"] as String,
+                .firstMatch((json["SenderName"] ?? "") as String)
+                ?.group(1) ??
+            ""),
+        date = (json["Datum"] ?? "") as String,
         unread =
             (json["unread"] as int?) != null && (json["unread"] as int?) == 1,
-        hidden = json["Papierkorb"] as String == "ja";
+        hidden = (json["Papierkorb"] ?? "") as String == "ja";
 
   OverviewEntry copyWith({
     String? id,
