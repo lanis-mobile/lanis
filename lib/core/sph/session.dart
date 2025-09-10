@@ -107,6 +107,12 @@ class SessionHandler {
     dio.options.validateStatus = (status) =>
         status != null && (status == 200 || status == 302 || status == 503);
 
+    final downCheckResponse = await dio.get(
+        "https://start.schulportal.hessen.de/");
+    if (downCheckResponse.statusCode == 503 || downCheckResponse.data.contains("Der Bereich der pädagogischen Organisation steht Ihnen aktuell nicht zur Verfügung.")) {
+      throw LanisDownException();
+    }
+
     late String loginURL;
 
     if (withLoginUrl != null) {
