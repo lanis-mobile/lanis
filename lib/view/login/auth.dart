@@ -121,146 +121,148 @@ class LoginFormState extends State<LoginForm> {
               constraints: BoxConstraints(maxWidth: 550),
               child: Form(
                 key: _formKey,
-                child: Center(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const SizedBox(
-                          height: padding,
-                        ),
-                        Center(
-                          child: Column(
-                            children: [
-                              const Icon(Icons.person, size: 70),
-                              Text(
-                                AppLocalizations.of(context).logIn,
-                                style: const TextStyle(fontSize: 35),
-                              )
-                            ],
+                child: AutofillGroup(
+                  child: Center(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const SizedBox(
+                            height: padding,
                           ),
-                        ),
-                        const SizedBox(
-                          height: padding * 5,
-                        ),
-                        SchoolSelector(
-                          controller: schoolIDController,
-                          outContext: context,
-                          onSchoolSelected: (name) {
-                            selectedSchoolName = name;
-                            setState(() {});
-                          },
-                        ),
-                        const SizedBox(
-                          height: padding,
-                        ),
-                        TextFormField(
-                          controller: usernameController,
-                          enabled: schoolIDController.text != "",
-                          autofillHints: [AutofillHints.username],
-                          autocorrect: false,
-                          decoration: InputDecoration(
-                              labelText: AppLocalizations.of(context)
-                                  .authUsernameHint),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return AppLocalizations.of(context)
-                                  .authValidationError;
-                            }
-
-                            return null;
-                          },
-                        ),
-                        const SizedBox(
-                          height: padding,
-                        ),
-                        TextFormField(
-                          controller: passwordController,
-                          enabled: schoolIDController.text.isNotEmpty,
-                          autofillHints: [AutofillHints.password],
-                          autocorrect: false,
-                          obscureText: true,
-                          decoration: InputDecoration(
-                            labelText:
-                                AppLocalizations.of(context).authPasswordHint,
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return AppLocalizations.of(context)
-                                  .authValidationError;
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(
-                          height: padding,
-                        ),
-                        Visibility(
-                          child: ExcludeSemantics(
-                            child: CheckboxListTile(
-                              enabled: schoolIDController.text.isNotEmpty,
-                              value: dseAgree,
-                              title: RichText(
-                                text: TextSpan(
-                                  text:
-                                      AppLocalizations.of(context).authIAccept,
-                                  style: DefaultTextStyle.of(context).style,
-                                  children: <TextSpan>[
-                                    TextSpan(
-                                      text: AppLocalizations.of(context)
-                                          .authTermsOfService,
-                                      style: TextStyle(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .primary),
-                                      recognizer: TapGestureRecognizer()
-                                        ..onTap = () => launchUrl(Uri.parse(
-                                            "https://lanis-mobile.github.io/policy/")),
-                                    ),
-                                    TextSpan(
-                                      text: AppLocalizations.of(context)
-                                          .authOfLanisMobile,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              onChanged: (val) {
-                                setState(() {
-                                  dseAgree = val!;
-                                });
-                              },
+                          Center(
+                            child: Column(
+                              children: [
+                                const Icon(Icons.person, size: 70),
+                                Text(
+                                  AppLocalizations.of(context).logIn,
+                                  style: const TextStyle(fontSize: 35),
+                                )
+                              ],
                             ),
                           ),
-                        ),
-                        const SizedBox(
-                          height: padding,
-                        ),
-                        FilledButton(
-                          onPressed: dseAgree
-                              ? () {
-                                  if (_formKey.currentState!.validate()) {
-                                    login(
-                                        usernameController.text.toLowerCase(),
-                                        passwordController.text,
-                                        schoolIDController.text);
+                          const SizedBox(
+                            height: padding * 5,
+                          ),
+                          SchoolSelector(
+                            controller: schoolIDController,
+                            outContext: context,
+                            onSchoolSelected: (name) {
+                              selectedSchoolName = name;
+                              setState(() {});
+                            },
+                          ),
+                          const SizedBox(
+                            height: padding,
+                          ),
+                          TextFormField(
+                            controller: usernameController,
+                            enabled: schoolIDController.text != "",
+                            autofillHints: [AutofillHints.username],
+                            autocorrect: false,
+                            decoration: InputDecoration(
+                                labelText: AppLocalizations.of(context)
+                                    .authUsernameHint),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return AppLocalizations.of(context)
+                                    .authValidationError;
+                              }
+
+                              return null;
+                            },
+                          ),
+                          const SizedBox(
+                            height: padding,
+                          ),
+                          TextFormField(
+                            controller: passwordController,
+                            enabled: schoolIDController.text.isNotEmpty,
+                            autofillHints: [AutofillHints.password],
+                            autocorrect: false,
+                            obscureText: true,
+                            decoration: InputDecoration(
+                              labelText:
+                                  AppLocalizations.of(context).authPasswordHint,
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return AppLocalizations.of(context)
+                                    .authValidationError;
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(
+                            height: padding,
+                          ),
+                          Visibility(
+                            child: ExcludeSemantics(
+                              child: CheckboxListTile(
+                                enabled: schoolIDController.text.isNotEmpty,
+                                value: dseAgree,
+                                title: RichText(
+                                  text: TextSpan(
+                                    text: AppLocalizations.of(context)
+                                        .authIAccept,
+                                    style: DefaultTextStyle.of(context).style,
+                                    children: <TextSpan>[
+                                      TextSpan(
+                                        text: AppLocalizations.of(context)
+                                            .authTermsOfService,
+                                        style: TextStyle(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .primary),
+                                        recognizer: TapGestureRecognizer()
+                                          ..onTap = () => launchUrl(Uri.parse(
+                                              "https://lanis-mobile.github.io/policy/")),
+                                      ),
+                                      TextSpan(
+                                        text: AppLocalizations.of(context)
+                                            .authOfLanisMobile,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                onChanged: (val) {
+                                  setState(() {
+                                    dseAgree = val!;
+                                  });
+                                },
+                              ),
+                            ),
+                          ),
+                          const SizedBox(
+                            height: padding,
+                          ),
+                          FilledButton(
+                            onPressed: dseAgree
+                                ? () {
+                                    if (_formKey.currentState!.validate()) {
+                                      login(
+                                          usernameController.text.toLowerCase(),
+                                          passwordController.text,
+                                          schoolIDController.text);
+                                    }
                                   }
-                                }
-                              : null,
-                          child: Text(AppLocalizations.of(context).logIn),
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            TextButton(
-                                onPressed: schoolIDController.text.isNotEmpty
-                                    ? () => launchUrl(Uri.parse(
-                                        "https://start.schulportal.hessen.de/benutzerverwaltung.php?a=userPWreminder&i=${schoolIDController.text}"))
-                                    : null,
-                                child: Text(AppLocalizations.of(context)
-                                    .authResetPassword))
-                          ],
-                        )
-                      ],
+                                : null,
+                            child: Text(AppLocalizations.of(context).logIn),
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              TextButton(
+                                  onPressed: schoolIDController.text.isNotEmpty
+                                      ? () => launchUrl(Uri.parse(
+                                          "https://start.schulportal.hessen.de/benutzerverwaltung.php?a=userPWreminder&i=${schoolIDController.text}"))
+                                      : null,
+                                  child: Text(AppLocalizations.of(context)
+                                      .authResetPassword))
+                            ],
+                          )
+                        ],
+                      ),
                     ),
                   ),
                 ),
