@@ -5,7 +5,7 @@ import 'package:lanis/view/login/auth.dart';
 
 import '../../core/sph/sph.dart';
 import '../../utils/authentication_state.dart';
-import 'account_list_tile.dart';
+import 'account_tile.dart';
 
 class AccountSwitcher extends StatefulWidget {
   const AccountSwitcher({super.key});
@@ -31,9 +31,8 @@ class _AccountSwitcherState extends State<AccountSwitcher> {
             itemCount: snapshot.data!.length,
             itemBuilder: (context, index) {
               final account = snapshot.data![index];
-              return AccountListTile(
-                schoolName: account.schoolName,
-                userName: account.username,
+              return AccountTile(
+                account: account,
                 lastLogin: account.lastLogin ?? DateTime.now(),
                 onTap: () async {
                   if (sph!.account.localId == account.id) {
@@ -44,7 +43,6 @@ class _AccountSwitcherState extends State<AccountSwitcher> {
                   await accountDatabase.setNextLogin(account.id);
                   if (context.mounted) authenticationState.reset(context);
                 },
-                dbID: account.id,
               );
             },
           );

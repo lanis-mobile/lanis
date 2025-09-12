@@ -18,4 +18,17 @@ extension AccountTypeExtension on AccountType {
         return AppLocalizations.of(context).parent;
     }
   }
+
+  static AccountType fromString(String type) {
+    switch (type.toLowerCase()) {
+      case 'student':
+        return AccountType.student;
+      case 'teacher':
+        return AccountType.teacher;
+      case 'parent':
+        return AccountType.parent;
+      default:
+        return AccountType.student; // Default to student if unknown
+    }
+  }
 }
