@@ -396,5 +396,7 @@
   "switchAccount": "Switch Account",
   "activeAccount": "Active Account",
   "addAccount": "Add Account",
-  "lastSeen": "{days, plural, =0{Today} one{Yesterday} other{{days} days ago}}"
+  "lastSeen": "{days, plural, =0{Today} one{Yesterday} other{{days} days ago}}",
+  "student": "Student",
+  "parent": "Parent"
 }
