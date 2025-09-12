@@ -319,6 +319,13 @@ class HomePageState extends State<HomePage> {
                                 .titleMedium
                                 ?.copyWith(color: textColor),
                           ),
+                          Text(
+                            sph!.account.accountType!.readableName(context),
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(color: textColor),
+                          ),
                         ],
                       ),
                     ),
@@ -346,7 +353,7 @@ class HomePageState extends State<HomePage> {
         ]);
   }
 
-  NavigationBar navBar(context) {
+  NavigationBar navBar(BuildContext context) {
     List<NavigationDestination> barDestinations = [];
 
     for (var destination in destinations) {

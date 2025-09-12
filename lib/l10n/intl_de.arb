@@ -352,5 +352,8 @@
   "switchAccount": "Account wechseln",
   "activeAccount": "Aktiver Account",
   "addAccount": "Account hinzufügen",
-  "lastSeen": "{days, plural, =0{Heute} one{Gestern} other{{days} Tage her}}"
+  "lastSeen": "{days, plural, =0{Heute} one{Gestern} other{{days} Tage her}}",
+  "student": "Schüler",
+  "parent": "Elternteil"
+
 }
