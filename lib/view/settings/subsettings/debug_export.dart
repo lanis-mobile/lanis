@@ -141,9 +141,9 @@ class _DebugExportState extends State<DebugExport> {
                             Navigator.of(context).push(MaterialPageRoute(
                                 builder: (context) => MonoTextViewer(
                                     report: report,
-                                  title: "Debug Export Preview",
-                                  fileNameStart: "lanis_mobile_debug_export"
-                                )));
+                                    title: "Debug Export Preview",
+                                    fileNameStart:
+                                        "lanis_mobile_debug_export")));
                           }
                         }
                       },

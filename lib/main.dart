@@ -246,11 +246,11 @@ Widget errorWidget(FlutterErrorDetails details, {BuildContext? context}) {
                   text: Trace.from(details.stack!).terse.toString()));
               if (context!.mounted) {
                 Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => MonoTextViewer(
-                    report: details.stack.toString(),
-                    title: "Stack Trace",
-                    fileNameStart: "stack_trace_default",
-                  )));
+                    builder: (context) => MonoTextViewer(
+                          report: details.stack.toString(),
+                          title: "Stack Trace",
+                          fileNameStart: "stack_trace_default",
+                        )));
               }
             },
             style: ButtonStyle(

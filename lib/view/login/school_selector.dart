@@ -1,8 +1,11 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:lanis/generated/l10n.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../core/native_adapter_instance.dart';
 
@@ -31,10 +34,15 @@ class _SchoolSelectorState extends State<SchoolSelector> {
 
   Future<void> loadSchoolList() async {
     try {
+      final packageInfo = await PackageInfo.fromPlatform();
       final dio = Dio();
       dio.httpClientAdapter = getNativeAdapterInstance();
       final response = await dio.get(
-          "https://startcache.schulportal.hessen.de/exporteur.php?a=schoollist");
+          "https://startcache.schulportal.hessen.de/exporteur.php?a=schoollist",
+          options: Options(headers: {
+            "User-Agent":
+            "Lanis-Mobile/v${packageInfo.version}+${packageInfo.buildNumber} on ${Platform.operatingSystem} (${kReleaseMode ? "release" : kDebugMode ? "debug" : "profile"})"
+          }));
       List<dynamic> data = jsonDecode(response.data);
       List<RemoteSchoolBezirk> result = [];
       for (var elem in data) {
