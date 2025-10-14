@@ -47,6 +47,9 @@ class SessionHandler {
 
   Future<void> prepareDio() async {
     jar = CookieJar();
+
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
+
     dio.httpClientAdapter = getNativeAdapterInstance();
     dio.interceptors.add(CookieManager(jar));
     dio.interceptors.add(InterceptorsWrapper(
@@ -79,17 +82,18 @@ class SessionHandler {
         return handler.next(response);
       },
     ));
-    // dio.interceptors.add(InterceptorsWrapper(
-    //   onRequest: (RequestOptions options, RequestInterceptorHandler handler) {
-    //     options.headers.addAll({
-    //       'Cache-Control': 'no-cache',
-    //       'Pragma': 'no-cache',
-    //       'User-Agent': 'Lanis-Mobile'
-    //     });
-    //    options.queryParameters['_cachebreaker'] = DateTime.now().millisecondsSinceEpoch.toString();
-    //     return handler.next(options);
-    //   },
-    // ));
+    dio.interceptors.add(InterceptorsWrapper(
+      onRequest: (RequestOptions options, RequestInterceptorHandler handler) {
+        options.headers.addAll({
+          //  'Cache-Control': 'no-cache',
+          //  'Pragma': 'no-cache',
+          'User-Agent':
+          "Lanis-Mobile/v${packageInfo.version}+${packageInfo.buildNumber} on ${Platform.operatingSystem} (${kReleaseMode ? "release" : kDebugMode ? "debug" : "profile"})"
+        });
+        //options.queryParameters['_cachebreaker'] = DateTime.now().millisecondsSinceEpoch.toString();
+        return handler.next(options);
+      },
+    ));
     dio.options.followRedirects = false;
     dio.options.connectTimeout = Duration(seconds: 8);
     dio.options.validateStatus = (status) =>
@@ -107,9 +111,11 @@ class SessionHandler {
     dio.options.validateStatus = (status) =>
         status != null && (status == 200 || status == 302 || status == 503);
 
-    final downCheckResponse = await dio.get(
-        "https://start.schulportal.hessen.de/");
-    if (downCheckResponse.statusCode == 503 || downCheckResponse.data.contains("Der Bereich der pädagogischen Organisation steht Ihnen aktuell nicht zur Verfügung.")) {
+    final downCheckResponse =
+        await dio.get("https://start.schulportal.hessen.de/");
+    if (downCheckResponse.statusCode == 503 ||
+        downCheckResponse.data.contains(
+            "Der Bereich der pädagogischen Organisation steht Ihnen aktuell nicht zur Verfügung.")) {
       throw LanisDownException();
     }
 
@@ -176,6 +182,7 @@ class SessionHandler {
   ///
   ///This can be used to open lanis in the browser of the user.
   static Future<String> getLoginURL(ClearTextAccount acc) async {
+    final packageInfoFuture = PackageInfo.fromPlatform();
     final dioHttp = Dio();
     final cookieJar = CookieJar();
     dioHttp.httpClientAdapter = getNativeAdapterInstance();
@@ -184,14 +191,19 @@ class SessionHandler {
     dioHttp.options.validateStatus = (status) =>
         status != null && (status == 200 || status == 302 || status == 503);
 
+    final packageInfo = await packageInfoFuture;
     final response1 = await dioHttp.post(
         "https://login.schulportal.hessen.de/?i=${acc.schoolID}",
-        queryParameters: {
+        data: {
           "user": '${acc.schoolID}.${acc.username}',
           "user2": acc.username,
           "password": acc.password,
         },
-        options: Options(contentType: "application/x-www-form-urlencoded"));
+        options:
+            Options(contentType: "application/x-www-form-urlencoded", headers: {
+          'User-Agent':
+          "Lanis-Mobile/v${packageInfo.version}+${packageInfo.buildNumber} on ${Platform.operatingSystem} (${kReleaseMode ? "release" : kDebugMode ? "debug" : "profile"})"
+        }));
 
     if (response1.statusCode == 503) {
       throw LanisDownException();

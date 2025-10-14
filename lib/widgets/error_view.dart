@@ -12,7 +12,11 @@ class AppletErrorView extends StatelessWidget {
   final StackTrace? stack;
 
   const AppletErrorView(
-      {super.key, required this.error, this.showAppBar = false, this.retry, this.stack});
+      {super.key,
+      required this.error,
+      this.showAppBar = false,
+      this.retry,
+      this.stack});
 
   @override
   Widget build(BuildContext context) {

@@ -70,20 +70,18 @@ class AppletParser<T> {
         if (offlineData != null) {
           addResponse(
             FetcherResponse(
-              status: FetcherStatus.done,
-              contentStatus: ContentStatus.offline,
-              content: typeFromJson(offlineData.json!),
-              fetchedAt: offlineData.timestamp,
-              error: null
-            ),
+                status: FetcherStatus.done,
+                contentStatus: ContentStatus.offline,
+                content: typeFromJson(offlineData.json!),
+                fetchedAt: offlineData.timestamp,
+                error: null),
           );
         } else {
           addResponse(
             FetcherResponse(
-              status: FetcherStatus.error,
-              contentStatus: ContentStatus.offline,
-              error: null
-            ),
+                status: FetcherStatus.error,
+                contentStatus: ContentStatus.offline,
+                error: null),
           );
         }
       }
@@ -95,8 +93,8 @@ class AppletParser<T> {
       addResponse(FetcherResponse(status: FetcherStatus.fetching, error: null));
 
       _getHome().then((data) async {
-        addResponse(
-            FetcherResponse<T>(status: FetcherStatus.done, content: data, error: null));
+        addResponse(FetcherResponse<T>(
+            status: FetcherStatus.done, content: data, error: null));
         isEmpty = false;
       }).catchError((ex, stack) async {
         logger.e(ex, stackTrace: stack);
@@ -107,9 +105,8 @@ class AppletParser<T> {
         }
         addResponse(
           FetcherResponse<T>(
-            status: FetcherStatus.error,
-            error: ExceptionWithStackTrace(exception: ex, stackTrace: stack)
-          ),
+              status: FetcherStatus.error,
+              error: ExceptionWithStackTrace(exception: ex, stackTrace: stack)),
         );
       });
     }

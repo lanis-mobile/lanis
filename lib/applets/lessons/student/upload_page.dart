@@ -710,7 +710,8 @@ class _UploadScreenState extends State<UploadScreen> {
                                                                     (context) {
                                                           return Scaffold(
                                                             appBar: AppBar(),
-                                                            body: AppletErrorView(
+                                                            body:
+                                                                AppletErrorView(
                                                               error: ex,
                                                             ),
                                                           );
