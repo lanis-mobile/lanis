@@ -319,8 +319,8 @@ class HomePageState extends State<HomePage> {
                                 .titleMedium
                                 ?.copyWith(color: textColor),
                           ),
-                          Text(
-                            sph!.account.accountType!.readableName(context),
+                          if (sph?.account.accountType != null) Text(
+                            sph?.account.accountType?.readableName(context) ?? "Loading...",
                             style: Theme.of(context)
                                 .textTheme
                                 .bodyMedium
