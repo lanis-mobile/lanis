@@ -64,6 +64,61 @@ class FormattedText extends StatelessWidget {
   const FormattedText(
       {super.key, required this.text, required this.formatStyle});
 
+  // Cache format patterns for better performance
+  static final List<FormatPattern> _formatPatterns = [
+    FormatPattern(
+        regExp: RegExp(r"--(([^-]|-(?!-))+)--"),
+        specialCaseRegExp: RegExp(r"--((|.*)__(([^_]|_(?!_))+)__(.*|))--"),
+        specialCaseTag: "<del hasU=true>",
+        specialCaseGroups: [2, 3, 5],
+        startTag: "<del>",
+        endTag: "</del>"),
+    FormatPattern(
+        regExp: RegExp(r"__(([^_]|_(?!_))+)__"),
+        specialCaseRegExp: RegExp(r"__((|.*)--(([^-]|-(?!-))+)--(.*|))__"),
+        specialCaseTag: "<u hasDel=true>",
+        specialCaseGroups: [2, 3, 5],
+        startTag: "<u>",
+        endTag: "</u>"),
+    FormatPattern(
+        regExp: RegExp(r"\*\*(([^*]|\*(?!\*))+)\*\*"),
+        startTag: "<b>",
+        endTag: "</b>"),
+    FormatPattern(
+        regExp: RegExp(r"_\((.*?)\)"), startTag: "<sub>", endTag: "</sub>"),
+    FormatPattern(
+        regExp: RegExp(r"_(.)\s"), startTag: "<sub>", endTag: "</sub>"),
+    FormatPattern(
+        regExp: RegExp(r"\^\((.*?)\)"), startTag: "<sup>", endTag: "</sup>"),
+    FormatPattern(
+        regExp: RegExp(r"\^(.)\s"), startTag: "<sup>", endTag: "</sup>"),
+    FormatPattern(
+        regExp: RegExp(r"~~(([^~]|~(?!~))+)~~"),
+        startTag: "<i>",
+        endTag: "</i>"),
+    FormatPattern(
+        regExp: RegExp(r"`(?!``)(.*)(?<!``)`"),
+        startTag: "<code>",
+        endTag: "</code>"),
+    FormatPattern(
+        regExp: RegExp(r"```\n*((?:[^`]|`(?!``))*)\n*```"),
+        startTag: "<code>",
+        endTag: "</code>"),
+    FormatPattern(
+        regExp: RegExp(r"(\d{2}\.\d{1,2}\.(\d{4}|\d{2}\b))"),
+        startTag: "<date>",
+        endTag: "</date>"),
+    FormatPattern(
+        regExp:
+            RegExp(r"(\d{2}:\d{2} Uhr)|(\d{2}:\d{2})", caseSensitive: false),
+        startTag: "<time>",
+        endTag: "</time>",
+        group: 0),
+    FormatPattern(
+        regExp: RegExp(r"^[ \t]*-[ \t]*(.*)", multiLine: true),
+        startTag: "\u2022 "),
+  ];
+
   /// Replaces all occurrences of map keys with their respective value
   String convertByMap(String string, Map<String, String> map) {
     var str = string;
@@ -87,59 +142,6 @@ class FormattedText extends StatelessWidget {
   /// 12.01.23, 12.01.2023 => <​date>,<br />
   /// 12:03 => <​time><br />
   String convertLanisSyntax(String lanisStyledText) {
-    final List<FormatPattern> formatPatterns = [
-      FormatPattern(
-          regExp: RegExp(r"--(([^-]|-(?!-))+)--"),
-          specialCaseRegExp: RegExp(r"--((|.*)__(([^_]|_(?!_))+)__(.*|))--"),
-          specialCaseTag: "<del hasU=true>",
-          specialCaseGroups: [2, 3, 5],
-          startTag: "<del>",
-          endTag: "</del>"),
-      FormatPattern(
-          regExp: RegExp(r"__(([^_]|_(?!_))+)__"),
-          specialCaseRegExp: RegExp(r"__((|.*)--(([^-]|-(?!-))+)--(.*|))__"),
-          specialCaseTag: "<u hasDel=true>",
-          specialCaseGroups: [2, 3, 5],
-          startTag: "<u>",
-          endTag: "</u>"),
-      FormatPattern(
-          regExp: RegExp(r"\*\*(([^*]|\*(?!\*))+)\*\*"),
-          startTag: "<b>",
-          endTag: "</b>"),
-      FormatPattern(
-          regExp: RegExp(r"_\((.*?)\)"), startTag: "<sub>", endTag: "</sub>"),
-      FormatPattern(
-          regExp: RegExp(r"_(.)\s"), startTag: "<sub>", endTag: "</sub>"),
-      FormatPattern(
-          regExp: RegExp(r"\^\((.*?)\)"), startTag: "<sup>", endTag: "</sup>"),
-      FormatPattern(
-          regExp: RegExp(r"\^(.)\s"), startTag: "<sup>", endTag: "</sup>"),
-      FormatPattern(
-          regExp: RegExp(r"~~(([^~]|~(?!~))+)~~"),
-          startTag: "<i>",
-          endTag: "</i>"),
-      FormatPattern(
-          regExp: RegExp(r"`(?!``)(.*)(?<!``)`"),
-          startTag: "<code>",
-          endTag: "</code>"),
-      FormatPattern(
-          regExp: RegExp(r"```\n*((?:[^`]|`(?!``))*)\n*```"),
-          startTag: "<code>",
-          endTag: "</code>"),
-      FormatPattern(
-          regExp: RegExp(r"(\d{2}\.\d{1,2}\.(\d{4}|\d{2}\b))"),
-          startTag: "<date>",
-          endTag: "</date>"),
-      FormatPattern(
-          regExp:
-              RegExp(r"(\d{2}:\d{2} Uhr)|(\d{2}:\d{2})", caseSensitive: false),
-          startTag: "<time>",
-          endTag: "</time>",
-          group: 0),
-      FormatPattern(
-          regExp: RegExp(r"^[ \t]*-[ \t]*(.*)", multiLine: true),
-          startTag: "\u2022 "),
-    ];
 
     String formattedText = lanisStyledText;
 
@@ -152,7 +154,7 @@ class FormattedText extends StatelessWidget {
 
     // Apply special case formatting, mainly for the 2 TextDecoration tags: .underline and .lineThrough
     // because without this always one of the TextDecoration exists, not both together.
-    for (final FormatPattern pattern in formatPatterns) {
+    for (final FormatPattern pattern in _formatPatterns) {
       if (pattern.specialCaseRegExp == null) break;
       formattedText = formattedText.replaceAllMapped(
           pattern.specialCaseRegExp!,
@@ -161,7 +163,7 @@ class FormattedText extends StatelessWidget {
     }
 
     // Apply formatting
-    for (final FormatPattern pattern in formatPatterns) {
+    for (final FormatPattern pattern in _formatPatterns) {
       formattedText = formattedText.replaceAllMapped(
           pattern.regExp,
           (match) =>
