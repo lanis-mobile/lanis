@@ -10,19 +10,22 @@ import '../../utils/logger.dart';
 
 class StorageManager {
   final SPH sph;
+  
+  // Cache RegExp for better performance
+  static final _hashCleanupRegex = RegExp(r'[^A-z0-9]');
 
   StorageManager({required this.sph});
 
   Future<Directory> getDocumentCacheDirectory() async {
     var tempDir = await getTemporaryDirectory();
     var userDir = Directory("${tempDir.path}/${sph.account.localId}");
-    if (!userDir.existsSync()) {
-      userDir.createSync();
+    if (!await userDir.exists()) {
+      await userDir.create();
     }
     String path = "${tempDir.path}/${sph.account.localId}/document_cache";
     Directory dir = Directory(path);
-    if (!dir.existsSync()) {
-      dir.createSync();
+    if (!await dir.exists()) {
+      await dir.create();
     }
     return dir;
   }
@@ -33,7 +36,7 @@ class StorageManager {
     var digest = sha256.convert(bytes);
 
     var shortHash =
-        digest.toString().replaceAll(RegExp(r'[^A-z0-9]'), '').substring(0, 12);
+        digest.toString().replaceAll(_hashCleanupRegex, '').substring(0, 12);
 
     return shortHash;
   }
@@ -46,7 +49,7 @@ class StorageManager {
     String filePath = "$folderPath/$filename";
 
     File existingFile = File(filePath);
-    return existingFile.existsSync();
+    return existingFile.exists();
   }
 
   ///downloads a file from an URL and returns the path of the file.
@@ -62,8 +65,8 @@ class StorageManager {
       String savePath = "$folderPath/$filename";
 
       Directory folder = Directory(folderPath);
-      if (!folder.existsSync()) {
-        folder.createSync(recursive: true);
+      if (!await folder.exists()) {
+        await folder.create(recursive: true);
       }
 
       if (await doesFileExist(url, filename)) {
@@ -97,9 +100,7 @@ class StorageManager {
       }
 
       File file = File(savePath);
-      var raf = file.openSync(mode: FileMode.write);
-      raf.writeFromSync(response.data);
-      await raf.close();
+      await file.writeAsBytes(response.data);
 
       return savePath;
     } catch (e, stack) {
@@ -110,12 +111,12 @@ class StorageManager {
 
   Future<void> deleteFilesOlderThan(Duration duration) async {
     var tempDir = await getDocumentCacheDirectory();
-    var files = tempDir.listSync(recursive: true);
-    for (var file in files) {
+    var files = tempDir.list(recursive: true);
+    await for (var file in files) {
       if (file is File) {
-        var stat = file.statSync();
+        var stat = await file.stat();
         if (DateTime.now().difference(stat.modified).compareTo(duration) > 0) {
-          file.deleteSync();
+          await file.delete();
         }
       }
     }

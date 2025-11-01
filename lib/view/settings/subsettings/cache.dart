@@ -13,20 +13,19 @@ class CacheSettings extends SettingsColours {
   final bool showBackButton;
   const CacheSettings({super.key, this.showBackButton = true});
 
-  static Map<String, int> dirStatSync(String dirPath) {
+  static Future<Map<String, int>> dirStat(String dirPath) async {
     int fileNum = 0;
     int totalSize = 0;
     var dir = Directory(dirPath);
 
-    if (dir.existsSync()) {
-      dir
-          .listSync(recursive: true, followLinks: false)
-          .forEach((FileSystemEntity entity) {
+    if (await dir.exists()) {
+      await for (var entity in dir.list(recursive: true, followLinks: false)) {
         if (entity is File) {
           fileNum++;
-          totalSize += entity.lengthSync();
+          final stat = await entity.stat();
+          totalSize += stat.size;
         }
-      });
+      }
     }
     return {'fileNum': fileNum, 'size': totalSize};
   }
@@ -40,10 +39,13 @@ class _CacheSettingsState extends SettingsColoursState<CacheSettings> {
 
   Future<void> clearCache() async {
     final dir = await sph!.storage.getDocumentCacheDirectory();
-    dir.deleteSync(recursive: true);
+    if (await dir.exists()) {
+      await dir.delete(recursive: true);
+    }
 
+    final stats = await CacheSettings.dirStat(dir.path);
     setState(() {
-      cacheStats = CacheSettings.dirStatSync(dir.path);
+      cacheStats = stats;
     });
   }
 
@@ -51,9 +53,10 @@ class _CacheSettingsState extends SettingsColoursState<CacheSettings> {
   void initState() {
     super.initState();
 
-    sph!.storage.getDocumentCacheDirectory().then((dir) {
+    sph!.storage.getDocumentCacheDirectory().then((dir) async {
+      final stats = await CacheSettings.dirStat(dir.path);
       setState(() {
-        cacheStats = CacheSettings.dirStatSync(dir.path);
+        cacheStats = stats;
       });
     });
   }

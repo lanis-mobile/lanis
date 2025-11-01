@@ -164,13 +164,15 @@ class _CalendarViewState extends State<CalendarView> {
         doesEntryExist(singleEventData["properties"]["zielgruppen"])) {
       Map<String, dynamic> data = singleEventData["properties"]["zielgruppen"];
 
+      final buffer = StringBuffer();
       data.forEach((key, value) {
         if (key == "-sus") {
-          targetGroup += value.replaceAll("amp;", "").toString();
+          buffer.write(value.replaceAll("amp;", "").toString());
           return;
         }
-        targetGroup += "$value, ";
+        buffer.write("$value, ");
       });
+      targetGroup = buffer.toString();
     }
 
     return Padding(

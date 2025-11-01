@@ -214,8 +214,8 @@ class AccountDatabase extends _$AccountDatabase {
       final Directory databasesDirectory =
           await getApplicationDocumentsDirectory();
       final dbFile = File('${databasesDirectory.path}/session_${id}_db.sqlite');
-      if (dbFile.existsSync()) {
-        dbFile.deleteSync();
+      if (await dbFile.exists()) {
+        await dbFile.delete();
       }
     }
     final int rows =
@@ -225,8 +225,8 @@ class AccountDatabase extends _$AccountDatabase {
     }
     final tempDir = await getTemporaryDirectory();
     final userDir = Directory("${tempDir.path}/$id");
-    if (userDir.existsSync()) {
-      userDir.deleteSync(recursive: true);
+    if (await userDir.exists()) {
+      await userDir.delete(recursive: true);
     }
   }
 
@@ -268,8 +268,8 @@ class AccountDatabase extends _$AccountDatabase {
     await delete(accountsTable).go();
     final tempDir = await getTemporaryDirectory();
     final userDir = Directory(tempDir.path);
-    if (userDir.existsSync()) {
-      userDir.deleteSync(recursive: true);
+    if (await userDir.exists()) {
+      await userDir.delete(recursive: true);
     }
   }
 
