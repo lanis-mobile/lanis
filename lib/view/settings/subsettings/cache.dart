@@ -52,12 +52,14 @@ class _CacheSettingsState extends SettingsColoursState<CacheSettings> {
   @override
   void initState() {
     super.initState();
+    _loadCacheStats();
+  }
 
-    sph!.storage.getDocumentCacheDirectory().then((dir) async {
-      final stats = await CacheSettings.dirStat(dir.path);
-      setState(() {
-        cacheStats = stats;
-      });
+  Future<void> _loadCacheStats() async {
+    final dir = await sph!.storage.getDocumentCacheDirectory();
+    final stats = await CacheSettings.dirStat(dir.path);
+    setState(() {
+      cacheStats = stats;
     });
   }
 
