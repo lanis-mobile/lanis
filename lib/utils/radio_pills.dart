@@ -17,9 +17,7 @@ enum RadioBorder {
 
   final BorderRadius borderRadius;
 
-  const RadioBorder(
-    this.borderRadius,
-  );
+  const RadioBorder(this.borderRadius);
 }
 
 class RadioPill<T> extends StatelessWidget {
@@ -42,8 +40,8 @@ class RadioPill<T> extends StatelessWidget {
     this.leading,
     this.border = RadioBorder.both,
     this.color,
-  })  : _variant = _RadioPillVariant.vertical,
-        _trailing = null;
+  }) : _variant = _RadioPillVariant.vertical,
+       _trailing = null;
 
   const RadioPill.horizontal({
     super.key,
@@ -56,8 +54,8 @@ class RadioPill<T> extends StatelessWidget {
     Widget? trailing,
     this.border = RadioBorder.both,
     this.color,
-  })  : _variant = _RadioPillVariant.horizontal,
-        _trailing = trailing;
+  }) : _variant = _RadioPillVariant.horizontal,
+       _trailing = trailing;
 
   final Widget? _trailing;
 
@@ -70,11 +68,11 @@ class RadioPill<T> extends StatelessWidget {
     return Material(
       color: onChanged == null
           ? selected
-              ? Theme.of(context).colorScheme.surfaceDim
-              : Theme.of(context).colorScheme.surfaceContainerHighest
+                ? Theme.of(context).colorScheme.surfaceDim
+                : Theme.of(context).colorScheme.surfaceContainerHighest
           : selected
-              ? Theme.of(context).colorScheme.primaryContainer
-              : color ?? Theme.of(context).colorScheme.surfaceContainerLow,
+          ? Theme.of(context).colorScheme.primaryContainer
+          : color ?? Theme.of(context).colorScheme.surfaceContainerLow,
       borderRadius: border.borderRadius,
       child: InkWell(
         onTap: onChanged != null
@@ -84,135 +82,127 @@ class RadioPill<T> extends StatelessWidget {
             : null,
         borderRadius: border.borderRadius,
         child: Padding(
-            padding: _variant == _RadioPillVariant.vertical
-                ? const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0)
-                : const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12.0),
-            child: _variant == _RadioPillVariant.vertical
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      if (leading != null) ...[
-                        Theme(
+          padding: _variant == _RadioPillVariant.vertical
+              ? const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0)
+              : const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12.0),
+          child: _variant == _RadioPillVariant.vertical
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    if (leading != null) ...[
+                      Theme(
+                        data: Theme.of(context).copyWith(
+                          iconTheme: Theme.of(context).iconTheme.copyWith(
+                            color: onChanged == null
+                                ? Theme.of(context).colorScheme.onSurfaceVariant
+                                : selected
+                                ? Theme.of(
+                                    context,
+                                  ).colorScheme.onPrimaryContainer
+                                : Theme.of(context).colorScheme.onSurface,
+                            size: 20.0,
+                          ),
+                        ),
+                        child: leading!,
+                      ),
+                      SizedBox(height: 4.0),
+                    ],
+                    Column(
+                      children: [
+                        DefaultTextStyle(
+                          style: Theme.of(context).textTheme.bodySmall!
+                              .copyWith(
+                                color: onChanged == null
+                                    ? Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant
+                                    : selected
+                                    ? Theme.of(
+                                        context,
+                                      ).colorScheme.onPrimaryContainer
+                                    : Theme.of(context).colorScheme.onSurface,
+                              ),
+                          child: title,
+                        ),
+                        if (subtitle != null)
+                          DefaultTextStyle(
+                            style: Theme.of(context).textTheme.bodySmall!
+                                .copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                            child: subtitle!,
+                          ),
+                      ],
+                    ),
+                  ],
+                )
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisSize: MainAxisSize.max,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        if (leading != null) ...[
+                          Theme(
                             data: Theme.of(context).copyWith(
                               iconTheme: Theme.of(context).iconTheme.copyWith(
-                                    color: onChanged == null
-                                        ? Theme.of(context)
-                                            .colorScheme
-                                            .onSurfaceVariant
-                                        : selected
-                                            ? Theme.of(context)
-                                                .colorScheme
-                                                .onPrimaryContainer
-                                            : Theme.of(context)
-                                                .colorScheme
-                                                .onSurface,
-                                    size: 20.0,
-                                  ),
-                            ),
-                            child: leading!),
-                        SizedBox(height: 4.0),
-                      ],
-                      Column(
-                        children: [
-                          DefaultTextStyle(
-                            style:
-                                Theme.of(context).textTheme.bodySmall!.copyWith(
-                                      color: onChanged == null
-                                          ? Theme.of(context)
-                                              .colorScheme
-                                              .onSurfaceVariant
-                                          : selected
-                                              ? Theme.of(context)
-                                                  .colorScheme
-                                                  .onPrimaryContainer
-                                              : Theme.of(context)
-                                                  .colorScheme
-                                                  .onSurface,
-                                    ),
-                            child: title,
-                          ),
-                          if (subtitle != null)
-                            DefaultTextStyle(
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall!
-                                    .copyWith(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurfaceVariant),
-                                child: subtitle!),
-                        ],
-                      ),
-                    ],
-                  )
-                : Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    mainAxisSize: MainAxisSize.max,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          if (leading != null) ...[
-                            Theme(
-                                data: Theme.of(context).copyWith(
-                                  iconTheme:
-                                      Theme.of(context).iconTheme.copyWith(
-                                            color: onChanged == null
-                                                ? Theme.of(context)
-                                                    .colorScheme
-                                                    .onSurfaceVariant
-                                                : selected
-                                                    ? Theme.of(context)
-                                                        .colorScheme
-                                                        .onPrimaryContainer
-                                                    : Theme.of(context)
-                                                        .colorScheme
-                                                        .onSurface,
-                                            size: 20.0,
-                                          ),
-                                ),
-                                child: leading!),
-                            SizedBox(width: 8.0),
-                          ],
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              DefaultTextStyle(
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall!
-                                    .copyWith(
-                                      color: onChanged == null
-                                          ? Theme.of(context)
-                                              .colorScheme
-                                              .onSurfaceVariant
-                                          : selected
-                                              ? Theme.of(context)
-                                                  .colorScheme
-                                                  .onPrimaryContainer
-                                              : Theme.of(context)
-                                                  .colorScheme
-                                                  .onSurface,
-                                    ),
-                                child: title,
+                                color: onChanged == null
+                                    ? Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant
+                                    : selected
+                                    ? Theme.of(
+                                        context,
+                                      ).colorScheme.onPrimaryContainer
+                                    : Theme.of(context).colorScheme.onSurface,
+                                size: 20.0,
                               ),
-                              if (subtitle != null)
-                                DefaultTextStyle(
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall!
-                                        .copyWith(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onSurfaceVariant),
-                                    child: subtitle!),
-                            ],
+                            ),
+                            child: leading!,
                           ),
+                          SizedBox(width: 8.0),
                         ],
-                      ),
-                      if (_trailing != null) _trailing!,
-                    ],
-                  )),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            DefaultTextStyle(
+                              style: Theme.of(context).textTheme.bodySmall!
+                                  .copyWith(
+                                    color: onChanged == null
+                                        ? Theme.of(
+                                            context,
+                                          ).colorScheme.onSurfaceVariant
+                                        : selected
+                                        ? Theme.of(
+                                            context,
+                                          ).colorScheme.onPrimaryContainer
+                                        : Theme.of(
+                                            context,
+                                          ).colorScheme.onSurface,
+                                  ),
+                              child: title,
+                            ),
+                            if (subtitle != null)
+                              DefaultTextStyle(
+                                style: Theme.of(context).textTheme.bodySmall!
+                                    .copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                                    ),
+                                child: subtitle!,
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    if (_trailing != null) _trailing,
+                  ],
+                ),
+        ),
       ),
     );
   }
@@ -229,8 +219,8 @@ class RadioPillGroupItem<T> {
     this.subtitle,
     required this.value,
     this.leading,
-  })  : _trailing = null,
-        _variant = _RadioPillVariant.vertical;
+  }) : _trailing = null,
+       _variant = _RadioPillVariant.vertical;
 
   const RadioPillGroupItem.horizontal({
     required this.title,
@@ -238,8 +228,8 @@ class RadioPillGroupItem<T> {
     required this.value,
     this.leading,
     Widget? trailing,
-  })  : _trailing = trailing,
-        _variant = _RadioPillVariant.horizontal;
+  }) : _trailing = trailing,
+       _variant = _RadioPillVariant.horizontal;
 
   final Widget? _trailing;
   final _RadioPillVariant _variant;
@@ -253,33 +243,35 @@ class RadioPillGroup<T> extends StatelessWidget {
   final Color? color;
   final ValueChanged<T>? onChanged;
 
-  const RadioPillGroup(
-      {super.key,
-      required this.pills,
-      this.groupValue,
-      this.onChanged,
-      this.color})
-      : _customPillBuilder = null,
-        _variant = _RadioPillGroupVariant.row;
+  const RadioPillGroup({
+    super.key,
+    required this.pills,
+    this.groupValue,
+    this.onChanged,
+    this.color,
+  }) : _customPillBuilder = null,
+       _variant = _RadioPillGroupVariant.row;
 
-  const RadioPillGroup.large(
-      {super.key,
-      required this.pills,
-      this.groupValue,
-      this.onChanged,
-      required Widget Function(T? groupValue, ValueChanged<T>? onChanged)
-          customPillBuilder,
-      this.color})
-      : _customPillBuilder = customPillBuilder,
-        _variant = _RadioPillGroupVariant.large;
+  const RadioPillGroup.large({
+    super.key,
+    required this.pills,
+    this.groupValue,
+    this.onChanged,
+    required Widget Function(T? groupValue, ValueChanged<T>? onChanged)
+    customPillBuilder,
+    this.color,
+  }) : _customPillBuilder = customPillBuilder,
+       _variant = _RadioPillGroupVariant.large;
 
   final Widget Function(T? groupValue, ValueChanged<T>? onChanged)?
-      _customPillBuilder;
+  _customPillBuilder;
 
   final _RadioPillGroupVariant _variant;
 
   RadioPill<T> instantiatePill(
-      final RadioPillGroupItem<T> pill, final int index) {
+    final RadioPillGroupItem<T> pill,
+    final int index,
+  ) {
     late RadioBorder border;
 
     if (_variant == _RadioPillGroupVariant.large) {
@@ -342,14 +334,12 @@ class RadioPillGroup<T> extends StatelessWidget {
           spacing: 2.0,
           children: [
             for (var i = 0; i < pills.length; i++) ...[
-              Expanded(
-                child: instantiatePill(pills[i], i),
-              ),
-            ]
+              Expanded(child: instantiatePill(pills[i], i)),
+            ],
           ],
         ),
         if (_customPillBuilder != null)
-          _customPillBuilder!(groupValue, onChanged),
+          _customPillBuilder(groupValue, onChanged),
       ],
     );
   }
@@ -361,23 +351,23 @@ class TrailingCircle extends StatelessWidget {
   final Color selectedColor;
   final bool selected;
 
-  const TrailingCircle(
-      {super.key,
-      required Color color,
-      required this.selectedBackgroundColor,
-      required this.selectedColor,
-      required this.selected})
-      : _color = color,
-        _customCircle = null;
+  const TrailingCircle({
+    super.key,
+    required Color color,
+    required this.selectedBackgroundColor,
+    required this.selectedColor,
+    required this.selected,
+  }) : _color = color,
+       _customCircle = null;
 
-  const TrailingCircle.custom(
-      {super.key,
-      required this.selectedBackgroundColor,
-      required this.selectedColor,
-      required this.selected,
-      required Widget customCircle})
-      : _customCircle = customCircle,
-        _color = null;
+  const TrailingCircle.custom({
+    super.key,
+    required this.selectedBackgroundColor,
+    required this.selectedColor,
+    required this.selected,
+    required Widget customCircle,
+  }) : _customCircle = customCircle,
+       _color = null;
 
   final Color? _color;
   final Widget? _customCircle;
@@ -393,25 +383,32 @@ class TrailingCircle extends StatelessWidget {
             SizedBox.fromSize(
               size: Size.square(32),
               child: DecoratedBox(
-                  decoration: BoxDecoration(
-                      color: selectedColor,
-                      borderRadius: BorderRadius.circular(100))),
+                decoration: BoxDecoration(
+                  color: selectedColor,
+                  borderRadius: BorderRadius.circular(100),
+                ),
+              ),
             ),
             SizedBox.fromSize(
               size: Size.square(29),
               child: DecoratedBox(
-                  decoration: BoxDecoration(
-                      color: selectedBackgroundColor,
-                      borderRadius: BorderRadius.circular(100))),
+                decoration: BoxDecoration(
+                  color: selectedBackgroundColor,
+                  borderRadius: BorderRadius.circular(100),
+                ),
+              ),
             ),
           ],
           SizedBox.fromSize(
             size: Size.square(selected ? 25 : 32),
-            child: _customCircle ??
+            child:
+                _customCircle ??
                 DecoratedBox(
-                    decoration: BoxDecoration(
-                        color: _color ?? Colors.transparent,
-                        borderRadius: BorderRadius.circular(100))),
+                  decoration: BoxDecoration(
+                    color: _color ?? Colors.transparent,
+                    borderRadius: BorderRadius.circular(100),
+                  ),
+                ),
           ),
         ],
       ),
@@ -433,13 +430,14 @@ class RadioTrailingCircleGroup<T> extends StatelessWidget {
   final RadioBorder border;
   final Color? color;
 
-  const RadioTrailingCircleGroup(
-      {super.key,
-      this.groupValue,
-      this.onChanged,
-      required this.colors,
-      this.border = RadioBorder.all,
-      this.color});
+  const RadioTrailingCircleGroup({
+    super.key,
+    this.groupValue,
+    this.onChanged,
+    required this.colors,
+    this.border = RadioBorder.all,
+    this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -447,39 +445,39 @@ class RadioTrailingCircleGroup<T> extends StatelessWidget {
       children: [
         Expanded(
           child: DecoratedBox(
-              decoration: BoxDecoration(
-                color:
-                    color ?? Theme.of(context).colorScheme.surfaceContainerLow,
-                borderRadius: border.borderRadius,
+            decoration: BoxDecoration(
+              color: color ?? Theme.of(context).colorScheme.surfaceContainerLow,
+              borderRadius: border.borderRadius,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Wrap(
+                spacing: 16.0,
+                runSpacing: 8.0,
+                alignment: WrapAlignment.center,
+                children: List.generate(colors.length, (index) {
+                  return InkWell(
+                    onTap: onChanged != null
+                        ? () {
+                            onChanged!(colors[index].value);
+                          }
+                        : null,
+                    child: Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: TrailingCircle(
+                        color: colors[index].color,
+                        selectedBackgroundColor: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerLow,
+                        selectedColor: Theme.of(context).colorScheme.primary,
+                        selected: groupValue == colors[index].value,
+                      ),
+                    ),
+                  );
+                }),
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Wrap(
-                    spacing: 16.0,
-                    runSpacing: 8.0,
-                    alignment: WrapAlignment.center,
-                    children: List.generate(colors.length, (index) {
-                      return InkWell(
-                        onTap: onChanged != null
-                            ? () {
-                                onChanged!(colors[index].value);
-                              }
-                            : null,
-                        child: Padding(
-                          padding: const EdgeInsets.all(4.0),
-                          child: TrailingCircle(
-                            color: colors[index].color,
-                            selectedBackgroundColor: Theme.of(context)
-                                .colorScheme
-                                .surfaceContainerLow,
-                            selectedColor:
-                                Theme.of(context).colorScheme.primary,
-                            selected: groupValue == colors[index].value,
-                          ),
-                        ),
-                      );
-                    })),
-              )),
+            ),
+          ),
         ),
       ],
     );

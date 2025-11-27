@@ -17,15 +17,22 @@ class TimetableStudentParser extends AppletParser<TimeTable> {
     final Document? document = await getTimetableDocument();
     if (document == null) throw NetworkException();
 
-    final tbodyAll =
-        await getTableBody(document, timeTableType: TimeTableType.all);
-    final tbodyOwn =
-        await getTableBody(document, timeTableType: TimeTableType.own);
-    final String? weekBadge =
-        document.querySelector("#aktuelleWoche")?.text.trim();
+    final tbodyAll = await getTableBody(
+      document,
+      timeTableType: TimeTableType.all,
+    );
+    final tbodyOwn = await getTableBody(
+      document,
+      timeTableType: TimeTableType.own,
+    );
+    final String? weekBadge = document
+        .querySelector("#aktuelleWoche")
+        ?.text
+        .trim();
     final List<TimetableDay> parsedAll = parseRoomPlan(tbodyAll!);
-    final List<TimetableDay>? parsedOwn =
-        (tbodyOwn == null ? null : parseRoomPlan(tbodyOwn));
+    final List<TimetableDay>? parsedOwn = (tbodyOwn == null
+        ? null
+        : parseRoomPlan(tbodyOwn));
 
     final hours = parseRows(tbodyAll);
 
@@ -43,20 +50,24 @@ class TimetableStudentParser extends AppletParser<TimeTable> {
   }
 
   Future<Document?> getTimetableDocument() async {
-    final redirectedRequest = await sph.session.dio
-        .get("https://start.schulportal.hessen.de/stundenplan.php");
+    final redirectedRequest = await sph.session.dio.get(
+      "https://start.schulportal.hessen.de/stundenplan.php",
+    );
 
     if (redirectedRequest.headers["location"] == null) {
       return null;
     }
 
     final response = await sph.session.dio.get(
-        "https://start.schulportal.hessen.de/${redirectedRequest.headers["location"]?[0]}");
+      "https://start.schulportal.hessen.de/${redirectedRequest.headers["location"]?[0]}",
+    );
     return parse(response.data);
   }
 
-  Future<Element?> getTableBody(Document document,
-      {TimeTableType timeTableType = TimeTableType.all}) async {
+  Future<Element?> getTableBody(
+    Document document, {
+    TimeTableType timeTableType = TimeTableType.all,
+  }) async {
     switch (timeTableType) {
       case TimeTableType.all:
         return document.querySelector("#all tbody");
@@ -69,20 +80,24 @@ class TimetableStudentParser extends AppletParser<TimeTable> {
     int dayCount = tbody.children[0].children.length - 1;
     List<TimetableDay> result = List.generate(dayCount, (_) => []);
 
-    List<(TimeOfDay, TimeOfDay)> timeSlots =
-        tbody.querySelectorAll(".VonBis").map((e) {
-      var timeString = e.text.trim();
-      var s = timeString.split(" - ");
-      var splitA = s[0].split(":");
-      var splitB = s[1].split(":");
-      return (
-        TimeOfDay(hour: int.parse(splitA[0]), minute: int.parse(splitA[1])),
-        TimeOfDay(hour: int.parse(splitB[0]), minute: int.parse(splitB[1]))
-      );
-    }).toList();
+    List<(TimeOfDay, TimeOfDay)> timeSlots = tbody
+        .querySelectorAll(".VonBis")
+        .map((e) {
+          var timeString = e.text.trim();
+          var s = timeString.split(" - ");
+          var splitA = s[0].split(":");
+          var splitB = s[1].split(":");
+          return (
+            TimeOfDay(hour: int.parse(splitA[0]), minute: int.parse(splitA[1])),
+            TimeOfDay(hour: int.parse(splitB[0]), minute: int.parse(splitB[1])),
+          );
+        })
+        .toList();
 
     List<List<bool>> alreadyParsed = List.generate(
-        timeSlots.length + 1, (_) => List.generate(dayCount, (_) => false));
+      timeSlots.length + 1,
+      (_) => List.generate(dayCount, (_) => false),
+    );
 
     bool timeslotOffsetFirstRow =
         tbody.children[0].children[0].text.trim() != "";
@@ -103,8 +118,15 @@ class TimetableStudentParser extends AppletParser<TimeTable> {
           alreadyParsed[rowIndex + i][actualDay] = true;
         }
 
-        result[actualDay].addAll(parseSingeHour(colElement, rowIndex, timeSlots,
-            timeslotOffsetFirstRow, actualDay));
+        result[actualDay].addAll(
+          parseSingeHour(
+            colElement,
+            rowIndex,
+            timeSlots,
+            timeslotOffsetFirstRow,
+            actualDay,
+          ),
+        );
       }
     }
     return result;
@@ -114,7 +136,7 @@ class TimetableStudentParser extends AppletParser<TimeTable> {
     List<TimeTableRow> result = [];
     for (var (rowIndex, rowElement) in tbody.children.indexed) {
       if (rowIndex == 0) continue; // skip first empty row
-      for (var (colIndex, colElement) in rowElement.children.indexed) {
+      for (var (_, colElement) in rowElement.children.indexed) {
         Element? e = colElement.querySelector(".VonBis");
         Element label = colElement.querySelector(".print-show")!;
         label = label.querySelector("b") ?? label;
@@ -123,12 +145,15 @@ class TimetableStudentParser extends AppletParser<TimeTable> {
         var s = timeString.split(" - ");
         var splitA = s[0].split(":");
         var splitB = s[1].split(":");
-        result.add(TimeTableRow(
+        result.add(
+          TimeTableRow(
             TimeTableRowType.lesson,
             TimeOfDay(hour: int.parse(splitA[0]), minute: int.parse(splitA[1])),
             TimeOfDay(hour: int.parse(splitB[0]), minute: int.parse(splitB[1])),
             label.text.trim(),
-            rowIndex));
+            rowIndex,
+          ),
+        );
         break;
       }
     }
@@ -136,11 +161,12 @@ class TimetableStudentParser extends AppletParser<TimeTable> {
   }
 
   List<TimetableSubject> parseSingeHour(
-      Element cell,
-      int y,
-      List<(TimeOfDay, TimeOfDay)> timeSlots,
-      bool timeslotOffsetFirstRow,
-      int day) {
+    Element cell,
+    int y,
+    List<(TimeOfDay, TimeOfDay)> timeSlots,
+    bool timeslotOffsetFirstRow,
+    int day,
+  ) {
     List<TimetableSubject> result = [];
     for (var row in cell.querySelectorAll(".stunde")) {
       var name = row.querySelector("b")?.text.trim();
@@ -150,8 +176,9 @@ class TimetableStudentParser extends AppletParser<TimeTable> {
       var lehrer = row.querySelector("small")?.text.trim();
       var badge = row.querySelector(".badge")?.text.trim();
       var duration = int.parse(row.parent!.attributes["rowspan"]!);
-      var startTime =
-          timeslotOffsetFirstRow ? timeSlots[y].$1 : timeSlots[y - 1].$1;
+      var startTime = timeslotOffsetFirstRow
+          ? timeSlots[y].$1
+          : timeSlots[y - 1].$1;
       var endTime = timeslotOffsetFirstRow
           ? timeSlots[y + duration - 1].$2
           : timeSlots[y - 1 + duration - 1].$2;
@@ -163,7 +190,8 @@ class TimetableStudentParser extends AppletParser<TimeTable> {
         id = Uuid().v5(Uuid.NAMESPACE_URL, name ?? raum).replaceAll('-', '');
       }
 
-      result.add(TimetableSubject(
+      result.add(
+        TimetableSubject(
           id: '$id-$day-${startTime.hour}-${startTime.minute}',
           name: name,
           raum: raum,
@@ -172,7 +200,9 @@ class TimetableStudentParser extends AppletParser<TimeTable> {
           duration: duration,
           startTime: startTime,
           endTime: endTime,
-          stunde: y));
+          stunde: y,
+        ),
+      );
     }
     return result;
   }

@@ -8,7 +8,7 @@ abstract class LanisException implements Exception {
   String get _defaultMessage;
 
   String get cause {
-    if (_customCause != null) return _customCause!;
+    if (_customCause != null) return _customCause;
 
     try {
       return _localizedMessage;

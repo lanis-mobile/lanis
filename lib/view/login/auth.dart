@@ -4,6 +4,7 @@ import 'package:lanis/core/database/account_database/account_db.dart';
 import 'package:lanis/core/sph/session.dart';
 import 'package:lanis/models/client_status_exceptions.dart';
 import 'package:lanis/utils/authentication_state.dart';
+import 'package:lanis/utils/logger.dart';
 import 'package:lanis/view/login/school_selector.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:lanis/generated/l10n.dart';
@@ -45,7 +46,9 @@ class LoginFormState extends State<LoginForm> {
     );
     try {
       if (await accountDatabase.doesAccountExist(
-          int.parse(schoolID), username)) {
+        int.parse(schoolID),
+        username,
+      )) {
         throw AccountAlreadyExistsException();
       }
 
@@ -68,20 +71,32 @@ class LoginFormState extends State<LoginForm> {
       await sph?.session.deAuthenticate();
       await accountDatabase.setNextLogin(newID);
       if (mounted) authenticationState.reset(context);
-    } on LanisException catch (ex) {
+    } catch (ex, s) {
+      logger.e(ex, stackTrace: s);
+
+      String cause = "";
+      if (ex is LanisException) {
+        cause = ex.cause;
+      } else {
+        if (mounted) {
+          cause = AppLocalizations.of(context).unknownError;
+        }
+      }
+
       setState(() {
         Navigator.pop(context); //pop dialog
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
             title: Text(AppLocalizations.of(context).error),
-            content: Text(ex.cause),
+            content: Text(cause),
             actions: [
               TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text("OK"))
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text("OK"),
+              ),
             ],
           ),
         );
@@ -127,9 +142,7 @@ class LoginFormState extends State<LoginForm> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const SizedBox(
-                            height: padding,
-                          ),
+                          const SizedBox(height: padding),
                           Center(
                             child: Column(
                               children: [
@@ -137,13 +150,11 @@ class LoginFormState extends State<LoginForm> {
                                 Text(
                                   AppLocalizations.of(context).logIn,
                                   style: const TextStyle(fontSize: 35),
-                                )
+                                ),
                               ],
                             ),
                           ),
-                          const SizedBox(
-                            height: padding * 5,
-                          ),
+                          const SizedBox(height: padding * 5),
                           SchoolSelector(
                             controller: schoolIDController,
                             outContext: context,
@@ -152,29 +163,28 @@ class LoginFormState extends State<LoginForm> {
                               setState(() {});
                             },
                           ),
-                          const SizedBox(
-                            height: padding,
-                          ),
+                          const SizedBox(height: padding),
                           TextFormField(
                             controller: usernameController,
                             enabled: schoolIDController.text != "",
                             autofillHints: [AutofillHints.username],
                             autocorrect: false,
                             decoration: InputDecoration(
-                                labelText: AppLocalizations.of(context)
-                                    .authUsernameHint),
+                              labelText: AppLocalizations.of(
+                                context,
+                              ).authUsernameHint,
+                            ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return AppLocalizations.of(context)
-                                    .authValidationError;
+                                return AppLocalizations.of(
+                                  context,
+                                ).authValidationError;
                               }
 
                               return null;
                             },
                           ),
-                          const SizedBox(
-                            height: padding,
-                          ),
+                          const SizedBox(height: padding),
                           TextFormField(
                             controller: passwordController,
                             enabled: schoolIDController.text.isNotEmpty,
@@ -182,20 +192,20 @@ class LoginFormState extends State<LoginForm> {
                             autocorrect: false,
                             obscureText: true,
                             decoration: InputDecoration(
-                              labelText:
-                                  AppLocalizations.of(context).authPasswordHint,
+                              labelText: AppLocalizations.of(
+                                context,
+                              ).authPasswordHint,
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return AppLocalizations.of(context)
-                                    .authValidationError;
+                                return AppLocalizations.of(
+                                  context,
+                                ).authValidationError;
                               }
                               return null;
                             },
                           ),
-                          const SizedBox(
-                            height: padding,
-                          ),
+                          const SizedBox(height: padding),
                           Visibility(
                             child: ExcludeSemantics(
                               child: CheckboxListTile(
@@ -203,24 +213,31 @@ class LoginFormState extends State<LoginForm> {
                                 value: dseAgree,
                                 title: RichText(
                                   text: TextSpan(
-                                    text: AppLocalizations.of(context)
-                                        .authIAccept,
+                                    text: AppLocalizations.of(
+                                      context,
+                                    ).authIAccept,
                                     style: DefaultTextStyle.of(context).style,
                                     children: <TextSpan>[
                                       TextSpan(
-                                        text: AppLocalizations.of(context)
-                                            .authTermsOfService,
+                                        text: AppLocalizations.of(
+                                          context,
+                                        ).authTermsOfService,
                                         style: TextStyle(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .primary),
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                        ),
                                         recognizer: TapGestureRecognizer()
-                                          ..onTap = () => launchUrl(Uri.parse(
-                                              "https://lanis-mobile.github.io/policy/")),
+                                          ..onTap = () => launchUrl(
+                                            Uri.parse(
+                                              "https://lanis-mobile.github.io/policy/",
+                                            ),
+                                          ),
                                       ),
                                       TextSpan(
-                                        text: AppLocalizations.of(context)
-                                            .authOfLanisMobile,
+                                        text: AppLocalizations.of(
+                                          context,
+                                        ).authOfLanisMobile,
                                       ),
                                     ],
                                   ),
@@ -233,17 +250,16 @@ class LoginFormState extends State<LoginForm> {
                               ),
                             ),
                           ),
-                          const SizedBox(
-                            height: padding,
-                          ),
+                          const SizedBox(height: padding),
                           FilledButton(
                             onPressed: dseAgree
                                 ? () {
                                     if (_formKey.currentState!.validate()) {
                                       login(
-                                          usernameController.text.toLowerCase(),
-                                          passwordController.text,
-                                          schoolIDController.text);
+                                        usernameController.text.toLowerCase(),
+                                        passwordController.text,
+                                        schoolIDController.text,
+                                      );
                                     }
                                   }
                                 : null,
@@ -253,14 +269,21 @@ class LoginFormState extends State<LoginForm> {
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
                               TextButton(
-                                  onPressed: schoolIDController.text.isNotEmpty
-                                      ? () => launchUrl(Uri.parse(
-                                          "https://start.schulportal.hessen.de/benutzerverwaltung.php?a=userPWreminder&i=${schoolIDController.text}"))
-                                      : null,
-                                  child: Text(AppLocalizations.of(context)
-                                      .authResetPassword))
+                                onPressed: schoolIDController.text.isNotEmpty
+                                    ? () => launchUrl(
+                                        Uri.parse(
+                                          "https://start.schulportal.hessen.de/benutzerverwaltung.php?a=userPWreminder&i=${schoolIDController.text}",
+                                        ),
+                                      )
+                                    : null,
+                                child: Text(
+                                  AppLocalizations.of(
+                                    context,
+                                  ).authResetPassword,
+                                ),
+                              ),
                             ],
-                          )
+                          ),
                         ],
                       ),
                     ),
@@ -269,7 +292,7 @@ class LoginFormState extends State<LoginForm> {
               ),
             ),
           ),
-        )
+        ),
       ],
     );
   }

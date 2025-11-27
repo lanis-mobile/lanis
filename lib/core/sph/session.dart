@@ -40,10 +40,7 @@ class SessionHandler {
 
   AccountType get accountType => _accountType ?? sph.account.accountType!;
 
-  SessionHandler({
-    required this.sph,
-    String? withLoginURL,
-  });
+  SessionHandler({required this.sph, String? withLoginURL});
 
   Future<void> prepareDio() async {
     jar = CookieJar();
@@ -52,48 +49,58 @@ class SessionHandler {
 
     dio.httpClientAdapter = getNativeAdapterInstance();
     dio.interceptors.add(CookieManager(jar));
-    dio.interceptors.add(InterceptorsWrapper(
-      onResponse: (Response response, ResponseInterceptorHandler handler) {
-        if (response.data != null) {
-          connectionChecker.status = ConnectionStatus.connected;
-        } else {
-          connectionChecker.status = ConnectionStatus.disconnected;
-        }
-        return handler.next(response);
-      },
-      onError: (DioException error, ErrorInterceptorHandler handler) {
-        if (error.type == DioExceptionType.connectionTimeout ||
-            error.type == DioExceptionType.receiveTimeout) {
-          connectionChecker.status = ConnectionStatus.disconnected;
-        }
-        return handler.next(error);
-      },
-    ));
-    dio.interceptors.add(InterceptorsWrapper(
-      onResponse: (Response response, ResponseInterceptorHandler handler) {
-        if (response.data is String) {
-          final contentType = response.headers.value('content-type');
-          if (contentType != null && contentType.contains('text/html')) {
-            final decryptedString = cryptor.decryptEncodedTags(response.data);
-            //response.data = unescape.convert(decryptedString);
-            response.data = decryptedString;
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onResponse: (Response response, ResponseInterceptorHandler handler) {
+          if (response.data != null) {
+            connectionChecker.status = ConnectionStatus.connected;
+          } else {
+            connectionChecker.status = ConnectionStatus.disconnected;
           }
-        }
-        return handler.next(response);
-      },
-    ));
-    dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (RequestOptions options, RequestInterceptorHandler handler) {
-        options.headers.addAll({
-          //  'Cache-Control': 'no-cache',
-          //  'Pragma': 'no-cache',
-          'User-Agent':
-          "Lanis-Mobile/v${packageInfo.version}+${packageInfo.buildNumber} on ${Platform.operatingSystem} (${kReleaseMode ? "release" : kDebugMode ? "debug" : "profile"})"
-        });
-        //options.queryParameters['_cachebreaker'] = DateTime.now().millisecondsSinceEpoch.toString();
-        return handler.next(options);
-      },
-    ));
+          return handler.next(response);
+        },
+        onError: (DioException error, ErrorInterceptorHandler handler) {
+          if (error.type == DioExceptionType.connectionTimeout ||
+              error.type == DioExceptionType.receiveTimeout) {
+            connectionChecker.status = ConnectionStatus.disconnected;
+          }
+          return handler.next(error);
+        },
+      ),
+    );
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onResponse: (Response response, ResponseInterceptorHandler handler) {
+          if (response.data is String) {
+            final contentType = response.headers.value('content-type');
+            if (contentType != null && contentType.contains('text/html')) {
+              final decryptedString = cryptor.decryptEncodedTags(response.data);
+              //response.data = unescape.convert(decryptedString);
+              response.data = decryptedString;
+            }
+          }
+          return handler.next(response);
+        },
+      ),
+    );
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (RequestOptions options, RequestInterceptorHandler handler) {
+          options.headers.addAll({
+            //  'Cache-Control': 'no-cache',
+            //  'Pragma': 'no-cache',
+            'User-Agent':
+                "Lanis-Mobile/v${packageInfo.version}+${packageInfo.buildNumber} on ${Platform.operatingSystem} (${kReleaseMode
+                    ? "release"
+                    : kDebugMode
+                    ? "debug"
+                    : "profile"})",
+          });
+          //options.queryParameters['_cachebreaker'] = DateTime.now().millisecondsSinceEpoch.toString();
+          return handler.next(options);
+        },
+      ),
+    );
     dio.options.followRedirects = false;
     dio.options.connectTimeout = Duration(seconds: 8);
     dio.options.validateStatus = (status) =>
@@ -101,8 +108,10 @@ class SessionHandler {
   }
 
   ///Logs the user in and fetches the necessary metadata.
-  Future<void> authenticate(
-      {bool withoutData = false, String? withLoginUrl}) async {
+  Future<void> authenticate({
+    bool withoutData = false,
+    String? withLoginUrl,
+  }) async {
     if (!(await connectionChecker.connected)) {
       throw NoConnectionException();
     }
@@ -111,11 +120,13 @@ class SessionHandler {
     dio.options.validateStatus = (status) =>
         status != null && (status == 200 || status == 302 || status == 503);
 
-    final downCheckResponse =
-        await dio.get("https://start.schulportal.hessen.de/");
+    final downCheckResponse = await dio.get(
+      "https://start.schulportal.hessen.de/",
+    );
     if (downCheckResponse.statusCode == 503 ||
         downCheckResponse.data.contains(
-            "Der Bereich der pädagogischen Organisation steht Ihnen aktuell nicht zur Verfügung.")) {
+          "Der Bereich der pädagogischen Organisation steht Ihnen aktuell nicht zur Verfügung.",
+        )) {
       throw LanisDownException();
     }
 
@@ -130,8 +141,10 @@ class SessionHandler {
     await dio.get(loginURL);
 
     preventLogoutTimer?.cancel();
-    preventLogoutTimer =
-        Timer.periodic(const Duration(seconds: 10), (timer) => preventLogout());
+    preventLogoutTimer = Timer.periodic(
+      const Duration(seconds: 10),
+      (timer) => preventLogout(),
+    );
 
     travelMenu = await getFastTravelMenu();
     if (!withoutData) {
@@ -139,7 +152,8 @@ class SessionHandler {
       accountDatabase.updateLastLogin(sph.account.localId);
 
       final response = await dio.get(
-          "https://start.schulportal.hessen.de/benutzerverwaltung.php?a=userData");
+        "https://start.schulportal.hessen.de/benutzerverwaltung.php?a=userData",
+      );
       userData = parseUserData(parse(response.data));
       _accountType = parseAccountType(parse(response.data));
 
@@ -158,21 +172,25 @@ class SessionHandler {
       String platform = Platform.isAndroid
           ? 'android'
           : Platform.isIOS
-              ? 'ios'
-              : 'unknown';
+          ? 'ios'
+          : 'unknown';
       await dio.post(
-          "https://lanis-logger.orion.alessioc42.dev/api/log-login?schoolid=${sph.account.schoolID}&versioncode=${packageInfo.buildNumber}&platform=$platform");
+        "https://lanis-logger.orion.alessioc42.dev/api/log-login?schoolid=${sph.account.schoolID}&versioncode=${packageInfo.buildNumber}&platform=$platform",
+      );
       logger.i(
-          'Logged account login to orion. (${sph.account.schoolID}, ${packageInfo.buildNumber})');
+        'Logged account login to orion. (${sph.account.schoolID}, ${packageInfo.buildNumber})',
+      );
     } catch (e) {
       logger.w(
-          'Failed to log account login to orion. (${sph.account.schoolID}, ${packageInfo.buildNumber})');
+        'Failed to log account login to orion. (${sph.account.schoolID}, ${packageInfo.buildNumber})',
+      );
     }
   }
 
   Future<void> deAuthenticate() async {
     logger.w(
-        'Deauthenticating user [${sph.account.localId}] ${sph.account.schoolID}.${sph.account.username}');
+      'Deauthenticating user [${sph.account.localId}] ${sph.account.schoolID}.${sph.account.username}',
+    );
     preventLogoutTimer?.cancel();
     await dio.get('https://start.schulportal.hessen.de/index.php?logout=all');
     jar.deleteAll();
@@ -184,45 +202,75 @@ class SessionHandler {
   static Future<String> getLoginURL(ClearTextAccount acc) async {
     final packageInfoFuture = PackageInfo.fromPlatform();
     final dioHttp = Dio();
-    final cookieJar = CookieJar();
+    final cookieJar = CookieJar(ignoreExpires: true);
     dioHttp.httpClientAdapter = getNativeAdapterInstance();
+
+    // CookieJar cannot handle "Set-Cookie" headers with "HttpOnly=1" instead of just "HttpOnly"
+    dioHttp.interceptors.add(
+      InterceptorsWrapper(
+        onResponse: (Response response, ResponseInterceptorHandler handler) {
+          response.headers.forEach((name, values) {
+            if (name.toLowerCase() == "set-cookie") {
+              for (var i = 0; i < values.length; i++) {
+                values[i] = values[i].replaceAll("HttpOnly=1", "HttpOnly");
+              }
+            }
+          });
+          return handler.next(response);
+        },
+      ),
+    );
     dioHttp.interceptors.add(CookieManager(cookieJar));
     dioHttp.options.followRedirects = false;
     dioHttp.options.validateStatus = (status) =>
         status != null && (status == 200 || status == 302 || status == 503);
 
     final packageInfo = await packageInfoFuture;
-    final response1 = await dioHttp.post(
-        "https://login.schulportal.hessen.de/?i=${acc.schoolID}",
-        data: {
-          "user": '${acc.schoolID}.${acc.username}',
-          "user2": acc.username,
-          "password": acc.password,
-        },
-        options:
-            Options(contentType: "application/x-www-form-urlencoded", headers: {
+
+    Response response1 = await dioHttp.post(
+      "https://login.schulportal.hessen.de/?i=${acc.schoolID}",
+      data: {
+        "user": '${acc.schoolID}.${acc.username}',
+        "user2": acc.username,
+        "password": acc.password,
+      },
+      options: Options(
+        contentType: "application/x-www-form-urlencoded",
+        headers: {
           'User-Agent':
-          "Lanis-Mobile/v${packageInfo.version}+${packageInfo.buildNumber} on ${Platform.operatingSystem} (${kReleaseMode ? "release" : kDebugMode ? "debug" : "profile"})"
-        }));
+              "Lanis-Mobile/v${packageInfo.version}+${packageInfo.buildNumber} on ${Platform.operatingSystem} (${kReleaseMode
+                  ? "release"
+                  : kDebugMode
+                  ? "debug"
+                  : "profile"})",
+        },
+      ),
+    );
+
+    logger.d("Response Headers: ${response1.headers.toString()}");
 
     if (response1.statusCode == 503) {
       throw LanisDownException();
     }
 
-    final loginTimeout =
-        parse(response1.data).getElementById("authErrorLocktime");
+    final loginTimeout = parse(
+      response1.data,
+    ).getElementById("authErrorLocktime");
 
     if (response1.headers.value(HttpHeaders.locationHeader) != null) {
-      final response2 =
-          await dioHttp.get("https://connect.schulportal.hessen.de");
+      final response2 = await dioHttp.get(
+        "https://connect.schulportal.hessen.de",
+      );
 
       String location2 =
           response2.headers.value(HttpHeaders.locationHeader) ?? "";
 
       return location2;
     } else if (loginTimeout != null) {
-      throw LoginTimeoutException(loginTimeout.text,
-          "Zu oft falsch eingeloggt! Für den nächsten Versuch musst du ${loginTimeout.text}s warten!");
+      throw LoginTimeoutException(
+        loginTimeout.text,
+        "Zu oft falsch eingeloggt! Für den nächsten Versuch musst du ${loginTimeout.text}s warten!",
+      );
     } else {
       throw WrongCredentialsException();
     }
@@ -234,9 +282,9 @@ class SessionHandler {
     final uri = Uri.parse("https://start.schulportal.hessen.de/ajax_login.php");
     String sid;
     try {
-      sid = (await jar.loadForRequest(uri))
-          .firstWhere((element) => element.name == "sid")
-          .value;
+      sid = (await jar.loadForRequest(
+        uri,
+      )).firstWhere((element) => element.name == "sid").value;
     } on StateError {
       return;
     }
@@ -247,9 +295,7 @@ class SessionHandler {
         data: 'name=${Uri.encodeComponent(sid)}',
         options: Options(
           contentType: "application/x-www-form-urlencoded",
-          headers: {
-            'x-requested-with': 'XMLHttpRequest',
-          },
+          headers: {'x-requested-with': 'XMLHttpRequest'},
         ),
       );
       if (response.statusCode == 503) {
@@ -263,14 +309,16 @@ class SessionHandler {
   ///returns the lanis fast navigation menubar.
   Future<dynamic> getFastTravelMenu() async {
     final response = await dio.get(
-        "https://start.schulportal.hessen.de/startseite.php?a=ajax&f=apps");
+      "https://start.schulportal.hessen.de/startseite.php?a=ajax&f=apps",
+    );
     return jsonDecode(response.data.toString())["entrys"];
   }
 
   ///Parses the user data from the user data page.
   Map<String, String> parseUserData(Document document) {
-    var userDataTableBody =
-        document.querySelector("div.col-md-12 table.table.table-striped tbody");
+    var userDataTableBody = document.querySelector(
+      "div.col-md-12 table.table.table-striped tbody",
+    );
 
     if (userDataTableBody != null) {
       Map<String, String> result = {};
@@ -292,8 +340,9 @@ class SessionHandler {
   }
 
   AccountType parseAccountType(Document document) {
-    final iconClassList =
-        document.querySelector('.nav.navbar-nav.navbar-right>li>a>i')!.classes;
+    final iconClassList = document
+        .querySelector('.nav.navbar-nav.navbar-right>li>a>i')!
+        .classes;
     if (iconClassList.contains('fa-child')) {
       return AccountType.student;
     } else if (iconClassList.contains('fa-user-circle')) {
@@ -306,15 +355,18 @@ class SessionHandler {
     }
   }
 
-  bool doesSupportFeature(AppletDefinition applet,
-      {AccountType? overrideAccountType}) {
+  bool doesSupportFeature(
+    AppletDefinition applet, {
+    AccountType? overrideAccountType,
+  }) {
     var app = travelMenu
         .where((element) => element["link"].toString() == applet.appletPhpUrl)
         .singleOrNull;
     if (app == null) {
       return false;
     }
-    return applet.supportedAccountTypes
-        .contains(overrideAccountType ?? accountType);
+    return applet.supportedAccountTypes.contains(
+      overrideAccountType ?? accountType,
+    );
   }
 }
