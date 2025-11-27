@@ -5,7 +5,6 @@ import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:encrypt/encrypt.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:flutter_keychain/flutter_keychain.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../../models/account_types.dart';
@@ -16,14 +15,14 @@ import 'kv_defaults.dart';
 part 'account_db.g.dart';
 
 /// Define Android options as recommended for encrypted shared preferences.
-AndroidOptions _getAndroidOptions() => const AndroidOptions(
-      encryptedSharedPreferences: true,
-    );
+AndroidOptions _getAndroidOptions() =>
+    const AndroidOptions(encryptedSharedPreferences: true);
 
 /// Instantiate FlutterSecureStorage with android options.
 /// iOS uses Keychain by default.
-final FlutterSecureStorage secureStorage =
-    FlutterSecureStorage(aOptions: _getAndroidOptions());
+final FlutterSecureStorage secureStorage = FlutterSecureStorage(
+  aOptions: _getAndroidOptions(),
+);
 
 class ClearTextAccount {
   final int localId;
@@ -93,21 +92,9 @@ class AccountDatabase extends _$AccountDatabase {
   /// Decrypts the encrypted password using the key from secure storage.
   static Future<String> decryptPassword(String encryptedPassword) async {
     String? key = await secureStorage.read(key: 'encryption_key');
-
-    /// TODO: Temporary migration from flutter_keychain to flutter_secure_storage. Remove in future.
     if (key == null) {
-      key = await FlutterKeychain.get(key: 'encryption_key');
-
-      if (key != null) {
-        await secureStorage.write(key: 'encryption_key', value: key);
-        await FlutterKeychain.remove(key: 'encryption_key');
-        logger.i(
-            'Migrated encryption key from flutter_keychain to flutter_secure_storage.');
-      } else {
-        throw Exception('Encryption key not found');
-      }
+      throw Exception('Encryption key not found in secure storage');
     }
-
     final cryptKey = Key.fromBase64(key);
     final parts = encryptedPassword.split(':');
     if (parts.length != 2) {
@@ -121,17 +108,13 @@ class AccountDatabase extends _$AccountDatabase {
   Future<void> updatePassword(int id, String newPasswordClearText) async {
     final passwordHash = await cryptPassword(newPasswordClearText);
     await (update(accountsTable)..where((tbl) => tbl.id.equals(id))).write(
-      AccountsTableCompanion(
-        passwordHash: Value(passwordHash),
-      ),
+      AccountsTableCompanion(passwordHash: Value(passwordHash)),
     );
   }
 
   Future<void> setAccountType(int id, AccountType accountType) async {
     await (update(accountsTable)..where((tbl) => tbl.id.equals(id))).write(
-      AccountsTableCompanion(
-        accountType: Value(accountType.toString()),
-      ),
+      AccountsTableCompanion(accountType: Value(accountType.toString())),
     );
   }
 
@@ -152,22 +135,25 @@ class AccountDatabase extends _$AccountDatabase {
         creationDate: Value(DateTime.now()),
       ),
     );
-    final insertedAccount = await (select(accountsTable)
-          ..where((tbl) =>
-              tbl.schoolId.equals(schoolID) & tbl.username.equals(username)))
-        .getSingle();
+    final insertedAccount =
+        await (select(accountsTable)..where(
+              (tbl) =>
+                  tbl.schoolId.equals(schoolID) & tbl.username.equals(username),
+            ))
+            .getSingle();
     return insertedAccount.id;
   }
 
   Future<ClearTextAccount?> getLastLoggedInAccount() async {
-    final account0 = await (select(accountsTable)
-          ..orderBy([
-            (u) => OrderingTerm(
+    final account0 =
+        await (select(accountsTable)..orderBy([
+              (u) => OrderingTerm(
                 expression: u.lastLogin,
                 mode: OrderingMode.desc,
-                nulls: NullsOrder.first),
-          ]))
-        .get();
+                nulls: NullsOrder.first,
+              ),
+            ]))
+            .get();
     final account = account0.isNotEmpty ? account0.first : null;
     if (account == null) return null;
 
@@ -185,9 +171,11 @@ class AccountDatabase extends _$AccountDatabase {
   }
 
   static Future<ClearTextAccount> getAccountFromTableData(
-      AccountsTableData account) async {
-    final String clearTextPassword =
-        await decryptPassword(account.passwordHash);
+    AccountsTableData account,
+  ) async {
+    final String clearTextPassword = await decryptPassword(
+      account.passwordHash,
+    );
     return ClearTextAccount(
       localId: account.id,
       schoolID: account.schoolId,
@@ -202,9 +190,9 @@ class AccountDatabase extends _$AccountDatabase {
   }
 
   Future<ClearTextAccount> getClearTextAccountFromId(int id) async {
-    final account = await (select(accountsTable)
-          ..where((tbl) => tbl.id.equals(id)))
-        .getSingle();
+    final account = await (select(
+      accountsTable,
+    )..where((tbl) => tbl.id.equals(id))).getSingle();
     return getAccountFromTableData(account);
   }
 
@@ -218,8 +206,9 @@ class AccountDatabase extends _$AccountDatabase {
         dbFile.deleteSync();
       }
     }
-    final int rows =
-        await (delete(accountsTable)..where((tbl) => tbl.id.equals(id))).go();
+    final int rows = await (delete(
+      accountsTable,
+    )..where((tbl) => tbl.id.equals(id))).go();
     if (rows == 0) {
       logger.w('Account with id $id not found');
     }
@@ -232,9 +221,7 @@ class AccountDatabase extends _$AccountDatabase {
 
   void updateLastLogin(int id) async {
     await (update(accountsTable)..where((tbl) => tbl.id.equals(id))).write(
-      AccountsTableCompanion(
-        lastLogin: Value(DateTime.now()),
-      ),
+      AccountsTableCompanion(lastLogin: Value(DateTime.now())),
     );
   }
 
@@ -242,25 +229,25 @@ class AccountDatabase extends _$AccountDatabase {
     if (sph == null) return;
     sph?.prefs.close();
     // check weather a account with null is already in the db and return if so
-    final account = await (select(accountsTable)
-          ..where((tbl) => tbl.lastLogin.isNull()))
-        .get();
+    final account = await (select(
+      accountsTable,
+    )..where((tbl) => tbl.lastLogin.isNull())).get();
     if (account.isNotEmpty) {
       return;
     }
 
     await (update(accountsTable)..where((tbl) => tbl.id.equals(id))).write(
-      AccountsTableCompanion(
-        lastLogin: Value(null),
-      ),
+      AccountsTableCompanion(lastLogin: Value(null)),
     );
   }
 
   Future<bool> doesAccountExist(int schoolID, String username) async {
-    final account = await (select(accountsTable)
-          ..where((tbl) =>
-              tbl.schoolId.equals(schoolID) & tbl.username.equals(username)))
-        .get();
+    final account =
+        await (select(accountsTable)..where(
+              (tbl) =>
+                  tbl.schoolId.equals(schoolID) & tbl.username.equals(username),
+            ))
+            .get();
     return account.isNotEmpty;
   }
 
@@ -285,20 +272,18 @@ class KV {
 
   Future<void> set(String key, dynamic value) async {
     final insert = jsonEncode({'v': value});
-    await db.into(db.appPreferencesTable).insert(
-          AppPreferencesTableCompanion.insert(
-            key: key,
-            value: Value(insert),
-          ),
+    await db
+        .into(db.appPreferencesTable)
+        .insert(
+          AppPreferencesTableCompanion.insert(key: key, value: Value(insert)),
           mode: InsertMode.insertOrReplace,
         );
   }
 
   Future<dynamic> get(String key) async {
-    final val = (await (db.select(db.appPreferencesTable)
-              ..where((tbl) => tbl.key.equals(key)))
-            .getSingleOrNull())
-        ?.value;
+    final val = (await (db.select(
+      db.appPreferencesTable,
+    )..where((tbl) => tbl.key.equals(key))).getSingleOrNull())?.value;
     if (val == null && kvDefaults.keys.contains(key)) {
       await set(key, kvDefaults[key]!);
       return kvDefaults[key];
@@ -307,12 +292,17 @@ class KV {
   }
 
   Future<Map<String, dynamic>> getMultiple(List<String> keys) {
-    return (db.select(db.appPreferencesTable)
-          ..where((tbl) => tbl.key.isIn(keys)))
-        .get()
-        .then((event) {
-      final result = Map.fromEntries(event.map((e) =>
-          MapEntry(e.key, e.value != null ? jsonDecode(e.value!)['v'] : null)));
+    return (db.select(
+      db.appPreferencesTable,
+    )..where((tbl) => tbl.key.isIn(keys))).get().then((event) {
+      final result = Map.fromEntries(
+        event.map(
+          (e) => MapEntry(
+            e.key,
+            e.value != null ? jsonDecode(e.value!)['v'] : null,
+          ),
+        ),
+      );
       for (var key in keys) {
         if (!result.containsKey(key) && kvDefaults.containsKey(key)) {
           result[key] = kvDefaults[key];
@@ -329,9 +319,9 @@ class KV {
   }
 
   Stream<dynamic> subscribe(String key) {
-    final stream = (db.select(db.appPreferencesTable)
-          ..where((tbl) => tbl.key.equals(key)))
-        .watchSingleOrNull();
+    final stream = (db.select(
+      db.appPreferencesTable,
+    )..where((tbl) => tbl.key.equals(key))).watchSingleOrNull();
     return stream.map((event) {
       if (event?.value == null && kvDefaults.containsKey(key)) {
         return kvDefaults[key];
@@ -341,12 +331,18 @@ class KV {
   }
 
   Stream<Map<String, dynamic>> subscribeMultiple(List<String> keys) {
-    final stream = (db.select(db.appPreferencesTable)
-          ..where((tbl) => tbl.key.isIn(keys)))
-        .watch();
+    final stream = (db.select(
+      db.appPreferencesTable,
+    )..where((tbl) => tbl.key.isIn(keys))).watch();
     return stream.map((event) {
-      final result = Map.fromEntries(event.map((e) =>
-          MapEntry(e.key, e.value != null ? jsonDecode(e.value!)['v'] : null)));
+      final result = Map.fromEntries(
+        event.map(
+          (e) => MapEntry(
+            e.key,
+            e.value != null ? jsonDecode(e.value!)['v'] : null,
+          ),
+        ),
+      );
       for (var key in keys) {
         if (!result.containsKey(key) && kvDefaults.containsKey(key)) {
           result[key] = kvDefaults[key];
