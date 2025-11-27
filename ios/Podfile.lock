@@ -1,8 +1,9 @@
 PODS:
   - app_settings (5.1.1):
     - Flutter
-  - background_fetch (1.4.0):
+  - background_fetch (1.5.0):
     - Flutter
+    - TSBackgroundFetch (~> 4.0)
   - cupertino_http (0.0.1):
     - Flutter
     - FlutterMacOS
@@ -58,8 +59,6 @@ PODS:
     - Flutter
   - flutter_keyboard_visibility_temp_fork (0.0.1):
     - Flutter
-  - flutter_keychain (0.0.1):
-    - Flutter
   - flutter_local_notifications (0.0.1):
     - Flutter
   - flutter_native_splash (2.4.3):
@@ -67,8 +66,6 @@ PODS:
   - flutter_secure_storage (6.0.0):
     - Flutter
   - image_picker_ios (0.0.1):
-    - Flutter
-  - objective_c (0.0.1):
     - Flutter
   - open_file_ios (0.0.1):
     - Flutter
@@ -116,6 +113,7 @@ PODS:
     - sqlite3/rtree
     - sqlite3/session
   - SwiftyGif (5.4.5)
+  - TSBackgroundFetch (4.0.5)
   - url_launcher_ios (0.0.1):
     - Flutter
 
@@ -131,12 +129,10 @@ DEPENDENCIES:
   - flutter_inappwebview_ios (from `.symlinks/plugins/flutter_inappwebview_ios/ios`)
   - flutter_keyboard_visibility (from `.symlinks/plugins/flutter_keyboard_visibility/ios`)
   - flutter_keyboard_visibility_temp_fork (from `.symlinks/plugins/flutter_keyboard_visibility_temp_fork/ios`)
-  - flutter_keychain (from `.symlinks/plugins/flutter_keychain/ios`)
   - flutter_local_notifications (from `.symlinks/plugins/flutter_local_notifications/ios`)
   - flutter_native_splash (from `.symlinks/plugins/flutter_native_splash/ios`)
   - flutter_secure_storage (from `.symlinks/plugins/flutter_secure_storage/ios`)
   - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
-  - objective_c (from `.symlinks/plugins/objective_c/ios`)
   - open_file_ios (from `.symlinks/plugins/open_file_ios/ios`)
   - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
@@ -155,6 +151,7 @@ SPEC REPOS:
     - SDWebImage
     - sqlite3
     - SwiftyGif
+    - TSBackgroundFetch
 
 EXTERNAL SOURCES:
   app_settings:
@@ -179,8 +176,6 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/flutter_keyboard_visibility/ios"
   flutter_keyboard_visibility_temp_fork:
     :path: ".symlinks/plugins/flutter_keyboard_visibility_temp_fork/ios"
-  flutter_keychain:
-    :path: ".symlinks/plugins/flutter_keychain/ios"
   flutter_local_notifications:
     :path: ".symlinks/plugins/flutter_local_notifications/ios"
   flutter_native_splash:
@@ -189,8 +184,6 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/flutter_secure_storage/ios"
   image_picker_ios:
     :path: ".symlinks/plugins/image_picker_ios/ios"
-  objective_c:
-    :path: ".symlinks/plugins/objective_c/ios"
   open_file_ios:
     :path: ".symlinks/plugins/open_file_ios/ios"
   package_info_plus:
@@ -212,7 +205,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   app_settings: 5127ae0678de1dcc19f2293271c51d37c89428b2
-  background_fetch: 81d0f20490f0126a1c29709e458f47a69e80f44e
+  background_fetch: 7457cb2c7be3086b37d87207866f30bed2f9fb58
   cupertino_http: 94ac07f5ff090b8effa6c5e2c47871d48ab7c86c
   device_info_plus: 71ffc6ab7634ade6267c7a93088ed7e4f74e5896
   DKImagePickerController: 946cec48c7873164274ecc4624d19e3da4c1ef3c
@@ -224,26 +217,25 @@ SPEC CHECKSUMS:
   flutter_inappwebview_ios: b89ba3482b96fb25e00c967aae065701b66e9b99
   flutter_keyboard_visibility: 4625131e43015dbbe759d9b20daaf77e0e3f6619
   flutter_keyboard_visibility_temp_fork: 95b2d534bacf6ac62e7fcbe5c2a9e2c2a17ce06f
-  flutter_keychain: 082382ca04745cc72ed13aa3598c151bb2eb426b
   flutter_local_notifications: a5a732f069baa862e728d839dd2ebb904737effb
   flutter_native_splash: c32d145d68aeda5502d5f543ee38c192065986cf
   flutter_secure_storage: 1ed9476fba7e7a782b22888f956cce43e2c62f13
-  image_picker_ios: 7fe1ff8e34c1790d6fff70a32484959f563a928a
-  objective_c: 89e720c30d716b036faf9c9684022048eee1eee2
+  image_picker_ios: e0ece4aa2a75771a7de3fa735d26d90817041326
   open_file_ios: 5ff7526df64e4394b4fe207636b67a95e83078bb
   OrderedSet: e539b66b644ff081c73a262d24ad552a69be3a94
   package_info_plus: af8e2ca6888548050f16fa2f1938db7b5a5df499
-  path_provider_foundation: 080d55be775b7414fd5a5ef3ac137b97b097e564
+  path_provider_foundation: bb55f6dbba17d0dccd6737fe6f7f34fbd0376880
   permission_handler_apple: 4ed2196e43d0651e8ff7ca3483a069d469701f2d
-  quick_actions_ios: 4b07fb49d8d8f3518d7565fbb7a91014067a7d82
+  quick_actions_ios: 500fcc11711d9f646739093395c4ae8eec25f779
   SDWebImage: f29024626962457f3470184232766516dee8dfea
   share_plus: 50da8cb520a8f0f65671c6c6a99b3617ed10a58a
-  shared_preferences_foundation: 9e1978ff2562383bd5676f64ec4e9aa8fa06a6f7
+  shared_preferences_foundation: 7036424c3d8ec98dfe75ff1667cb0cd531ec82bb
   sqlite3: 73513155ec6979715d3904ef53a8d68892d4032b
   sqlite3_flutter_libs: 83f8e9f5b6554077f1d93119fe20ebaa5f3a9ef1
   SwiftyGif: 706c60cf65fa2bc5ee0313beece843c8eb8194d4
-  url_launcher_ios: 694010445543906933d732453a59da0a173ae33d
+  TSBackgroundFetch: e91020924db32f27d0a43df7dec6f73f10743571
+  url_launcher_ios: 7a95fa5b60cc718a708b8f2966718e93db0cef1b
 
-PODFILE CHECKSUM: 2cf1f8b3cd963cc5f56e0e59400a0eecb42a9fd4
+PODFILE CHECKSUM: c118466e7060795d729c5fb7c4b52d8413b88c0f
 
 COCOAPODS: 1.16.2
