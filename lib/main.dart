@@ -215,7 +215,8 @@ Widget errorWidget(FlutterErrorDetails details, {BuildContext? context}) {
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) => MonoTextViewer(
-                      report: details.stack.toString(),
+                      report:
+                          "${details.exception}\n${details.stack.toString()}",
                       title: "Stack Trace",
                       fileNameStart: "stack_trace_default",
                     ),
