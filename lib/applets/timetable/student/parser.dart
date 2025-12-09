@@ -50,18 +50,28 @@ class TimetableStudentParser extends AppletParser<TimeTable> {
   }
 
   Future<Document?> getTimetableDocument() async {
-    final redirectedRequest = await sph.session.dio.get(
+    // On the website, the user is redirected every time, if they do not have the query parameter set.
+    // However, the data is still loaded correctly without redirection, so we avoid it here to save traffic.
+
+    final response1 = await sph.session.dio.get(
       "https://start.schulportal.hessen.de/stundenplan.php",
     );
 
-    if (redirectedRequest.headers["location"] == null) {
+    if (response1.data.toString().trim().isNotEmpty) {
+      final document = parse(response1.data);
+      if (document.getElementById("all") != null) {
+        return document;
+      }
+    }
+
+    if (response1.headers["location"] == null) {
       return null;
     }
 
-    final response = await sph.session.dio.get(
-      "https://start.schulportal.hessen.de/${redirectedRequest.headers["location"]?[0]}",
+    final response2 = await sph.session.dio.get(
+      "https://start.schulportal.hessen.de/${response1.headers["location"]?[0]}",
     );
-    return parse(response.data);
+    return parse(response2.data);
   }
 
   Future<Element?> getTableBody(
