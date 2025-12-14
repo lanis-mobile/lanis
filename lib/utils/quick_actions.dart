@@ -32,10 +32,13 @@ class QuickActionsStartUp {
             Destination destination = Destination.fromAppletDefinition(applet);
             if (homeKey.currentContext != null)
               Navigator.popUntil(
-                  homeKey.currentContext!, (route) => route.isFirst);
+                homeKey.currentContext!,
+                (route) => route.isFirst,
+              );
             if (destination.enableBottomNavigation) {
-              int appletIndex =
-                  AppDefinitions.getIndexByPhpIdentifier(applet.appletPhpUrl);
+              int appletIndex = AppDefinitions.getIndexByPhpIdentifier(
+                applet.appletPhpUrl,
+              );
 
               if (homeKey.currentState != null) {
                 homeKey.currentState?.updateDestination(appletIndex);
@@ -78,7 +81,8 @@ class QuickActionsStartUp {
       return true;
     } on TimeoutException catch (_) {
       logger.e(
-          'QuickActions initialization timed out. Likely the user is not logged in.');
+        'QuickActions initialization timed out. Likely the user is not logged in.',
+      );
       return false;
     }
   }
@@ -93,26 +97,31 @@ class QuickActionsStartUp {
     }
     if (_quickActionsSet) return;
     List<String> enabledShortcutsList = List<String>.from(
-        (await accountDatabase.kv.get('quick-actions')) ?? []);
+      (await accountDatabase.kv.get('quick-actions')) ?? [],
+    );
     if (!context.mounted) return;
 
     List<ShortcutItem> shortcuts = [];
     for (final applet in AppDefinitions.applets) {
       if (enabledShortcutsList.contains(applet.appletPhpUrl)) {
-        shortcuts.add(ShortcutItem(
-          type: applet.appletPhpUrl,
-          localizedTitle: applet.label(context),
-          icon: '@mipmap/ic_launcher_monochrome',
-        ));
+        shortcuts.add(
+          ShortcutItem(
+            type: applet.appletPhpUrl,
+            localizedTitle: applet.label(context),
+            icon: '@mipmap/ic_launcher_monochrome',
+          ),
+        );
       }
     }
     for (final applet in AppDefinitions.external) {
       if (enabledShortcutsList.contains(applet.id)) {
-        shortcuts.add(ShortcutItem(
-          type: applet.id,
-          localizedTitle: applet.label(context),
-          icon: '@mipmap/ic_launcher_monochrome',
-        ));
+        shortcuts.add(
+          ShortcutItem(
+            type: applet.id,
+            localizedTitle: applet.label(context),
+            icon: '@mipmap/ic_launcher_monochrome',
+          ),
+        );
       }
     }
 

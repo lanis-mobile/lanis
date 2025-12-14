@@ -6,9 +6,7 @@ import '../../../core/sph/sph.dart';
 import '../../../models/conversations.dart';
 
 class NewConversationConfigurator extends StatefulWidget {
-  const NewConversationConfigurator({
-    super.key,
-  });
+  const NewConversationConfigurator({super.key});
 
   @override
   State<NewConversationConfigurator> createState() =>
@@ -91,8 +89,8 @@ class _NewConversationConfiguratorState
                     Text(
                       AppLocalizations.of(context).subject,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
@@ -126,8 +124,8 @@ class _NewConversationConfiguratorState
                     Text(
                       AppLocalizations.of(context).addReceivers,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const Spacer(),
                     if (receivers.isNotEmpty)
@@ -146,8 +144,9 @@ class _NewConversationConfiguratorState
                       initialItems: receivers,
                       textFieldConfiguration: TextFieldConfiguration(
                         decoration: InputDecoration(
-                          hintText:
-                              AppLocalizations.of(context).addReceiversHint,
+                          hintText: AppLocalizations.of(
+                            context,
+                          ).addReceiversHint,
                           border: const OutlineInputBorder(),
                         ),
                       ),
@@ -155,7 +154,8 @@ class _NewConversationConfiguratorState
                         return SuggestionConfiguration(
                           title: Text(entry.name),
                           leading: Icon(
-                              entry.isTeacher ? Icons.school : Icons.person),
+                            entry.isTeacher ? Icons.school : Icons.person,
+                          ),
                           subtitle: entry.isTeacher
                               ? Text(AppLocalizations.of(context).teacher)
                               : null,
@@ -165,7 +165,8 @@ class _NewConversationConfiguratorState
                         return ChipConfiguration(
                           label: Text(entry.name),
                           avatar: Icon(
-                              entry.isTeacher ? Icons.school : Icons.person),
+                            entry.isTeacher ? Icons.school : Icons.person,
+                          ),
                         );
                       },
                       loadingBuilder: (context) {
@@ -183,15 +184,19 @@ class _NewConversationConfiguratorState
                             ConnectionStatus.disconnected) {
                           return ListTile(
                             leading: const Icon(Icons.wifi_off),
-                            title: Text(AppLocalizations.of(context)
-                                .noInternetConnection2),
+                            title: Text(
+                              AppLocalizations.of(
+                                context,
+                              ).noInternetConnection2,
+                            ),
                           );
                         }
 
                         return ListTile(
                           leading: const Icon(Icons.person_off),
-                          title:
-                              Text(AppLocalizations.of(context).noPersonFound),
+                          title: Text(
+                            AppLocalizations.of(context).noPersonFound,
+                          ),
                         );
                       },
                       onAdded: (receiverEntry) {
@@ -203,7 +208,8 @@ class _NewConversationConfiguratorState
                         if (query.isEmpty) return <ReceiverEntry>[];
 
                         final dynamic result = await sph!
-                            .parser.conversationsParser
+                            .parser
+                            .conversationsParser
                             .searchTeacher(query);
                         return result;
                       },
@@ -227,10 +233,8 @@ class _NewConversationConfiguratorState
                         const SizedBox(width: 8),
                         Text(
                           AppLocalizations.of(context).conversationType,
-                          style:
-                              Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -253,23 +257,26 @@ class _NewConversationConfiguratorState
                             ),
                             Flexible(
                               child: Text(
-                                AppLocalizations.of(context)
-                                    .conversationTypeName(chatType.name),
+                                AppLocalizations.of(
+                                  context,
+                                ).conversationTypeName(chatType.name),
                               ),
                             ),
                             if (chatType == ChatType.openChat) ...[
                               const SizedBox(width: 8),
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 2),
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.orange,
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
-                                  AppLocalizations.of(context)
-                                      .experimental
-                                      .toUpperCase(),
+                                  AppLocalizations.of(
+                                    context,
+                                  ).experimental.toUpperCase(),
                                   style: const TextStyle(
                                     fontSize: 10.0,
                                     fontWeight: FontWeight.bold,
@@ -282,15 +289,17 @@ class _NewConversationConfiguratorState
                               const SizedBox(width: 8),
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 2),
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.green,
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
-                                  AppLocalizations.of(context)
-                                      .recommended
-                                      .toUpperCase(),
+                                  AppLocalizations.of(
+                                    context,
+                                  ).recommended.toUpperCase(),
                                   style: const TextStyle(
                                     fontSize: 10.0,
                                     fontWeight: FontWeight.bold,
@@ -298,12 +307,13 @@ class _NewConversationConfiguratorState
                                   ),
                                 ),
                               ),
-                            ]
+                            ],
                           ],
                         ),
                         subtitle: Text(
-                          AppLocalizations.of(context)
-                              .conversationTypeDescription(chatType.name),
+                          AppLocalizations.of(
+                            context,
+                          ).conversationTypeDescription(chatType.name),
                           textAlign: TextAlign.start,
                         ),
                         isThreeLine: chatType == ChatType.openChat,

@@ -36,16 +36,17 @@ class Destination {
   final Widget Function(BuildContext, AccountType, Function openDrawerCb)? body;
   late final bool isSupported;
 
-  Destination(
-      {this.body,
-      this.action,
-      this.addDivider = false,
-      required this.isSupported,
-      required this.enableBottomNavigation,
-      required this.enableDrawer,
-      required this.icon,
-      required this.selectedIcon,
-      required this.label});
+  Destination({
+    this.body,
+    this.action,
+    this.addDivider = false,
+    required this.isSupported,
+    required this.enableBottomNavigation,
+    required this.enableDrawer,
+    required this.icon,
+    required this.selectedIcon,
+    required this.label,
+  });
 
   factory Destination.fromAppletDefinition(AppletDefinition appletDefinition) {
     return Destination(
@@ -53,11 +54,17 @@ class Destination {
           ? appletDefinition.bodyBuilder
           : null,
       action: appletDefinition.appletType != AppletType.nested
-          ? (context) =>
-              Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-                return appletDefinition.bodyBuilder!(
-                    context, sph!.session.accountType, () {});
-              }))
+          ? (context) => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) {
+                  return appletDefinition.bodyBuilder!(
+                    context,
+                    sph!.session.accountType,
+                    () {},
+                  );
+                },
+              ),
+            )
           : null,
       addDivider: appletDefinition.addDivider,
       isSupported: sph!.session.doesSupportFeature(appletDefinition),
@@ -120,27 +127,31 @@ class HomePageState extends State<HomePage> {
 
   final List<Destination> endDestinations = [
     Destination(
-        label: (context) => AppLocalizations.of(context).openMoodle,
-        icon: const Icon(Icons.open_in_new),
-        selectedIcon: const Icon(Icons.open_in_new),
-        isSupported: true,
-        enableBottomNavigation: false,
-        addDivider: true,
-        enableDrawer: true,
-        action: (context) => Navigator.push(context,
-            MaterialPageRoute(builder: (context) => const MoodleWebView()))),
+      label: (context) => AppLocalizations.of(context).openMoodle,
+      icon: const Icon(Icons.open_in_new),
+      selectedIcon: const Icon(Icons.open_in_new),
+      isSupported: true,
+      enableBottomNavigation: false,
+      addDivider: true,
+      enableDrawer: true,
+      action: (context) => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const MoodleWebView()),
+      ),
+    ),
     Destination(
-        label: (context) => AppLocalizations.of(context).openLanisInBrowser,
-        icon: const Icon(Icons.open_in_new),
-        selectedIcon: const Icon(Icons.open_in_new),
-        isSupported: true,
-        enableBottomNavigation: false,
-        enableDrawer: true,
-        action: (context) {
-          SessionHandler.getLoginURL(sph!.account).then((response) {
-            launchUrl(Uri.parse(response));
-          });
-        }),
+      label: (context) => AppLocalizations.of(context).openLanisInBrowser,
+      icon: const Icon(Icons.open_in_new),
+      selectedIcon: const Icon(Icons.open_in_new),
+      isSupported: true,
+      enableBottomNavigation: false,
+      enableDrawer: true,
+      action: (context) {
+        SessionHandler.getLoginURL(sph!.account).then((response) {
+          launchUrl(Uri.parse(response));
+        });
+      },
+    ),
     Destination(
       label: (context) => AppLocalizations.of(context).settings,
       icon: const Icon(Icons.settings),
@@ -155,17 +166,18 @@ class HomePageState extends State<HomePage> {
       ),
     ),
     Destination(
-        isSupported: true,
-        enableBottomNavigation: false,
-        enableDrawer: true,
-        icon: Icon(Icons.logout),
-        selectedIcon: Icon(Icons.logout_outlined),
-        label: (context) => AppLocalizations.of(context).logout,
-        action: (context) async {
-          await sph!.session.deAuthenticate();
-          await accountDatabase.deleteAccount(sph!.account.localId);
-          if (context.mounted) authenticationState.reset(context);
-        }),
+      isSupported: true,
+      enableBottomNavigation: false,
+      enableDrawer: true,
+      icon: Icon(Icons.logout),
+      selectedIcon: Icon(Icons.logout_outlined),
+      label: (context) => AppLocalizations.of(context).logout,
+      action: (context) async {
+        await sph!.session.deAuthenticate();
+        await accountDatabase.deleteAccount(sph!.account.localId);
+        if (context.mounted) authenticationState.reset(context);
+      },
+    ),
   ];
 
   void setDefaultDestination() {
@@ -181,19 +193,20 @@ class HomePageState extends State<HomePage> {
   }
 
   void openLanisInBrowser(BuildContext? context) {
-    SessionHandler.getLoginURL(sph!.account).then((response) {
-      launchUrl(Uri.parse(response));
-    }).catchError((ex) {
-      if (context == null || !context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(ex.cause),
-        duration: const Duration(seconds: 1),
-        action: SnackBarAction(
-          label: 'ACTION',
-          onPressed: () {},
-        ),
-      ));
-    }, test: (e) => e is LanisException);
+    SessionHandler.getLoginURL(sph!.account)
+        .then((response) {
+          launchUrl(Uri.parse(response));
+        })
+        .catchError((ex) {
+          if (context == null || !context.mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(ex.cause),
+              duration: const Duration(seconds: 1),
+              action: SnackBarAction(label: 'ACTION', onPressed: () {}),
+            ),
+          );
+        }, test: (e) => e is LanisException);
   }
 
   Widget noAppsSupported() {
@@ -210,17 +223,15 @@ class HomePageState extends State<HomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.disabled_by_default_outlined,
-              size: 150,
-            ),
+            const Icon(Icons.disabled_by_default_outlined, size: 150),
             Padding(
               padding: const EdgeInsets.all(32),
               child: Text(AppLocalizations.of(context).noSupportOpenInBrowser),
             ),
             ElevatedButton(
-                onPressed: () => openLanisInBrowser(context),
-                child: Text(AppLocalizations.of(context).openLanisInBrowser))
+              onPressed: () => openLanisInBrowser(context),
+              child: Text(AppLocalizations.of(context).openLanisInBrowser),
+            ),
           ],
         ),
       ),
@@ -246,111 +257,124 @@ class HomePageState extends State<HomePage> {
         if (destination.addDivider) {
           drawerDestinations.add(const Divider());
         }
-        drawerDestinations.add(NavigationDrawerDestination(
-          label: Text(destination.label(context)),
-          icon: destination.icon,
-          selectedIcon: destination.selectedIcon,
-          enabled: destination.isSupported,
-        ));
+        drawerDestinations.add(
+          NavigationDrawerDestination(
+            label: Text(destination.label(context)),
+            icon: destination.icon,
+            selectedIcon: destination.selectedIcon,
+            enabled: destination.isSupported,
+          ),
+        );
       }
     }
 
-    final Color imageColor =
-        Theme.of(context).colorScheme.inversePrimary.withValues(alpha: 0.5);
-    final Color textColor =
-        imageColor.computeLuminance() < 0.5 ? Colors.white : Colors.black;
+    final Color imageColor = Theme.of(
+      context,
+    ).colorScheme.inversePrimary.withValues(alpha: 0.5);
+    final Color textColor = imageColor.computeLuminance() < 0.5
+        ? Colors.white
+        : Colors.black;
 
     return NavigationDrawer(
-        selectedIndex: selectedDestinationDrawer,
-        onDestinationSelected: (int index) => openDestination(index, true),
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12.0),
-            child: Stack(
-              children: [
-                Stack(
-                  alignment: Alignment.centerLeft,
-                  children: [
-                    ClipRRect(
-                      child: ImageFiltered(
-                        imageFilter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
-                        child: ColorFiltered(
-                          colorFilter:
-                              ColorFilter.mode(imageColor, BlendMode.srcOver),
-                          child: AspectRatio(
-                            aspectRatio: 16 / 8,
-                            child: CachedNetworkImage(
-                              imageUrl: Uri.parse(
-                                  "https://startcache.schulportal.hessen.de/exporteur.php?a=schoolbg&i=${sph!.account.schoolID}&s=xs"),
-                              placeholder: const Image(
-                                image: AssetImage("assets/icon.png"),
-                                fit: BoxFit.cover,
-                              ),
-                              builder: (BuildContext context,
-                                  ImageProvider<Object> imageProvider) {
-                                return Image(
-                                  fit: BoxFit.cover,
-                                  image: imageProvider,
-                                );
-                              },
+      selectedIndex: selectedDestinationDrawer,
+      onDestinationSelected: (int index) => openDestination(index, true),
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12.0),
+          child: Stack(
+            children: [
+              Stack(
+                alignment: Alignment.centerLeft,
+                children: [
+                  ClipRRect(
+                    child: ImageFiltered(
+                      imageFilter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
+                      child: ColorFiltered(
+                        colorFilter: ColorFilter.mode(
+                          imageColor,
+                          BlendMode.srcOver,
+                        ),
+                        child: AspectRatio(
+                          aspectRatio: 16 / 8,
+                          child: CachedNetworkImage(
+                            imageUrl: Uri.parse(
+                              "https://startcache.schulportal.hessen.de/exporteur.php?a=schoolbg&i=${sph!.account.schoolID}&s=xs",
                             ),
+                            placeholder: const Image(
+                              image: AssetImage("assets/icon.png"),
+                              fit: BoxFit.cover,
+                            ),
+                            builder:
+                                (
+                                  BuildContext context,
+                                  ImageProvider<Object> imageProvider,
+                                ) {
+                                  return Image(
+                                    fit: BoxFit.cover,
+                                    image: imageProvider,
+                                  );
+                                },
                           ),
                         ),
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 24.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 24.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "${sph?.session.userData["nachname"]}, ${sph?.session.userData["vorname"]}",
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: textColor,
+                              ),
+                        ),
+                        Text(
+                          sph!.account.schoolName,
+                          style: Theme.of(
+                            context,
+                          ).textTheme.titleMedium?.copyWith(color: textColor),
+                        ),
+                        if (sph?.account.accountType != null)
                           Text(
-                            "${sph?.session.userData["nachname"]}, ${sph?.session.userData["vorname"]}",
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineSmall
-                                ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: textColor),
+                            sph?.account.accountType?.readableName(context) ??
+                                "Loading...",
+                            style: Theme.of(
+                              context,
+                            ).textTheme.bodyMedium?.copyWith(color: textColor),
                           ),
-                          Text(
-                            sph!.account.schoolName,
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
-                                ?.copyWith(color: textColor),
-                          ),
-                          if (sph?.account.accountType != null) Text(
-                            sph?.account.accountType?.readableName(context) ?? "Loading...",
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(color: textColor),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                Align(
-                  alignment: Alignment.topRight,
-                  child: Padding(
-                    padding: EdgeInsets.only(top: 2, right: 2),
-                    child: IconButton(
-                      onPressed: () {
-                        Navigator.of(context).push(MaterialPageRoute(
-                            builder: (context) => AccountSwitcher()));
-                      },
-                      icon: Icon(Icons.switch_account),
-                      color: textColor,
-                      iconSize: 32,
+                      ],
                     ),
                   ),
+                ],
+              ),
+              Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: EdgeInsets.only(top: 2, right: 2),
+                  child: IconButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => AccountSwitcher(),
+                        ),
+                      );
+                    },
+                    icon: Icon(Icons.switch_account),
+                    color: textColor,
+                    iconSize: 32,
+                  ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          ...drawerDestinations,
-        ]);
+        ),
+        ...drawerDestinations,
+      ],
+    );
   }
 
   NavigationBar navBar(BuildContext context) {
@@ -358,12 +382,14 @@ class HomePageState extends State<HomePage> {
 
     for (var destination in destinations) {
       if (destination.enableBottomNavigation && destination.isSupported) {
-        barDestinations.add(NavigationDestination(
-          label: destination.label(context),
-          icon: destination.icon,
-          selectedIcon: destination.selectedIcon,
-          enabled: destination.isSupported,
-        ));
+        barDestinations.add(
+          NavigationDestination(
+            label: destination.label(context),
+            icon: destination.icon,
+            selectedIcon: destination.selectedIcon,
+            enabled: destination.isSupported,
+          ),
+        );
       }
     }
 
@@ -393,9 +419,12 @@ class HomePageState extends State<HomePage> {
       key: _drawerKey,
       body: doesSupportAnyApplet
           ? destinations[selectedDestinationDrawer].body!(
-              context, sph!.session.accountType, () {
-              _drawerKey.currentState!.openDrawer();
-            })
+              context,
+              sph!.session.accountType,
+              () {
+                _drawerKey.currentState!.openDrawer();
+              },
+            )
           : noAppsSupported(),
       bottomNavigationBar: doesSupportAnyApplet ? navBar(context) : null,
       drawer: navDrawer(context),

@@ -26,7 +26,7 @@ class PressTile extends StatelessWidget {
       color: selected
           ? Theme.of(context).colorScheme.primaryContainer
           : foregroundColor ??
-              Theme.of(context).colorScheme.surfaceContainerLow,
+                Theme.of(context).colorScheme.surfaceContainerLow,
       borderRadius: borderRadius ?? BorderRadius.circular(12.0),
       child: InkWell(
         onTap: onPressed,
@@ -35,10 +35,7 @@ class PressTile extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
           child: Row(
             children: [
-              Icon(
-                icon,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
+              Icon(icon, color: Theme.of(context).colorScheme.onSurface),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
@@ -47,17 +44,16 @@ class PressTile extends StatelessWidget {
                     Text(
                       title,
                       style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
                     ),
                     Text(
                       subtitle,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),

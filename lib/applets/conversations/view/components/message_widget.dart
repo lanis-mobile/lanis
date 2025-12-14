@@ -7,8 +7,11 @@ class MessageWidget extends StatelessWidget {
   final Message message;
   final TextStyle? textStyle;
 
-  const MessageWidget(
-      {super.key, required this.message, required this.textStyle});
+  const MessageWidget({
+    super.key,
+    required this.message,
+    required this.textStyle,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -28,10 +31,7 @@ class MessageWidget extends StatelessWidget {
         children: [
           // Author name
           if (message.state == MessageState.first && !message.own) ...[
-            Text(
-              message.author!,
-              style: textStyle,
-            )
+            Text(message.author!, style: textStyle),
           ],
 
           // Message bubble
@@ -42,9 +42,7 @@ class MessageWidget extends StatelessWidget {
             shadow: shadow,
             child: ClipPath(
               child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: size.clamp(350, 600),
-                ),
+                constraints: BoxConstraints(maxWidth: size.clamp(350, 600)),
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     color: BubbleStyles.getStyle(message.own).mainColor,
@@ -54,11 +52,15 @@ class MessageWidget extends StatelessWidget {
                   ),
                   child: Padding(
                     padding: BubbleStructure.getPadding(
-                        message.state == MessageState.first, message.own),
+                      message.state == MessageState.first,
+                      message.own,
+                    ),
                     child: FormattedText(
-                        text: message.text,
-                        formatStyle:
-                            BubbleStyles.getStyle(message.own).textFormatStyle),
+                      text: message.text,
+                      formatStyle: BubbleStyles.getStyle(
+                        message.own,
+                      ).textFormatStyle,
+                    ),
                   ),
                 ),
               ),
@@ -67,50 +69,53 @@ class MessageWidget extends StatelessWidget {
 
           // Date text
           Padding(
-              padding: EdgeInsets.symmetric(
-                  horizontal: message.state == MessageState.first
-                      ? BubbleStructure.compensatedPadding
-                      : BubbleStructure.horizontalPadding),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(DateFormat("HH:mm").format(message.date),
-                      style: BubbleStyles.getStyle(message.own).dateTextStyle),
-                  if (message.own) ...[
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 2.0),
-                      child: Icon(
-                        Icons.circle,
-                        color: Theme.of(context).colorScheme.onSurface,
-                        size: 3,
+            padding: EdgeInsets.symmetric(
+              horizontal: message.state == MessageState.first
+                  ? BubbleStructure.compensatedPadding
+                  : BubbleStructure.horizontalPadding,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  DateFormat("HH:mm").format(message.date),
+                  style: BubbleStyles.getStyle(message.own).dateTextStyle,
+                ),
+                if (message.own) ...[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                    child: Icon(
+                      Icons.circle,
+                      color: Theme.of(context).colorScheme.onSurface,
+                      size: 3,
+                    ),
+                  ),
+                  if (message.status == MessageStatus.sending) ...[
+                    const Padding(
+                      padding: EdgeInsets.only(left: 2.0),
+                      child: SizedBox(
+                        width: 10.0,
+                        height: 10.0,
+                        child: CircularProgressIndicator(strokeWidth: 2.5),
                       ),
                     ),
-                    if (message.status == MessageStatus.sending) ...[
-                      const Padding(
-                        padding: EdgeInsets.only(left: 2.0),
-                        child: SizedBox(
-                            width: 10.0,
-                            height: 10.0,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                            )),
-                      )
-                    ] else if (message.status == MessageStatus.error) ...[
-                      Icon(
-                        Icons.error,
-                        color: Theme.of(context).colorScheme.error,
-                        size: 12,
-                      )
-                    ] else ...[
-                      Icon(
-                        Icons.check_circle,
-                        color: Theme.of(context).colorScheme.primary,
-                        size: 12,
-                      )
-                    ]
-                  ]
+                  ] else if (message.status == MessageStatus.error) ...[
+                    Icon(
+                      Icons.error,
+                      color: Theme.of(context).colorScheme.error,
+                      size: 12,
+                    ),
+                  ] else ...[
+                    Icon(
+                      Icons.check_circle,
+                      color: Theme.of(context).colorScheme.primary,
+                      size: 12,
+                    ),
+                  ],
                 ],
-              ))
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -135,10 +140,7 @@ class ClipShadowPath extends StatelessWidget {
     if (clipper != null) {
       return CustomPaint(
         key: UniqueKey(),
-        painter: _ClipShadowShadowPainter(
-          clipper: clipper!,
-          shadow: shadow,
-        ),
+        painter: _ClipShadowShadowPainter(clipper: clipper!, shadow: shadow),
         child: ClipPath(clipper: clipper, child: child),
       );
     } else {

@@ -26,23 +26,21 @@ class FetchMoreIndicator extends StatelessWidget {
         completeDuration: Duration(milliseconds: 200),
       ),
       child: child,
-      builder: (
-        BuildContext context,
-        Widget child,
-        IndicatorController controller,
-      ) {
-        return AnimatedBuilder(
-            animation: controller,
-            builder: (context, _) {
-              final dy = controller.value.clamp(0.0, 1.25) *
-                  -(height - (height * 0.25));
-              return Stack(
-                children: [
-                  child,
-                  PositionedIndicatorContainer(
-                    controller: controller,
-                    displacement: 0,
-                    child: Container(
+      builder:
+          (BuildContext context, Widget child, IndicatorController controller) {
+            return AnimatedBuilder(
+              animation: controller,
+              builder: (context, _) {
+                final dy =
+                    controller.value.clamp(0.0, 1.25) *
+                    -(height - (height * 0.25));
+                return Stack(
+                  children: [
+                    child,
+                    PositionedIndicatorContainer(
+                      controller: controller,
+                      displacement: 0,
+                      child: Container(
                         padding: const EdgeInsets.all(8.0),
                         transform: Matrix4.translationValues(0.0, dy, 0.0),
                         child: switch (controller.state) {
@@ -50,25 +48,28 @@ class FetchMoreIndicator extends StatelessWidget {
                           IndicatorState.dragging ||
                           IndicatorState.canceling ||
                           IndicatorState.armed ||
-                          IndicatorState.settling =>
-                            const Icon(Icons.refresh),
+                          IndicatorState.settling => const Icon(Icons.refresh),
                           IndicatorState.loading => Container(
-                              margin: const EdgeInsets.only(bottom: 8.0),
-                              width: 16,
-                              height: 16,
-                              child: const CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
+                            margin: const EdgeInsets.only(bottom: 8.0),
+                            width: 16,
+                            height: 16,
+                            child: const CircularProgressIndicator(
+                              strokeWidth: 2,
                             ),
+                          ),
                           IndicatorState.complete ||
-                          IndicatorState.finalizing =>
-                            const Icon(Icons.check_circle, color: Colors.green),
-                        }),
-                  ),
-                ],
-              );
-            });
-      },
+                          IndicatorState.finalizing => const Icon(
+                            Icons.check_circle,
+                            color: Colors.green,
+                          ),
+                        },
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
     );
   }
 }
