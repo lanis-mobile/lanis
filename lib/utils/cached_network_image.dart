@@ -52,33 +52,40 @@ class _CachedNetworkImageState extends State<CachedNetworkImage> {
     });
   }
 
+  void _loadBase64Data() {
+    try {
+      String uriString = widget.imageUrl.toString();
+      int commaIndex = uriString.indexOf(',');
+      if (commaIndex != -1) {
+        String base64Data = uriString
+            .substring(commaIndex + 1)
+            .replaceAll(RegExp(r'\s+'), '');
+        Uint8List bytes = base64Decode(base64Data);
+
+        imageProvider = MemoryImage(bytes);
+        setState(() {
+          loading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        loading = true;
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    if (widget.imageUrl.scheme != 'data') {
+    if (widget.imageUrl.scheme == 'data') {
+      _loadBase64Data();
+    } else {
       loadData();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.imageUrl.scheme == 'data') {
-      try {
-        String uriString = widget.imageUrl.toString();
-        int commaIndex = uriString.indexOf(',');
-        if (commaIndex != -1) {
-          String base64Data = uriString
-              .substring(commaIndex + 1)
-              .replaceAll(RegExp(r'\s+'), '');
-          Uint8List bytes = base64Decode(base64Data);
-
-          return widget.builder(context, MemoryImage(bytes));
-        }
-      } catch (e) {
-        return widget.placeholder;
-      }
-    }
-
     if (loading) {
       return widget.placeholder;
     } else {
