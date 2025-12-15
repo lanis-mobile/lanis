@@ -23,8 +23,9 @@ Future<void> setupBackgroundService(AccountDatabase accountDatabase) async {
     return;
   }
 
-  final accounts =
-      await (accountDatabase.select(accountDatabase.accountsTable)).get();
+  final accounts = await (accountDatabase.select(
+    accountDatabase.accountsTable,
+  )).get();
   int disabledCount = 0;
   for (final account in accounts) {
     final ClearTextAccount clearTextAccount =
@@ -39,10 +40,12 @@ Future<void> setupBackgroundService(AccountDatabase accountDatabase) async {
     return;
   }
 
-  final int targetIntervalMinutes =
-      await accountDatabase.kv.get('notifications-target-interval-minutes');
+  final int targetIntervalMinutes = await accountDatabase.kv.get(
+    'notifications-target-interval-minutes',
+  );
   logger.i(
-      'Setting up background task with interval of $targetIntervalMinutes minutes');
+    'Setting up background task with interval of $targetIntervalMinutes minutes',
+  );
   if (Platform.isAndroid) {
     await FlutterBackgroundExecutor().createRefreshTask(
       callback: callbackDispatcher,
@@ -59,27 +62,30 @@ Future<void> setupBackgroundService(AccountDatabase accountDatabase) async {
       ),
     );
     // To fetch everything immediately
-    await FlutterBackgroundExecutor()
-        .runImmediatelyBackgroundTask(callback: callbackDispatcher);
+    await FlutterBackgroundExecutor().runImmediatelyBackgroundTask(
+      callback: callbackDispatcher,
+    );
   }
 
   if (Platform.isIOS) {
     try {
       await bgf.BackgroundFetch.configure(
-          bgf.BackgroundFetchConfig(
-              minimumFetchInterval: targetIntervalMinutes),
-          (String taskId) async {
-        try {
-          await callbackDispatcher();
-        } finally {
+        bgf.BackgroundFetchConfig(minimumFetchInterval: targetIntervalMinutes),
+        (String taskId) async {
+          try {
+            await callbackDispatcher();
+          } finally {
+            bgf.BackgroundFetch.finish(taskId);
+          }
+        },
+        (String taskId) async {
           bgf.BackgroundFetch.finish(taskId);
-        }
-      }, (String taskId) async {
-        bgf.BackgroundFetch.finish(taskId);
-      });
+        },
+      );
 
       await bgf.BackgroundFetch.scheduleTask(
-          bgf.TaskConfig(taskId: "com.transistorsoft.notftask", delay: 10000));
+        bgf.TaskConfig(taskId: "com.transistorsoft.notftask", delay: 10000),
+      );
     } catch (e, s) {
       backgroundLogger.e(e, stackTrace: s);
     }
@@ -92,9 +98,10 @@ Future<void> initializeNotifications() async {
       const InitializationSettings(
         android: AndroidInitializationSettings('@drawable/ic_launcher'),
         iOS: DarwinInitializationSettings(
-            requestAlertPermission: true,
-            requestBadgePermission: true,
-            requestSoundPermission: true),
+          requestAlertPermission: true,
+          requestBadgePermission: true,
+          requestSoundPermission: true,
+        ),
       ),
     );
   } catch (e, s) {
@@ -121,8 +128,9 @@ Future<void> callbackDispatcher() async {
       return;
     }
 
-    final accounts =
-        await (accountDatabase.select(accountDatabase.accountsTable)).get();
+    final accounts = await (accountDatabase.select(
+      accountDatabase.accountsTable,
+    )).get();
 
     List<Future> accountBackgroundTasks = [];
 
@@ -137,10 +145,12 @@ Future<void> callbackDispatcher() async {
       accountBackgroundTasks.add(() async {
         List<Future> appletTasks = [];
         bool authenticated = false;
-        for (final applet in AppDefinitions.applets
-            .where((a) => a.notificationTask != null)) {
-          if (applet.supportedAccountTypes
-                  .contains(clearTextAccount.accountType) &&
+        for (final applet in AppDefinitions.applets.where(
+          (a) => a.notificationTask != null,
+        )) {
+          if (applet.supportedAccountTypes.contains(
+                clearTextAccount.accountType,
+              ) &&
               (await sph.prefs.kv.get('notification-${applet.appletPhpUrl}') ??
                   true)) {
             if (!authenticated) {
@@ -148,15 +158,23 @@ Future<void> callbackDispatcher() async {
               await sph.session.authenticate(withoutData: true);
               authenticated = true;
             }
-            if (!sph.session.doesSupportFeature(applet,
-                overrideAccountType: clearTextAccount.accountType)) {
+            if (!sph.session.doesSupportFeature(
+              applet,
+              overrideAccountType: clearTextAccount.accountType,
+            )) {
               continue;
             }
-            appletTasks.add(applet.notificationTask!(
+            appletTasks.add(
+              applet.notificationTask!(
                 sph,
                 clearTextAccount.accountType ?? AccountType.student,
-                BackgroundTaskToolkit(sph, applet.appletPhpUrl,
-                    multiAccount: accounts.length > 1)));
+                BackgroundTaskToolkit(
+                  sph,
+                  applet.appletPhpUrl,
+                  multiAccount: accounts.length > 1,
+                ),
+              ),
+            );
           }
         }
         await Future.wait(appletTasks);
@@ -196,13 +214,14 @@ class BackgroundTaskToolkit {
   /// [message] is the message of the notification
   /// [id] is the id of the notification, must be between 0 and 10000
   /// [avoidDuplicateSending] if true, the message will not be sent if the same message was sent before
-  Future<void> sendMessage(
-      {required String title,
-      required String message,
-      int id = 0,
-      bool avoidDuplicateSending = false,
-      Importance importance = Importance.high,
-      Priority priority = Priority.high}) async {
+  Future<void> sendMessage({
+    required String title,
+    required String message,
+    int id = 0,
+    bool avoidDuplicateSending = false,
+    Importance importance = Importance.high,
+    Priority priority = Priority.high,
+  }) async {
     if (id > 10000 || id < 0) {
       throw ArgumentError('id must be between 0 and 10000');
     }
@@ -212,8 +231,10 @@ class BackgroundTaskToolkit {
         : message;
     if (avoidDuplicateSending) {
       final hash = hashString(message);
-      final lastMessage =
-          await _sph.prefs.getNotificationDuplicates(id, appletId);
+      final lastMessage = await _sph.prefs.getNotificationDuplicates(
+        id,
+        appletId,
+      );
       if (lastMessage?.hash == hash) {
         return;
       }
@@ -234,10 +255,16 @@ class BackgroundTaskToolkit {
         presentAlert: false,
         presentBadge: true,
       );
-      var platformDetails =
-          NotificationDetails(android: androidDetails, iOS: iOSDetails);
-      await FlutterLocalNotificationsPlugin()
-          .show(id, title, message, platformDetails);
+      var platformDetails = NotificationDetails(
+        android: androidDetails,
+        iOS: iOSDetails,
+      );
+      await FlutterLocalNotificationsPlugin().show(
+        id,
+        title,
+        message,
+        platformDetails,
+      );
     } catch (e, s) {
       backgroundLogger.e(e, stackTrace: s);
     }
@@ -254,15 +281,17 @@ Future<bool> isTaskWithinConstraints(AccountDatabase accountDB) async {
   final globalSettings = await accountDB.kv.getMultiple([
     'notifications-allowed-days',
     'notifications-start-time',
-    'notifications-end-time'
+    'notifications-end-time',
   ]);
   TimeOfDay currentTime = TimeOfDay.now();
   TimeOfDay startTime = TimeOfDay(
-      hour: globalSettings['notifications-start-time'][0],
-      minute: globalSettings['notifications-start-time'][1]);
+    hour: globalSettings['notifications-start-time'][0],
+    minute: globalSettings['notifications-start-time'][1],
+  );
   TimeOfDay endTime = TimeOfDay(
-      hour: globalSettings['notifications-end-time'][0],
-      minute: globalSettings['notifications-end-time'][1]);
+    hour: globalSettings['notifications-end-time'][0],
+    minute: globalSettings['notifications-end-time'][1],
+  );
   if (currentTime.hour < startTime.hour || currentTime.hour > endTime.hour) {
     return false;
   }

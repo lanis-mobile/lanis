@@ -12,8 +12,11 @@ import 'homework_box.dart';
 class CourseOverviewAnsicht extends StatefulWidget {
   final String dataFetchURL;
   final String title;
-  const CourseOverviewAnsicht(
-      {super.key, required this.dataFetchURL, required this.title});
+  const CourseOverviewAnsicht({
+    super.key,
+    required this.dataFetchURL,
+    required this.title,
+  });
 
   @override
   State<StatefulWidget> createState() => _CourseOverviewAnsichtState();
@@ -54,18 +57,15 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
   }
 
   Widget noDataScreen(context) => Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.search,
-              size: 60,
-            ),
-            Text(AppLocalizations.of(context).noDataFound)
-          ],
-        ),
-      );
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        const Icon(Icons.search, size: 60),
+        Text(AppLocalizations.of(context).noDataFound),
+      ],
+    ),
+  );
 
   Widget _buildBody() {
     if (data == null) {
@@ -91,24 +91,26 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
                       child: Card(
                         child: ListTile(
                           title: ElevatedButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          CourseOverviewAnsicht(
-                                            dataFetchURL:
-                                                data!.semester1URL.toString(),
-                                            title: widget.title,
-                                          )),
-                                );
-                              },
-                              child: Text(
-                                  AppLocalizations.of(context).toSemesterOne,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 18))),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => CourseOverviewAnsicht(
+                                    dataFetchURL: data!.semester1URL.toString(),
+                                    title: widget.title,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Text(
+                              AppLocalizations.of(context).toSemesterOne,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     );
@@ -116,7 +118,8 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
 
                   List<GestureDetector> files = [];
                   for (FileInfo file in data!.history[index].files) {
-                    files.add(GestureDetector(
+                    files.add(
+                      GestureDetector(
                         onLongPress: () {
                           showFileModal(context, file);
                         },
@@ -131,116 +134,126 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
                             ),
                             () {},
                           ),
-                        )));
+                        ),
+                      ),
+                    );
                   }
 
                   List<Widget> uploads = [];
                   for (var upload in data!.history[index].uploads) {
                     if (upload.status == "open") {
-                      uploads.add(Container(
+                      uploads.add(
+                        Container(
                           decoration: BoxDecoration(
-                              color:
-                                  Theme.of(context).colorScheme.inversePrimary,
-                              borderRadius: BorderRadius.circular(20)),
+                            color: Theme.of(context).colorScheme.inversePrimary,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
                           height: 40,
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               FilledButton(
-                                  onPressed: () async {
-                                    await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => UploadScreen(
-                                            url: upload.url.toString(),
-                                            name: upload.name,
-                                            status: "open"),
+                                onPressed: () async {
+                                  await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => UploadScreen(
+                                        url: upload.url.toString(),
+                                        name: upload.name,
+                                        status: "open",
                                       ),
-                                    );
-                                    setState(() {
-                                      _loadData();
-                                    });
-                                  },
-                                  child: Wrap(
-                                    crossAxisAlignment:
-                                        WrapCrossAlignment.center,
-                                    spacing: 6,
-                                    children: [
-                                      const Icon(
-                                        Icons.upload,
-                                        size: 20,
+                                    ),
+                                  );
+                                  setState(() {
+                                    _loadData();
+                                  });
+                                },
+                                child: Wrap(
+                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                  spacing: 6,
+                                  children: [
+                                    const Icon(Icons.upload, size: 20),
+                                    Text(upload.name),
+                                    if (upload.uploaded != null) ...[
+                                      Badge(
+                                        backgroundColor: Theme.of(
+                                          context,
+                                        ).colorScheme.onPrimary,
+                                        label: Text(
+                                          upload.uploaded!,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .labelLarge
+                                              ?.copyWith(
+                                                color: Theme.of(
+                                                  context,
+                                                ).colorScheme.primary,
+                                              ),
+                                        ),
+                                        largeSize: 20,
                                       ),
-                                      Text(upload.name),
-                                      if (upload.uploaded != null) ...[
-                                        Badge(
-                                          backgroundColor: Theme.of(context)
-                                              .colorScheme
-                                              .onPrimary,
-                                          label: Text(
-                                            upload.uploaded!,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .labelLarge
-                                                ?.copyWith(
-                                                    color: Theme.of(context)
-                                                        .colorScheme
-                                                        .primary),
-                                          ),
-                                          largeSize: 20,
-                                        )
-                                      ]
                                     ],
-                                  )),
-                              Padding(
-                                padding: const EdgeInsets.only(
-                                    left: 6.0, right: 12.0),
-                                child: Text(
-                                  upload.date ?? "",
-                                  style:
-                                      Theme.of(context).textTheme.labelMedium,
-                                ),
-                              )
-                            ],
-                          )));
-                    } else {
-                      uploads.add(OutlinedButton(
-                          onPressed: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => UploadScreen(
-                                      url: upload.url.toString(),
-                                      name: upload.name,
-                                      status: "closed"),
+                                  ],
                                 ),
                               ),
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                  left: 6.0,
+                                  right: 12.0,
+                                ),
+                                child: Text(
+                                  upload.date ?? "",
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.labelMedium,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    } else {
+                      uploads.add(
+                        OutlinedButton(
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => UploadScreen(
+                                url: upload.url.toString(),
+                                name: upload.name,
+                                status: "closed",
+                              ),
+                            ),
+                          ),
                           child: Wrap(
                             crossAxisAlignment: WrapCrossAlignment.center,
                             spacing: 8,
                             children: [
-                              const Icon(
-                                Icons.file_upload_off,
-                                size: 18,
-                              ),
+                              const Icon(Icons.file_upload_off, size: 18),
                               Text(upload.name),
                               if (upload.uploaded != null) ...[
                                 Badge(
-                                  backgroundColor:
-                                      Theme.of(context).colorScheme.primary,
+                                  backgroundColor: Theme.of(
+                                    context,
+                                  ).colorScheme.primary,
                                   label: Text(
                                     upload.uploaded!,
                                     style: Theme.of(context)
                                         .textTheme
                                         .labelLarge
                                         ?.copyWith(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onPrimary),
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onPrimary,
+                                        ),
                                   ),
                                   largeSize: 20,
-                                )
-                              ]
+                                ),
+                              ],
                             ],
-                          )));
+                          ),
+                        ),
+                      );
                     }
                   }
 
@@ -255,7 +268,9 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
                         children: [
                           Padding(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 12),
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
@@ -268,45 +283,52 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
                                       Row(
                                         children: [
                                           const Padding(
-                                            padding:
-                                                EdgeInsets.only(right: 4.0),
+                                            padding: EdgeInsets.only(
+                                              right: 4.0,
+                                            ),
                                             child: Icon(
                                               Icons.calendar_today,
                                               size: 15,
                                             ),
                                           ),
                                           Text(
-                                            AppLocalizations.of(context)
-                                                .dateWithHours(
-                                                    dateFormat.format(data!
-                                                        .history[index]
-                                                        .topicDate!),
-                                                    data!.history[index]
-                                                            .schoolHours ??
-                                                        ""),
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .labelSmall,
+                                            AppLocalizations.of(
+                                              context,
+                                            ).dateWithHours(
+                                              dateFormat.format(
+                                                data!.history[index].topicDate!,
+                                              ),
+                                              data!
+                                                      .history[index]
+                                                      .schoolHours ??
+                                                  "",
+                                            ),
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.labelSmall,
                                           ),
                                         ],
                                       ),
                                       Visibility(
                                         visible:
                                             data!.history[index].presence !=
-                                                null,
+                                            null,
                                         child: Row(
                                           children: [
                                             Text(
                                               (data!.history[index].presence ??
                                                       '')
                                                   .replaceAll(
-                                                      "andere schulische Veranstaltung",
-                                                      "a.s.V."),
+                                                    "andere schulische Veranstaltung",
+                                                    "a.s.V.",
+                                                  ),
                                               style: Theme.of(context)
                                                   .textTheme
                                                   .labelSmall
                                                   ?.copyWith(
-                                                    color: data!.history[index]
+                                                    color:
+                                                        data!
+                                                                .history[index]
                                                                 .presence ==
                                                             'fehlend'
                                                         ? Colors.red[300]
@@ -315,10 +337,13 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
                                             ),
                                             Padding(
                                               padding: const EdgeInsets.only(
-                                                  left: 4.0),
+                                                left: 4.0,
+                                              ),
                                               child: Icon(
                                                 Icons.meeting_room,
-                                                color: data!.history[index]
+                                                color:
+                                                    data!
+                                                            .history[index]
                                                             .presence ==
                                                         'fehlend'
                                                     ? Colors.red[300]
@@ -334,20 +359,25 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
                                 ),
                                 if (data!.history[index].topicTitle !=
                                     null) ...[
-                                  Text(data!.history[index].topicTitle!,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleLarge),
+                                  Text(
+                                    data!.history[index].topicTitle!,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleLarge,
+                                  ),
                                 ],
                                 if (data!.history[index].description !=
                                     null) ...[
                                   Padding(
                                     padding: const EdgeInsets.only(
-                                        top: 4, bottom: 4),
+                                      top: 4,
+                                      bottom: 4,
+                                    ),
                                     child: FormattedText(
                                       text: data!.history[index].description!,
-                                      formatStyle:
-                                          DefaultFormatStyle(context: context),
+                                      formatStyle: DefaultFormatStyle(
+                                        context: context,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -360,10 +390,7 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
                                   visible: files.isNotEmpty,
                                   child: Padding(
                                     padding: const EdgeInsets.only(top: 4),
-                                    child: Wrap(
-                                      spacing: 8,
-                                      children: files,
-                                    ),
+                                    child: Wrap(spacing: 8, children: files),
                                   ),
                                 ),
                                 Visibility(
@@ -379,12 +406,13 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
                                 ),
                               ],
                             ),
-                          )
+                          ),
                         ],
                       ),
                     ),
                   );
-                })
+                },
+              )
             : noDataScreen(context);
       case 1: // leistungen
         return data!.marks.isNotEmpty
@@ -408,7 +436,9 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
                             trailing: Text(
                               data!.marks[index].mark,
                               style: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 20.0),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 20.0,
+                              ),
                             ),
                             subtitle: Text(
                               data!.marks[index].date,
@@ -425,10 +455,9 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
                               subtitle: Text(
                                 data!.marks[index].comment ?? "",
                                 style: TextStyle(
-                                  fontSize: Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium!
-                                      .fontSize,
+                                  fontSize: Theme.of(
+                                    context,
+                                  ).textTheme.bodyMedium!.fontSize,
                                   fontStyle: FontStyle.italic,
                                 ),
                               ),
@@ -446,13 +475,13 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
                 itemCount: data!.exams.length,
                 itemBuilder: (context, index) {
                   return Padding(
-                      padding: EdgeInsets.only(
-                        left: padding,
-                        right: padding,
-                        bottom: index == data!.exams.length - 1 ? 14 : 8,
-                      ),
-                      child: Card(
-                          child: ListTile(
+                    padding: EdgeInsets.only(
+                      left: padding,
+                      right: padding,
+                      bottom: index == data!.exams.length - 1 ? 14 : 8,
+                    ),
+                    child: Card(
+                      child: ListTile(
                         title: Text(
                           data!.exams[index].name,
                           style: Theme.of(context).textTheme.titleMedium,
@@ -461,7 +490,9 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
                           data!.exams[index].value ?? '',
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
-                      )));
+                      ),
+                    ),
+                  );
                 },
               )
             : noDataScreen(context);
@@ -480,13 +511,13 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
                     ),
                     child: Card(
                       child: ListTile(
-                        title: Text(
-                          toBeginningOfSentenceCase(key),
-                        ),
+                        title: Text(toBeginningOfSentenceCase(key)),
                         trailing: Text(
                           value,
                           style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 20.0),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20.0,
+                          ),
                         ),
                       ),
                     ),
@@ -503,12 +534,8 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
   Widget build(BuildContext context) {
     if (loading) {
       return Scaffold(
-        appBar: AppBar(
-          title: Text(widget.title),
-        ),
-        body: const Center(
-          child: CircularProgressIndicator(),
-        ),
+        appBar: AppBar(title: Text(widget.title)),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -519,17 +546,19 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
         actions: [
           if (data!.semester1URL != null)
             IconButton(
-                icon: const Icon(Icons.looks_one_outlined),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => CourseOverviewAnsicht(
-                              dataFetchURL: data!.semester1URL.toString(),
-                              title: widget.title,
-                            )),
-                  );
-                })
+              icon: const Icon(Icons.looks_one_outlined),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CourseOverviewAnsicht(
+                      dataFetchURL: data!.semester1URL.toString(),
+                      title: widget.title,
+                    ),
+                  ),
+                );
+              },
+            ),
         ],
       ),
       bottomNavigationBar: NavigationBar(
@@ -551,14 +580,15 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
             label: AppLocalizations.of(context).performance,
           ),
           NavigationDestination(
-              icon: const Icon(Icons.draw),
-              selectedIcon: const Icon(Icons.draw_outlined),
-              label: AppLocalizations.of(context).exams),
+            icon: const Icon(Icons.draw),
+            selectedIcon: const Icon(Icons.draw_outlined),
+            label: AppLocalizations.of(context).exams,
+          ),
           NavigationDestination(
             icon: const Icon(Icons.list),
             selectedIcon: const Icon(Icons.list_outlined),
             label: AppLocalizations.of(context).attendances,
-          )
+          ),
         ],
       ),
     );

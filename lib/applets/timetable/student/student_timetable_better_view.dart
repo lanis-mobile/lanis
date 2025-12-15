@@ -29,8 +29,11 @@ class StudentTimetableBetterView extends StatefulWidget {
 
 class _StudentTimetableBetterViewState
     extends State<StudentTimetableBetterView> {
-  List<TimetableDay> getSelectedPlan(TimeTable data, TimeTableType selectedType,
-      Map<String, dynamic> settings) {
+  List<TimetableDay> getSelectedPlan(
+    TimeTable data,
+    TimeTableType selectedType,
+    Map<String, dynamic> settings,
+  ) {
     List<List<TimetableSubject>>? customLessons =
         TimeTableHelper.getCustomLessons(settings);
     if (selectedType == TimeTableType.own && data.planForOwn != null) {
@@ -44,58 +47,63 @@ class _StudentTimetableBetterViewState
   @override
   Widget build(BuildContext context) {
     return CombinedAppletBuilder<TimeTable>(
-        parser: sph!.parser.timetableStudentParser,
-        phpUrl: timeTableDefinition.appletPhpUrl,
-        settingsDefaults: timeTableDefinition.settingsDefaults,
-        accountType: AccountType.student,
-        loadingAppBar: AppBar(
-          title: Text(timeTableDefinition.label(context)),
-          leading: widget.openDrawerCb != null
-              ? IconButton(
-                  icon: const Icon(Icons.menu),
-                  onPressed: () => widget.openDrawerCb!(),
-                )
-              : null,
-        ),
-        builder: (BuildContext context,
+      parser: sph!.parser.timetableStudentParser,
+      phpUrl: timeTableDefinition.appletPhpUrl,
+      settingsDefaults: timeTableDefinition.settingsDefaults,
+      accountType: AccountType.student,
+      loadingAppBar: AppBar(
+        title: Text(timeTableDefinition.label(context)),
+        leading: widget.openDrawerCb != null
+            ? IconButton(
+                icon: const Icon(Icons.menu),
+                onPressed: () => widget.openDrawerCb!(),
+              )
+            : null,
+      ),
+      builder:
+          (
+            BuildContext context,
             TimeTable timetable,
             _,
             Map<String, dynamic> settings,
             updateSettings,
-            Future<void> Function()? refresh) {
-          TimeTableType selectedType =
-              settings['student-selected-type'] == 'TimeTableType.own'
-                  ? TimeTableType.own
-                  : TimeTableType.all;
-          bool showByWeek = settings['student-selected-week'] == true;
-          List<TimetableDay> selectedPlan =
-              getSelectedPlan(timetable, selectedType, settings);
-          final List<String> uniqueBadges = selectedPlan
-              .expand((innerList) => innerList.map((e) => e.badge))
-              .whereType<String>()
-              .toSet()
-              .toList();
+            Future<void> Function()? refresh,
+          ) {
+            TimeTableType selectedType =
+                settings['student-selected-type'] == 'TimeTableType.own'
+                ? TimeTableType.own
+                : TimeTableType.all;
+            bool showByWeek = settings['student-selected-week'] == true;
+            List<TimetableDay> selectedPlan = getSelectedPlan(
+              timetable,
+              selectedType,
+              settings,
+            );
+            final List<String> uniqueBadges = selectedPlan
+                .expand((innerList) => innerList.map((e) => e.badge))
+                .whereType<String>()
+                .toSet()
+                .toList();
 
-          if (currentWeekIndex == -1) {
-            currentWeekIndex = (showByWeek || timetable.weekBadge == null)
-                ? 0
-                : uniqueBadges.indexOf(timetable.weekBadge!) + 1;
-          }
+            if (currentWeekIndex == -1) {
+              currentWeekIndex = (showByWeek || timetable.weekBadge == null)
+                  ? 0
+                  : uniqueBadges.indexOf(timetable.weekBadge!) + 1;
+            }
 
-          TimeTableData data = TimeTableData(
+            TimeTableData data = TimeTableData(
               selectedPlan,
               timetable,
               settings,
-              currentWeekIndex == 0
-                  ? null
-                  : uniqueBadges[currentWeekIndex - 1]);
+              currentWeekIndex == 0 ? null : uniqueBadges[currentWeekIndex - 1],
+            );
 
-          headerHeight =
-              timetable.weekBadge != null && timetable.weekBadge!.isNotEmpty
-                  ? 40
-                  : 26;
+            headerHeight =
+                timetable.weekBadge != null && timetable.weekBadge!.isNotEmpty
+                ? 40
+                : 26;
 
-          return Scaffold(
+            return Scaffold(
               appBar: AppBar(
                 title: Text(timeTableDefinition.label(context)),
                 leading: widget.openDrawerCb != null
@@ -113,28 +121,36 @@ class _StudentTimetableBetterViewState
                             timetable.weekBadge != null)
                           TextButton(
                             onPressed: () {
-                              currentWeekIndex = (currentWeekIndex + 1) %
+                              currentWeekIndex =
+                                  (currentWeekIndex + 1) %
                                   (uniqueBadges.length + 1);
-                              updateSettings('student-selected-week',
-                                  currentWeekIndex == 0);
+                              updateSettings(
+                                'student-selected-week',
+                                currentWeekIndex == 0,
+                              );
                             },
                             child: Text(
                               (currentWeekIndex < 1)
-                                  ? AppLocalizations.of(context)
-                                      .timetableAllWeeks
+                                  ? AppLocalizations.of(
+                                      context,
+                                    ).timetableAllWeeks
                                   : AppLocalizations.of(context).timetableWeek(
-                                      uniqueBadges[currentWeekIndex - 1]),
+                                      uniqueBadges[currentWeekIndex - 1],
+                                    ),
                             ),
                           ),
                         IconButton(
-                            onPressed: () => updateSettings('single-day',
-                                !(settings['single-day'] ?? false)),
-                            icon: (settings['single-day'] ?? false)
-                                ? Icon(Icons.calendar_today)
-                                : Icon(Icons.calendar_today_outlined)),
+                          onPressed: () => updateSettings(
+                            'single-day',
+                            !(settings['single-day'] ?? false),
+                          ),
+                          icon: (settings['single-day'] ?? false)
+                              ? Icon(Icons.calendar_today)
+                              : Icon(Icons.calendar_today_outlined),
+                        ),
                       ],
                     ),
-                  )
+                  ),
                 ],
               ),
               body: Padding(
@@ -154,25 +170,32 @@ class _StudentTimetableBetterViewState
                         FloatingActionButton(
                           heroTag: "toggle",
                           tooltip: selectedType == TimeTableType.all
-                              ? AppLocalizations.of(context)
-                                  .timetableSwitchToPersonal
-                              : AppLocalizations.of(context)
-                                  .timetableSwitchToClass,
+                              ? AppLocalizations.of(
+                                  context,
+                                ).timetableSwitchToPersonal
+                              : AppLocalizations.of(
+                                  context,
+                                ).timetableSwitchToClass,
                           onPressed: () {
                             updateSettings(
-                                'student-selected-type',
-                                selectedType == TimeTableType.all
-                                    ? 'TimeTableType.own'
-                                    : 'TimeTableType.all');
+                              'student-selected-type',
+                              selectedType == TimeTableType.all
+                                  ? 'TimeTableType.own'
+                                  : 'TimeTableType.all',
+                            );
                           },
-                          child: Icon(selectedType == TimeTableType.all
-                              ? Icons.person
-                              : Icons.people),
+                          child: Icon(
+                            selectedType == TimeTableType.all
+                                ? Icons.person
+                                : Icons.people,
+                          ),
                         ),
                       ],
                     )
-                  : null);
-        });
+                  : null,
+            );
+          },
+    );
   }
 }
 
@@ -186,7 +209,8 @@ class TimeTableView extends StatelessWidget {
   double calculateColumnHeight(List<TimeTableRow> rows) {
     double totalHeight = 0;
     for (var row in rows) {
-      totalHeight += (row.type == TimeTableRowType.lesson
+      totalHeight +=
+          (row.type == TimeTableRowType.lesson
               ? itemHeight
               : itemHeight - pauseHeight) +
           8;
@@ -212,13 +236,14 @@ class TimeTableView extends StatelessWidget {
     return woy;
   }
 
-  const TimeTableView(
-      {super.key,
-      required this.data,
-      required this.timetable,
-      required this.settings,
-      required this.updateSettings,
-      this.refresh});
+  const TimeTableView({
+    super.key,
+    required this.data,
+    required this.timetable,
+    required this.settings,
+    required this.updateSettings,
+    this.refresh,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -246,11 +271,14 @@ class TimeTableView extends StatelessWidget {
                             timetable.weekBadge != null &&
                                     timetable.weekBadge!.isNotEmpty
                                 ? Text(
-                                    AppLocalizations.of(context)
-                                        .timetableWeek(timetable.weekBadge!),
+                                    AppLocalizations.of(
+                                      context,
+                                    ).timetableWeek(timetable.weekBadge!),
                                     style: TextStyle(
-                                        overflow: TextOverflow.ellipsis,
-                                        fontSize: 10))
+                                      overflow: TextOverflow.ellipsis,
+                                      fontSize: 10,
+                                    ),
+                                  )
                                 : SizedBox(),
                           ],
                         ),
@@ -260,12 +288,12 @@ class TimeTableView extends StatelessWidget {
                       Container(
                         decoration: BoxDecoration(
                           color: row.type == TimeTableRowType.lesson
-                              ? Theme.of(context)
-                                  .colorScheme
-                                  .surfaceContainerHighest
-                              : Theme.of(context)
-                                  .colorScheme
-                                  .surfaceContainerHigh,
+                              ? Theme.of(
+                                  context,
+                                ).colorScheme.surfaceContainerHighest
+                              : Theme.of(
+                                  context,
+                                ).colorScheme.surfaceContainerHigh,
                           borderRadius: BorderRadius.circular(8.0),
                         ),
                         width: hourWidth,
@@ -274,20 +302,17 @@ class TimeTableView extends StatelessWidget {
                             : pauseHeight,
                         child: Column(
                           children: [
-                            Text(row.label,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                )),
+                            Text(row.label, style: TextStyle(fontSize: 12)),
                             ...(row.type == TimeTableRowType.lesson
                                 ? [
-                                    Text(row.startTime.format(context),
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                        )),
-                                    Text(row.endTime.format(context),
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                        )),
+                                    Text(
+                                      row.startTime.format(context),
+                                      style: TextStyle(fontSize: 10),
+                                    ),
+                                    Text(
+                                      row.endTime.format(context),
+                                      style: TextStyle(fontSize: 10),
+                                    ),
                                   ]
                                 : []),
                           ],
@@ -307,15 +332,18 @@ class TimeTableView extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: days.map((e) {
                             return Expanded(
-                                child: Stack(children: [
-                              e,
-                              TimeMarkerWidget(
-                                data: data,
-                                timetable: timetable,
-                                settings: settings,
-                                day: days.indexOf(e),
+                              child: Stack(
+                                children: [
+                                  e,
+                                  TimeMarkerWidget(
+                                    data: data,
+                                    timetable: timetable,
+                                    settings: settings,
+                                    day: days.indexOf(e),
+                                  ),
+                                ],
                               ),
-                            ]));
+                            );
                           }).toList(),
                         );
                       } else {
@@ -332,7 +360,9 @@ class TimeTableView extends StatelessWidget {
                               children: days.map((e) {
                                 return Padding(
                                   padding: const EdgeInsets.only(
-                                      left: 4.0, right: 8.0),
+                                    left: 4.0,
+                                    right: 8.0,
+                                  ),
                                   child: Stack(
                                     children: [
                                       e,
@@ -373,29 +403,33 @@ class TimeTableView extends StatelessWidget {
                 color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(8.0),
               ),
-              child: Builder(builder: (context) {
-                var today = DateTime.now().startOfWeek;
-                var monday = DateTime(today.year, today.month,
-                    today.day - (today.weekday - 1) + 7);
+              child: Builder(
+                builder: (context) {
+                  var today = DateTime.now().startOfWeek;
+                  var monday = DateTime(
+                    today.year,
+                    today.month,
+                    today.day - (today.weekday - 1) + 7,
+                  );
 
-                return Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      DateFormat.E(Localizations.localeOf(context).languageCode)
-                          .format(monday.add(Duration(days: i))),
-                      textAlign: TextAlign.center,
-                    ),
-                    Text(
-                      monday.add(Duration(days: i)).format('dd.MM.'),
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 10,
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        DateFormat.E(
+                          Localizations.localeOf(context).languageCode,
+                        ).format(monday.add(Duration(days: i))),
+                        textAlign: TextAlign.center,
                       ),
-                    ),
-                  ],
-                );
-              }),
+                      Text(
+                        monday.add(Duration(days: i)).format('dd.MM.'),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 10),
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
             const SizedBox(height: 8.0),
             SizedBox(
@@ -489,10 +523,12 @@ class _TimeMarkerWidgetState extends State<TimeMarkerWidget> {
     for (var (lesson) in widget.data.hours) {
       // Check if lesson is already over and add the height of the lesson (or height of break)
       // If in the lesson add percentage of the lesson that has already passed
-      final height =
-          lesson.type == TimeTableRowType.lesson ? itemHeight : pauseHeight;
+      final height = lesson.type == TimeTableRowType.lesson
+          ? itemHeight
+          : pauseHeight;
       if (now >= lesson.startTime && now <= lesson.endTime) {
-        final diff = height *
+        final diff =
+            height *
             ((-now.differenceInMinutes(lesson.startTime)) /
                 lesson.startTime.differenceInMinutes(lesson.endTime));
         offset += diff;

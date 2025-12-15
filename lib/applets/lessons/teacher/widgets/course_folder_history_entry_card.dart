@@ -14,11 +14,12 @@ class CourseFolderHistoryEntryCard extends StatefulWidget {
   final CourseFolderHistoryEntry entry;
   final String courseId;
   final void Function() afterDeleted;
-  const CourseFolderHistoryEntryCard(
-      {super.key,
-      required this.afterDeleted,
-      required this.entry,
-      required this.courseId});
+  const CourseFolderHistoryEntryCard({
+    super.key,
+    required this.afterDeleted,
+    required this.entry,
+    required this.courseId,
+  });
 
   @override
   State<CourseFolderHistoryEntryCard> createState() =>
@@ -66,21 +67,23 @@ class _CourseFolderHistoryEntryCardState
       },
     );
     if (delete == true) {
-      final result = await sph!.parser.lessonsTeacherParser
-          .deleteEntry(widget.courseId, widget.entry.id);
+      final result = await sph!.parser.lessonsTeacherParser.deleteEntry(
+        widget.courseId,
+        widget.entry.id,
+      );
       if (result) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Eintrag gelöscht'),
-          ));
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Eintrag gelöscht')));
         }
         await Future.delayed(Duration(seconds: 1));
         widget.afterDeleted();
       } else {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Eintrag konnte nicht gelöscht werden'),
-          ));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Eintrag konnte nicht gelöscht werden')),
+          );
         }
       }
     }
@@ -108,11 +111,14 @@ class _CourseFolderHistoryEntryCardState
                           spacing: 4,
                           children: [
                             Icon(Icons.schedule, size: 18),
-                            Text(AppLocalizations.of(context).dateWithHours(
-                                DateFormat.yMEd(Localizations.localeOf(context)
-                                        .toString())
-                                    .format(widget.entry.date),
-                                widget.entry.schoolHours)),
+                            Text(
+                              AppLocalizations.of(context).dateWithHours(
+                                DateFormat.yMEd(
+                                  Localizations.localeOf(context).toString(),
+                                ).format(widget.entry.date),
+                                widget.entry.schoolHours,
+                              ),
+                            ),
                             if (_isToday)
                               Container(
                                 decoration: BoxDecoration(
@@ -121,12 +127,11 @@ class _CourseFolderHistoryEntryCardState
                                 ),
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 4.0),
+                                    horizontal: 4.0,
+                                  ),
                                   child: Text(
                                     'Heute',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                    ),
+                                    style: TextStyle(color: Colors.white),
                                   ),
                                 ),
                               ),
@@ -138,23 +143,23 @@ class _CourseFolderHistoryEntryCardState
                                 ),
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 4.0),
+                                    horizontal: 4.0,
+                                  ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     spacing: 4,
                                     children: [
                                       Text(
                                         'Vorab',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                        ),
+                                        style: TextStyle(color: Colors.white),
                                       ),
                                       Icon(
-                                          widget.entry.isAvailableInAdvance
-                                              ? Icons.visibility
-                                              : Icons.visibility_off,
-                                          size: 16,
-                                          color: Colors.white),
+                                        widget.entry.isAvailableInAdvance
+                                            ? Icons.visibility
+                                            : Icons.visibility_off,
+                                        size: 16,
+                                        color: Colors.white,
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -182,15 +187,18 @@ class _CourseFolderHistoryEntryCardState
                     }
                   },
                   itemBuilder: (BuildContext context) {
-                    return {'Eintrag löschen', 'Eintrag bearbeiten'}
-                        .map((String choice) {
+                    return {'Eintrag löschen', 'Eintrag bearbeiten'}.map((
+                      String choice,
+                    ) {
                       return PopupMenuItem<String>(
                         value: choice,
                         child: Row(
                           children: [
-                            Icon(choice == 'Eintrag löschen'
-                                ? Icons.delete
-                                : Icons.edit),
+                            Icon(
+                              choice == 'Eintrag löschen'
+                                  ? Icons.delete
+                                  : Icons.edit,
+                            ),
                             const SizedBox(width: 4.0),
                             Text(choice),
                           ],
@@ -202,8 +210,11 @@ class _CourseFolderHistoryEntryCardState
               ],
             ),
             Padding(
-              padding:
-                  const EdgeInsets.only(left: 12.0, right: 12.0, bottom: 8.0),
+              padding: const EdgeInsets.only(
+                left: 12.0,
+                right: 12.0,
+                bottom: 8.0,
+              ),
               child: Column(
                 children: [
                   if (widget.entry.content != null) ...[
@@ -226,24 +237,25 @@ class _CourseFolderHistoryEntryCardState
                       padding: const EdgeInsets.all(8),
                       child: Row(
                         children: [
-                          Icon(Icons.text_snippet_outlined,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onTertiaryContainer),
+                          Icon(
+                            Icons.text_snippet_outlined,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onTertiaryContainer,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
-                              child: LineConstraintText(
-                            data: widget.entry.content!,
-                            maxLines: 2,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onTertiaryContainer,
-                                ),
-                          ))
+                            child: LineConstraintText(
+                              data: widget.entry.content!,
+                              maxLines: 2,
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onTertiaryContainer,
+                                  ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -267,19 +279,20 @@ class _CourseFolderHistoryEntryCardState
                       padding: const EdgeInsets.all(8),
                       child: Row(
                         children: [
-                          Icon(Icons.task,
-                              color: Theme.of(context).colorScheme.onPrimary),
+                          Icon(
+                            Icons.task,
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: LineConstraintText(
                               data: widget.entry.homework!,
                               maxLines: 2,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
+                              style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(
-                                    color:
-                                        Theme.of(context).colorScheme.onPrimary,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onPrimary,
                                   ),
                             ),
                           ),
@@ -345,39 +358,41 @@ class _CourseFolderHistoryEntryCardState
             if (_showFiles) ...[
               Divider(),
               Padding(
-                padding:
-                    const EdgeInsets.only(bottom: 8.0, right: 12.0, left: 12.0),
+                padding: const EdgeInsets.only(
+                  bottom: 8.0,
+                  right: 12.0,
+                  left: 12.0,
+                ),
                 child: Wrap(
                   spacing: 4.0,
                   alignment: WrapAlignment.start,
                   children: [
-                    SizedBox(
-                      width: double.infinity,
+                    SizedBox(width: double.infinity),
+                    ...widget.entry.files.map(
+                      (file) => CourseFolderHistoryEntryFileChip(
+                        file: file,
+                        courseId: widget.courseId,
+                        onVisibilityChanged: (bool isVisible) {
+                          setState(() {
+                            file.isVisibleForStudents = isVisible;
+                          });
+                        },
+                        onFileDeleted: () {
+                          setState(() {
+                            widget.entry.files.remove(file);
+                          });
+                        },
+                      ),
                     ),
-                    ...widget.entry.files
-                        .map((file) => CourseFolderHistoryEntryFileChip(
-                              file: file,
-                              courseId: widget.courseId,
-                              onVisibilityChanged: (bool isVisible) {
-                                setState(() {
-                                  file.isVisibleForStudents = isVisible;
-                                });
-                              },
-                              onFileDeleted: () {
-                                setState(() {
-                                  widget.entry.files.remove(file);
-                                });
-                              },
-                            )),
                     UploadFileToCourseChip(
                       courseId: widget.courseId,
                       entryId: widget.entry.id,
                       onFileUploaded:
                           (List<CourseFolderHistoryEntryFile> files) {
-                        setState(() {
-                          widget.entry.files.addAll(files);
-                        });
-                      },
+                            setState(() {
+                              widget.entry.files.addAll(files);
+                            });
+                          },
                     ),
                   ],
                 ),

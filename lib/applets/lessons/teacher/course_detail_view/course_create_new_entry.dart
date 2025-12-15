@@ -16,8 +16,9 @@ class _CourseCreateNewEntryState extends State<CourseCreateNewEntry> {
   CourseFolderNewEntryConstraints get constraints =>
       widget.courseFolderDetails.newEntryConstraints;
 
-  List<String> get availableSchoolEndHours => constraints.schoolHours
-      .sublist(constraints.schoolHours.indexOf(_selectedStartHour));
+  List<String> get availableSchoolEndHours => constraints.schoolHours.sublist(
+    constraints.schoolHours.indexOf(_selectedStartHour),
+  );
 
   final _formKey = GlobalKey<FormState>();
   DateTime _selectedDate = DateTime.now();
@@ -28,8 +29,9 @@ class _CourseCreateNewEntryState extends State<CourseCreateNewEntry> {
   final TextEditingController _entryHomeworkController =
       TextEditingController();
   bool _useDocumentSubmission = false;
-  DateTime _selectedDocumentSubmissionDeadline =
-      DateTime.now().add(Duration(days: 7));
+  DateTime _selectedDocumentSubmissionDeadline = DateTime.now().add(
+    Duration(days: 7),
+  );
   TimeOfDay _selectedDocumentSubmissionTime = TimeOfDay(hour: 22, minute: 00);
   bool _everySubmissionVisibleForStudents = false;
   bool _prevouslyVisibleForStudents = false;
@@ -81,9 +83,11 @@ class _CourseCreateNewEntryState extends State<CourseCreateNewEntry> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
-                    icon: Icon(_prevouslyVisibleForStudents
-                        ? Icons.visibility
-                        : Icons.visibility_off),
+                    icon: Icon(
+                      _prevouslyVisibleForStudents
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                    ),
                     onPressed: () {
                       setState(() {
                         _prevouslyVisibleForStudents =
@@ -96,12 +100,13 @@ class _CourseCreateNewEntryState extends State<CourseCreateNewEntry> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(4),
                       border: Border.all(
-                          color: Theme.of(context).colorScheme.secondary),
+                        color: Theme.of(context).colorScheme.secondary,
+                      ),
                     ),
                     child: Text(
                       DateFormat.yMEd(
-                              Localizations.localeOf(context).toString())
-                          .format(_selectedDate),
+                        Localizations.localeOf(context).toString(),
+                      ).format(_selectedDate),
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
                   ),
@@ -122,84 +127,84 @@ class _CourseCreateNewEntryState extends State<CourseCreateNewEntry> {
               },
             ),
             Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                child: Row(
-                  mainAxisSize: MainAxisSize.max,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  spacing: 16,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Icon(Icons.access_time),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: Text(
-                        'Von',
-                        style:
-                            Theme.of(context).textTheme.labelMedium?.copyWith(
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: Row(
+                mainAxisSize: MainAxisSize.max,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                spacing: 16,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Icon(Icons.access_time),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Text(
+                      'Von',
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                     ),
-                    Expanded(
-                      child: DropdownButton<String>(
-                        items: constraints.schoolHours
-                            .map(
-                              (e) => DropdownMenuItem<String>(
-                                value: e,
-                                child: Text('Stunde $e'),
-                              ),
-                            )
-                            .toList(),
-                        value: _selectedStartHour,
-                        isExpanded: true,
-                        onChanged: (val) {
-                          int startHourIndex =
-                              constraints.schoolHours.indexOf(val!);
-                          int endHourIndex =
-                              constraints.schoolHours.indexOf(_selectedEndHour);
-                          setState(() {
-                            _selectedStartHour = val;
-                            if (startHourIndex > endHourIndex) {
-                              _selectedEndHour = val;
-                            }
-                          });
-                        },
+                  ),
+                  Expanded(
+                    child: DropdownButton<String>(
+                      items: constraints.schoolHours
+                          .map(
+                            (e) => DropdownMenuItem<String>(
+                              value: e,
+                              child: Text('Stunde $e'),
+                            ),
+                          )
+                          .toList(),
+                      value: _selectedStartHour,
+                      isExpanded: true,
+                      onChanged: (val) {
+                        int startHourIndex = constraints.schoolHours.indexOf(
+                          val!,
+                        );
+                        int endHourIndex = constraints.schoolHours.indexOf(
+                          _selectedEndHour,
+                        );
+                        setState(() {
+                          _selectedStartHour = val;
+                          if (startHourIndex > endHourIndex) {
+                            _selectedEndHour = val;
+                          }
+                        });
+                      },
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Text(
+                      'Bis',
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: Text(
-                        'Bis',
-                        style:
-                            Theme.of(context).textTheme.labelMedium?.copyWith(
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                      ),
+                  ),
+                  Expanded(
+                    child: DropdownButton<String>(
+                      items: availableSchoolEndHours
+                          .map(
+                            (e) => DropdownMenuItem<String>(
+                              value: e,
+                              child: Text('Stunde $e'),
+                            ),
+                          )
+                          .toList(),
+                      value: _selectedEndHour,
+                      isExpanded: true,
+                      onChanged: (val) {
+                        setState(() {
+                          _selectedEndHour = val!;
+                        });
+                      },
                     ),
-                    Expanded(
-                      child: DropdownButton<String>(
-                        items: availableSchoolEndHours
-                            .map(
-                              (e) => DropdownMenuItem<String>(
-                                value: e,
-                                child: Text('Stunde $e'),
-                              ),
-                            )
-                            .toList(),
-                        value: _selectedEndHour,
-                        isExpanded: true,
-                        onChanged: (val) {
-                          setState(() {
-                            _selectedEndHour = val!;
-                          });
-                        },
-                      ),
-                    ),
-                  ],
-                )),
+                  ),
+                ],
+              ),
+            ),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: TextFormField(
@@ -268,8 +273,9 @@ class _CourseCreateNewEntryState extends State<CourseCreateNewEntry> {
                                   initialDate:
                                       _selectedDocumentSubmissionDeadline,
                                   firstDate: DateTime.now(),
-                                  lastDate:
-                                      DateTime.now().add(Duration(days: 365)),
+                                  lastDate: DateTime.now().add(
+                                    Duration(days: 365),
+                                  ),
                                 );
                                 if (picked != null &&
                                     picked !=
@@ -282,22 +288,24 @@ class _CourseCreateNewEntryState extends State<CourseCreateNewEntry> {
                               },
                               child: Container(
                                 padding: EdgeInsets.symmetric(
-                                    vertical: 4, horizontal: 16),
+                                  vertical: 4,
+                                  horizontal: 16,
+                                ),
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(4),
                                   border: Border.all(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .secondary),
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.secondary,
+                                  ),
                                 ),
                                 child: Text(
                                   DateFormat.yMEd(
-                                          Localizations.localeOf(context)
-                                              .toString())
-                                      .format(
-                                          _selectedDocumentSubmissionDeadline),
-                                  style:
-                                      Theme.of(context).textTheme.headlineSmall,
+                                    Localizations.localeOf(context).toString(),
+                                  ).format(_selectedDocumentSubmissionDeadline),
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.headlineSmall,
                                 ),
                               ),
                             ),
@@ -316,19 +324,24 @@ class _CourseCreateNewEntryState extends State<CourseCreateNewEntry> {
                               },
                               child: Container(
                                 padding: EdgeInsets.symmetric(
-                                    vertical: 4, horizontal: 16),
+                                  vertical: 4,
+                                  horizontal: 16,
+                                ),
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(4),
                                   border: Border.all(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .primary),
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                  ),
                                 ),
                                 child: Text(
-                                  _selectedDocumentSubmissionTime
-                                      .format(context),
-                                  style:
-                                      Theme.of(context).textTheme.headlineSmall,
+                                  _selectedDocumentSubmissionTime.format(
+                                    context,
+                                  ),
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.headlineSmall,
                                 ),
                               ),
                             ),
@@ -356,25 +369,26 @@ class _CourseCreateNewEntryState extends State<CourseCreateNewEntry> {
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
                     showLoadingDialog();
-                    final result =
-                        await sph!.parser.lessonsTeacherParser.postNewEntry(
-                      book: widget.courseFolderDetails.courseId,
-                      datum: DateFormat('dd.MM.yyyy').format(_selectedDate),
-                      zeigeauchvorheran: _prevouslyVisibleForStudents,
-                      stundenVon: _selectedStartHour,
-                      stundenBis: _selectedEndHour,
-                      subject: _entryTopicController.text,
-                      inhalt: _entryContentController.text,
-                      homework: _entryHomeworkController.text,
-                      abgabe: _useDocumentSubmission,
-                      abgabeBisDate: _selectedDocumentSubmissionDeadline,
-                      abgabeBisTime: _selectedDocumentSubmissionTime,
-                      abgabeSichtbar: _everySubmissionVisibleForStudents,
-                    );
+                    final result = await sph!.parser.lessonsTeacherParser
+                        .postNewEntry(
+                          book: widget.courseFolderDetails.courseId,
+                          datum: DateFormat('dd.MM.yyyy').format(_selectedDate),
+                          zeigeauchvorheran: _prevouslyVisibleForStudents,
+                          stundenVon: _selectedStartHour,
+                          stundenBis: _selectedEndHour,
+                          subject: _entryTopicController.text,
+                          inhalt: _entryContentController.text,
+                          homework: _entryHomeworkController.text,
+                          abgabe: _useDocumentSubmission,
+                          abgabeBisDate: _selectedDocumentSubmissionDeadline,
+                          abgabeBisTime: _selectedDocumentSubmissionTime,
+                          abgabeSichtbar: _everySubmissionVisibleForStudents,
+                        );
                     if (context.mounted) {
                       Navigator.of(context).pop(); // Close loading dialog
-                      Navigator.of(context)
-                          .pop(result); // Close this screen and return result
+                      Navigator.of(
+                        context,
+                      ).pop(result); // Close this screen and return result
                     }
                   }
                 },

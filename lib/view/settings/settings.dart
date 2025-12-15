@@ -40,12 +40,13 @@ class SettingsTile {
     return true;
   }
 
-  const SettingsTile(
-      {required this.title,
-      required this.subtitle,
-      required this.icon,
-      required this.screen,
-      this.show = alwaysShow});
+  const SettingsTile({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.screen,
+    this.show = alwaysShow,
+  });
 }
 
 class SettingsScreen extends SettingsColours {
@@ -57,66 +58,69 @@ class SettingsScreen extends SettingsColours {
 
 class _SettingsScreenState extends SettingsColoursState<SettingsScreen> {
   final List<SettingsGroup> settingsTiles = [
-    SettingsGroup(tiles: [
-      SettingsTile(
+    SettingsGroup(
+      tiles: [
+        SettingsTile(
           title: (context) => AppLocalizations.of(context).appearance,
           subtitle: (context) async {
             return AppLocalizations.of(context).darkModeColoursList;
           },
           icon: Icons.palette_rounded,
           screen: (context) => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => AppearanceSettings()),
+          ),
+        ),
+        SettingsTile(
+          title: (context) => AppLocalizations.of(context).language,
+          subtitle: (context) async {
+            String code = Localizations.localeOf(context).languageCode;
+
+            if (code.contains("de")) {
+              return "Deutsch";
+            } else if (code.contains("en")) {
+              return "English";
+            } else {
+              return "Unknown";
+            }
+          },
+          icon: Icons.language_rounded,
+          screen: (context) =>
+              AppSettings.openAppSettings(type: AppSettingsType.appLocale),
+          show: () async {
+            if (!Platform.isAndroid) {
+              return false;
+            }
+
+            DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+            final androidInfo = await deviceInfo.androidInfo;
+            return androidInfo.version.sdkInt >= 33;
+          },
+        ),
+        SettingsTile(
+          title: (context) => AppLocalizations.of(context).notifications,
+          subtitle: (context) async {
+            return AppLocalizations.of(context).intervalAppletsList;
+          },
+          icon: Icons.notifications_rounded,
+          screen: (context) async {
+            int accountCount = await accountDatabase
+                .select(accountDatabase.accountsTable)
+                .get()
+                .then((value) => value.length);
+
+            if (context.mounted) {
+              Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => AppearanceSettings()),
-              )),
-      SettingsTile(
-        title: (context) => AppLocalizations.of(context).language,
-        subtitle: (context) async {
-          String code = Localizations.localeOf(context).languageCode;
-
-          if (code.contains("de")) {
-            return "Deutsch";
-          } else if (code.contains("en")) {
-            return "English";
-          } else {
-            return "Unknown";
-          }
-        },
-        icon: Icons.language_rounded,
-        screen: (context) =>
-            AppSettings.openAppSettings(type: AppSettingsType.appLocale),
-        show: () async {
-          if (!Platform.isAndroid) {
-            return false;
-          }
-
-          DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
-          final androidInfo = await deviceInfo.androidInfo;
-          return androidInfo.version.sdkInt >= 33;
-        },
-      ),
-      SettingsTile(
-        title: (context) => AppLocalizations.of(context).notifications,
-        subtitle: (context) async {
-          return AppLocalizations.of(context).intervalAppletsList;
-        },
-        icon: Icons.notifications_rounded,
-        screen: (context) async {
-          int accountCount = await accountDatabase
-              .select(accountDatabase.accountsTable)
-              .get()
-              .then((value) => value.length);
-
-          if (context.mounted) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
+                MaterialPageRoute(
                   builder: (context) =>
-                      NotificationSettings(accountCount: accountCount)),
-            );
-          }
-        },
-      ),
-      SettingsTile(
+                      NotificationSettings(accountCount: accountCount),
+                ),
+              );
+            }
+          },
+        ),
+        SettingsTile(
           title: (context) => AppLocalizations.of(context).clearCache,
           subtitle: (context) async {
             Map<String, int> cacheStats = {'fileNum': 0, 'size': 0};
@@ -129,85 +133,92 @@ class _SettingsScreenState extends SettingsColoursState<SettingsScreen> {
           },
           icon: Icons.storage_rounded,
           screen: (context) => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => CacheSettings()),
-              )),
-      SettingsTile(
-        title: (context) => AppLocalizations.of(context).quickActions,
-        subtitle: (context) async =>
-            "${AppLocalizations.of(context).applets}, ${AppLocalizations.of(context).external}",
-        icon: Icons.extension,
-        screen: (context) => Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) => QuickActions(
-                    showBackButton: true,
-                  )),
+            context,
+            MaterialPageRoute(builder: (context) => CacheSettings()),
+          ),
         ),
-      )
-    ]),
+        SettingsTile(
+          title: (context) => AppLocalizations.of(context).quickActions,
+          subtitle: (context) async =>
+              "${AppLocalizations.of(context).applets}, ${AppLocalizations.of(context).external}",
+          icon: Icons.extension,
+          screen: (context) => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => QuickActions(showBackButton: true),
+            ),
+          ),
+        ),
+      ],
+    ),
     if (sph!.session.doesSupportFeature(calendarDefinition) ||
         sph!.session.doesSupportFeature(timeTableDefinition))
-      SettingsGroup(tiles: [
-        if (sph!.session.doesSupportFeature(calendarDefinition))
-          SettingsTile(
-            title: (context) => AppLocalizations.of(context).calendarExport,
-            subtitle: (context) async => 'PDF, iCal, ICS, CSV',
-            icon: Icons.download_rounded,
-            screen: (context) => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const CalendarExport(),
+      SettingsGroup(
+        tiles: [
+          if (sph!.session.doesSupportFeature(calendarDefinition))
+            SettingsTile(
+              title: (context) => AppLocalizations.of(context).calendarExport,
+              subtitle: (context) async => 'PDF, iCal, ICS, CSV',
+              icon: Icons.download_rounded,
+              screen: (context) => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const CalendarExport()),
               ),
             ),
-          ),
-        if (sph!.session.doesSupportFeature(timeTableDefinition))
-          SettingsTile(
-            title: (context) => AppLocalizations.of(context).customizeTimetable,
-            subtitle: (context) async =>
-                AppLocalizations.of(context).customizeTimetableDescription,
-            icon: Icons.timelapse,
-            screen: (context) => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const StudentTimetableSettings()),
+          if (sph!.session.doesSupportFeature(timeTableDefinition))
+            SettingsTile(
+              title: (context) =>
+                  AppLocalizations.of(context).customizeTimetable,
+              subtitle: (context) async =>
+                  AppLocalizations.of(context).customizeTimetableDescription,
+              icon: Icons.timelapse,
+              screen: (context) => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const StudentTimetableSettings(),
+                ),
+              ),
             ),
+        ],
+      ),
+    SettingsGroup(
+      tiles: [
+        SettingsTile(
+          title: (context) => AppLocalizations.of(context).userData,
+          subtitle: (context) async {
+            return AppLocalizations.of(context).ageNameClassList;
+          },
+          icon: Icons.account_circle_rounded,
+          screen: (context) => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => UserDataSettings()),
           ),
-      ]),
-    SettingsGroup(tiles: [
-      SettingsTile(
-        title: (context) => AppLocalizations.of(context).userData,
-        subtitle: (context) async {
-          return AppLocalizations.of(context).ageNameClassList;
-        },
-        icon: Icons.account_circle_rounded,
-        screen: (context) => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => UserDataSettings()),
         ),
-      ),
-    ]),
-    SettingsGroup(tiles: [
-      SettingsTile(
-        title: (context) => AppLocalizations.of(context).about,
-        subtitle: (context) async {
-          return AppLocalizations.of(context).contributorsLinksLicensesList;
-        },
-        icon: Icons.school_rounded,
-        screen: (context) => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => AboutSettings()),
+      ],
+    ),
+    SettingsGroup(
+      tiles: [
+        SettingsTile(
+          title: (context) => AppLocalizations.of(context).about,
+          subtitle: (context) async {
+            return AppLocalizations.of(context).contributorsLinksLicensesList;
+          },
+          icon: Icons.school_rounded,
+          screen: (context) => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => AboutSettings()),
+          ),
         ),
-      ),
-      SettingsTile(
-        icon: Icons.question_mark,
-        show: () async => true,
-        title: (context) => AppLocalizations.of(context).inThisUpdate,
-        subtitle: (context) async =>
-            AppLocalizations.of(context).showReleaseNotesForThisVersion,
-        screen: (context) async => showLocalUpdateInfo(context),
-      )
-    ]),
+        SettingsTile(
+          icon: Icons.question_mark,
+          show: () async => true,
+          title: (context) => AppLocalizations.of(context).inThisUpdate,
+          subtitle: (context) async =>
+              AppLocalizations.of(context).showReleaseNotesForThisVersion,
+          screen: (context) async => showLocalUpdateInfo(context),
+        ),
+      ],
+    ),
   ];
 
   SettingsTile? selectedTile;
@@ -215,7 +226,8 @@ class _SettingsScreenState extends SettingsColoursState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final isTablet = Responsive.isTablet(context);
-    final double availableHeight = MediaQuery.of(context).size.height -
+    final double availableHeight =
+        MediaQuery.of(context).size.height -
         kToolbarHeight -
         MediaQuery.of(context).padding.top;
 
@@ -233,12 +245,15 @@ class _SettingsScreenState extends SettingsColoursState<SettingsScreen> {
         itemCount: settingsTiles.length,
         itemBuilder: (context, groupIndex) {
           return Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 4.0,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              children: List.generate(settingsTiles[groupIndex].tiles.length,
-                  (tileIndex) {
+              children: List.generate(settingsTiles[groupIndex].tiles.length, (
+                tileIndex,
+              ) {
                 final tile = settingsTiles[groupIndex].tiles[tileIndex];
                 return SettingsTileWidget(
                   tile: tile,
@@ -303,7 +318,9 @@ class _SettingsScreenState extends SettingsColoursState<SettingsScreen> {
         } else if (tile.title(context) ==
             AppLocalizations.of(context).notifications) {
           return NotificationSettings(
-              accountCount: 1, showBackButton: !isTablet);
+            accountCount: 1,
+            showBackButton: !isTablet,
+          );
         } else if (tile.title(context) ==
             AppLocalizations.of(context).clearCache) {
           return CacheSettings(showBackButton: !isTablet);
@@ -324,19 +341,21 @@ class _SettingsScreenState extends SettingsColoursState<SettingsScreen> {
         } else if (tile.title(context) ==
             AppLocalizations.of(context).inThisUpdate) {
           return FutureBuilder(
-              future: showLocalUpdateInfo(context, dialog: false),
-              builder: (context, snapshot) {
-                if (snapshot.hasData && snapshot.data != null) {
-                  return Scaffold(
-                    appBar: LargeAppBar(
-                        showBackButton: false,
-                        backgroundColor: backgroundColor,
-                        title: Text(AppLocalizations.of(context).inThisUpdate)),
-                    body: snapshot.data as Widget,
-                  );
-                }
-                return const Center(child: CircularProgressIndicator());
-              });
+            future: showLocalUpdateInfo(context, dialog: false),
+            builder: (context, snapshot) {
+              if (snapshot.hasData && snapshot.data != null) {
+                return Scaffold(
+                  appBar: LargeAppBar(
+                    showBackButton: false,
+                    backgroundColor: backgroundColor,
+                    title: Text(AppLocalizations.of(context).inThisUpdate),
+                  ),
+                  body: snapshot.data as Widget,
+                );
+              }
+              return const Center(child: CircularProgressIndicator());
+            },
+          );
         }
         return Center(child: Text(AppLocalizations.of(context).noResults));
       },
@@ -354,27 +373,31 @@ class SettingsTileWidget extends StatefulWidget {
   final Function(SettingsTile)? onSelect;
   final bool preventNavigation;
 
-  const SettingsTileWidget(
-      {super.key,
-      required this.tile,
-      required this.foregroundColor,
-      required this.index,
-      required this.length,
-      this.disableSetState = false,
-      this.selected = false,
-      this.onSelect,
-      this.preventNavigation = false});
+  const SettingsTileWidget({
+    super.key,
+    required this.tile,
+    required this.foregroundColor,
+    required this.index,
+    required this.length,
+    this.disableSetState = false,
+    this.selected = false,
+    this.onSelect,
+    this.preventNavigation = false,
+  });
 
   static BorderRadius getRadius(int index, int length) {
     if (index == 0 && length > 1) {
       return BorderRadius.only(
-          topLeft: Radius.circular(12.0), topRight: Radius.circular(12.0));
+        topLeft: Radius.circular(12.0),
+        topRight: Radius.circular(12.0),
+      );
     } else if (index == 0) {
       return BorderRadius.circular(12.0);
     } else if (index == length - 1) {
       return BorderRadius.only(
-          bottomLeft: Radius.circular(12.0),
-          bottomRight: Radius.circular(12.0));
+        bottomLeft: Radius.circular(12.0),
+        bottomRight: Radius.circular(12.0),
+      );
     } else {
       return BorderRadius.zero;
     }
@@ -390,10 +413,7 @@ class _SettingsTileWidgetState extends State<SettingsTileWidget> {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-      future: Future.wait([
-        widget.tile.show(),
-        widget.tile.subtitle(context),
-      ]),
+      future: Future.wait([widget.tile.show(), widget.tile.subtitle(context)]),
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return _buildTile(subtitle);

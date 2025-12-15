@@ -16,8 +16,11 @@ import '../../../models/timetable.dart';
 class StudentTimetableSettings extends SettingsColours {
   final Function? openDrawerCb;
   final bool showBack;
-  const StudentTimetableSettings(
-      {super.key, this.openDrawerCb, this.showBack = true});
+  const StudentTimetableSettings({
+    super.key,
+    this.openDrawerCb,
+    this.showBack = true,
+  });
 
   @override
   State<StudentTimetableSettings> createState() =>
@@ -27,7 +30,9 @@ class StudentTimetableSettings extends SettingsColours {
 class _StudentTimetableSettingsState
     extends SettingsColoursState<StudentTimetableSettings> {
   List<TimetableDay> getSelectedPlan(
-      TimeTable data, TimeTableType selectedType) {
+    TimeTable data,
+    TimeTableType selectedType,
+  ) {
     if (selectedType == TimeTableType.own) {
       return data.planForOwn!;
     }
@@ -35,12 +40,13 @@ class _StudentTimetableSettingsState
   }
 
   void showCustomLessonDialog(
-      TimeTable currentTimetable,
-      updateSettings,
-      Map<String, dynamic> settings,
-      List<List<TimetableSubject>>? customLessons,
-      int currentDay,
-      {TimetableSubject? lesson}) {
+    TimeTable currentTimetable,
+    updateSettings,
+    Map<String, dynamic> settings,
+    List<List<TimetableSubject>>? customLessons,
+    int currentDay, {
+    TimetableSubject? lesson,
+  }) {
     List<TimeTableRow>? hours = currentTimetable.hours;
     if (hours == null || hours.length <= 1) {
       throw Exception('hours is null or too short');
@@ -63,27 +69,31 @@ class _StudentTimetableSettingsState
       nameController.text = lesson.name ?? '';
       teacherController.text = lesson.lehrer ?? '';
       roomController.text = lesson.raum ?? '';
-      startTime =
-          hours.firstWhere((hour) => hour.startTime == lesson.startTime);
+      startTime = hours.firstWhere(
+        (hour) => hour.startTime == lesson.startTime,
+      );
       endTime = hours.firstWhere((hour) => hour.endTime == lesson.endTime);
-      selectedWeek =
-          lesson.badge == null ? 0 : allBadges.indexOf(lesson.badge) + 1;
+      selectedWeek = lesson.badge == null
+          ? 0
+          : allBadges.indexOf(lesson.badge) + 1;
       duration = lesson.duration;
     }
 
     showModalBottomSheet(
-        showDragHandle: true,
-        useSafeArea: true,
-        context: context,
-        isScrollControlled: true,
-        builder: (context1) {
-          return Padding(
-            padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom + 32.0,
-                right: 16.0,
-                left: 16.0,
-                top: 16.0),
-            child: StatefulBuilder(builder: (context1, setState) {
+      showDragHandle: true,
+      useSafeArea: true,
+      context: context,
+      isScrollControlled: true,
+      builder: (context1) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom + 32.0,
+            right: 16.0,
+            left: 16.0,
+            top: 16.0,
+          ),
+          child: StatefulBuilder(
+            builder: (context1, setState) {
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 spacing: 16.0,
@@ -95,10 +105,9 @@ class _StudentTimetableSettingsState
                       setState(() {});
                     },
                     decoration: InputDecoration(
-                        labelText:
-                            '${AppLocalizations.of(context).lessonName}*',
-                        helperText:
-                            '*${AppLocalizations.of(context).required}'),
+                      labelText: '${AppLocalizations.of(context).lessonName}*',
+                      helperText: '*${AppLocalizations.of(context).required}',
+                    ),
                   ),
                   Row(
                     spacing: 8.0,
@@ -110,16 +119,18 @@ class _StudentTimetableSettingsState
                             setState(() {});
                           },
                           decoration: InputDecoration(
-                              labelText: AppLocalizations.of(context).teacher),
+                            labelText: AppLocalizations.of(context).teacher,
+                          ),
                         ),
                       ),
                       Expanded(
                         child: TextField(
                           controller: roomController,
                           decoration: InputDecoration(
-                              labelText: AppLocalizations.of(context).room),
+                            labelText: AppLocalizations.of(context).room,
+                          ),
                         ),
-                      )
+                      ),
                     ],
                   ),
                   Row(
@@ -130,18 +141,22 @@ class _StudentTimetableSettingsState
                         initialSelection: startTime.label,
                         onSelected: (value) {
                           setState(() {
-                            startTime =
-                                hours.firstWhere((hour) => hour.label == value);
-                            duration = hours.indexOf(endTime) -
+                            startTime = hours.firstWhere(
+                              (hour) => hour.label == value,
+                            );
+                            duration =
+                                hours.indexOf(endTime) -
                                 hours.indexOf(startTime) +
                                 1;
                           });
                         },
                         dropdownMenuEntries: hours
-                            .map((hour) => DropdownMenuEntry(
-                                  value: hour.label,
-                                  label: hour.label,
-                                ))
+                            .map(
+                              (hour) => DropdownMenuEntry(
+                                value: hour.label,
+                                label: hour.label,
+                              ),
+                            )
                             .toList(),
                       ),
                       Text('-'),
@@ -150,18 +165,22 @@ class _StudentTimetableSettingsState
                         initialSelection: endTime.label,
                         onSelected: (value) {
                           setState(() {
-                            endTime =
-                                hours.firstWhere((hour) => hour.label == value);
-                            duration = hours.indexOf(endTime) -
+                            endTime = hours.firstWhere(
+                              (hour) => hour.label == value,
+                            );
+                            duration =
+                                hours.indexOf(endTime) -
                                 hours.indexOf(startTime) +
                                 1;
                           });
                         },
                         dropdownMenuEntries: hours
-                            .map((hour) => DropdownMenuEntry(
-                                  value: hour.label,
-                                  label: hour.label,
-                                ))
+                            .map(
+                              (hour) => DropdownMenuEntry(
+                                value: hour.label,
+                                label: hour.label,
+                              ),
+                            )
                             .toList(),
                       ),
                       if (allBadges.isNotEmpty)
@@ -170,82 +189,94 @@ class _StudentTimetableSettingsState
                           label: Text(AppLocalizations.of(context).week),
                           initialSelection: [
                             noBadge,
-                            ...allBadges
+                            ...allBadges,
                           ][selectedWeek],
                           onSelected: (value) {
                             setState(() {
-                              selectedWeek =
-                                  [noBadge, ...allBadges].indexOf(value!);
+                              selectedWeek = [
+                                noBadge,
+                                ...allBadges,
+                              ].indexOf(value!);
                             });
                           },
                           dropdownMenuEntries: [noBadge, ...allBadges]
-                              .map((badge) => DropdownMenuEntry(
-                                    value: badge,
-                                    label: badge != noBadge
-                                        ? AppLocalizations.of(context)
-                                            .timetableWeek(badge ?? '')
-                                        : badge!,
-                                  ))
+                              .map(
+                                (badge) => DropdownMenuEntry(
+                                  value: badge,
+                                  label: badge != noBadge
+                                      ? AppLocalizations.of(
+                                          context,
+                                        ).timetableWeek(badge ?? '')
+                                      : badge!,
+                                ),
+                              )
                               .toList(),
-                        )
+                        ),
                     ],
                   ),
                   ElevatedButton(
-                      onPressed: (nameController.text.isNotEmpty &&
-                              hours.indexOf(startTime) <=
-                                  hours.indexOf(endTime))
-                          ? () {
-                              TimetableSubject newLesson = TimetableSubject(
-                                  id:
-                                      'custom${nameController.text.replaceAll('-', '_')}-$currentDay-${startTime.startTime.hour}-${startTime.startTime.minute}',
-                                  name: nameController.text,
-                                  raum: roomController.text.isEmpty
-                                      ? null
-                                      : roomController.text,
-                                  lehrer: teacherController.text,
-                                  badge: selectedWeek == 0
-                                      ? null
-                                      : allBadges[selectedWeek - 1],
-                                  duration: duration,
-                                  startTime: startTime.startTime,
-                                  endTime: endTime.endTime,
-                                  stunde: hours.indexOf(startTime));
+                    onPressed:
+                        (nameController.text.isNotEmpty &&
+                            hours.indexOf(startTime) <= hours.indexOf(endTime))
+                        ? () {
+                            TimetableSubject newLesson = TimetableSubject(
+                              id: 'custom${nameController.text.replaceAll('-', '_')}-$currentDay-${startTime.startTime.hour}-${startTime.startTime.minute}',
+                              name: nameController.text,
+                              raum: roomController.text.isEmpty
+                                  ? null
+                                  : roomController.text,
+                              lehrer: teacherController.text,
+                              badge: selectedWeek == 0
+                                  ? null
+                                  : allBadges[selectedWeek - 1],
+                              duration: duration,
+                              startTime: startTime.startTime,
+                              endTime: endTime.endTime,
+                              stunde: hours.indexOf(startTime),
+                            );
 
-                              if (settings['custom-lessons'] == null) {
-                                settings['custom-lessons'] = ',,,,,,,'
-                                    .split(',')
-                                    .map((_) => [])
-                                    .toList();
-                              }
-
-                              List<List<TimetableSubject>>? days =
-                                  TimeTableHelper.getCustomLessons(settings);
-
-                              if (days == null) {
-                                throw Exception('days is null');
-                              }
-
-                              if (lesson != null) {
-                                days[currentDay].remove(lesson);
-                              }
-                              days[currentDay].add(newLesson);
-
-                              updateSettings('custom-lessons', days);
-                              Navigator.of(context).pop();
-                              showSnackbar(
-                                  context,
-                                  AppLocalizations.of(context)
-                                      .lessonAdded(newLesson.name!));
+                            if (settings['custom-lessons'] == null) {
+                              settings['custom-lessons'] = ',,,,,,,'
+                                  .split(',')
+                                  .map((_) => [])
+                                  .toList();
                             }
-                          : null,
-                      child: Text(lesson == null
+
+                            List<List<TimetableSubject>>? days =
+                                TimeTableHelper.getCustomLessons(settings);
+
+                            if (days == null) {
+                              throw Exception('days is null');
+                            }
+
+                            if (lesson != null) {
+                              days[currentDay].remove(lesson);
+                            }
+                            days[currentDay].add(newLesson);
+
+                            updateSettings('custom-lessons', days);
+                            Navigator.of(context).pop();
+                            showSnackbar(
+                              context,
+                              AppLocalizations.of(
+                                context,
+                              ).lessonAdded(newLesson.name!),
+                            );
+                          }
+                        : null,
+                    child: Text(
+                      lesson == null
                           ? AppLocalizations.of(context).addLesson
-                          : AppLocalizations.of(context).editLesson)),
+                          : AppLocalizations.of(context).editLesson,
+                    ),
+                  ),
                 ],
               );
-            }),
-          );
-        });
+            },
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -276,8 +307,9 @@ class _StudentTimetableSettingsState
             List<List<TimetableSubject>>? customLessons =
                 TimeTableHelper.getCustomLessons(settings);
 
-            List<String> weekDays =
-                DateFormat.EEEE(Platform.localeName).dateSymbols.WEEKDAYS;
+            List<String> weekDays = DateFormat.EEEE(
+              Platform.localeName,
+            ).dateSymbols.WEEKDAYS;
             weekDays = weekDays.sublist(1)..add(weekDays[0]);
 
             return DefaultTabController(
@@ -288,8 +320,9 @@ class _StudentTimetableSettingsState
                   TabBar(
                     isScrollable: true,
                     tabAlignment: TabAlignment.center,
-                    tabs:
-                        weekDays.map((dayName) => Tab(text: dayName)).toList(),
+                    tabs: weekDays
+                        .map((dayName) => Tab(text: dayName))
+                        .toList(),
                   ),
                   Expanded(
                     child: TabBarView(
@@ -313,11 +346,12 @@ class _StudentTimetableSettingsState
                                       Padding(
                                         padding: const EdgeInsets.all(8.0),
                                         child: Text(
-                                          AppLocalizations.of(context)
-                                              .hiddenLessons,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .labelLarge,
+                                          AppLocalizations.of(
+                                            context,
+                                          ).hiddenLessons,
+                                          style: Theme.of(
+                                            context,
+                                          ).textTheme.labelLarge,
                                         ),
                                       ),
                                       if (dayLessons.isNotEmpty)
@@ -333,9 +367,10 @@ class _StudentTimetableSettingsState
                                               onPressed: () {
                                                 setState(() {
                                                   updateSettings(
-                                                      'hidden-lessons',
-                                                      settings['hidden-lessons']
-                                                        ..remove(lesson.id));
+                                                    'hidden-lessons',
+                                                    settings['hidden-lessons']
+                                                      ..remove(lesson.id),
+                                                  );
                                                 });
                                               },
                                             ),
@@ -345,17 +380,19 @@ class _StudentTimetableSettingsState
                                         Padding(
                                           padding: const EdgeInsets.all(8.0),
                                           child: Text(
-                                            AppLocalizations.of(context)
-                                                .hiddenLessonsDescription,
+                                            AppLocalizations.of(
+                                              context,
+                                            ).hiddenLessonsDescription,
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .bodySmall!
                                                 .copyWith(
-                                                    color: Theme.of(context)
-                                                        .colorScheme
-                                                        .onSurfaceVariant),
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .onSurfaceVariant,
+                                                ),
                                           ),
-                                        )
+                                        ),
                                     ],
                                   ),
                                 ),
@@ -367,11 +404,12 @@ class _StudentTimetableSettingsState
                                       Padding(
                                         padding: const EdgeInsets.all(8.0),
                                         child: Text(
-                                          AppLocalizations.of(context)
-                                              .customLessons,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .labelLarge,
+                                          AppLocalizations.of(
+                                            context,
+                                          ).customLessons,
+                                          style: Theme.of(
+                                            context,
+                                          ).textTheme.labelLarge,
                                         ),
                                       ),
                                       if (customDayLessons != null &&
@@ -390,12 +428,13 @@ class _StudentTimetableSettingsState
                                                   icon: Icon(Icons.edit),
                                                   onPressed: () =>
                                                       showCustomLessonDialog(
-                                                          timetable,
-                                                          updateSettings,
-                                                          settings,
-                                                          customLessons,
-                                                          currentDay,
-                                                          lesson: lesson),
+                                                        timetable,
+                                                        updateSettings,
+                                                        settings,
+                                                        customLessons,
+                                                        currentDay,
+                                                        lesson: lesson,
+                                                      ),
                                                 ),
                                                 IconButton(
                                                   icon: Icon(Icons.delete),
@@ -404,8 +443,9 @@ class _StudentTimetableSettingsState
                                                       customLessons![currentDay]
                                                           .remove(lesson);
                                                       updateSettings(
-                                                          'custom-lessons',
-                                                          customLessons);
+                                                        'custom-lessons',
+                                                        customLessons,
+                                                      );
                                                     });
                                                   },
                                                 ),
@@ -415,19 +455,25 @@ class _StudentTimetableSettingsState
                                         }),
                                       Padding(
                                         padding: const EdgeInsets.symmetric(
-                                            horizontal: 8.0, vertical: 2.0),
+                                          horizontal: 8.0,
+                                          vertical: 2.0,
+                                        ),
                                         child: ElevatedButton(
-                                            onPressed: () =>
-                                                showCustomLessonDialog(
-                                                    timetable,
-                                                    updateSettings,
-                                                    settings,
-                                                    customLessons,
-                                                    currentDay),
-                                            child: Text(
-                                                AppLocalizations.of(context)
-                                                    .addLesson)),
-                                      )
+                                          onPressed: () =>
+                                              showCustomLessonDialog(
+                                                timetable,
+                                                updateSettings,
+                                                settings,
+                                                customLessons,
+                                                currentDay,
+                                              ),
+                                          child: Text(
+                                            AppLocalizations.of(
+                                              context,
+                                            ).addLesson,
+                                          ),
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -439,41 +485,40 @@ class _StudentTimetableSettingsState
                     ),
                   ),
                   Padding(
-                      padding: const EdgeInsets.only(
-                          left: 16.0, right: 16.0, bottom: 32.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SizedBox(
-                            height: 28.0,
-                          ),
-                          Icon(
-                            Icons.info_outline_rounded,
-                            size: 20.0,
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
-                          SizedBox(
-                            height: 8.0,
-                          ),
-                          Text(
-                            AppLocalizations.of(context)
-                                .customizeTimetableDisclaimer,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall!
-                                .copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant),
-                          )
-                        ],
-                      )),
+                    padding: const EdgeInsets.only(
+                      left: 16.0,
+                      right: 16.0,
+                      bottom: 32.0,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(height: 28.0),
+                        Icon(
+                          Icons.info_outline_rounded,
+                          size: 20.0,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                        SizedBox(height: 8.0),
+                        Text(
+                          AppLocalizations.of(
+                            context,
+                          ).customizeTimetableDisclaimer,
+                          style: Theme.of(context).textTheme.bodySmall!
+                              .copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             );
           },
-        )
+        ),
       ],
     );
   }

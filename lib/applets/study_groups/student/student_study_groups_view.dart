@@ -17,41 +17,41 @@ class _StudentStudyGroupsViewState extends State<StudentStudyGroupsView> {
   @override
   Widget build(BuildContext context) {
     return CombinedAppletBuilder(
-        parser: sph!.parser.studyGroupsStudentParser,
-        phpUrl: studyGroupsDefinition.appletPhpUrl,
-        settingsDefaults: studyGroupsDefinition.settingsDefaults,
-        accountType: sph!.session.accountType,
-        showErrorAppBar: true,
-        loadingAppBar: AppBar(),
-        builder:
-            (context, data, accountType, settings, updateSetting, refresh) {
-          return Scaffold(
-            appBar: AppBar(
-              title: settings['showExams'] != 'true'
-                  ? Text(AppLocalizations.of(context).studyGroups)
-                  : Text(AppLocalizations.of(context).exams),
-              actions: [
-                settings['showExams'] != 'true'
-                    ? Tooltip(
-                        message: AppLocalizations.of(context).exams,
-                        child: IconButton(
-                          icon: Icon(Icons.article_outlined),
-                          onPressed: () => updateSetting('showExams', 'true'),
-                        ),
-                      )
-                    : Tooltip(
-                        message: AppLocalizations.of(context).studyGroups,
-                        child: IconButton(
-                          icon: Icon(Icons.groups_outlined),
-                          onPressed: () => updateSetting('showExams', 'false'),
-                        ),
+      parser: sph!.parser.studyGroupsStudentParser,
+      phpUrl: studyGroupsDefinition.appletPhpUrl,
+      settingsDefaults: studyGroupsDefinition.settingsDefaults,
+      accountType: sph!.session.accountType,
+      showErrorAppBar: true,
+      loadingAppBar: AppBar(),
+      builder: (context, data, accountType, settings, updateSetting, refresh) {
+        return Scaffold(
+          appBar: AppBar(
+            title: settings['showExams'] != 'true'
+                ? Text(AppLocalizations.of(context).studyGroups)
+                : Text(AppLocalizations.of(context).exams),
+            actions: [
+              settings['showExams'] != 'true'
+                  ? Tooltip(
+                      message: AppLocalizations.of(context).exams,
+                      child: IconButton(
+                        icon: Icon(Icons.article_outlined),
+                        onPressed: () => updateSetting('showExams', 'true'),
                       ),
-              ],
-            ),
-            body: settings['showExams'] == 'true'
-                ? StudentExamsView(exams: data.sortedExams)
-                : StudentCourseView(studyGroup: data.groups),
-          );
-        });
+                    )
+                  : Tooltip(
+                      message: AppLocalizations.of(context).studyGroups,
+                      child: IconButton(
+                        icon: Icon(Icons.groups_outlined),
+                        onPressed: () => updateSetting('showExams', 'false'),
+                      ),
+                    ),
+            ],
+          ),
+          body: settings['showExams'] == 'true'
+              ? StudentExamsView(exams: data.sortedExams)
+              : StudentCourseView(studyGroup: data.groups),
+        );
+      },
+    );
   }
 }

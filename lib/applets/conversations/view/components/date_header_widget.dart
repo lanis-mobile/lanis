@@ -15,13 +15,18 @@ class DateHeaderWidget extends StatelessWidget {
         Card(
           margin: const EdgeInsets.only(top: 16.0, bottom: 4.0),
           child: Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-            child: Text(DateFormat(
-                    "d. MMMM y", Localizations.localeOf(context).languageCode)
-                .format(header.date)),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 12.0,
+              vertical: 8.0,
+            ),
+            child: Text(
+              DateFormat(
+                "d. MMMM y",
+                Localizations.localeOf(context).languageCode,
+              ).format(header.date),
+            ),
           ),
-        )
+        ),
       ],
     );
   }
