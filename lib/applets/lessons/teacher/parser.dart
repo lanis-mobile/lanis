@@ -16,9 +16,8 @@ class LessonsTeacherParser extends AppletParser<LessonsTeacherHome> {
 
   @override
   Future<LessonsTeacherHome> getHome() async {
-    final response = await sph.session.dio.get(
-      'https://start.schulportal.hessen.de/meinunterricht.php?jump=no',
-    );
+    final response = await sph.session.dio
+        .get('https://start.schulportal.hessen.de/meinunterricht.php?jump=no');
     final Document document = parse(response.data);
     final Element? courseFoldersElement = document.getElementById('hefte');
     if (courseFoldersElement == null) {
@@ -33,14 +32,12 @@ class LessonsTeacherParser extends AppletParser<LessonsTeacherHome> {
           .querySelector('div.thumbnail>div.caption>h3')!
           .text
           .trim();
-      final List<Element> tableRows = courseFolderElement
-          .querySelector('div.thumbnail>div.row')!
-          .children;
+      final List<Element> tableRows =
+          courseFolderElement.querySelector('div.thumbnail>div.row')!.children;
       final String courseTopic = tableRows[0].text.trim();
       final String lastEntryTopic = tableRows[1].text.trim();
       final String lastEntryDate = tableRows[2].text.trim();
-      final String homework =
-          courseFolderElement
+      final String homework = courseFolderElement
               .querySelector('div.thumbnail>p>span.homework')
               ?.text
               .trim() ??
@@ -51,8 +48,7 @@ class LessonsTeacherParser extends AppletParser<LessonsTeacherHome> {
           ? DateFormat('dd.MM.yyyy').tryParse(lastEntryDate)
           : null;
 
-      courseFolders.add(
-        CourseFolderStartPage(
+      courseFolders.add(CourseFolderStartPage(
           id: RegExp(r'id=(\d+)').firstMatch(url)!.group(1)!,
           name: title,
           topic: courseTopic,
@@ -62,13 +58,10 @@ class LessonsTeacherParser extends AppletParser<LessonsTeacherHome> {
                   date: lastEntryDateTime!,
                   homework: homework != ''
                       ? (homework != 'Keine Hausaufgaben hinterlegt!'
-                            ? homework
-                            : null)
-                      : null,
-                )
-              : null,
-        ),
-      );
+                          ? homework
+                          : null)
+                      : null)
+              : null));
     }
 
     return LessonsTeacherHome(courseFolders: courseFolders);
@@ -76,26 +69,22 @@ class LessonsTeacherParser extends AppletParser<LessonsTeacherHome> {
 
   Future<CourseFolderDetails> getCourseFolderDetails(String courseId) async {
     final response = await sph.session.dio.get(
-      'https://start.schulportal.hessen.de/meinunterricht.php?a=view&id=$courseId',
-    );
+        'https://start.schulportal.hessen.de/meinunterricht.php?a=view&id=$courseId');
     final Document document = parse(response.data);
 
     List<CourseFolderHistoryEntry> history = [];
     final historyTable = document.getElementById('historyTable');
     for (Element entryRow in historyTable?.children[1].children ?? []) {
       // extract dd.MM.yyyy via regex from entryRow.children[0].text
-      final String dateStr =
-          RegExp(
-            r'(\d{2}\.\d{2}\.\d{4})',
-          ).firstMatch(entryRow.children[0].text)?.group(1) ??
+      final String dateStr = RegExp(r'(\d{2}\.\d{2}\.\d{4})')
+              .firstMatch(entryRow.children[0].text)
+              ?.group(1) ??
           '';
 
-      final contentResults = entryRow.children[2].getElementsByClassName(
-        'far fa-comment-alt',
-      );
-      final homeworkResults = entryRow.children[2].getElementsByClassName(
-        'fas fa-home',
-      );
+      final contentResults =
+          entryRow.children[2].getElementsByClassName('far fa-comment-alt');
+      final homeworkResults =
+          entryRow.children[2].getElementsByClassName('fas fa-home');
 
       List<CourseFolderHistoryEntryFile> remoteFiles = [];
       for (final fileDiv in entryRow.getElementsByClassName('file')) {
@@ -103,49 +92,44 @@ class LessonsTeacherParser extends AppletParser<LessonsTeacherHome> {
         final fileId = fileDiv.attributes['data-entry']!;
         final url =
             'https://start.schulportal.hessen.de/meinunterricht.php?a=downloadFile&id=$courseId&e=$fileId&f=$fileName';
-        remoteFiles.add(
-          CourseFolderHistoryEntryFile(
-            name: fileName,
-            extension: fileDiv.attributes['data-extension']!,
-            isVisibleForStudents: fileDiv
-                .getElementsByClassName('fa fa-child fileVisibility')[0]
-                .classes
-                .contains('on'),
-            url: Uri.parse(url),
-            entryId: fileId,
-          ),
-        );
+        remoteFiles.add(CourseFolderHistoryEntryFile(
+          name: fileName,
+          extension: fileDiv.attributes['data-extension']!,
+          isVisibleForStudents: fileDiv
+              .getElementsByClassName('fa fa-child fileVisibility')[0]
+              .classes
+              .contains('on'),
+          url: Uri.parse(url),
+          entryId: fileId,
+        ));
       }
 
-      history.add(
-        CourseFolderHistoryEntry(
-          id: entryRow.attributes['data-entry']!,
-          topic: entryRow.getElementsByClassName('thema')[0].text.trim(),
-          date: DateFormat('dd.MM.yyyy').parse(dateStr),
-          schoolHours: SubstitutionsParser.parseHours(
-            entryRow.children[0].getElementsByTagName('small')[0].text.trim(),
-          ),
-          isAvailableInAdvance:
-              entryRow.children[0].querySelector('i.fa.fa-child') != null,
-          files: remoteFiles,
-          attendanceActionRequired: entryRow.children[3]
-              .querySelectorAll('div.btn-group')
-              .last
-              .children[0]
-              .classes
-              .contains('btn-danger'),
-          content: contentResults.isNotEmpty
-              ? contentResults[0].nextElementSibling?.text
-              : null,
-          homework: homeworkResults.isNotEmpty
-              ? homeworkResults[0].nextElementSibling?.text
-              : null,
-          studentUploadFileCount: entryRow.children[3]
-              .querySelectorAll('div.btn-group')[1]
-              .querySelector('button.btn>span.badge')
-              ?.text,
-        ),
-      );
+      history.add(CourseFolderHistoryEntry(
+        id: entryRow.attributes['data-entry']!,
+        topic: entryRow.getElementsByClassName('thema')[0].text.trim(),
+        date: DateFormat('dd.MM.yyyy').parse(dateStr),
+        schoolHours: SubstitutionsParser.parseHours(
+            entryRow.children[0].getElementsByTagName('small')[0].text.trim()),
+        isAvailableInAdvance:
+            entryRow.children[0].querySelector('i.fa.fa-child') != null,
+        files: remoteFiles,
+        attendanceActionRequired: entryRow.children[3]
+            .querySelectorAll('div.btn-group')
+            .last
+            .children[0]
+            .classes
+            .contains('btn-danger'),
+        content: contentResults.isNotEmpty
+            ? contentResults[0].nextElementSibling?.text
+            : null,
+        homework: homeworkResults.isNotEmpty
+            ? homeworkResults[0].nextElementSibling?.text
+            : null,
+        studentUploadFileCount: entryRow.children[3]
+            .querySelectorAll('div.btn-group')[1]
+            .querySelector('button.btn>span.badge')
+            ?.text,
+      ));
     }
 
     Element? countAndNameElement = document.querySelector('#content>h1>small');
@@ -153,8 +137,7 @@ class LessonsTeacherParser extends AppletParser<LessonsTeacherHome> {
 
     final writeBox = document.getElementById('writeBox')!;
     final entryOptionIcons = writeBox.querySelectorAll(
-      'div.form-group>label.col-sm-3.control-label>span.fa',
-    );
+        'div.form-group>label.col-sm-3.control-label>span.fa');
     List<String> selectableSchoolHours = document
         .getElementById('stundenVon')!
         .children
@@ -167,36 +150,29 @@ class LessonsTeacherParser extends AppletParser<LessonsTeacherHome> {
     return CourseFolderDetails(
       courseId: courseId,
       newEntryConstraints: CourseFolderNewEntryConstraints(
-        topicVisibleForStudents: entryOptionIcons[2].classes.contains(
-          'fa-child',
-        ),
-        contentVisibleForStudents: entryOptionIcons[3].classes.contains(
-          'fa-child',
-        ),
-        homeworkVisibleForStudents: entryOptionIcons[4].classes.contains(
-          'fa-child',
-        ),
+        topicVisibleForStudents:
+            entryOptionIcons[2].classes.contains('fa-child'),
+        contentVisibleForStudents:
+            entryOptionIcons[3].classes.contains('fa-child'),
+        homeworkVisibleForStudents:
+            entryOptionIcons[4].classes.contains('fa-child'),
         schoolHours: selectableSchoolHours,
       ),
-      courseName: document
-          .getElementsByTagName('title')[0]
-          .text
-          .split('-')[0]
-          .trim(),
+      courseName:
+          document.getElementsByTagName('title')[0].text.split('-')[0].trim(),
       studentCount: int.parse(text.trim().split('-')[0].trim()),
       learningGroupsUrl: Uri.tryParse(
-        document.querySelector('#content>h1>small>a')?.attributes['href'] ?? '',
-      ),
-      courseTopic:
-          (document
-                      .querySelector('#content>h1')
-                      ?.children
-                      .last
-                      .text
-                      .trim()
-                      .replaceFirst('Thema:', '') ??
-                  '')
-              .trim(),
+          document.querySelector('#content>h1>small>a')?.attributes['href'] ??
+              ''),
+      courseTopic: (document
+                  .querySelector('#content>h1')
+                  ?.children
+                  .last
+                  .text
+                  .trim()
+                  .replaceFirst('Thema:', '') ??
+              '')
+          .trim(),
       history: history,
     );
   }
@@ -268,7 +244,7 @@ class LessonsTeacherParser extends AppletParser<LessonsTeacherHome> {
             "Sec-Fetch-Site": "same-origin",
             "User-Agent":
                 "Mozilla/5.0 (X11; Linux x86_64; rv:133.0) Gecko/20100101 Firefox/133.0",
-            "X-Requested-With": "XMLHttpRequest",
+            "X-Requested-With": "XMLHttpRequest"
           },
         ),
       );
@@ -292,10 +268,8 @@ class LessonsTeacherParser extends AppletParser<LessonsTeacherHome> {
 
     // password has to be encoded correctly, du to special characters
     final encodedData = data.entries
-        .map(
-          (e) =>
-              '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}',
-        )
+        .map((e) =>
+            '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}')
         .join('&');
 
     final response = await sph.session.dio.post(

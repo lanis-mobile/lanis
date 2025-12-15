@@ -15,7 +15,7 @@ final calendarDefinition = AppletDefinition(
   supportedAccountTypes: [
     AccountType.student,
     AccountType.teacher,
-    AccountType.parent,
+    AccountType.parent
   ],
   allowOffline: false,
   settingsDefaults: {},

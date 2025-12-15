@@ -12,13 +12,12 @@ class CourseFolderHistoryEntryFileChip extends StatefulWidget {
   final String courseId;
   final void Function(bool visibility) onVisibilityChanged;
   final void Function() onFileDeleted;
-  const CourseFolderHistoryEntryFileChip({
-    super.key,
-    required this.file,
-    required this.courseId,
-    required this.onVisibilityChanged,
-    required this.onFileDeleted,
-  });
+  const CourseFolderHistoryEntryFileChip(
+      {super.key,
+      required this.file,
+      required this.courseId,
+      required this.onVisibilityChanged,
+      required this.onFileDeleted});
 
   @override
   State<CourseFolderHistoryEntryFileChip> createState() =>
@@ -41,32 +40,27 @@ class _CourseFolderHistoryEntryFileChipState
       queryParameters: body,
       data: body,
       options: Options(
-        contentType: "application/x-www-form-urlencoded; charset=UTF-8",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-          "X-Requested-With": "XMLHttpRequest",
-        },
-      ),
+          contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "X-Requested-With": "XMLHttpRequest",
+          }),
     );
     final String responseString = response.data.toString();
     if (responseString == '"1"') {
       widget.onVisibilityChanged(!widget.file.isVisibleForStudents);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Sichtbarkeit erfolgreich geändert'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Sichtbarkeit erfolgreich geändert'),
+          backgroundColor: Colors.green,
+        ));
       }
     } else {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Fehler beim Ändern der Sichtbarkeit'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Fehler beim Ändern der Sichtbarkeit'),
+          backgroundColor: Colors.red,
+        ));
       }
     }
   }
@@ -114,32 +108,27 @@ class _CourseFolderHistoryEntryFileChipState
       queryParameters: data,
       data: data,
       options: Options(
-        contentType: "application/x-www-form-urlencoded; charset=UTF-8",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-          "X-Requested-With": "XMLHttpRequest",
-        },
-      ),
+          contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "X-Requested-With": "XMLHttpRequest",
+          }),
     );
     final String responseString = response.data.toString();
     if (responseString == '"1"') {
       widget.onFileDeleted();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Datei erfolgreich gelöscht'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Datei erfolgreich gelöscht'),
+          backgroundColor: Colors.green,
+        ));
       }
     } else {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Fehler beim Löschen der Datei'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Fehler beim Löschen der Datei'),
+          backgroundColor: Colors.red,
+        ));
       }
     }
   }
@@ -158,9 +147,10 @@ class _CourseFolderHistoryEntryFileChipState
           ),
           Text(
             widget.file.name,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSecondary,
-            ),
+            style: Theme.of(context)
+                .textTheme
+                .bodyMedium
+                ?.copyWith(color: Theme.of(context).colorScheme.onSecondary),
             overflow: TextOverflow.fade,
           ),
           Icon(
@@ -176,8 +166,8 @@ class _CourseFolderHistoryEntryFileChipState
       ),
       backgroundColor: Theme.of(context).colorScheme.secondary,
       labelStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-        color: Theme.of(context).colorScheme.onSecondary,
-      ),
+            color: Theme.of(context).colorScheme.onSecondary,
+          ),
       onPressed: () async {
         final RenderBox button = context.findRenderObject() as RenderBox;
         final RenderBox overlay =
@@ -185,10 +175,8 @@ class _CourseFolderHistoryEntryFileChipState
         final RelativeRect position = RelativeRect.fromRect(
           Rect.fromPoints(
             button.localToGlobal(Offset.zero, ancestor: overlay),
-            button.localToGlobal(
-              button.size.bottomRight(Offset.zero),
-              ancestor: overlay,
-            ),
+            button.localToGlobal(button.size.bottomRight(Offset.zero),
+                ancestor: overlay),
           ),
           Offset.zero & overlay.size,
         );
@@ -214,11 +202,10 @@ class _CourseFolderHistoryEntryFileChipState
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    widget.file.isVisibleForStudents
-                        ? Icons.visibility_off
-                        : Icons.visibility,
-                    size: 16,
-                  ),
+                      widget.file.isVisibleForStudents
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                      size: 16),
                   SizedBox(width: 4),
                   Text('Sichtbarkeit (SuS) ändern'),
                 ],
@@ -241,10 +228,8 @@ class _CourseFolderHistoryEntryFileChipState
           switch (result) {
             case 'open':
               if (context.mounted)
-                showFileModal(
-                  context,
-                  FileInfo(name: widget.file.name, url: widget.file.url),
-                );
+                showFileModal(context,
+                    FileInfo(name: widget.file.name, url: widget.file.url));
               break;
             case 'visibility':
               changeRemoteVisibility();

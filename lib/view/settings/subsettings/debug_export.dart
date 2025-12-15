@@ -35,151 +35,144 @@ class _DebugExportState extends State<DebugExport> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Debug Export')),
+      appBar: AppBar(
+        title: Text('Debug Export'),
+      ),
       body: ListView(
         children: [
           ListTile(
-            leading: Icon(Icons.warning, color: Colors.red),
+            leading: Icon(
+              Icons.warning,
+              color: Colors.red,
+            ),
             title: Text('UFFGEPASST!'),
             subtitle: Text(
-              'Über diese Sektion kannst du Debug-Daten exportieren. Versende diese Daten nur an vertrauenswürdige Entwickler. Lösche die Daten, sobald du sie nicht mehr benötigst. Sie können sensible Informationen enthalten, die die Schule und dich betreffen.',
-            ),
+                'Über diese Sektion kannst du Debug-Daten exportieren. Versende diese Daten nur an vertrauenswürdige Entwickler. Lösche die Daten, sobald du sie nicht mehr benötigst. Sie können sensible Informationen enthalten, die die Schule und dich betreffen.'),
           ),
           ListTile(
             leading: Icon(Icons.contact_mail),
             title: Text('Mit wem hast du Kontakt?'),
             subtitle: Text(
-              'Wenn du Debug-Daten exportierst, stelle sicher, dass du sie ausschließlich an lanis-mobile@alessioc42.dev sendest. Diese E-Mail-Adresse wird von dem Hauptentwickler betreut. Sende die Daten auf keinen Fall an andere E-Mail-Adressen oder über andere Wege!',
-            ),
+                'Wenn du Debug-Daten exportierst, stelle sicher, dass du sie ausschließlich an lanis-mobile@alessioc42.dev sendest. Diese E-Mail-Adresse wird von dem Hauptentwickler betreut. Sende die Daten auf keinen Fall an andere E-Mail-Adressen oder über andere Wege!'),
           ),
           Divider(),
           Form(
-            key: formKey,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: Column(
-                spacing: 8.0,
-                children: [
-                  DropdownButtonFormField<String>(
-                    decoration: InputDecoration(
-                      labelText: 'HTTP Method',
-                      border: OutlineInputBorder(),
+              key: formKey,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Column(
+                  spacing: 8.0,
+                  children: [
+                    DropdownButtonFormField<String>(
+                      decoration: InputDecoration(
+                        labelText: 'HTTP Method',
+                        border: OutlineInputBorder(),
+                      ),
+                      initialValue: 'GET',
+                      items: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
+                          .map((method) => DropdownMenuItem(
+                                value: method,
+                                child: Text(method),
+                              ))
+                          .toList(),
+                      onChanged: (value) {
+                        methodController.text = value ?? 'GET';
+                      },
                     ),
-                    initialValue: 'GET',
-                    items: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
-                        .map(
-                          (method) => DropdownMenuItem(
-                            value: method,
-                            child: Text(method),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (value) {
-                      methodController.text = value ?? 'GET';
-                    },
-                  ),
-                  TextFormField(
-                    controller: urlController,
-                    decoration: InputDecoration(
-                      labelText: 'URL',
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter a URL';
-                      }
-                      return null;
-                    },
-                  ),
-                  TextFormField(
-                    controller: headersController,
-                    decoration: InputDecoration(
-                      labelText: 'Headers (JSON: { "key": "value" })',
-                      border: OutlineInputBorder(),
-                    ),
-                    maxLines: 2,
-                  ),
-                  TextFormField(
-                    controller: queryParamsController,
-                    decoration: InputDecoration(
-                      labelText: 'Query Params (JSON: { "key": "value" })',
-                      border: OutlineInputBorder(),
-                    ),
-                    maxLines: 2,
-                  ),
-                  TextFormField(
-                    controller: bodyController,
-                    decoration: InputDecoration(
-                      labelText: 'Body (for POST/PUT/PATCH)',
-                      border: OutlineInputBorder(),
-                    ),
-                    maxLines: 4,
-                  ),
-                  CheckboxListTile(
-                    value: authenticated,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        authenticated = value ?? true;
-                      });
-                    },
-                    title: Text("Authenticated Request"),
-                  ),
-                  ElevatedButton(
-                    onPressed: () async {
-                      if (formKey.currentState?.validate() ?? false) {
-                        final report = await createDebugExport(
-                          context,
-                          urlController.text,
-                          methodController.text,
-                          bodyController.text,
-                          headersController.text,
-                          queryParamsController.text,
-                          authenticated,
-                        );
-                        // show full screen dialog with report as scrollable text
-                        if (context.mounted) {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => MonoTextViewer(
-                                report: report,
-                                title: "Debug Export Preview",
-                                fileNameStart: "lanis_mobile_debug_export",
-                              ),
-                            ),
-                          );
+                    TextFormField(
+                      controller: urlController,
+                      decoration: InputDecoration(
+                        labelText: 'URL',
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter a URL';
                         }
-                      }
-                    },
-                    child: Text('Export Debug Data'),
-                  ),
-                ],
-              ),
-            ),
-          ),
+                        return null;
+                      },
+                    ),
+                    TextFormField(
+                      controller: headersController,
+                      decoration: InputDecoration(
+                        labelText: 'Headers (JSON: { "key": "value" })',
+                        border: OutlineInputBorder(),
+                      ),
+                      maxLines: 2,
+                    ),
+                    TextFormField(
+                      controller: queryParamsController,
+                      decoration: InputDecoration(
+                        labelText: 'Query Params (JSON: { "key": "value" })',
+                        border: OutlineInputBorder(),
+                      ),
+                      maxLines: 2,
+                    ),
+                    TextFormField(
+                      controller: bodyController,
+                      decoration: InputDecoration(
+                        labelText: 'Body (for POST/PUT/PATCH)',
+                        border: OutlineInputBorder(),
+                      ),
+                      maxLines: 4,
+                    ),
+                    CheckboxListTile(
+                      value: authenticated,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          authenticated = value ?? true;
+                        });
+                      },
+                      title: Text("Authenticated Request"),
+                    ),
+                    ElevatedButton(
+                      onPressed: () async {
+                        if (formKey.currentState?.validate() ?? false) {
+                          final report = await createDebugExport(
+                              context,
+                              urlController.text,
+                              methodController.text,
+                              bodyController.text,
+                              headersController.text,
+                              queryParamsController.text,
+                              authenticated);
+                          // show full screen dialog with report as scrollable text
+                          if (context.mounted) {
+                            Navigator.of(context).push(MaterialPageRoute(
+                                builder: (context) => MonoTextViewer(
+                                    report: report,
+                                    title: "Debug Export Preview",
+                                    fileNameStart:
+                                        "lanis_mobile_debug_export")));
+                          }
+                        }
+                      },
+                      child: Text('Export Debug Data'),
+                    ),
+                  ],
+                ),
+              ))
         ],
       ),
     );
   }
 
   Future<String> createDebugExport(
-    BuildContext context,
-    String url,
-    String httpMethod,
-    String body,
-    String headersJson,
-    String queryJson,
-    bool authenticated,
-  ) async {
+      BuildContext context,
+      String url,
+      String httpMethod,
+      String body,
+      String headersJson,
+      String queryJson,
+      bool authenticated) async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
     MemoryLogger report = MemoryLogger();
     report.log('START: Debug Export');
     report.log('SCHOOL: ${sph!.account.schoolID} (${sph!.account.schoolName})');
     report.log(
-      'PLATFORM: ${Platform.operatingSystem} ${Platform.version} ${Platform.operatingSystemVersion}',
-    );
+        'PLATFORM: ${Platform.operatingSystem} ${Platform.version} ${Platform.operatingSystemVersion}');
     report.log(
-      'APP VERSION: ${packageInfo.appName} ${packageInfo.buildNumber} ${packageInfo.version}',
-    );
+        'APP VERSION: ${packageInfo.appName} ${packageInfo.buildNumber} ${packageInfo.version}');
     report.log('INSTALL STORE: ${packageInfo.installerStore}');
     report.write('------------- BEGIN REQUEST DESCRIPTION -------------');
     report.log('URL: $url');
@@ -209,8 +202,7 @@ class _DebugExportState extends State<DebugExport> {
       );
       report.write("------------- BEGIN RESPONSE -------------");
       report.log(
-        'Status Code: ${response.statusCode} (${response.statusMessage})',
-      );
+          'Status Code: ${response.statusCode} (${response.statusMessage})');
       report.write('-------- BEGIN HEADER --------');
       for (var key in response.headers.map.keys) {
         report.write("$key: ${response.headers.value(key)}");

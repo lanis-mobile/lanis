@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 class KeyboardObserver extends ValueNotifier<KeyboardStatus>
     with WidgetsBindingObserver {
-  KeyboardObserver({KeyboardStatus value = KeyboardStatus.unknown})
-    : super(KeyboardStatus.unknown);
+  KeyboardObserver({
+    KeyboardStatus value = KeyboardStatus.unknown,
+  }) : super(KeyboardStatus.unknown);
 
   bool _disposed = false;
 
@@ -64,4 +65,8 @@ class KeyboardObserver extends ValueNotifier<KeyboardStatus>
   }
 }
 
-enum KeyboardStatus { closed, opened, unknown }
+enum KeyboardStatus {
+  closed,
+  opened,
+  unknown,
+}

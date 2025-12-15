@@ -11,11 +11,8 @@ class DataStorageNodeView extends StatefulWidget {
   final int nodeID;
   final String title;
 
-  const DataStorageNodeView({
-    super.key,
-    required this.nodeID,
-    required this.title,
-  });
+  const DataStorageNodeView(
+      {super.key, required this.nodeID, required this.title});
 
   @override
   State<StatefulWidget> createState() => _DataStorageNodeViewState();
@@ -35,8 +32,8 @@ class _DataStorageNodeViewState extends State<DataStorageNodeView> {
 
   void loadItems() async {
     try {
-      final (fileList, folderList) = await sph!.parser.dataStorageParser
-          .getNode(widget.nodeID);
+      final (fileList, folderList) =
+          await sph!.parser.dataStorageParser.getNode(widget.nodeID);
       files = fileList;
       folders = folderList;
 
@@ -55,7 +52,12 @@ class _DataStorageNodeViewState extends State<DataStorageNodeView> {
     var listTiles = <Widget>[];
 
     for (var folder in folders) {
-      listTiles.add(FolderListTile(context: context, folder: folder));
+      listTiles.add(
+        FolderListTile(
+          context: context,
+          folder: folder,
+        ),
+      );
     }
 
     for (var file in files) {
@@ -68,20 +70,25 @@ class _DataStorageNodeViewState extends State<DataStorageNodeView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.title)),
+      appBar: AppBar(
+        title: Text(widget.title),
+      ),
       body: loading
-          ? Center(child: CircularProgressIndicator())
-          : error
           ? Center(
-              child: Column(
-                children: [
-                  Icon(Icons.error_outline, size: 100),
-                  SizedBox(height: 10),
-                  Text(AppLocalizations.of(context).couldNotLoadFiles),
-                ],
-              ),
+              child: CircularProgressIndicator(),
             )
-          : ListView(children: getListTiles()),
+          : error
+              ? Center(
+                  child: Column(
+                  children: [
+                    Icon(Icons.error_outline, size: 100),
+                    SizedBox(height: 10),
+                    Text(AppLocalizations.of(context).couldNotLoadFiles),
+                  ],
+                ))
+              : ListView(
+                  children: getListTiles(),
+                ),
     );
   }
 }

@@ -7,7 +7,12 @@ import '../core/sph/sph.dart';
 import '../models/client_status_exceptions.dart';
 import 'logger.dart';
 
-enum LoginStatus { waiting, done, error, setup }
+enum LoginStatus {
+  waiting,
+  done,
+  error,
+  setup;
+}
 
 /// Authenticates a user and set ups the global SPH instance.
 class AuthenticationState {

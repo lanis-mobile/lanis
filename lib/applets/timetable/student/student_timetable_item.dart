@@ -38,12 +38,8 @@ class ItemBlock extends StatelessWidget {
     this.disableAction = false,
   });
 
-  void showColorPicker(
-    BuildContext context,
-    Map<String, dynamic> settings,
-    Function updateSettings,
-    TimetableSubject lesson,
-  ) {
+  void showColorPicker(BuildContext context, Map<String, dynamic> settings,
+      Function updateSettings, TimetableSubject lesson) {
     Color selectedColor = TimeTableHelper.getColorForLesson(settings, lesson);
     showDialog(
       context: context,
@@ -52,7 +48,9 @@ class ItemBlock extends StatelessWidget {
           content: SingleChildScrollView(
             child: ColorPicker(
               pickerColor: selectedColor,
-              onColorChanged: (c) => {selectedColor = c},
+              onColorChanged: (c) => {
+                selectedColor = c,
+              },
               enableAlpha: false,
               labelTypes: [],
             ),
@@ -63,7 +61,7 @@ class ItemBlock extends StatelessWidget {
               onPressed: () {
                 updateSettings('lesson-colors', {
                   ...settings['lesson-colors'],
-                  lesson.id!.split('-')[0]: null,
+                  lesson.id!.split('-')[0]: null
                 });
 
                 Navigator.of(context).pop();
@@ -81,9 +79,8 @@ class ItemBlock extends StatelessWidget {
                 }
                 updateSettings('lesson-colors', {
                   ...settings['lesson-colors'],
-                  lesson.id!.split('-')[0]: selectedColor.toHexString(
-                    enableAlpha: false,
-                  ),
+                  lesson.id!.split('-')[0]:
+                      selectedColor.toHexString(enableAlpha: false)
                 });
               },
             ),
@@ -95,112 +92,100 @@ class ItemBlock extends StatelessWidget {
 
   void showSubject(BuildContext context) {
     showModalBottomSheet(
-      context: context,
-      showDragHandle: true,
-      builder: (context) {
-        return SizedBox(
-          width: double.infinity,
-          child: Padding(
-            padding: const EdgeInsets.only(
-              left: 20.0,
-              right: 20.0,
-              bottom: 20.0,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Title
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        subject?.name ??
-                            AppLocalizations.of(context).unknownLesson,
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      Row(
-                        children: [
-                          IconButton(
-                            onPressed: () {
-                              showColorPicker(
-                                context,
-                                settings,
-                                updateSettings,
-                                subject!,
-                              );
-                            },
-                            icon: Container(
-                              width: 24,
-                              height: 24,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: color,
-                              ),
-                            ),
-                          ),
-                          if (subject != null &&
-                              (subject?.id == null ||
-                                  !subject!.id!.startsWith('custom')))
+        context: context,
+        showDragHandle: true,
+        builder: (context) {
+          return SizedBox(
+            width: double.infinity,
+            child: Padding(
+              padding:
+                  const EdgeInsets.only(left: 20.0, right: 20.0, bottom: 20.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          subject?.name ??
+                              AppLocalizations.of(context).unknownLesson,
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        Row(
+                          children: [
                             IconButton(
-                              onPressed: () {
-                                Navigator.pop(context);
-                                updateSettings('hidden-lessons', [
-                                  ...?settings['hidden-lessons'],
-                                  subject!.id,
-                                ]);
-                                showSnackbar(
-                                  context,
-                                  AppLocalizations.of(
-                                    context,
-                                  ).lessonHidden(subject!.name!),
-                                  seconds: 3,
-                                );
-                              },
-                              icon: const Icon(Icons.visibility_off_outlined),
-                            ),
-                        ],
-                      ),
-                    ],
+                                onPressed: () {
+                                  showColorPicker(context, settings,
+                                      updateSettings, subject!);
+                                },
+                                icon: Container(
+                                  width: 24,
+                                  height: 24,
+                                  decoration: BoxDecoration(
+                                      shape: BoxShape.circle, color: color),
+                                )),
+                            if (subject != null &&
+                                (subject?.id == null ||
+                                    !subject!.id!.startsWith('custom')))
+                              IconButton(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                    updateSettings('hidden-lessons', [
+                                      ...?settings['hidden-lessons'],
+                                      subject!.id
+                                    ]);
+                                    showSnackbar(
+                                        context,
+                                        AppLocalizations.of(context)
+                                            .lessonHidden(subject!.name!),
+                                        seconds: 3);
+                                  },
+                                  icon: const Icon(
+                                      Icons.visibility_off_outlined)),
+                          ],
+                        )
+                      ],
+                    ),
                   ),
-                ),
-                if (subject?.raum != null)
-                  modalSheetItem(subject!.raum!, Icons.place),
-                modalSheetItem(
-                  "${subject!.startTime.format(context)} - ${subject!.endTime.format(context)} (${subject!.duration} ${subject!.duration == 1 ? "Stunde" : "Stunden"})",
-                  Icons.access_time,
-                ),
-                if (subject?.lehrer != null)
-                  modalSheetItem(subject!.lehrer!, Icons.person),
-                if (subject?.badge != null)
-                  modalSheetItem(subject!.badge!, Icons.info),
-              ],
+                  if (subject?.raum != null)
+                    modalSheetItem(subject!.raum!, Icons.place),
+                  modalSheetItem(
+                    "${subject!.startTime.format(context)} - ${subject!.endTime.format(context)} (${subject!.duration} ${subject!.duration == 1 ? "Stunde" : "Stunden"})",
+                    Icons.access_time,
+                  ),
+                  if (subject?.lehrer != null)
+                    modalSheetItem(subject!.lehrer!, Icons.person),
+                  if (subject?.badge != null)
+                    modalSheetItem(subject!.badge!, Icons.info),
+                ],
+              ),
             ),
-          ),
-        );
-      },
-    );
+          );
+        });
   }
 
   Widget modalSheetItem(String content, IconData icon) {
-    return Builder(
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 4.0),
-          child: Row(
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: Icon(icon, size: 24),
+    return Builder(builder: (context) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 4.0),
+        child: Row(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: Icon(
+                icon,
+                size: 24,
               ),
-              Text(content, style: Theme.of(context).textTheme.labelLarge),
-            ],
-          ),
-        );
-      },
-    );
+            ),
+            Text(content, style: Theme.of(context).textTheme.labelLarge)
+          ],
+        ),
+      );
+    });
   }
 
   Widget _colorContainer(double width, {Widget? child}) {
@@ -210,9 +195,7 @@ class ItemBlock extends StatelessWidget {
       clipBehavior: Clip.hardEdge, // Clips any overflow, useful for the y axis
       decoration: BoxDecoration(
         border: Border.all(
-          color: color ?? Colors.transparent,
-          width: min(1, width / 3),
-        ),
+            color: color ?? Colors.transparent, width: min(1, width / 3)),
         color: color ?? Colors.transparent,
         borderRadius: BorderRadius.circular(8.0),
       ),
@@ -227,15 +210,13 @@ class ItemBlock extends StatelessWidget {
       fontSize: 12,
       color: color != null
           ? color!.computeLuminance() > 0.5
-                ? Colors.black
-                : Colors.white
+              ? Colors.black
+              : Colors.white
           : null,
     );
 
-    double calcWidth = max(
-      1,
-      width - ((width > (hOffset ?? 0)) ? (hOffset ?? 0) : 0),
-    );
+    double calcWidth =
+        max(1, width - ((width > (hOffset ?? 0)) ? (hOffset ?? 0) : 0));
 
     return Positioned(
       top: offset,
@@ -249,40 +230,39 @@ class ItemBlock extends StatelessWidget {
                 child: onlyColor
                     ? SizedBox()
                     : (!onlyColor && subject != null)
-                    ? SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Wrap(
-                              runAlignment: WrapAlignment.spaceBetween,
-                              alignment: WrapAlignment.spaceBetween,
-                              spacing: height % itemHeight >= 1.99
-                                  ? 99999
-                                  : 8.0,
+                        ? SingleChildScrollView(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                Text(
-                                  subject!.name ?? '',
-                                  style: textStyle,
-                                  maxLines: 1,
+                                Wrap(
+                                  runAlignment: WrapAlignment.spaceBetween,
+                                  alignment: WrapAlignment.spaceBetween,
+                                  spacing:
+                                      height % itemHeight >= 1.99 ? 99999 : 8.0,
+                                  children: [
+                                    Text(
+                                      subject!.name ?? '',
+                                      style: textStyle,
+                                      maxLines: 1,
+                                    ),
+                                    if (subject!.lehrer != null)
+                                      Text(
+                                        subject!.lehrer!,
+                                        style: textStyle,
+                                        maxLines: 1,
+                                      ),
+                                  ],
                                 ),
-                                if (subject!.lehrer != null)
+                                if (subject!.raum != null)
                                   Text(
-                                    subject!.lehrer!,
+                                    subject!.raum!,
                                     style: textStyle,
                                     maxLines: 1,
                                   ),
                               ],
                             ),
-                            if (subject!.raum != null)
-                              Text(
-                                subject!.raum!,
-                                style: textStyle,
-                                maxLines: 1,
-                              ),
-                          ],
-                        ),
-                      )
-                    : SizedBox(),
+                          )
+                        : SizedBox(),
               ),
             ),
     );
@@ -296,11 +276,11 @@ class ItemBlock extends StatelessWidget {
     required this.hOffset,
     required this.updateSettings,
     required this.settings,
-  }) : subject = null,
-       color = null,
-       onlyColor = false,
-       disableAction = true,
-       empty = true;
+  })  : subject = null,
+        color = null,
+        onlyColor = false,
+        disableAction = true,
+        empty = true;
 }
 
 class ListItem extends StatelessWidget {
@@ -354,12 +334,10 @@ class ListItem extends StatelessWidget {
       bool hidePause = false;
       for (var subject in subjectsInRow) {
         int numPauses = data.hours
-            .where(
-              (element) =>
-                  element.type == TimeTableRowType.pause &&
-                  element.startTime >= subject.startTime &&
-                  element.endTime <= subject.endTime,
-            )
+            .where((element) =>
+                element.type == TimeTableRowType.pause &&
+                element.startTime >= subject.startTime &&
+                element.endTime <= subject.endTime)
             .length;
         if (numPauses > 0) {
           hidePause = true;
@@ -414,45 +392,38 @@ class ListItem extends StatelessWidget {
       child: Stack(
         children: [
           for (var subject in subjects)
-            Builder(
-              builder: (context) {
-                int indexInRow = subjectsInRow.indexOf(subject);
-                int maxNum = max(maxSubjectsInRow, subjectsInRow.length);
+            Builder(builder: (context) {
+              int indexInRow = subjectsInRow.indexOf(subject);
+              int maxNum = max(maxSubjectsInRow, subjectsInRow.length);
 
-                double hOffset = (width / maxNum) * indexInRow;
+              double hOffset = (width / maxNum) * indexInRow;
 
-                int numPauses = data.hours
-                    .where(
-                      (element) =>
-                          element.type == TimeTableRowType.pause &&
-                          element.startTime >= subject.startTime &&
-                          element.endTime <= subject.endTime,
-                    )
-                    .length;
+              int numPauses = data.hours
+                  .where((element) =>
+                      element.type == TimeTableRowType.pause &&
+                      element.startTime >= subject.startTime &&
+                      element.endTime <= subject.endTime)
+                  .length;
 
-                return ItemBlock(
-                  subject: subject,
-                  height:
-                      itemHeight * subject.duration +
-                      ((subject.duration - 1) * 8) +
-                      (numPauses * (pauseHeight + 8)),
-                  color: TimeTableHelper.getColorForLesson(settings, subject),
-                  offset: verticalOffset,
-                  // Calculate left offset based on subject index and max overlapping subjects
-                  hOffset: hOffset + (maxNum >= 2 ? 0 : 0),
-                  width: (width / maxNum) - (maxNum >= 2 ? 2 : 0),
-                  settings: settings,
-                  updateSettings: updateSettings,
-                  // Only show the color of the subject to save resources
-                  onlyColor:
-                      subjectsInRow.length > 3 &&
-                      !(settings['single-day'] ?? false),
-                  disableAction:
-                      subjectsInRow.length > 6 &&
-                      !(settings['single-day'] ?? false),
-                );
-              },
-            ),
+              return ItemBlock(
+                subject: subject,
+                height: itemHeight * subject.duration +
+                    ((subject.duration - 1) * 8) +
+                    (numPauses * (pauseHeight + 8)),
+                color: TimeTableHelper.getColorForLesson(settings, subject),
+                offset: verticalOffset,
+                // Calculate left offset based on subject index and max overlapping subjects
+                hOffset: hOffset + (maxNum >= 2 ? 0 : 0),
+                width: (width / maxNum) - (maxNum >= 2 ? 2 : 0),
+                settings: settings,
+                updateSettings: updateSettings,
+                // Only show the color of the subject to save resources
+                onlyColor: subjectsInRow.length > 3 &&
+                    !(settings['single-day'] ?? false),
+                disableAction: subjectsInRow.length > 6 &&
+                    !(settings['single-day'] ?? false),
+              );
+            }),
         ],
       ),
     );

@@ -30,8 +30,7 @@ class _ResetAccountPageState extends State<ResetAccountPage> {
                 color: Theme.of(context).colorScheme.secondary,
                 borderRadius: BorderRadius.circular(8.0),
                 border: Border.all(
-                  color: Theme.of(context).colorScheme.tertiaryContainer,
-                ),
+                    color: Theme.of(context).colorScheme.tertiaryContainer),
               ),
               child: Column(
                 children: [
@@ -45,8 +44,7 @@ class _ResetAccountPageState extends State<ResetAccountPage> {
                       Text(
                         sph!.account.username,
                         style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSecondary,
-                        ),
+                            color: Theme.of(context).colorScheme.onSecondary),
                       ),
                     ],
                   ),
@@ -61,8 +59,7 @@ class _ResetAccountPageState extends State<ResetAccountPage> {
                       Text(
                         sph!.account.schoolName,
                         style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSecondary,
-                        ),
+                            color: Theme.of(context).colorScheme.onSecondary),
                       ),
                     ],
                   ),
@@ -72,17 +69,18 @@ class _ResetAccountPageState extends State<ResetAccountPage> {
                     children: [
                       Icon(
                         Icons.password,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSecondary.withRed(255),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSecondary
+                            .withRed(255),
                       ),
                       Text(
                         '••••••••••••••••••••',
                         style: TextStyle(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSecondary.withRed(255),
-                        ),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSecondary
+                                .withRed(255)),
                       ),
                     ],
                   ),
@@ -107,9 +105,8 @@ class _ResetAccountPageState extends State<ResetAccountPage> {
                     final String? newPassword = await showDialog<String>(
                       context: context,
                       builder: (context) => SimpleDialog(
-                        title: Text(
-                          AppLocalizations.of(context).changePassword,
-                        ),
+                        title:
+                            Text(AppLocalizations.of(context).changePassword),
                         children: [
                           Padding(
                             padding: EdgeInsets.all(8.0),
@@ -119,16 +116,14 @@ class _ResetAccountPageState extends State<ResetAccountPage> {
                               autocorrect: false,
                               obscureText: true,
                               decoration: InputDecoration(
-                                labelText: AppLocalizations.of(
-                                  context,
-                                ).authPasswordHint,
+                                labelText: AppLocalizations.of(context)
+                                    .authPasswordHint,
                               ),
                               autovalidateMode: AutovalidateMode.always,
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return AppLocalizations.of(
-                                    context,
-                                  ).authValidationError;
+                                  return AppLocalizations.of(context)
+                                      .authValidationError;
                                 }
                                 return null;
                               },
@@ -142,18 +137,15 @@ class _ResetAccountPageState extends State<ResetAccountPage> {
                                 Navigator.of(context).pop(controller.text);
                               },
                               child: Text(
-                                AppLocalizations.of(context).changePassword,
-                              ),
+                                  AppLocalizations.of(context).changePassword),
                             ),
-                          ),
+                          )
                         ],
                       ),
                     );
                     if (newPassword == null) return;
                     await accountDatabase.updatePassword(
-                      sph!.account.localId,
-                      newPassword,
-                    );
+                        sph!.account.localId, newPassword);
                     if (context.mounted) {
                       authenticationState.reset(context);
                     }
@@ -173,7 +165,7 @@ class _ResetAccountPageState extends State<ResetAccountPage> {
                 ),
               ],
             ),
-          ),
+          )
         ],
       ),
     );

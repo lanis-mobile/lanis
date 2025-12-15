@@ -7,23 +7,22 @@ class StatisticWidget extends StatelessWidget {
   final String conversationTitle;
   final ParticipationStatistics statistics;
 
-  const StatisticWidget({
-    super.key,
-    required this.statistics,
-    required this.conversationTitle,
-  });
+  const StatisticWidget(
+      {super.key, required this.statistics, required this.conversationTitle});
 
   Widget statisticsHeaderRow(
-    BuildContext context,
-    Icon icon,
-    String title,
-    int count,
-  ) {
+      BuildContext context, Icon icon, String title, int count) {
     return Column(
       children: [
         icon,
-        Text(title, style: Theme.of(context).textTheme.titleMedium),
-        Text(count.toString(), style: Theme.of(context).textTheme.bodyMedium),
+        Text(
+          title,
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        Text(
+          count.toString(),
+          style: Theme.of(context).textTheme.bodyMedium,
+        )
       ],
     );
   }
@@ -31,15 +30,22 @@ class StatisticWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(AppLocalizations.of(context).receivers)),
+      appBar: AppBar(
+        title: Text(AppLocalizations.of(context).receivers),
+      ),
       body: ListView(
         children: [
-          const SizedBox(height: 30),
+          const SizedBox(
+            height: 30,
+          ),
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Icon(Icons.groups_outlined, size: 60),
+              const Icon(
+                Icons.groups_outlined,
+                size: 60,
+              ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12.0),
                 child: Text(
@@ -50,7 +56,9 @@ class StatisticWidget extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 30),
+          const SizedBox(
+            height: 30,
+          ),
           Card(
             margin: const EdgeInsets.symmetric(horizontal: 12.0),
             child: Padding(
@@ -60,47 +68,45 @@ class StatisticWidget extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   Expanded(
-                    child: statisticsHeaderRow(
-                      context,
-                      const Icon(Icons.person),
-                      AppLocalizations.of(context).participants,
-                      statistics.countStudents,
-                    ),
-                  ),
+                      child: statisticsHeaderRow(
+                          context,
+                          const Icon(Icons.person),
+                          AppLocalizations.of(context).participants,
+                          statistics.countStudents)),
                   Expanded(
-                    child: statisticsHeaderRow(
-                      context,
-                      const Icon(Icons.school),
-                      AppLocalizations.of(context).supervisors,
-                      statistics.countTeachers,
-                    ),
-                  ),
+                      child: statisticsHeaderRow(
+                          context,
+                          const Icon(Icons.school),
+                          AppLocalizations.of(context).supervisors,
+                          statistics.countTeachers)),
                   Expanded(
-                    child: statisticsHeaderRow(
-                      context,
-                      const Icon(Icons.supervisor_account),
-                      AppLocalizations.of(context).parents,
-                      statistics.countParents,
-                    ),
-                  ),
+                      child: statisticsHeaderRow(
+                          context,
+                          const Icon(Icons.supervisor_account),
+                          AppLocalizations.of(context).parents,
+                          statistics.countParents)),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 15),
+          const SizedBox(
+            height: 15,
+          ),
           Text(
             AppLocalizations.of(context).knownReceivers,
             style: Theme.of(context).textTheme.titleMedium,
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 5),
+          const SizedBox(
+            height: 5,
+          ),
           for (final KnownParticipant participant
               in statistics.knownParticipants) ...[
             ListTile(
               title: Text(participant.name),
               leading: Icon(participant.type.icon),
-            ),
-          ],
+            )
+          ]
         ],
       ),
     );

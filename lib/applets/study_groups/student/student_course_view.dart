@@ -32,12 +32,8 @@ class StudentCourseView extends StatelessWidget {
       grouped.putIfAbsent(group.semester, () => []).add(group);
     }
     return grouped.entries
-        .map(
-          (entry) => StudentStudyGroupBySemester(
-            studyGroup: entry.value,
-            semester: entry.key,
-          ),
-        )
+        .map((entry) => StudentStudyGroupBySemester(
+            studyGroup: entry.value, semester: entry.key))
         .toList();
   }
 
@@ -47,31 +43,22 @@ class StudentCourseView extends StatelessWidget {
         padding: const EdgeInsets.all(8.0),
         child: Column(
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  studyGroup.courseName,
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-                Text(
-                  studyGroup.courseSysId,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
-            ),
+            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+              Text(studyGroup.courseName,
+                  style: Theme.of(context).textTheme.titleSmall),
+              Text(studyGroup.courseSysId,
+                  style: Theme.of(context).textTheme.bodySmall)
+            ]),
             Align(
               alignment: Alignment.centerLeft,
               child: Wrap(
                 alignment: WrapAlignment.start,
                 crossAxisAlignment: WrapCrossAlignment.start,
                 children: studyGroup.teachers
-                    .map(
-                      (teacher) => Padding(
-                        padding: const EdgeInsets.all(1.0),
-                        child: TeacherChip(teacher: teacher),
-                      ),
-                    )
+                    .map((teacher) => Padding(
+                          padding: const EdgeInsets.all(1.0),
+                          child: TeacherChip(teacher: teacher),
+                        ))
                     .toList(),
               ),
             ),
@@ -80,7 +67,10 @@ class StudentCourseView extends StatelessWidget {
                 final i = entry.key;
                 final e = entry.value;
                 return Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 1),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 1,
+                  ),
                   decoration: BoxDecoration(
                     borderRadius: getRadius(i, studyGroup.exams.length),
                     color: i % 2 == 0
@@ -93,7 +83,10 @@ class StudentCourseView extends StatelessWidget {
                       Text(e.type),
                       Spacer(),
                       Text(DateFormat('EEE, dd.MM.yyyy').format(e.date)),
-                      Icon(Icons.date_range, size: 14),
+                      Icon(
+                        Icons.date_range,
+                        size: 14,
+                      ),
                     ],
                   ),
                 );
@@ -158,14 +151,13 @@ class _TeacherChipState extends State<TeacherChip> {
           children: [
             Icon(Icons.person, size: 16),
             Text(
-              "${widget.teacher.lastName}, ${widget.teacher.firstName} (${widget.teacher.krz})",
-            ),
+                "${widget.teacher.lastName}, ${widget.teacher.firstName} (${widget.teacher.krz})"),
             if (widget.teacher.email != null)
               Icon(
                 Icons.email,
                 size: 16,
                 color: Theme.of(context).colorScheme.primary,
-              ),
+              )
           ],
         ),
       ),
@@ -177,8 +169,6 @@ class StudentStudyGroupBySemester {
   List<StudentStudyGroup> studyGroup;
   String semester;
 
-  StudentStudyGroupBySemester({
-    required this.studyGroup,
-    required this.semester,
-  });
+  StudentStudyGroupBySemester(
+      {required this.studyGroup, required this.semester});
 }

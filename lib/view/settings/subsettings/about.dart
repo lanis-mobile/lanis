@@ -18,57 +18,54 @@ class AvatarTile extends StatelessWidget {
   final void Function() onTap;
   final Color? color;
 
-  const AvatarTile({
-    super.key,
-    required this.networkImage,
-    required this.name,
-    required this.contributions,
-    required this.avatarSize,
-    required this.contentPadding,
-    required this.onTap,
-    this.color,
-  });
+  const AvatarTile(
+      {super.key,
+      required this.networkImage,
+      required this.name,
+      required this.contributions,
+      required this.avatarSize,
+      required this.contentPadding,
+      required this.onTap,
+      this.color});
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: color ?? Theme.of(context).colorScheme.surfaceContainerLow,
-      borderRadius: BorderRadius.circular(12.0),
-      child: InkWell(
-        onTap: onTap,
+        color: color ?? Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(12.0),
-        child: Padding(
-          padding: contentPadding,
-          child: Row(
-            spacing: 8.0,
-            children: [
-              CircleAvatar(
-                radius: avatarSize,
-                backgroundImage: NetworkImage(networkImage),
-              ),
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12.0),
+          child: Padding(
+            padding: contentPadding,
+            child: Row(
+              spacing: 8.0,
+              children: [
+                CircleAvatar(
+                  radius: avatarSize,
+                  backgroundImage: NetworkImage(networkImage),
+                ),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                          color: Theme.of(context).colorScheme.onSurface),
                     ),
-                  ),
-                  Text(
-                    contributions,
-                    style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    Text(
+                      contributions,
+                      style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                          color:
+                              Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                )
+              ],
+            ),
           ),
-        ),
-      ),
-    );
+        ));
   }
 }
 
@@ -79,12 +76,11 @@ class AboutLink {
 
   final IconData iconData;
 
-  const AboutLink({
-    required this.title,
-    required this.onTap,
-    required this.iconData,
-    this.onLongPress,
-  });
+  const AboutLink(
+      {required this.title,
+      required this.onTap,
+      required this.iconData,
+      this.onLongPress});
 }
 
 class AboutSettings extends SettingsColours {
@@ -106,9 +102,8 @@ class _AboutSettingsState extends SettingsColoursState<AboutSettings> {
     });
 
     try {
-      final response = await sph!.session.dio.get(
-        'https://api.github.com/repos/lanis-mobile/lanis/contributors',
-      );
+      final response = await sph!.session.dio
+          .get('https://api.github.com/repos/lanis-mobile/lanis/contributors');
       setState(() {
         contributors = response.data;
       });
@@ -135,18 +130,14 @@ class _AboutSettingsState extends SettingsColoursState<AboutSettings> {
     AboutLink(
       title: (context) => AppLocalizations.of(context).featureRequest,
       iconData: Icons.add_comment_outlined,
-      onTap: (context) => launchUrl(
-        Uri.parse(
-          "https://github.com/alessioC42/lanis-mobile/issues/new/choose",
-        ),
-      ),
+      onTap: (context) => launchUrl(Uri.parse(
+          "https://github.com/alessioC42/lanis-mobile/issues/new/choose")),
     ),
     AboutLink(
       title: (context) => AppLocalizations.of(context).latestRelease,
       iconData: Icons.update_outlined,
-      onTap: (context) => launchUrl(
-        Uri.parse("https://github.com/alessioC42/lanis-mobile/releases/latest"),
-      ),
+      onTap: (context) => launchUrl(Uri.parse(
+          "https://github.com/alessioC42/lanis-mobile/releases/latest")),
     ),
     AboutLink(
       title: (context) => AppLocalizations.of(context).privacyPolicy,
@@ -160,29 +151,26 @@ class _AboutSettingsState extends SettingsColoursState<AboutSettings> {
       onTap: (context) async => showLicensePage(context: context),
     ),
     AboutLink(
-      title: (context) => AppLocalizations.of(context).buildInformation,
-      iconData: Icons.build_outlined,
-      onTap: (context) async {
-        final packageInfo = await PackageInfo.fromPlatform();
+        title: (context) => AppLocalizations.of(context).buildInformation,
+        iconData: Icons.build_outlined,
+        onTap: (context) async {
+          final packageInfo = await PackageInfo.fromPlatform();
 
-        if (context.mounted) {
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: Text(AppLocalizations.of(context).appInformation),
-                content: Text(
-                  "appName: ${packageInfo.appName}\npackageName: ${packageInfo.packageName}\nversion: ${packageInfo.version}\nbuildNumber: ${packageInfo.buildNumber}\nisDebug: $kDebugMode\nisProfile: $kProfileMode\nisRelease: $kReleaseMode\n",
-                ),
-              );
-            },
-          );
-        }
-      },
-      onLongPress: (context) => Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (context) => DebugExport())),
-    ),
+          if (context.mounted) {
+            showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: Text(AppLocalizations.of(context).appInformation),
+                    content: Text(
+                        "appName: ${packageInfo.appName}\npackageName: ${packageInfo.packageName}\nversion: ${packageInfo.version}\nbuildNumber: ${packageInfo.buildNumber}\nisDebug: $kDebugMode\nisProfile: $kProfileMode\nisRelease: $kReleaseMode\n"),
+                  );
+                });
+          }
+        },
+        onLongPress: (context) => Navigator.of(context).push(MaterialPageRoute(
+              builder: (context) => DebugExport(),
+            ))),
   ];
 
   @override
@@ -195,207 +183,201 @@ class _AboutSettingsState extends SettingsColoursState<AboutSettings> {
   @override
   Widget build(BuildContext context) {
     return SettingsPageWithRefreshIndicator(
-      backgroundColor: backgroundColor,
-      title: Text(AppLocalizations.of(context).about),
-      showBackButton: widget.showBackButton,
-      onRefresh: () {
-        return getContributors();
-      },
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (contributors == null && error == false)
-              const LinearProgressIndicator()
-            else if (contributors != null && error == false) ...[
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 16.0,
-                  children: [
-                    Text(
-                      AppLocalizations.of(context).contributors,
-                      style: Theme.of(context).textTheme.labelLarge!.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
+        backgroundColor: backgroundColor,
+        title: Text(AppLocalizations.of(context).about),
+        showBackButton: widget.showBackButton,
+        onRefresh: () {
+          return getContributors();
+        },
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (contributors == null && error == false)
+                const LinearProgressIndicator()
+              else if (contributors != null && error == false) ...[
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 16.0,
+                    children: [
+                      Text(
+                        AppLocalizations.of(context).contributors,
+                        style: Theme.of(context).textTheme.labelLarge!.copyWith(
+                            color: Theme.of(context).colorScheme.primary),
                       ),
-                    ),
-                    Column(
-                      spacing: 4.0,
-                      children: [
-                        SizedBox(
-                          height: 176.0,
-                          child: Row(
-                            spacing: 4.0,
-                            children: [
-                              Expanded(
-                                flex: 4800,
-                                child: Material(
-                                  color: foregroundColor,
-                                  borderRadius: BorderRadius.circular(12.0),
-                                  child: InkWell(
-                                    onTap: () => launchUrl(
-                                      Uri.parse(contributors[0]['html_url']),
-                                    ),
+                      Column(
+                        spacing: 4.0,
+                        children: [
+                          SizedBox(
+                            height: 176.0,
+                            child: Row(
+                              spacing: 4.0,
+                              children: [
+                                Expanded(
+                                  flex: 4800,
+                                  child: Material(
+                                    color: foregroundColor,
                                     borderRadius: BorderRadius.circular(12.0),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      spacing: 12.0,
-                                      children: [
-                                        CircleAvatar(
-                                          radius: 38.0,
-                                          backgroundImage: NetworkImage(
-                                            contributors[0]['avatar_url'],
+                                    child: InkWell(
+                                      onTap: () => launchUrl(Uri.parse(
+                                          contributors[0]['html_url'])),
+                                      borderRadius: BorderRadius.circular(12.0),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        spacing: 12.0,
+                                        children: [
+                                          CircleAvatar(
+                                            radius: 38.0,
+                                            backgroundImage: NetworkImage(
+                                                contributors[0]['avatar_url']),
                                           ),
-                                        ),
-                                        Text(
-                                          contributors[0]['login'],
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyLarge!
-                                              .copyWith(
-                                                color: Theme.of(
-                                                  context,
-                                                ).colorScheme.onSurface,
-                                              ),
-                                        ),
-                                        Text(
-                                          "${contributors[0]['contributions']} commits",
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodySmall!
-                                              .copyWith(
-                                                color: Theme.of(
-                                                  context,
-                                                ).colorScheme.onSurfaceVariant,
-                                              ),
-                                        ),
-                                      ],
+                                          Text(
+                                            contributors[0]['login'],
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyLarge!
+                                                .copyWith(
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .onSurface),
+                                          ),
+                                          Text(
+                                            "${contributors[0]['contributions']} commits",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall!
+                                                .copyWith(
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .onSurfaceVariant),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                              Expanded(
-                                flex: 5200,
-                                child: Column(
-                                  spacing: 4.0,
-                                  children: [
-                                    Expanded(
-                                      flex: 5500,
-                                      child: AvatarTile(
-                                        networkImage:
-                                            contributors[1]['avatar_url'],
-                                        name: contributors[1]['login'],
-                                        contributions:
-                                            "${contributors[1]['contributions']} commits",
-                                        avatarSize: 24.0,
-                                        contentPadding:
-                                            const EdgeInsets.symmetric(
-                                              horizontal: 16.0,
-                                            ),
-                                        color: foregroundColor,
-                                        onTap: () => launchUrl(
-                                          Uri.parse(
-                                            contributors[1]['html_url'],
-                                          ),
+                                Expanded(
+                                  flex: 5200,
+                                  child: Column(
+                                    spacing: 4.0,
+                                    children: [
+                                      Expanded(
+                                        flex: 5500,
+                                        child: AvatarTile(
+                                          networkImage: contributors[1]
+                                              ['avatar_url'],
+                                          name: contributors[1]['login'],
+                                          contributions:
+                                              "${contributors[1]['contributions']} commits",
+                                          avatarSize: 24.0,
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                  horizontal: 16.0),
+                                          color: foregroundColor,
+                                          onTap: () => launchUrl(Uri.parse(
+                                              contributors[1]['html_url'])),
                                         ),
                                       ),
-                                    ),
-                                    Expanded(
-                                      flex: 4500,
-                                      child: AvatarTile(
-                                        networkImage:
-                                            contributors[2]['avatar_url'],
-                                        name: contributors[2]['login'],
-                                        contributions:
-                                            "${contributors[2]['contributions']} commits",
-                                        avatarSize: 24.0,
-                                        contentPadding:
-                                            const EdgeInsets.symmetric(
-                                              horizontal: 16.0,
-                                            ),
-                                        color: foregroundColor,
-                                        onTap: () => launchUrl(
-                                          Uri.parse(
-                                            contributors[2]['html_url'],
-                                          ),
+                                      Expanded(
+                                        flex: 4500,
+                                        child: AvatarTile(
+                                          networkImage: contributors[2]
+                                              ['avatar_url'],
+                                          name: contributors[2]['login'],
+                                          contributions:
+                                              "${contributors[2]['contributions']} commits",
+                                          avatarSize: 24.0,
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                  horizontal: 16.0),
+                                          color: foregroundColor,
+                                          onTap: () => launchUrl(Uri.parse(
+                                              contributors[2]['html_url'])),
                                         ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        for (var i = 3; i < contributors.length; i++)
-                          AvatarTile(
-                            networkImage: contributors[i]['avatar_url'],
-                            name: contributors[i]['login'],
-                            contributions:
-                                "${contributors[i]['contributions']} ${contributors[i]['contributions'] == 1 ? "commit" : "commits"}",
-                            avatarSize: 20.0,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 20.0,
-                              vertical: 12.0,
-                            ),
-                            color: foregroundColor,
-                            onTap: () => launchUrl(
-                              Uri.parse(contributors[i]['html_url']),
+                                    ],
+                                  ),
+                                )
+                              ],
                             ),
                           ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ],
-        ),
-        if (!error) SizedBox(height: 24.0),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Text(
-            AppLocalizations.of(context).moreInformation,
-            style: Theme.of(context).textTheme.labelLarge!.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
-        ),
-        SizedBox(height: 4.0),
-        for (var link in links)
-          ListTile(
-            leading: Icon(link.iconData),
-            title: Text(link.title(context)),
-            onTap: () => link.onTap(context),
-            onLongPress: () => link.onLongPress?.call(context),
-          ),
-        if (error) ...[
-          SizedBox(height: 24.0),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  Icons.info_outline_rounded,
-                  size: 20.0,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-                SizedBox(height: 8.0),
-                Text(
-                  AppLocalizations.of(context).settingsErrorAbout,
-                  style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          for (var i = 3; i < contributors.length; i++)
+                            AvatarTile(
+                              networkImage: contributors[i]['avatar_url'],
+                              name: contributors[i]['login'],
+                              contributions:
+                                  "${contributors[i]['contributions']} ${contributors[i]['contributions'] == 1 ? "commit" : "commits"}",
+                              avatarSize: 20.0,
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 20.0, vertical: 12.0),
+                              color: foregroundColor,
+                              onTap: () => launchUrl(
+                                  Uri.parse(contributors[i]['html_url'])),
+                            ),
+                        ],
+                      )
+                    ],
                   ),
                 ),
               ],
+            ],
+          ),
+          if (!error)
+            SizedBox(
+              height: 24.0,
+            ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Text(
+              AppLocalizations.of(context).moreInformation,
+              style: Theme.of(context)
+                  .textTheme
+                  .labelLarge!
+                  .copyWith(color: Theme.of(context).colorScheme.primary),
             ),
           ),
-        ],
-        SizedBox(height: 12.0),
-      ],
-    );
+          SizedBox(
+            height: 4.0,
+          ),
+          for (var link in links)
+            ListTile(
+              leading: Icon(link.iconData),
+              title: Text(link.title(context)),
+              onTap: () => link.onTap(context),
+              onLongPress: () => link.onLongPress?.call(context),
+            ),
+          if (error) ...[
+            SizedBox(
+              height: 24.0,
+            ),
+            Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.info_outline_rounded,
+                      size: 20.0,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                    SizedBox(
+                      height: 8.0,
+                    ),
+                    Text(
+                      AppLocalizations.of(context).settingsErrorAbout,
+                      style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                          color:
+                              Theme.of(context).colorScheme.onSurfaceVariant),
+                    )
+                  ],
+                )),
+          ],
+          SizedBox(
+            height: 12.0,
+          ),
+        ]);
   }
 }

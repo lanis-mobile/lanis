@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:lanis/generated/l10n.dart';
 
-enum AccountType { student, teacher, parent }
+enum AccountType {
+  student,
+  teacher,
+  parent,
+}
 
 extension AccountTypeExtension on AccountType {
   String readableName(BuildContext context) {

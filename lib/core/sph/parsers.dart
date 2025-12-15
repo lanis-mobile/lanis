@@ -55,10 +55,8 @@ class Parsers {
   }
 
   TimetableStudentParser get timetableStudentParser {
-    _timetableStudentParser ??= TimetableStudentParser(
-      sph,
-      timeTableDefinition,
-    );
+    _timetableStudentParser ??=
+        TimetableStudentParser(sph, timeTableDefinition);
     return _timetableStudentParser!;
   }
 
@@ -68,10 +66,8 @@ class Parsers {
   }
 
   StudyGroupsStudentParser get studyGroupsStudentParser {
-    _studyGroupsStudentParser ??= StudyGroupsStudentParser(
-      sph,
-      studyGroupsDefinition,
-    );
+    _studyGroupsStudentParser ??=
+        StudyGroupsStudentParser(sph, studyGroupsDefinition);
     return _studyGroupsStudentParser!;
   }
 }

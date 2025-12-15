@@ -13,20 +13,15 @@ import '../background_service.dart';
 import '../core/sph/sph.dart';
 
 typedef StringBuildContextCallback = String Function(BuildContext context);
-typedef WidgetBuildBody =
-    Widget Function(
-      BuildContext context,
-      AccountType accountType,
-      Function? openDrawerCb,
-    );
-typedef BackgroundTaskFunction =
-    Future<void> Function(
-      SPH sph,
-      AccountType accountType,
-      BackgroundTaskToolkit toolkit,
-    );
+typedef WidgetBuildBody = Widget Function(
+    BuildContext context, AccountType accountType, Function? openDrawerCb);
+typedef BackgroundTaskFunction = Future<void> Function(
+    SPH sph, AccountType accountType, BackgroundTaskToolkit toolkit);
 
-enum AppletType { nested, navigation }
+enum AppletType {
+  nested,
+  navigation,
+}
 
 class AppletDefinition {
   final String appletPhpUrl;
@@ -66,7 +61,11 @@ class ExternalDefinition {
   final Icon icon = Icon(Icons.open_in_new);
   final Function(BuildContext?)? action;
 
-  ExternalDefinition({required this.id, required this.label, this.action});
+  ExternalDefinition({
+    required this.id,
+    required this.label,
+    this.action,
+  });
 }
 
 class AppDefinitions {
@@ -77,7 +76,7 @@ class AppDefinitions {
     conversationsDefinition,
     lessonsDefinition,
     dataStorageDefinition,
-    studyGroupsDefinition,
+    studyGroupsDefinition
   ];
 
   static List<ExternalDefinition> external = [
@@ -86,22 +85,18 @@ class AppDefinitions {
   ];
 
   static bool isAppletSupported(AccountType accountType, String phpIdentifier) {
-    return applets.any(
-      (element) =>
-          element.supportedAccountTypes.contains(accountType) &&
-          element.appletPhpUrl == phpIdentifier,
-    );
+    return applets.any((element) =>
+        element.supportedAccountTypes.contains(accountType) &&
+        element.appletPhpUrl == phpIdentifier);
   }
 
   static getByPhpIdentifier(String phpIdentifier) {
-    return applets.firstWhere(
-      (element) => element.appletPhpUrl == phpIdentifier,
-    );
+    return applets
+        .firstWhere((element) => element.appletPhpUrl == phpIdentifier);
   }
 
   static getIndexByPhpIdentifier(String phpIdentifier) {
-    return applets.indexWhere(
-      (element) => element.appletPhpUrl == phpIdentifier,
-    );
+    return applets
+        .indexWhere((element) => element.appletPhpUrl == phpIdentifier);
   }
 }

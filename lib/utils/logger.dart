@@ -17,16 +17,14 @@ class Logger {
   void i(dynamic message) {
     if (kDebugMode) {
       print(
-        '$_blue${_dateFormat.format(DateTime.now())} [INFO] $_name: $message$_reset',
-      );
+          '$_blue${_dateFormat.format(DateTime.now())} [INFO] $_name: $message$_reset');
     }
   }
 
   void e(dynamic message, {StackTrace? stackTrace}) {
     if (kDebugMode) {
       print(
-        '$_red${_dateFormat.format(DateTime.now())} [ERROR] $_name: $message$_reset',
-      );
+          '$_red${_dateFormat.format(DateTime.now())} [ERROR] $_name: $message$_reset');
       if (stackTrace != null) {
         debugPrintStack(stackTrace: stackTrace, label: _name);
       }
@@ -36,32 +34,28 @@ class Logger {
   void w(dynamic message) {
     if (kDebugMode) {
       print(
-        '$_yellow${_dateFormat.format(DateTime.now())} [WARNING] $_name: $message$_reset',
-      );
+          '$_yellow${_dateFormat.format(DateTime.now())} [WARNING] $_name: $message$_reset');
     }
   }
 
   void f(dynamic message) {
     if (kDebugMode) {
       print(
-        '$_magenta${_dateFormat.format(DateTime.now())} [FATAL] $_name: $message$_reset',
-      );
+          '$_magenta${_dateFormat.format(DateTime.now())} [FATAL] $_name: $message$_reset');
     }
   }
 
   void d(dynamic message) {
     if (kDebugMode) {
       print(
-        '$_magenta${_dateFormat.format(DateTime.now())} [DEBUG] $_name: $message$_reset',
-      );
+          '$_magenta${_dateFormat.format(DateTime.now())} [DEBUG] $_name: $message$_reset');
     }
   }
 
   void database(String message) {
     if (kDebugMode) {
       print(
-        '$_cyan${_dateFormat.format(DateTime.now())} [DATABASE] $_name: $message$_reset',
-      );
+          '$_cyan${_dateFormat.format(DateTime.now())} [DATABASE] $_name: $message$_reset');
     }
   }
 }

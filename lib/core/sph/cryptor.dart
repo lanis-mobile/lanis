@@ -39,10 +39,8 @@ class Cryptor {
         throw LanisDownException();
       }
 
-      return encrypt.RSAKeyParser().parse(
-            jsonDecode(response.toString())["publickey"],
-          )
-          as RSAPublicKey;
+      return encrypt.RSAKeyParser()
+          .parse(jsonDecode(response.toString())["publickey"]) as RSAPublicKey;
     } on (SocketException, DioException) {
       return null;
     }
@@ -84,10 +82,8 @@ class Cryptor {
   }
 
   Uint8List encryptKey(RSAPublicKey publicKey) {
-    final rsa = encrypt.RSA(
-      publicKey: publicKey,
-      encoding: encrypt.RSAEncoding.PKCS1,
-    );
+    final rsa =
+        encrypt.RSA(publicKey: publicKey, encoding: encrypt.RSAEncoding.PKCS1);
     return rsa.encrypt(key.bytes).bytes;
   }
 
@@ -132,8 +128,7 @@ class Cryptor {
 
     // CBC mode isn't the best anymore.
     final aes = encrypt.Encrypter(
-      encrypt.AES(derivedKey, mode: encrypt.AESMode.cbc, padding: "PKCS7"),
-    );
+        encrypt.AES(derivedKey, mode: encrypt.AESMode.cbc, padding: "PKCS7"));
 
     final encryptedData = aes.encrypt(decryptedData, iv: derivedIV).bytes;
 
@@ -143,12 +138,9 @@ class Cryptor {
   }
 
   static List<int>? decryptWithKey(
-    Uint8List encryptedDataWithSalt,
-    encrypt.Key key,
-  ) {
+      Uint8List encryptedDataWithSalt, encrypt.Key key) {
     final encryptedData = encrypt.Encrypted.fromBase64(
-      base64.encode(encryptedDataWithSalt.sublist(16)),
-    );
+        base64.encode(encryptedDataWithSalt.sublist(16)));
 
     // 0 to 8 is "Salted__" in ASCII. If this doesn't exists then something is wrong.
     if ("Salted__" != utf8.decode(encryptedDataWithSalt.sublist(0, 8))) {
@@ -163,9 +155,8 @@ class Cryptor {
     final derivedIV = encrypt.IV(derivedKeyAndIV.sublist(32, 48));
 
     // CBC mode isn't the best anymore.
-    final aes = encrypt.Encrypter(
-      encrypt.AES(derivedKey, mode: encrypt.AESMode.cbc),
-    );
+    final aes =
+        encrypt.Encrypter(encrypt.AES(derivedKey, mode: encrypt.AESMode.cbc));
 
     return aes.decryptBytes(encryptedData, iv: derivedIV);
   }

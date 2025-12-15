@@ -28,25 +28,21 @@ class ConversationsChat extends StatefulWidget {
   final bool isTablet;
   final Function refreshSidebar;
 
-  const ConversationsChat({
-    super.key,
-    required this.title,
-    required this.id,
-    this.newSettings,
-    required this.isTablet,
-    required this.refreshSidebar,
-    this.hidden = false,
-  });
+  const ConversationsChat(
+      {super.key,
+      required this.title,
+      required this.id,
+      this.newSettings,
+      required this.isTablet,
+      required this.refreshSidebar,
+      this.hidden = false});
 
-  ConversationsChat.fromEntry(
-    OverviewEntry entry,
-    this.isTablet, {
-    super.key,
-    required this.refreshSidebar,
-  }) : id = entry.id,
-       title = entry.title,
-       newSettings = null,
-       hidden = entry.hidden;
+  ConversationsChat.fromEntry(OverviewEntry entry, this.isTablet,
+      {super.key, required this.refreshSidebar})
+      : id = entry.id,
+        title = entry.title,
+        newSettings = null,
+        hidden = entry.hidden;
   @override
   State<ConversationsChat> createState() => _ConversationsChatState();
 }
@@ -62,9 +58,8 @@ class _ConversationsChatState extends State<ConversationsChat>
   final ScrollController scrollController = ScrollController();
 
   final ValueNotifier<bool> isSendVisible = ValueNotifier<bool>(false);
-  final ValueNotifier<bool> isScrollToBottomVisible = ValueNotifier<bool>(
-    false,
-  );
+  final ValueNotifier<bool> isScrollToBottomVisible =
+      ValueNotifier<bool>(false);
   final TextEditingController textEditingController = TextEditingController();
 
   final IndicatorController refreshIndicatorController = IndicatorController();
@@ -169,38 +164,34 @@ class _ConversationsChatState extends State<ConversationsChat>
 
   void showErrorDialog() {
     showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        icon: const Icon(Icons.error),
-        title: Text(AppLocalizations.of(context).errorOccurred),
-        actions: [
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            child: Text(AppLocalizations.of(context).back),
-          ),
-        ],
-      ),
-    );
+        context: context,
+        builder: (context) => AlertDialog(
+              icon: const Icon(Icons.error),
+              title: Text(AppLocalizations.of(context).errorOccurred),
+              actions: [
+                FilledButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: Text(AppLocalizations.of(context).back))
+              ],
+            ));
   }
 
   void showNoInternetDialog() {
     showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        icon: const Icon(Icons.wifi_off),
-        title: Text(AppLocalizations.of(context).noInternetConnection2),
-        actions: [
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            child: Text(AppLocalizations.of(context).back),
-          ),
-        ],
-      ),
-    );
+        context: context,
+        builder: (context) => AlertDialog(
+              icon: const Icon(Icons.wifi_off),
+              title: Text(AppLocalizations.of(context).noInternetConnection2),
+              actions: [
+                FilledButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: Text(AppLocalizations.of(context).back))
+              ],
+            ));
   }
 
   static DateTime parseDateString(String date) {
@@ -209,19 +200,13 @@ class _ConversationsChatState extends State<ConversationsChat>
       DateTime conversation = DateFormat("H:m").parse(date.substring(6));
 
       return now.copyWith(
-        hour: conversation.hour,
-        minute: conversation.minute,
-        second: 0,
-      );
+          hour: conversation.hour, minute: conversation.minute, second: 0);
     } else if (date.contains("gestern")) {
       DateTime yesterday = DateTime.now().subtract(const Duration(days: 1));
       DateTime conversation = DateFormat("H:m").parse(date.substring(8));
 
       return yesterday.copyWith(
-        hour: conversation.hour,
-        minute: conversation.minute,
-        second: 0,
-      );
+          hour: conversation.hour, minute: conversation.minute, second: 0);
     } else {
       return DateFormat("d.M.y H:m").parse(date);
     }
@@ -262,12 +247,11 @@ class _ConversationsChatState extends State<ConversationsChat>
     });
 
     final result = await sph!.parser.conversationsParser.replyToConversation(
-      settings.id,
-      "all",
-      settings.groupChat ? "ja" : "nein",
-      settings.onlyPrivateAnswers ? "ja" : "nein",
-      text,
-    );
+        settings.id,
+        "all",
+        settings.groupChat ? "ja" : "nein",
+        settings.onlyPrivateAnswers ? "ja" : "nein",
+        text);
 
     widget.refreshSidebar();
     setState(() {
@@ -319,10 +303,8 @@ class _ConversationsChatState extends State<ConversationsChat>
     // Add message to chat with appropriate date header if needed
     if (chat.isEmpty ||
         (chat.last is Message && !messageDate.isSameDay(chat.last.date))) {
-      chat.addAll([
-        DateHeader(date: messageDate),
-        addMessage(message, position),
-      ]);
+      chat.addAll(
+          [DateHeader(date: messageDate), addMessage(message, position)]);
     } else {
       chat.add(addMessage(message, position));
     }
@@ -343,7 +325,7 @@ class _ConversationsChatState extends State<ConversationsChat>
     // Add parent message with initial date header
     chat.addAll([
       DateHeader(date: parentDate),
-      addMessage(unparsedMessages.parent, MessageState.first),
+      addMessage(unparsedMessages.parent, MessageState.first)
     ]);
 
     // Process all replies
@@ -371,11 +353,10 @@ class _ConversationsChatState extends State<ConversationsChat>
       );
 
       statistics = ParticipationStatistics(
-        countParents: result.countParents,
-        countStudents: result.countStudents,
-        countTeachers: result.countTeachers,
-        knownParticipants: result.knownParticipants,
-      );
+          countParents: result.countParents,
+          countStudents: result.countStudents,
+          countTeachers: result.countTeachers,
+          knownParticipants: result.knownParticipants);
 
       renderMessages(result);
     } else {
@@ -385,7 +366,7 @@ class _ConversationsChatState extends State<ConversationsChat>
 
       chat.addAll([
         DateHeader(date: widget.newSettings!.firstMessage.date),
-        widget.newSettings!.firstMessage,
+        widget.newSettings!.firstMessage
       ]);
     }
 
@@ -436,11 +417,8 @@ class _ConversationsChatState extends State<ConversationsChat>
                 builder: (context) {
                   return AlertDialog(
                     icon: const Icon(Icons.groups),
-                    title: Text(
-                      AppLocalizations.of(
-                        context,
-                      ).conversationTypeName(ChatType.openChat.name),
-                    ),
+                    title: Text(AppLocalizations.of(context)
+                        .conversationTypeName(ChatType.openChat.name)),
                     content: Text(AppLocalizations.of(context).openChatWarning),
                     actions: [
                       FilledButton(
@@ -462,9 +440,7 @@ class _ConversationsChatState extends State<ConversationsChat>
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (context) => StatisticWidget(
-                    statistics: statistics!,
-                    conversationTitle: widget.title,
-                  ),
+                      statistics: statistics!, conversationTitle: widget.title),
                 ),
               );
             },
@@ -491,7 +467,9 @@ class _ConversationsChatState extends State<ConversationsChat>
           return Visibility(
             visible: isVisible,
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 60),
+              padding: const EdgeInsets.only(
+                bottom: 60,
+              ),
               child: InkWell(
                 borderRadius: BorderRadius.circular(15),
                 onTap: () =>
@@ -500,13 +478,12 @@ class _ConversationsChatState extends State<ConversationsChat>
                   height: 30,
                   width: 30,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(15),
-                    border: Border.all(
-                      color: Theme.of(context).colorScheme.secondaryFixedDim,
-                      width: 1.5,
-                    ),
-                    color: Theme.of(context).colorScheme.surfaceDim,
-                  ),
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.secondaryFixedDim,
+                        width: 1.5,
+                      ),
+                      color: Theme.of(context).colorScheme.surfaceDim),
                   child: const Icon(Icons.keyboard_arrow_down),
                 ),
               ),
@@ -526,17 +503,14 @@ class _ConversationsChatState extends State<ConversationsChat>
                     error: snapshot.error as LanisException,
                     showAppBar: true,
                     retry: () {
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
+                      Navigator.of(context).pushReplacement(MaterialPageRoute(
                           builder: (_) => ConversationsChat(
-                            refreshSidebar: widget.refreshSidebar,
-                            title: widget.title,
-                            id: widget.id,
-                            newSettings: widget.newSettings,
-                            isTablet: widget.isTablet,
-                          ),
-                        ),
-                      );
+                                refreshSidebar: widget.refreshSidebar,
+                                title: widget.title,
+                                id: widget.id,
+                                newSettings: widget.newSettings,
+                                isTablet: widget.isTablet,
+                              )));
                     },
                   );
                 }
@@ -569,11 +543,11 @@ class _ConversationsChatState extends State<ConversationsChat>
                               .withValues(alpha: 0.07),
                         ),
                         GestureDetector(
-                          onTap: () => SystemChannels.textInput.invokeMethod(
-                            'TextInput.hide',
-                          ),
+                          onTap: () => SystemChannels.textInput
+                              .invokeMethod('TextInput.hide'),
                           behavior: HitTestBehavior.deferToChild,
-                          child: NotificationListener<ScrollMetricsNotification>(
+                          child:
+                              NotificationListener<ScrollMetricsNotification>(
                             onNotification: (_) {
                               toggleScrollToBottomFab();
                               return false;
@@ -588,9 +562,8 @@ class _ConversationsChatState extends State<ConversationsChat>
                                 slivers: [
                                   SliverToBoxAdapter(
                                     child: AnimatedContainer(
-                                      duration: const Duration(
-                                        milliseconds: 200,
-                                      ),
+                                      duration:
+                                          const Duration(milliseconds: 200),
                                       curve: Curves.easeInOut,
                                       height: richTextEditorSize + 10,
                                     ),
@@ -603,23 +576,19 @@ class _ConversationsChatState extends State<ConversationsChat>
                                           chat.length - 1 - index;
                                       if (chat[reversedIndex] is Message) {
                                         return MessageWidget(
-                                          message: chat[reversedIndex],
-                                          textStyle:
-                                              textStyles[chat[reversedIndex]
-                                                  .author],
-                                        );
+                                            message: chat[reversedIndex],
+                                            textStyle: textStyles[
+                                                chat[reversedIndex].author]);
                                       } else {
                                         return DateHeaderWidget(
-                                          header: chat[reversedIndex],
-                                        );
+                                            header: chat[reversedIndex]);
                                       }
                                     },
                                   ),
                                   SliverToBoxAdapter(
                                     child: Padding(
-                                      padding: const EdgeInsets.only(
-                                        bottom: 12.0,
-                                      ),
+                                      padding:
+                                          const EdgeInsets.only(bottom: 12.0),
                                       child: Column(
                                         children: [
                                           Row(
@@ -628,15 +597,14 @@ class _ConversationsChatState extends State<ConversationsChat>
                                             children: [
                                               Flexible(
                                                 child: Padding(
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 12.0,
-                                                      ),
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                      horizontal: 12.0),
                                                   child: Text(
                                                     widget.title,
-                                                    style: Theme.of(
-                                                      context,
-                                                    ).textTheme.headlineMedium,
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .headlineMedium,
                                                     textAlign: TextAlign.center,
                                                   ),
                                                 ),
@@ -649,26 +617,21 @@ class _ConversationsChatState extends State<ConversationsChat>
                                               alignment: Alignment.center,
                                               padding:
                                                   const EdgeInsets.symmetric(
-                                                    vertical: 8.0,
-                                                    horizontal: 12.0,
-                                                  ),
+                                                      vertical: 8.0,
+                                                      horizontal: 12.0),
                                               margin: const EdgeInsets.only(
-                                                top: 16.0,
-                                              ),
+                                                  top: 16.0),
                                               decoration: BoxDecoration(
-                                                color: Theme.of(context)
-                                                    .colorScheme
-                                                    .surfaceContainerHigh,
-                                              ),
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .surfaceContainerHigh),
                                               child: Text(
-                                                AppLocalizations.of(
-                                                  context,
-                                                ).privateConversation(
-                                                  settings.author!,
-                                                ),
-                                                style: Theme.of(
-                                                  context,
-                                                ).textTheme.bodyMedium,
+                                                AppLocalizations.of(context)
+                                                    .privateConversation(
+                                                        settings.author!),
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodyMedium,
                                                 textAlign: TextAlign.center,
                                               ),
                                             ),
@@ -716,7 +679,9 @@ class _ConversationsChatState extends State<ConversationsChat>
               );
             }
             // Waiting content
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
           },
         ),
       ),

@@ -4,9 +4,8 @@ class LessonsTeacherHome {
   LessonsTeacherHome({required this.courseFolders});
 
   Map<String, dynamic> toJson() {
-    final List<Map<String, dynamic>> courseFoldersJson = courseFolders.map((
-      CourseFolderStartPage courseFolder,
-    ) {
+    final List<Map<String, dynamic>> courseFoldersJson =
+        courseFolders.map((CourseFolderStartPage courseFolder) {
       return {
         'name': courseFolder.name,
         'topic': courseFolder.topic,
@@ -14,9 +13,9 @@ class LessonsTeacherHome {
             ? {
                 'topic': courseFolder.entryInformation!.topic,
                 'date': courseFolder.entryInformation!.date.toIso8601String(),
-                'homework': courseFolder.entryInformation!.homework,
+                'homework': courseFolder.entryInformation!.homework
               }
-            : null,
+            : null
       };
     }).toList();
     return {'courseFolders': courseFoldersJson};
@@ -29,12 +28,11 @@ class CourseFolderStartPage {
   final CourseFolderStartPageEntryInformation? entryInformation;
   final String id;
 
-  CourseFolderStartPage({
-    required this.name,
-    required this.topic,
-    required this.id,
-    this.entryInformation,
-  });
+  CourseFolderStartPage(
+      {required this.name,
+      required this.topic,
+      required this.id,
+      this.entryInformation});
 }
 
 class CourseFolderStartPageEntryInformation {
@@ -42,11 +40,8 @@ class CourseFolderStartPageEntryInformation {
   final DateTime date;
   final String? homework;
 
-  CourseFolderStartPageEntryInformation({
-    required this.topic,
-    required this.date,
-    this.homework,
-  });
+  CourseFolderStartPageEntryInformation(
+      {required this.topic, required this.date, this.homework});
 }
 
 class CourseFolderDetails {
@@ -57,15 +52,14 @@ class CourseFolderDetails {
   final Uri? learningGroupsUrl;
   final List<CourseFolderHistoryEntry> history;
   final CourseFolderNewEntryConstraints newEntryConstraints;
-  CourseFolderDetails({
-    required this.courseId,
-    required this.studentCount,
-    required this.courseName,
-    required this.newEntryConstraints,
-    required this.courseTopic,
-    this.learningGroupsUrl,
-    required this.history,
-  });
+  CourseFolderDetails(
+      {required this.courseId,
+      required this.studentCount,
+      required this.courseName,
+      required this.newEntryConstraints,
+      required this.courseTopic,
+      this.learningGroupsUrl,
+      required this.history});
 }
 
 class CourseFolderHistoryEntry {
@@ -80,18 +74,17 @@ class CourseFolderHistoryEntry {
   final bool isAvailableInAdvance;
   final String? studentUploadFileCount;
 
-  CourseFolderHistoryEntry({
-    required this.id,
-    required this.isAvailableInAdvance,
-    required this.topic,
-    required this.studentUploadFileCount,
-    required this.date,
-    required this.schoolHours,
-    this.homework,
-    this.content,
-    required this.files,
-    required this.attendanceActionRequired,
-  });
+  CourseFolderHistoryEntry(
+      {required this.id,
+      required this.isAvailableInAdvance,
+      required this.topic,
+      required this.studentUploadFileCount,
+      required this.date,
+      required this.schoolHours,
+      this.homework,
+      this.content,
+      required this.files,
+      required this.attendanceActionRequired});
 }
 
 class CourseFolderHistoryEntryFile {
@@ -101,13 +94,12 @@ class CourseFolderHistoryEntryFile {
   final Uri url;
   bool isVisibleForStudents;
 
-  CourseFolderHistoryEntryFile({
-    required this.name,
-    required this.entryId,
-    required this.url,
-    required this.isVisibleForStudents,
-    required this.extension,
-  });
+  CourseFolderHistoryEntryFile(
+      {required this.name,
+      required this.entryId,
+      required this.url,
+      required this.isVisibleForStudents,
+      required this.extension});
 }
 
 class CourseFolderNewEntryConstraints {
@@ -116,10 +108,9 @@ class CourseFolderNewEntryConstraints {
   final bool homeworkVisibleForStudents;
   final List<String> schoolHours;
 
-  CourseFolderNewEntryConstraints({
-    required this.topicVisibleForStudents,
-    required this.contentVisibleForStudents,
-    required this.homeworkVisibleForStudents,
-    required this.schoolHours,
-  });
+  CourseFolderNewEntryConstraints(
+      {required this.topicVisibleForStudents,
+      required this.contentVisibleForStudents,
+      required this.homeworkVisibleForStudents,
+      required this.schoolHours});
 }

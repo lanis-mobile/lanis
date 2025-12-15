@@ -15,16 +15,15 @@ class FormatPattern {
   late final String? specialCaseTag;
   late final List<int> specialCaseGroups;
 
-  FormatPattern({
-    required this.regExp,
-    this.startTag,
-    this.endTag,
-    this.group = 1,
-    this.map = const {},
-    this.specialCaseRegExp,
-    this.specialCaseTag,
-    this.specialCaseGroups = const [1],
-  });
+  FormatPattern(
+      {required this.regExp,
+      this.startTag,
+      this.endTag,
+      this.group = 1,
+      this.map = const {},
+      this.specialCaseRegExp,
+      this.specialCaseTag,
+      this.specialCaseGroups = const [1]});
 }
 
 class FormatStyle {
@@ -35,42 +34,35 @@ class FormatStyle {
   late final Color codeBackground;
   late final Color codeForeground;
 
-  FormatStyle({
-    required this.textStyle,
-    required this.timeColor,
-    required this.linkBackground,
-    required this.linkForeground,
-    required this.codeBackground,
-    required this.codeForeground,
-  });
+  FormatStyle(
+      {required this.textStyle,
+      required this.timeColor,
+      required this.linkBackground,
+      required this.linkForeground,
+      required this.codeBackground,
+      required this.codeForeground});
 }
 
 class DefaultFormatStyle extends FormatStyle {
   late final BuildContext context;
 
   DefaultFormatStyle({required this.context})
-    : super(
-        textStyle: Theme.of(context).textTheme.bodyMedium!,
-        timeColor: Theme.of(context).colorScheme.primary,
-        linkBackground: Theme.of(
-          context,
-        ).colorScheme.primary.withValues(alpha: 0.25),
-        linkForeground: Theme.of(context).colorScheme.primary,
-        codeBackground: Theme.of(
-          context,
-        ).colorScheme.secondary.withValues(alpha: 0.25),
-        codeForeground: Theme.of(context).colorScheme.onSurface,
-      );
+      : super(
+            textStyle: Theme.of(context).textTheme.bodyMedium!,
+            timeColor: Theme.of(context).colorScheme.primary,
+            linkBackground:
+                Theme.of(context).colorScheme.primary.withValues(alpha: 0.25),
+            linkForeground: Theme.of(context).colorScheme.primary,
+            codeBackground:
+                Theme.of(context).colorScheme.secondary.withValues(alpha: 0.25),
+            codeForeground: Theme.of(context).colorScheme.onSurface);
 }
 
 class FormattedText extends StatelessWidget {
   final String text;
   final FormatStyle formatStyle;
-  const FormattedText({
-    super.key,
-    required this.text,
-    required this.formatStyle,
-  });
+  const FormattedText(
+      {super.key, required this.text, required this.formatStyle});
 
   /// Replaces all occurrences of map keys with their respective value
   String convertByMap(String string, Map<String, String> map) {
@@ -97,79 +89,56 @@ class FormattedText extends StatelessWidget {
   String convertLanisSyntax(String lanisStyledText) {
     final List<FormatPattern> formatPatterns = [
       FormatPattern(
-        regExp: RegExp(r"--(([^-]|-(?!-))+)--"),
-        specialCaseRegExp: RegExp(r"--((|.*)__(([^_]|_(?!_))+)__(.*|))--"),
-        specialCaseTag: "<del hasU=true>",
-        specialCaseGroups: [2, 3, 5],
-        startTag: "<del>",
-        endTag: "</del>",
-      ),
+          regExp: RegExp(r"--(([^-]|-(?!-))+)--"),
+          specialCaseRegExp: RegExp(r"--((|.*)__(([^_]|_(?!_))+)__(.*|))--"),
+          specialCaseTag: "<del hasU=true>",
+          specialCaseGroups: [2, 3, 5],
+          startTag: "<del>",
+          endTag: "</del>"),
       FormatPattern(
-        regExp: RegExp(r"__(([^_]|_(?!_))+)__"),
-        specialCaseRegExp: RegExp(r"__((|.*)--(([^-]|-(?!-))+)--(.*|))__"),
-        specialCaseTag: "<u hasDel=true>",
-        specialCaseGroups: [2, 3, 5],
-        startTag: "<u>",
-        endTag: "</u>",
-      ),
+          regExp: RegExp(r"__(([^_]|_(?!_))+)__"),
+          specialCaseRegExp: RegExp(r"__((|.*)--(([^-]|-(?!-))+)--(.*|))__"),
+          specialCaseTag: "<u hasDel=true>",
+          specialCaseGroups: [2, 3, 5],
+          startTag: "<u>",
+          endTag: "</u>"),
       FormatPattern(
-        regExp: RegExp(r"\*\*(([^*]|\*(?!\*))+)\*\*"),
-        startTag: "<b>",
-        endTag: "</b>",
-      ),
+          regExp: RegExp(r"\*\*(([^*]|\*(?!\*))+)\*\*"),
+          startTag: "<b>",
+          endTag: "</b>"),
       FormatPattern(
-        regExp: RegExp(r"_\((.*?)\)"),
-        startTag: "<sub>",
-        endTag: "</sub>",
-      ),
+          regExp: RegExp(r"_\((.*?)\)"), startTag: "<sub>", endTag: "</sub>"),
       FormatPattern(
-        regExp: RegExp(r"_(.)\s"),
-        startTag: "<sub>",
-        endTag: "</sub>",
-      ),
+          regExp: RegExp(r"_(.)\s"), startTag: "<sub>", endTag: "</sub>"),
       FormatPattern(
-        regExp: RegExp(r"\^\((.*?)\)"),
-        startTag: "<sup>",
-        endTag: "</sup>",
-      ),
+          regExp: RegExp(r"\^\((.*?)\)"), startTag: "<sup>", endTag: "</sup>"),
       FormatPattern(
-        regExp: RegExp(r"\^(.)\s"),
-        startTag: "<sup>",
-        endTag: "</sup>",
-      ),
+          regExp: RegExp(r"\^(.)\s"), startTag: "<sup>", endTag: "</sup>"),
       FormatPattern(
-        regExp: RegExp(r"~~(([^~]|~(?!~))+)~~"),
-        startTag: "<i>",
-        endTag: "</i>",
-      ),
+          regExp: RegExp(r"~~(([^~]|~(?!~))+)~~"),
+          startTag: "<i>",
+          endTag: "</i>"),
       FormatPattern(
-        regExp: RegExp(r"`(?!``)(.*)(?<!``)`"),
-        startTag: "<code>",
-        endTag: "</code>",
-      ),
+          regExp: RegExp(r"`(?!``)(.*)(?<!``)`"),
+          startTag: "<code>",
+          endTag: "</code>"),
       FormatPattern(
-        regExp: RegExp(r"```\n*((?:[^`]|`(?!``))*)\n*```"),
-        startTag: "<code>",
-        endTag: "</code>",
-      ),
+          regExp: RegExp(r"```\n*((?:[^`]|`(?!``))*)\n*```"),
+          startTag: "<code>",
+          endTag: "</code>"),
       FormatPattern(
-        regExp: RegExp(r"(\d{2}\.\d{1,2}\.(\d{4}|\d{2}\b))"),
-        startTag: "<date>",
-        endTag: "</date>",
-      ),
+          regExp: RegExp(r"(\d{2}\.\d{1,2}\.(\d{4}|\d{2}\b))"),
+          startTag: "<date>",
+          endTag: "</date>"),
       FormatPattern(
-        regExp: RegExp(
-          r"(\d{2}:\d{2} Uhr)|(\d{2}:\d{2})",
-          caseSensitive: false,
-        ),
-        startTag: "<time>",
-        endTag: "</time>",
-        group: 0,
-      ),
+          regExp:
+              RegExp(r"(\d{2}:\d{2} Uhr)|(\d{2}:\d{2})", caseSensitive: false),
+          startTag: "<time>",
+          endTag: "</time>",
+          group: 0),
       FormatPattern(
-        regExp: RegExp(r"^[ \t]*-[ \t]*(.*)", multiLine: true),
-        startTag: "\u2022 ",
-      ),
+          regExp: RegExp(r"^[ \t]*-[ \t]*(.*)", multiLine: true),
+          startTag: "\u2022 "),
     ];
 
     String formattedText = lanisStyledText;
@@ -186,27 +155,23 @@ class FormattedText extends StatelessWidget {
     for (final FormatPattern pattern in formatPatterns) {
       if (pattern.specialCaseRegExp == null) break;
       formattedText = formattedText.replaceAllMapped(
-        pattern.specialCaseRegExp!,
-        (match) =>
-            "${pattern.specialCaseTag ?? ""}${convertByMap(match.groups(pattern.specialCaseGroups).join(), pattern.map)}${pattern.endTag ?? ""}",
-      );
+          pattern.specialCaseRegExp!,
+          (match) =>
+              "${pattern.specialCaseTag ?? ""}${convertByMap(match.groups(pattern.specialCaseGroups).join(), pattern.map)}${pattern.endTag ?? ""}");
     }
 
     // Apply formatting
     for (final FormatPattern pattern in formatPatterns) {
       formattedText = formattedText.replaceAllMapped(
-        pattern.regExp,
-        (match) =>
-            "${pattern.startTag ?? ""}${convertByMap(match.group(pattern.group)!, pattern.map)}${pattern.endTag ?? ""}",
-      );
+          pattern.regExp,
+          (match) =>
+              "${pattern.startTag ?? ""}${convertByMap(match.group(pattern.group)!, pattern.map)}${pattern.endTag ?? ""}");
     }
 
     // Surround emails and links with <a> tag
-    final List<LinkifyElement> linkifiedElements = linkify(
-      formattedText,
-      options: const LinkifyOptions(humanize: true, removeWww: true),
-      linkifiers: const [EmailLinkifier(), UrlLinkifier()],
-    );
+    final List<LinkifyElement> linkifiedElements = linkify(formattedText,
+        options: const LinkifyOptions(humanize: true, removeWww: true),
+        linkifiers: const [EmailLinkifier(), UrlLinkifier()]);
 
     String linkifiedText = "";
 
@@ -233,125 +198,95 @@ class FormattedText extends StatelessWidget {
         style: formatStyle.textStyle,
         tags: {
           "b": const StyledTextTag(
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          "u": StyledTextCustomTag(
-            parse: (_, attributes) {
-              List<TextDecoration> textDecorations = [TextDecoration.underline];
-              if (attributes.containsKey("hasDel")) {
-                textDecorations.add(TextDecoration.lineThrough);
-              }
+              style: TextStyle(fontWeight: FontWeight.bold)),
+          "u": StyledTextCustomTag(parse: (_, attributes) {
+            List<TextDecoration> textDecorations = [TextDecoration.underline];
+            if (attributes.containsKey("hasDel")) {
+              textDecorations.add(TextDecoration.lineThrough);
+            }
 
-              return TextStyle(
-                decoration: TextDecoration.combine(textDecorations),
-              );
-            },
-          ),
+            return TextStyle(
+              decoration: TextDecoration.combine(textDecorations),
+            );
+          }),
           "i": const StyledTextTag(
-            style: TextStyle(fontStyle: FontStyle.italic),
-          ),
-          "del": StyledTextCustomTag(
-            parse: (_, attributes) {
-              List<TextDecoration> textDecorations = [
-                TextDecoration.lineThrough,
-              ];
-              if (attributes.containsKey("hasU")) {
-                textDecorations.add(TextDecoration.underline);
-              }
+              style: TextStyle(fontStyle: FontStyle.italic)),
+          "del": StyledTextCustomTag(parse: (_, attributes) {
+            List<TextDecoration> textDecorations = [TextDecoration.lineThrough];
+            if (attributes.containsKey("hasU")) {
+              textDecorations.add(TextDecoration.underline);
+            }
 
-              return TextStyle(
-                decoration: TextDecoration.combine(textDecorations),
-              );
-            },
-          ),
+            return TextStyle(
+              decoration: TextDecoration.combine(textDecorations),
+            );
+          }),
           "sup": const StyledTextTag(
-            style: TextStyle(fontFeatures: [FontFeature.superscripts()]),
-          ),
+              style: TextStyle(fontFeatures: [FontFeature.superscripts()])),
           "sub": const StyledTextTag(
-            style: TextStyle(fontFeatures: [FontFeature.subscripts()]),
-          ),
-          "code": StyledTextWidgetBuilderTag(
-            (context, _, textContent) => Padding(
-              padding: const EdgeInsets.only(top: 2, bottom: 2),
-              child: Container(
-                padding: const EdgeInsets.only(
-                  left: 8.0,
-                  right: 8.0,
-                  top: 4,
-                  bottom: 4,
-                ),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(6),
-                  color: formatStyle.codeBackground,
-                ),
-                child: Text(
-                  textContent!,
-                  style: TextStyle(
-                    fontFamily: "Roboto Mono",
-                    color: formatStyle.codeForeground,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          "date": StyledTextWidgetBuilderTag(
-            (context, _, textContent) => Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 2),
-                  child: Icon(
-                    Icons.calendar_today,
-                    size: 20,
-                    color: formatStyle.timeColor,
-                  ),
-                ),
-                Flexible(
-                  child: Text(
-                    textContent!,
-                    style: TextStyle(
-                      color: formatStyle.timeColor,
-                      fontWeight: FontWeight.bold,
+              style: TextStyle(fontFeatures: [FontFeature.subscripts()])),
+          "code":
+              StyledTextWidgetBuilderTag((context, _, textContent) => Padding(
+                    padding: const EdgeInsets.only(top: 2, bottom: 2),
+                    child: Container(
+                      padding: const EdgeInsets.only(
+                          left: 8.0, right: 8.0, top: 4, bottom: 4),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(6),
+                        color: formatStyle.codeBackground,
+                      ),
+                      child: Text(
+                        textContent!,
+                        style: TextStyle(
+                            fontFamily: "Roboto Mono",
+                            color: formatStyle.codeForeground),
+                      ),
                     ),
+                  )),
+          "date": StyledTextWidgetBuilderTag((context, _, textContent) => Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(right: 2),
+                    child: Icon(Icons.calendar_today,
+                        size: 20, color: formatStyle.timeColor),
                   ),
-                ),
-              ],
-            ),
-          ),
-          "time": StyledTextWidgetBuilderTag(
-            (context, _, textContent) => Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 2),
-                  child: Icon(
-                    Icons.access_time_filled,
-                    size: 20,
-                    color: formatStyle.timeColor,
-                  ),
-                ),
-                Flexible(
-                  child: Text(
-                    textContent!,
-                    style: TextStyle(
-                      color: formatStyle.timeColor,
-                      fontWeight: FontWeight.bold,
+                  Flexible(
+                    child: Text(
+                      textContent!,
+                      style: TextStyle(
+                          color: formatStyle.timeColor,
+                          fontWeight: FontWeight.bold),
                     ),
+                  )
+                ],
+              )),
+          "time": StyledTextWidgetBuilderTag((context, _, textContent) => Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(right: 2),
+                    child: Icon(Icons.access_time_filled,
+                        size: 20, color: formatStyle.timeColor),
                   ),
-                ),
-              ],
-            ),
-          ),
+                  Flexible(
+                    child: Text(
+                      textContent!,
+                      style: TextStyle(
+                          color: formatStyle.timeColor,
+                          fontWeight: FontWeight.bold),
+                    ),
+                  )
+                ],
+              )),
           "a": StyledTextWidgetBuilderTag((context, attributes, textContent) {
             late final Icon icon;
 
             if (attributes["type"] == "url") {
               icon = Icon(Icons.link, color: formatStyle.linkForeground);
             } else {
-              icon = Icon(
-                Icons.email_rounded,
-                color: formatStyle.linkForeground,
-              );
+              icon =
+                  Icon(Icons.email_rounded, color: formatStyle.linkForeground);
             }
 
             return Padding(
@@ -360,40 +295,34 @@ class FormattedText extends StatelessWidget {
                 onTap: () async {
                   if (!await launchUrl(Uri.parse(attributes["href"]!))) {
                     logger.w(
-                      '${attributes["href"]} konnte nicht geöffnet werden.',
-                    );
+                        '${attributes["href"]} konnte nicht geöffnet werden.');
                   }
                 },
                 borderRadius: BorderRadius.circular(6),
                 child: Container(
-                  padding: const EdgeInsets.only(
-                    left: 7,
-                    right: 8,
-                    top: 2,
-                    bottom: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(6),
-                    color: formatStyle.linkBackground,
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(right: 4),
-                        child: icon,
-                      ),
-                      Flexible(
-                        child: Text(
-                          textContent!,
-                          style: TextStyle(color: formatStyle.linkForeground),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
+                    padding: const EdgeInsets.only(
+                        left: 7, right: 8, top: 2, bottom: 2),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(6),
+                      color: formatStyle.linkBackground,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(right: 4),
+                          child: icon,
                         ),
-                      ),
-                    ],
-                  ),
-                ),
+                        Flexible(
+                          child: Text(
+                            textContent!,
+                            style: TextStyle(color: formatStyle.linkForeground),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
+                        ),
+                      ],
+                    )),
               ),
             );
           }),

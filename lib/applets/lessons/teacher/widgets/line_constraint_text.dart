@@ -4,12 +4,8 @@ class LineConstraintText extends StatefulWidget {
   final String data;
   final int maxLines;
   final TextStyle? style;
-  const LineConstraintText({
-    super.key,
-    required this.data,
-    this.maxLines = 1,
-    this.style,
-  });
+  const LineConstraintText(
+      {super.key, required this.data, this.maxLines = 1, this.style});
 
   @override
   State<LineConstraintText> createState() => _LineConstraintTextState();

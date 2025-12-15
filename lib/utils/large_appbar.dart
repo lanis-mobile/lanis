@@ -40,12 +40,13 @@ class LargeAppBar extends StatelessWidget implements PreferredSizeWidget {
                   Padding(
                     padding: const EdgeInsets.only(left: 16.0, bottom: 28),
                     child: DefaultTextStyle(
-                      style: Theme.of(context).textTheme.headlineMedium!
-                          .copyWith(
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
-                      child: title,
-                    ),
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineMedium!
+                            .copyWith(
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                        child: title),
                   ),
                 ],
               ),

@@ -64,9 +64,10 @@ class _LessonListTileState extends State<LessonListTile> {
               if (widget.lesson.currentEntry?.topicTitle != null)
                 Text(
                   widget.lesson.currentEntry!.topicTitle ?? '-',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(fontStyle: FontStyle.italic),
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyMedium
+                      ?.copyWith(fontStyle: FontStyle.italic),
                 ),
               if (widget.lesson.currentEntry?.homework != null) ...[
                 const SizedBox(height: 12),
@@ -80,11 +81,10 @@ class _LessonListTileState extends State<LessonListTile> {
               Row(
                 children: [
                   Icon(
-                    widget.lesson.teachers.length > 1
-                        ? Icons.people
-                        : Icons.person,
-                    size: 16,
-                  ),
+                      widget.lesson.teachers.length > 1
+                          ? Icons.people
+                          : Icons.person,
+                      size: 16),
                   if (widget.lesson.teachers.length == 1)
                     Text(
                       " ${widget.lesson.teachers[0].teacher} (${widget.lesson.teachers[0].teacherKuerzel})",
@@ -95,9 +95,8 @@ class _LessonListTileState extends State<LessonListTile> {
                     ),
                   const Spacer(),
                   Text(
-                    '${dateFormat.format(widget.lesson.currentEntry?.topicDate ?? DateTime(0))} ',
-                  ),
-                  const Icon(Icons.calendar_today, size: 16),
+                      '${dateFormat.format(widget.lesson.currentEntry?.topicDate ?? DateTime(0))} '),
+                  const Icon(Icons.calendar_today, size: 16)
                 ],
               ),
             ],
@@ -109,11 +108,10 @@ class _LessonListTileState extends State<LessonListTile> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => CourseOverviewAnsicht(
-                  dataFetchURL: widget.lesson.courseURL.toString(),
-                  title: widget.lesson.name,
-                ),
-              ),
+                  builder: (context) => CourseOverviewAnsicht(
+                        dataFetchURL: widget.lesson.courseURL.toString(),
+                        title: widget.lesson.name,
+                      )),
             );
           },
         ),

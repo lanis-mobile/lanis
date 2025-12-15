@@ -32,26 +32,25 @@ class Substitution {
   final dynamic lerngruppe;
   final List? hervorgehoben;
 
-  Substitution({
-    required this.tag,
-    required this.tag_en,
-    required this.stunde,
-    this.vertreter,
-    this.lehrer,
-    this.klasse,
-    this.klasse_alt,
-    this.fach,
-    this.fach_alt,
-    this.raum,
-    this.raum_alt,
-    this.hinweis,
-    this.hinweis2,
-    this.art,
-    this.Lehrerkuerzel,
-    this.Vertreterkuerzel,
-    this.lerngruppe,
-    this.hervorgehoben,
-  });
+  Substitution(
+      {required this.tag,
+      required this.tag_en,
+      required this.stunde,
+      this.vertreter,
+      this.lehrer,
+      this.klasse,
+      this.klasse_alt,
+      this.fach,
+      this.fach_alt,
+      this.raum,
+      this.raum_alt,
+      this.hinweis,
+      this.hinweis2,
+      this.art,
+      this.Lehrerkuerzel,
+      this.Vertreterkuerzel,
+      this.lerngruppe,
+      this.hervorgehoben});
 
   bool passesFilter(SubstitutionFilter substitutionsFilter) {
     Map<String, Function> filterFunctions = {
@@ -117,45 +116,45 @@ class Substitution {
   }
 
   Map<String, dynamic> toJson() => {
-    'tag': tag,
-    'tag_en': tag_en,
-    'stunde': stunde,
-    'vertreter': vertreter,
-    'lehrer': lehrer,
-    'klasse': klasse,
-    'klasse_alt': klasse_alt,
-    'fach': fach,
-    'fach_alt': fach_alt,
-    'raum': raum,
-    'raum_alt': raum_alt,
-    'hinweis': hinweis,
-    'hinweis2': hinweis2,
-    'art': art,
-    'Lehrerkuerzel': Lehrerkuerzel,
-    'Vertreterkuerzel': Vertreterkuerzel,
-    'lerngruppe': lerngruppe,
-    'hervorgehoben': hervorgehoben,
-  };
+        'tag': tag,
+        'tag_en': tag_en,
+        'stunde': stunde,
+        'vertreter': vertreter,
+        'lehrer': lehrer,
+        'klasse': klasse,
+        'klasse_alt': klasse_alt,
+        'fach': fach,
+        'fach_alt': fach_alt,
+        'raum': raum,
+        'raum_alt': raum_alt,
+        'hinweis': hinweis,
+        'hinweis2': hinweis2,
+        'art': art,
+        'Lehrerkuerzel': Lehrerkuerzel,
+        'Vertreterkuerzel': Vertreterkuerzel,
+        'lerngruppe': lerngruppe,
+        'hervorgehoben': hervorgehoben,
+      };
 
   Substitution.fromJson(Map<String, dynamic> json)
-    : tag = json['tag'],
-      tag_en = json['tag_en'],
-      stunde = json['stunde'],
-      vertreter = json['vertreter'],
-      lehrer = json['lehrer'],
-      klasse = json['klasse'],
-      klasse_alt = json['klasse_alt'],
-      fach = json['fach'],
-      fach_alt = json['fach_alt'],
-      raum = json['raum'],
-      raum_alt = json['raum_alt'],
-      hinweis = json['hinweis'],
-      hinweis2 = json['hinweis2'],
-      art = json['art'],
-      Lehrerkuerzel = json['Lehrerkuerzel'],
-      Vertreterkuerzel = json['Vertreterkuerzel'],
-      lerngruppe = json['lerngruppe'],
-      hervorgehoben = json['hervorgehoben'];
+      : tag = json['tag'],
+        tag_en = json['tag_en'],
+        stunde = json['stunde'],
+        vertreter = json['vertreter'],
+        lehrer = json['lehrer'],
+        klasse = json['klasse'],
+        klasse_alt = json['klasse_alt'],
+        fach = json['fach'],
+        fach_alt = json['fach_alt'],
+        raum = json['raum'],
+        raum_alt = json['raum_alt'],
+        hinweis = json['hinweis'],
+        hinweis2 = json['hinweis2'],
+        art = json['art'],
+        Lehrerkuerzel = json['Lehrerkuerzel'],
+        Vertreterkuerzel = json['Vertreterkuerzel'],
+        lerngruppe = json['lerngruppe'],
+        hervorgehoben = json['hervorgehoben'];
 }
 
 /// A data class to store all substitution information for a single day
@@ -174,11 +173,9 @@ class SubstitutionDay {
     return _dateTime!;
   }
 
-  SubstitutionDay({
-    required this.parsedDate,
-    List<Substitution>? substitutions,
-    this.infos,
-  }) : substitutions = substitutions ?? [];
+  SubstitutionDay(
+      {required this.parsedDate, List<Substitution>? substitutions, this.infos})
+      : substitutions = substitutions ?? [];
 
   void add(Substitution substitution) {
     substitutions.add(substitution);
@@ -189,19 +186,19 @@ class SubstitutionDay {
   }
 
   Map<String, dynamic> toJson() => {
-    'date': parsedDate,
-    'substitutions': substitutions.map((s) => s.toJson()).toList(),
-    'infos': infos?.map((i) => i.toJson()).toList(),
-  };
+        'date': parsedDate,
+        'substitutions': substitutions.map((s) => s.toJson()).toList(),
+        'infos': infos?.map((i) => i.toJson()).toList(),
+      };
 
   SubstitutionDay.fromJson(Map<String, dynamic> json)
-    : parsedDate = json['date'],
-      substitutions = (json['substitutions'] as List)
-          .map((i) => Substitution.fromJson(i))
-          .toList(),
-      infos = (json['infos'] as List?)
-          ?.map((i) => SubstitutionInfo.fromJson(i))
-          .toList();
+      : parsedDate = json['date'],
+        substitutions = (json['substitutions'] as List)
+            .map((i) => Substitution.fromJson(i))
+            .toList(),
+        infos = (json['infos'] as List?)
+            ?.map((i) => SubstitutionInfo.fromJson(i))
+            .toList();
 
   SubstitutionDay withDayInfo(List<SubstitutionInfo> info) {
     return SubstitutionDay(
@@ -218,8 +215,8 @@ class SubstitutionPlan {
   DateTime lastUpdated;
 
   SubstitutionPlan({List<SubstitutionDay>? days, DateTime? lastUpdated})
-    : days = days ?? [],
-      lastUpdated = lastUpdated ?? DateTime.now();
+      : days = days ?? [],
+        lastUpdated = lastUpdated ?? DateTime.now();
 
   void add(SubstitutionDay substitutionDay) {
     days.add(substitutionDay);
@@ -234,11 +231,9 @@ class SubstitutionPlan {
   }
 
   void removeEmptyDays() {
-    days.removeWhere(
-      (day) =>
-          day.substitutions.isEmpty &&
-          ((day.infos == null || day.infos!.isEmpty)),
-    );
+    days.removeWhere((day) =>
+        day.substitutions.isEmpty &&
+        ((day.infos == null || day.infos!.isEmpty)));
   }
 
   void filterAll(SubstitutionFilter filter) {
@@ -249,15 +244,15 @@ class SubstitutionPlan {
   }
 
   Map<String, dynamic> toJson() => {
-    'days': days.map((d) => d.toJson()).toList(),
-    'lastUpdated': lastUpdated.toIso8601String(),
-  };
+        'days': days.map((d) => d.toJson()).toList(),
+        'lastUpdated': lastUpdated.toIso8601String(),
+      };
 
   SubstitutionPlan.fromJson(Map<String, dynamic> json)
-    : days = (json['days'] as List)
-          .map((i) => SubstitutionDay.fromJson(i))
-          .toList(),
-      lastUpdated = DateTime.parse(json['lastUpdated']);
+      : days = (json['days'] as List)
+            .map((i) => SubstitutionDay.fromJson(i))
+            .toList(),
+        lastUpdated = DateTime.parse(json['lastUpdated']);
 }
 
 /// A data class to store all information that is available to every user for a single substitution day
@@ -269,11 +264,13 @@ class SubstitutionInfo {
 
   SubstitutionInfo({required this.header, required this.values});
 
-  Map<String, dynamic> toJson() => {'header': header, 'values': values};
+  Map<String, dynamic> toJson() => {
+        'header': header,
+        'values': values,
+      };
 
   SubstitutionInfo.fromJson(Map<String, dynamic> json)
-    : header = json['header'] as String,
-      values = (json['values'] as List<dynamic>)
-          .map((e) => e as String)
-          .toList();
+      : header = json['header'] as String,
+        values =
+            (json['values'] as List<dynamic>).map((e) => e as String).toList();
 }

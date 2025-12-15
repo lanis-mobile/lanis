@@ -20,9 +20,8 @@ class _OfflineAvailableAppletsSectionState
   List<OfflineApplet> possibleOfflineApplets = [];
 
   Future<void> loadPossibleOfflineApplets() async {
-    final accounts = await accountDatabase
-        .select(accountDatabase.accountsTable)
-        .get();
+    final accounts =
+        await accountDatabase.select(accountDatabase.accountsTable).get();
     for (final account in accounts) {
       final userDatabase = AccountPreferencesDatabase(localId: account.id);
       final applets = await userDatabase.select(userDatabase.appletData).get();
@@ -67,28 +66,24 @@ class _OfflineAvailableAppletsSectionState
         children: possibleOfflineApplets
             .map(
               (offlineApplet) => ListTile(
-                title: Text(offlineApplet.definition.label(context)),
-                subtitle: Text(offlineApplet.userDisplayName),
-                leading: offlineApplet.definition.icon,
-                onTap: () async {
-                  ClearTextAccount acc = await accountDatabase
-                      .getClearTextAccountFromId(offlineApplet.localUserId);
-                  sph = SPH(account: acc);
-                  if (context.mounted) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            offlineApplet.definition.bodyBuilder!(
-                              context,
-                              acc.accountType ?? AccountType.student,
-                              null,
-                            ),
-                      ),
-                    );
-                  }
-                },
-              ),
+                  title: Text(offlineApplet.definition.label(context)),
+                  subtitle: Text(offlineApplet.userDisplayName),
+                  leading: offlineApplet.definition.icon,
+                  onTap: () async {
+                    ClearTextAccount acc = await accountDatabase
+                        .getClearTextAccountFromId(offlineApplet.localUserId);
+                    sph = SPH(account: acc);
+                    if (context.mounted) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              offlineApplet.definition.bodyBuilder!(context,
+                                  acc.accountType ?? AccountType.student, null),
+                        ),
+                      );
+                    }
+                  }),
             )
             .toList(growable: false),
       ),

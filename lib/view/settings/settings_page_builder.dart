@@ -59,7 +59,9 @@ class SettingsPage extends StatelessWidget {
       body: Padding(
         padding: contentPadding,
         child: children.length > 1
-            ? ListView(children: children)
+            ? ListView(
+                children: children,
+              )
             : children.first,
       ),
       floatingActionButton: floatingActionButton,
@@ -76,16 +78,15 @@ class SettingsPageWithRefreshIndicator extends StatelessWidget {
   final void Function()? back;
   final bool showBackButton;
 
-  const SettingsPageWithRefreshIndicator({
-    super.key,
-    required this.backgroundColor,
-    required this.title,
-    this.contentPadding = EdgeInsets.zero,
-    this.back,
-    required this.onRefresh,
-    required this.children,
-    this.showBackButton = true,
-  });
+  const SettingsPageWithRefreshIndicator(
+      {super.key,
+      required this.backgroundColor,
+      required this.title,
+      this.contentPadding = EdgeInsets.zero,
+      this.back,
+      required this.onRefresh,
+      required this.children,
+      this.showBackButton = true});
 
   @override
   Widget build(BuildContext context) {
@@ -101,18 +102,17 @@ class SettingsPageWithRefreshIndicator extends StatelessWidget {
         padding: contentPadding,
         child: RefreshIndicator(
           onRefresh: onRefresh,
-          child: ListView(children: children),
+          child: ListView(
+            children: children,
+          ),
         ),
       ),
     );
   }
 }
 
-typedef SettingsListBuilder =
-    List<Widget> Function(
-      BuildContext context,
-      AsyncSnapshot<Map<String, dynamic>> snapshot,
-    );
+typedef SettingsListBuilder = List<Widget> Function(
+    BuildContext context, AsyncSnapshot<Map<String, dynamic>> snapshot);
 
 class SettingsPageWithStreamBuilder extends StatelessWidget {
   final Color backgroundColor;
@@ -123,16 +123,15 @@ class SettingsPageWithStreamBuilder extends StatelessWidget {
   final Stream<Map<String, dynamic>> subscription;
   final bool showBackButton;
 
-  const SettingsPageWithStreamBuilder({
-    super.key,
-    required this.backgroundColor,
-    required this.title,
-    this.contentPadding = EdgeInsets.zero,
-    this.back,
-    required this.subscription,
-    required this.builder,
-    this.showBackButton = true,
-  });
+  const SettingsPageWithStreamBuilder(
+      {super.key,
+      required this.backgroundColor,
+      required this.title,
+      this.contentPadding = EdgeInsets.zero,
+      this.back,
+      required this.subscription,
+      required this.builder,
+      this.showBackButton = true});
 
   @override
   Widget build(BuildContext context) {
@@ -153,7 +152,9 @@ class SettingsPageWithStreamBuilder extends StatelessWidget {
               return LinearProgressIndicator();
             }
 
-            return ListView(children: builder(context, snapshot));
+            return ListView(
+              children: builder(context, snapshot),
+            );
           },
         ),
       ),

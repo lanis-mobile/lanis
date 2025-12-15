@@ -8,11 +8,8 @@ import '../../../models/conversations.dart';
 class FullScreenConversationsMessageInput extends StatefulWidget {
   final ChatCreationData? creationData;
   final String? title;
-  const FullScreenConversationsMessageInput({
-    super.key,
-    this.creationData,
-    this.title,
-  });
+  const FullScreenConversationsMessageInput(
+      {super.key, this.creationData, this.title});
 
   @override
   State<FullScreenConversationsMessageInput> createState() =>
@@ -106,8 +103,7 @@ class _FullScreenConversationsMessageInputState
           IconButton(
             onPressed: () {
               final String text = FullScreenConversationsMessageInput.parseText(
-                _controller.document.toDelta(),
-              );
+                  _controller.document.toDelta());
 
               if (text.isEmpty) return;
 
@@ -122,20 +118,16 @@ class _FullScreenConversationsMessageInputState
           children: [
             Expanded(
               child: QuillEditor.basic(
-                configurations: QuillEditorConfigurations(
-                  controller: _controller,
-                  placeholder: AppLocalizations.of(
-                    context,
-                  ).sendMessagePlaceholder,
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                ),
-              ),
+                  configurations: QuillEditorConfigurations(
+                      controller: _controller,
+                      placeholder:
+                          AppLocalizations.of(context).sendMessagePlaceholder,
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0))),
             ),
             QuillToolbar(
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainer,
-                ),
+                    color: Theme.of(context).colorScheme.surfaceContainer),
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Wrap(
@@ -148,7 +140,9 @@ class _FullScreenConversationsMessageInputState
                         isUndo: false,
                         controller: _controller,
                       ),
-                      QuillToolbarClearFormatButton(controller: _controller),
+                      QuillToolbarClearFormatButton(
+                        controller: _controller,
+                      ),
                       QuillToolbarToggleStyleButton(
                         options: const QuillToolbarToggleStyleButtonOptions(),
                         controller: _controller,
@@ -164,9 +158,8 @@ class _FullScreenConversationsMessageInputState
                         attribute: Attribute.underline,
                       ),
                       QuillToolbarToggleStyleButton(
-                        controller: _controller,
-                        attribute: Attribute.strikeThrough,
-                      ),
+                          controller: _controller,
+                          attribute: Attribute.strikeThrough),
                       QuillToolbarToggleStyleButton(
                         controller: _controller,
                         attribute: Attribute.inlineCode,
@@ -176,13 +169,11 @@ class _FullScreenConversationsMessageInputState
                         attribute: Attribute.ul,
                       ),
                       QuillToolbarToggleStyleButton(
-                        controller: _controller,
-                        attribute: Attribute.superscript,
-                      ),
+                          controller: _controller,
+                          attribute: Attribute.superscript),
                       QuillToolbarToggleStyleButton(
-                        controller: _controller,
-                        attribute: Attribute.subscript,
-                      ),
+                          controller: _controller,
+                          attribute: Attribute.subscript),
                     ],
                   ),
                 ),

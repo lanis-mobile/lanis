@@ -14,17 +14,16 @@ class TimetableSubject {
   // Row index in the timetable
   int? stunde;
 
-  TimetableSubject({
-    required this.id,
-    required this.name,
-    required this.raum,
-    required this.lehrer,
-    required this.badge,
-    required this.duration,
-    required this.startTime,
-    required this.endTime,
-    required this.stunde,
-  });
+  TimetableSubject(
+      {required this.id,
+      required this.name,
+      required this.raum,
+      required this.lehrer,
+      required this.badge,
+      required this.duration,
+      required this.startTime,
+      required this.endTime,
+      required this.stunde});
 
   @override
   String toString() {
@@ -41,25 +40,23 @@ class TimetableSubject {
       "duration": duration,
       "startTime": [startTime.hour, startTime.minute],
       "endTime": [endTime.hour, endTime.minute],
-      "stunde": stunde,
+      "stunde": stunde
     };
   }
 
   factory TimetableSubject.fromJson(Map<String, dynamic> json) {
     return TimetableSubject(
-      id: json["id"],
-      name: json["name"],
-      raum: json["raum"],
-      lehrer: json["lehrer"],
-      badge: json["badge"],
-      duration: json["duration"],
-      stunde: json["stunde"],
-      startTime: TimeOfDay(
-        hour: json["startTime"][0],
-        minute: json["startTime"][1],
-      ),
-      endTime: TimeOfDay(hour: json["endTime"][0], minute: json["endTime"][1]),
-    );
+        id: json["id"],
+        name: json["name"],
+        raum: json["raum"],
+        lehrer: json["lehrer"],
+        badge: json["badge"],
+        duration: json["duration"],
+        stunde: json["stunde"],
+        startTime:
+            TimeOfDay(hour: json["startTime"][0], minute: json["startTime"][1]),
+        endTime:
+            TimeOfDay(hour: json["endTime"][0], minute: json["endTime"][1]));
   }
 
   @override
@@ -95,24 +92,16 @@ class TimeTable {
   // JSON operations
   TimeTable.fromJson(Map<String, dynamic> json) {
     planForAll = (json['planForAll'] as List?)
-        ?.map(
-          (day) => (day as List)
-              .map(
-                (fach) =>
-                    TimetableSubject.fromJson(fach as Map<String, dynamic>),
-              )
-              .toList(),
-        )
+        ?.map((day) => (day as List)
+            .map((fach) =>
+                TimetableSubject.fromJson(fach as Map<String, dynamic>))
+            .toList())
         .toList();
     planForOwn = (json['planForOwn'] as List?)
-        ?.map(
-          (day) => (day as List)
-              .map(
-                (fach) =>
-                    TimetableSubject.fromJson(fach as Map<String, dynamic>),
-              )
-              .toList(),
-        )
+        ?.map((day) => (day as List)
+            .map((fach) =>
+                TimetableSubject.fromJson(fach as Map<String, dynamic>))
+            .toList())
         .toList();
     hours = (json['hours'] as List?)
         ?.map((hour) => TimeTableRow.fromJson(hour as Map<String, dynamic>))
@@ -142,12 +131,7 @@ class TimeTableRow {
   final int lessonIndex;
 
   TimeTableRow(
-    this.type,
-    this.startTime,
-    this.endTime,
-    this.label,
-    this.lessonIndex,
-  );
+      this.type, this.startTime, this.endTime, this.label, this.lessonIndex);
 
   @override
   String toString() {
@@ -181,20 +165,11 @@ class TimeTableRow {
         ? TimeTableRowType.lesson
         : TimeTableRowType.pause;
     TimeOfDay start = TimeOfDay(
-      hour: json['startTime']['hour'],
-      minute: json['startTime']['minute'],
-    );
+        hour: json['startTime']['hour'], minute: json['startTime']['minute']);
     TimeOfDay end = TimeOfDay(
-      hour: json['endTime']['hour'],
-      minute: json['endTime']['minute'],
-    );
-    TimeTableRow row = TimeTableRow(
-      rowType,
-      start,
-      end,
-      json['label'],
-      json['lessonIndex'],
-    );
+        hour: json['endTime']['hour'], minute: json['endTime']['minute']);
+    TimeTableRow row =
+        TimeTableRow(rowType, start, end, json['label'], json['lessonIndex']);
     return row;
   }
 }
@@ -211,31 +186,23 @@ class TimeTableData {
             lesson.badge == "")
         ? true
         : sameWeek
-        ? (weekBadge == lesson.badge)
-        : (weekBadge != lesson.badge);
+            ? (weekBadge == lesson.badge)
+            : (weekBadge != lesson.badge);
   }
 
-  TimeTableData(
-    List<TimetableDay> data,
-    TimeTable timetable,
-    Map<String, dynamic> settings,
-    this.weekBadge,
-  ) {
+  TimeTableData(List<TimetableDay> data, TimeTable timetable,
+      Map<String, dynamic> settings, this.weekBadge) {
     for (var (index, hour) in timetable.hours!.indexed) {
       if (index > 0 && timetable.hours![index - 1].endTime != hour.startTime) {
-        if (timetable.hours![index - 1].endTime.differenceInMinutes(
-              hour.startTime,
-            ) >
+        if (timetable.hours![index - 1].endTime
+                .differenceInMinutes(hour.startTime) >
             10) {
-          hours.add(
-            TimeTableRow(
+          hours.add(TimeTableRow(
               TimeTableRowType.pause,
               timetable.hours![index - 1].endTime,
               hour.startTime,
               'Pause',
-              -1,
-            ),
-          );
+              -1));
         }
       }
       hours.add(hour);
@@ -253,9 +220,8 @@ class TimeTableData {
       timetableDays.add(dayData);
     }
 
-    timetableDays = timetableDays
-        .where((TimetableDay day) => day.isNotEmpty)
-        .toList();
+    timetableDays =
+        timetableDays.where((TimetableDay day) => day.isNotEmpty).toList();
   }
 }
 

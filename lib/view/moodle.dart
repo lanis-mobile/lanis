@@ -46,9 +46,7 @@ class _MoodleWebViewState extends State<MoodleWebView> {
   PullToRefreshController? pullToRefreshController;
 
   void addWebViewCookies(
-    final List<dio_core.Cookie> cookies,
-    List<String> urls,
-  ) {
+      final List<dio_core.Cookie> cookies, List<String> urls) {
     for (int i = 0; i < cookies.length; i++) {
       cookieManager.setCookie(
         url: WebUri(urls[i]),
@@ -85,20 +83,16 @@ class _MoodleWebViewState extends State<MoodleWebView> {
       dio.interceptors.add(dio_plugin.CookieManager(jar));
 
       final lastSchoolCookie = dio_core.Cookie(
-        "schulportal_lastschool",
-        sph!.account.schoolID.toString(),
-      );
+          "schulportal_lastschool", sph!.account.schoolID.toString());
       lastSchoolCookie.domain = ".hessen.de";
       lastSchoolCookie.path = "/";
       lastSchoolCookie.secure = true;
 
-      jar.saveFromResponse(Uri.parse("https://login.schulportal.hessen.de/"), [
-        lastSchoolCookie,
-      ]);
+      jar.saveFromResponse(Uri.parse("https://login.schulportal.hessen.de/"),
+          [lastSchoolCookie]);
 
-      final response1 = await dio.head(
-        "https://mo${sph!.account.schoolID}.schulportal.hessen.de",
-      );
+      final response1 = await dio
+          .head("https://mo${sph!.account.schoolID}.schulportal.hessen.de");
       final location_1 = response1.headers.value("location")!;
 
       // llngproxy01.schulportal.hessen.de
@@ -115,58 +109,46 @@ class _MoodleWebViewState extends State<MoodleWebView> {
       final url = jsonDecode(Uri.decodeFull(sphSessionPDataCookie))["_url"];
 
       // login.schulportal.hessen.de/saml/singleSignOn?SAMLRequest=..
-      final response3 = await dio.post(
-        location2,
-        options: Options(
-          headers: {"Content-Type": "application/x-www-form-urlencoded"},
-        ),
-        data: {
-          "user": "${sph!.account.schoolID}.${sph!.account.username}",
-          "user2": sph!.account.username,
-          "password": sph!.account.password,
-          "url": url,
-        },
-      );
+      final response3 = await dio.post(location2,
+          options: Options(headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          }),
+          data: {
+            "user": "${sph!.account.schoolID}.${sph!.account.username}",
+            "user2": sph!.account.username,
+            "password": sph!.account.password,
+            "url": url
+          });
       final location3 = response3.headers.value("location")!;
 
       // llngproxy01.schulportal.hessen.de/saml/proxySingleSignOnArtifact...
       final response4 = await dio.get(location3);
       final cookies2 = await jar.loadForRequest(Uri.parse(location3));
-      final moProd01Cookie = cookies2.firstWhere(
-        (cookie) => cookie.name == "mo-prod01",
-      );
+      final moProd01Cookie =
+          cookies2.firstWhere((cookie) => cookie.name == "mo-prod01");
       final location4 = response4.headers.value("location")!;
 
       // mo{SCHOOLID}.schulportal.hessen.de/login/index.php
       await dio.get(location4);
       final cookies3 = await jar.loadForRequest(Uri.parse(location4));
-      final moodleId1Cookie = cookies3.firstWhere(
-        (cookie) => cookie.name == "MOODLEID1_",
-      );
-      final moodleSessionCookie = cookies3.firstWhere(
-        (cookie) => cookie.name == "MoodleSession",
-      );
+      final moodleId1Cookie =
+          cookies3.firstWhere((cookie) => cookie.name == "MOODLEID1_");
+      final moodleSessionCookie =
+          cookies3.firstWhere((cookie) => cookie.name == "MoodleSession");
 
       dio.close();
       jar.deleteAll();
 
-      addWebViewCookies(
-        [moProd01Cookie, moodleId1Cookie, moodleSessionCookie],
-        [location3, location4, location4],
-      );
+      addWebViewCookies([moProd01Cookie, moodleId1Cookie, moodleSessionCookie],
+          [location3, location4, location4]);
 
       webViewController!.loadUrl(
-        urlRequest: URLRequest(
-          url: WebUri(
-            "https://mo${sph!.account.schoolID}.schulportal.hessen.de",
-          ),
-        ),
-      );
+          urlRequest: URLRequest(
+              url: WebUri(
+                  "https://mo${sph!.account.schoolID}.schulportal.hessen.de")));
       sph!.session.jar.saveFromResponse(Uri.parse(location3), [moProd01Cookie]);
-      sph!.session.jar.saveFromResponse(Uri.parse(location4), [
-        moodleId1Cookie,
-        moodleSessionCookie,
-      ]);
+      sph!.session.jar.saveFromResponse(
+          Uri.parse(location4), [moodleId1Cookie, moodleSessionCookie]);
 
       setState(() {
         isLoggedIn = true;
@@ -211,268 +193,315 @@ class _MoodleWebViewState extends State<MoodleWebView> {
     super.didChangeDependencies();
 
     pullToRefreshController ??= PullToRefreshController(
-      settings: PullToRefreshSettings(
-        color: Theme.of(context).colorScheme.primary,
-        backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
-      ),
-      onRefresh: refresh,
-    );
+        settings: PullToRefreshSettings(
+            color: Theme.of(context).colorScheme.primary,
+            backgroundColor: Theme.of(context).colorScheme.surfaceContainer),
+        onRefresh: refresh);
 
     if (webViewController != null) {
       pullToRefreshController!.setColor(Theme.of(context).colorScheme.primary);
-      pullToRefreshController!.setBackgroundColor(
-        Theme.of(context).colorScheme.surfaceContainer,
-      );
+      pullToRefreshController!
+          .setBackgroundColor(Theme.of(context).colorScheme.surfaceContainer);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Moodle"),
-        leading: IconButton(
-          onPressed: () async {
-            setState(() {
-              showWebView = false;
-            });
-
-            Navigator.of(context).pop();
-          },
-          icon: const Icon(Icons.arrow_back),
-        ),
-      ),
-      body: Stack(
-        children: [
-          PopScope(
-            canPop: false,
-            onPopInvokedWithResult: (bool res, _) async {
-              if (res) {
-                return;
-              }
-
-              final canGoBack = await webViewController!.canGoBack();
-              if (canGoBack) {
-                webViewController!.goBack();
-              } else {
+        appBar: AppBar(
+          title: const Text("Moodle"),
+          leading: IconButton(
+              onPressed: () async {
                 setState(() {
                   showWebView = false;
                 });
 
-                if (context.mounted) Navigator.pop(context);
-              }
-            },
-            child: Visibility(
-              visible: showWebView,
-              child: InAppWebView(
-                pullToRefreshController: pullToRefreshController,
-                initialSettings: InAppWebViewSettings(
-                  transparentBackground: true,
-                ),
-                onWebViewCreated: (controller) {
-                  webViewController = controller;
-                },
-                shouldOverrideUrlLoading: (controller, navigationAction) async {
-                  error = null;
+                Navigator.of(context).pop();
+              },
+              icon: const Icon(Icons.arrow_back)),
+        ),
+        body: Stack(
+          children: [
+            PopScope(
+              canPop: false,
+              onPopInvokedWithResult: (bool res, _) async {
+                if (res) {
+                  return;
+                }
 
-                  final WebUri uri = navigationAction.request.url!;
+                final canGoBack = await webViewController!.canGoBack();
+                if (canGoBack) {
+                  webViewController!.goBack();
+                } else {
+                  setState(() {
+                    showWebView = false;
+                  });
 
-                  if (uri.rawValue.contains(
-                        ".schulportal.hessen.de/login/logout.php",
-                      ) ||
-                      uri.rawValue.contains(
-                        ".schulportal.hessen.de/index.php?logout=all",
-                      )) {
-                    return NavigationActionPolicy.CANCEL;
-                  }
+                  if (context.mounted) Navigator.pop(context);
+                }
+              },
+              child: Visibility(
+                visible: showWebView,
+                child: InAppWebView(
+                  pullToRefreshController: pullToRefreshController,
+                  initialSettings: InAppWebViewSettings(
+                    transparentBackground: true,
+                  ),
+                  onWebViewCreated: (controller) {
+                    webViewController = controller;
+                  },
+                  shouldOverrideUrlLoading:
+                      (controller, navigationAction) async {
+                    error = null;
 
-                  if (uri.rawValue.contains('start.schulportal.hessen.de')) {
-                    setState(() {
-                      showWebView = false;
-                    });
-                    Navigator.pop(context);
-                    return NavigationActionPolicy.CANCEL;
-                  }
+                    final WebUri uri = navigationAction.request.url!;
 
-                  if (!uri.rawValue.contains(".schulportal.hessen.de")) {
-                    await launchUrl(uri);
+                    if (uri.rawValue.contains(
+                            ".schulportal.hessen.de/login/logout.php") ||
+                        uri.rawValue.contains(
+                            ".schulportal.hessen.de/index.php?logout=all")) {
+                      return NavigationActionPolicy.CANCEL;
+                    }
 
-                    return NavigationActionPolicy.CANCEL;
-                  }
+                    if (uri.rawValue.contains('start.schulportal.hessen.de')) {
+                      setState(() {
+                        showWebView = false;
+                      });
+                      Navigator.pop(context);
+                      return NavigationActionPolicy.CANCEL;
+                    }
 
-                  return NavigationActionPolicy.ALLOW;
-                },
-                onLoadStart: (controller, uri) async {
-                  error = null;
-                  errorUrl = null;
+                    if (!uri.rawValue.contains(".schulportal.hessen.de")) {
+                      await launchUrl(uri);
 
-                  if (await controller.canGoBack()) {
-                    canGoBack.value = true;
-                  } else {
-                    canGoBack.value = false;
-                  }
+                      return NavigationActionPolicy.CANCEL;
+                    }
 
-                  if (await controller.canGoForward()) {
-                    canGoForward.value = true;
-                  } else {
-                    canGoForward.value = false;
-                  }
-                },
-                onLoadStop: (controller, url) async {
-                  pullToRefreshController!.endRefreshing();
-                  progressIndicator.value = 0;
+                    return NavigationActionPolicy.ALLOW;
+                  },
+                  onLoadStart: (controller, uri) async {
+                    error = null;
+                    errorUrl = null;
 
-                  setState(() {}); // error
-                },
-                onTitleChanged: (controller, title) {
-                  currentPageTitle.value = title ?? "";
-                },
-                onPageCommitVisible: (controller, uri) async {
-                  // Hack to enable pull to refresh in Moodle.
-                  controller.evaluateJavascript(
-                    source:
-                        "document.documentElement.style.height = document.documentElement.clientHeight + 1 + 'px';",
-                  );
+                    if (await controller.canGoBack()) {
+                      canGoBack.value = true;
+                    } else {
+                      canGoBack.value = false;
+                    }
 
-                  // Hide logout buttons.
-                  controller.evaluateJavascript(
-                    source:
-                        '''document.querySelector("div#user-action-menu a.dropdown-item[href*='/login/logout.php']").style.display = "none";''',
-                  );
-                  controller.evaluateJavascript(
-                    source:
-                        '''document.querySelector("div.navbar li a[href*='index.php?logout=']").style.display = "none";''',
-                  );
-                },
-                onProgressChanged: (controller, progress) {
-                  if (progress == 100) {
+                    if (await controller.canGoForward()) {
+                      canGoForward.value = true;
+                    } else {
+                      canGoForward.value = false;
+                    }
+                  },
+                  onLoadStop: (controller, url) async {
                     pullToRefreshController!.endRefreshing();
                     progressIndicator.value = 0;
-                    return;
-                  }
 
-                  progressIndicator.value = progress;
-                },
-                onReceivedError: (controller, request, response) async {
-                  error = response.description;
-                  errorUrl = request.url;
+                    setState(() {}); // error
+                  },
+                  onTitleChanged: (controller, title) {
+                    currentPageTitle.value = title ?? "";
+                  },
+                  onPageCommitVisible: (controller, uri) async {
+                    // Hack to enable pull to refresh in Moodle.
+                    controller.evaluateJavascript(
+                        source:
+                            "document.documentElement.style.height = document.documentElement.clientHeight + 1 + 'px';");
 
-                  pullToRefreshController!.endRefreshing();
-                  progressIndicator.value = 0;
-                },
-                onDownloadStartRequest: (controller, request) {
-                  double fileSize = request.contentLength / 1000000;
+                    // Hide logout buttons.
+                    controller.evaluateJavascript(
+                        source:
+                            '''document.querySelector("div#user-action-menu a.dropdown-item[href*='/login/logout.php']").style.display = "none";''');
+                    controller.evaluateJavascript(
+                        source:
+                            '''document.querySelector("div.navbar li a[href*='index.php?logout=']").style.display = "none";''');
+                  },
+                  onProgressChanged: (controller, progress) {
+                    if (progress == 100) {
+                      pullToRefreshController!.endRefreshing();
+                      progressIndicator.value = 0;
+                      return;
+                    }
 
-                  showFileModal(
-                    context,
-                    FileInfo(
-                      name:
-                          request.suggestedFilename ??
-                          sph!.storage.generateUniqueHash(request.url.rawValue),
-                      url: request.url,
-                      size: "(${fileSize.toStringAsFixed(2)} MB)",
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
+                    progressIndicator.value = progress;
+                  },
+                  onReceivedError: (controller, request, response) async {
+                    error = response.description;
+                    errorUrl = request.url;
 
-          // Background
-          if (!isLoggedIn || error != null) ...[
-            Column(
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    width: double.maxFinite,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surface,
-                      ),
-                    ),
-                  ),
+                    pullToRefreshController!.endRefreshing();
+                    progressIndicator.value = 0;
+                  },
+                  onDownloadStartRequest: (controller, request) {
+                    double fileSize = request.contentLength / 1000000;
+
+                    showFileModal(
+                        context,
+                        FileInfo(
+                          name: request.suggestedFilename ??
+                              sph!.storage
+                                  .generateUniqueHash(request.url.rawValue),
+                          url: request.url,
+                          size: "(${fileSize.toStringAsFixed(2)} MB)",
+                        ));
+                  },
                 ),
-              ],
-            ),
-          ],
-
-          // Login
-          if (!isLoggedIn && !isLoginError) ...[
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const CircularProgressIndicator(),
-                  const SizedBox(height: 24),
-                  Text(
-                    AppLocalizations.of(context).logInTitle,
-                    style: Theme.of(context).textTheme.labelLarge,
-                  ),
-                ],
               ),
             ),
-          ] else if (!isLoggedIn) ...[
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+
+            // Background
+            if (!isLoggedIn || error != null) ...[
+              Column(
+                mainAxisSize: MainAxisSize.max,
                 children: [
-                  if (noInternetLogin) ...[
-                    const Icon(Icons.wifi_off, size: 60),
-                    SizedBox(height: 16),
-                    Text(
-                      AppLocalizations.of(context).noInternetConnection2,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                  ] else ...[
-                    const Icon(Icons.warning, size: 60),
-                    SizedBox(height: 16),
-                    Text(
-                      AppLocalizations.of(context).errorOccurred,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    SizedBox(height: 4),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        loginError,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyMedium,
+                  Expanded(
+                    child: SizedBox(
+                      width: double.maxFinite,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surface),
                       ),
                     ),
-                  ],
-                  SizedBox(height: 16),
-                  FilledButton(
-                    onPressed: () async {
-                      await getCookies();
-                    },
-                    child: Text(AppLocalizations.of(context).tryAgain),
-                  ),
+                  )
                 ],
-              ),
-            ),
-          ],
+              )
+            ],
 
-          // Error
-          if (error != null) ...[
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    error == noInternetError ? Icons.wifi_off : Icons.warning,
-                    size: 60,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16.0),
-                    child: Text(
-                      error == noInternetError
-                          ? AppLocalizations.of(context).noInternetConnection2
-                          : AppLocalizations.of(context).errorOccurredWebsite,
-                      style: Theme.of(context).textTheme.titleMedium,
+            // Login
+            if (!isLoggedIn && !isLoginError) ...[
+              Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const CircularProgressIndicator(),
+                    const SizedBox(
+                      height: 24,
                     ),
-                  ),
-                  if (error != noInternetError) ...[
+                    Text(
+                      AppLocalizations.of(context).logInTitle,
+                      style: Theme.of(context).textTheme.labelLarge,
+                    )
+                  ],
+                ),
+              )
+            ] else if (!isLoggedIn) ...[
+              Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (noInternetLogin) ...[
+                      const Icon(
+                        Icons.wifi_off,
+                        size: 60,
+                      ),
+                      SizedBox(
+                        height: 16,
+                      ),
+                      Text(
+                        AppLocalizations.of(context).noInternetConnection2,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ] else ...[
+                      const Icon(
+                        Icons.warning,
+                        size: 60,
+                      ),
+                      SizedBox(
+                        height: 16,
+                      ),
+                      Text(
+                        AppLocalizations.of(context).errorOccurred,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      SizedBox(
+                        height: 4,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          loginError,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ),
+                    ],
+                    SizedBox(
+                      height: 16,
+                    ),
+                    FilledButton(
+                        onPressed: () async {
+                          await getCookies();
+                        },
+                        child: Text(AppLocalizations.of(context).tryAgain)),
+                  ],
+                ),
+              )
+            ],
+
+            // Error
+            if (error != null) ...[
+              Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      error == noInternetError ? Icons.wifi_off : Icons.warning,
+                      size: 60,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      child: Text(
+                        error == noInternetError
+                            ? AppLocalizations.of(context).noInternetConnection2
+                            : AppLocalizations.of(context).errorOccurredWebsite,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ),
+                    if (error != noInternetError) ...[
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            DecoratedBox(
+                              decoration: BoxDecoration(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .primaryContainer,
+                                  borderRadius: BorderRadius.circular(12)),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 4.0, horizontal: 8.0),
+                                child: Text(
+                                  AppLocalizations.of(context).error,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .labelLarge!
+                                      .copyWith(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onPrimaryContainer),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(
+                              width: 8,
+                            ),
+                            Flexible(
+                              child: Text(
+                                error ?? "",
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                      const SizedBox(
+                        height: 4,
+                      ),
+                    ],
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20.0),
                       child: Row(
@@ -480,179 +509,126 @@ class _MoodleWebViewState extends State<MoodleWebView> {
                         children: [
                           DecoratedBox(
                             decoration: BoxDecoration(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.primaryContainer,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .primaryContainer,
+                                borderRadius: BorderRadius.circular(12)),
                             child: Padding(
                               padding: const EdgeInsets.symmetric(
-                                vertical: 4.0,
-                                horizontal: 8.0,
-                              ),
+                                  vertical: 4.0, horizontal: 8.0),
                               child: Text(
-                                AppLocalizations.of(context).error,
-                                style: Theme.of(context).textTheme.labelLarge!
+                                "URL",
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelLarge!
                                     .copyWith(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onPrimaryContainer,
-                                    ),
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onPrimaryContainer),
                               ),
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(
+                            width: 8,
+                          ),
                           Flexible(
                             child: Text(
-                              error ?? "",
+                              errorUrl?.rawValue ?? "Unknown error",
                               style: Theme.of(context).textTheme.bodyMedium,
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
+                          )
                         ],
                       ),
                     ),
-                    const SizedBox(height: 4),
                   ],
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.primaryContainer,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 4.0,
-                              horizontal: 8.0,
-                            ),
-                            child: Text(
-                              "URL",
-                              style: Theme.of(context).textTheme.labelLarge!
-                                  .copyWith(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onPrimaryContainer,
-                                  ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Flexible(
-                          child: Text(
-                            errorUrl?.rawValue ?? "Unknown error",
-                            style: Theme.of(context).textTheme.bodyMedium,
-                            maxLines: 3,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
+            ],
           ],
-        ],
-      ),
-      bottomNavigationBar: isLoggedIn
-          ? SafeArea(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ValueListenableBuilder(
-                    valueListenable: progressIndicator,
-                    builder: (context, progress, _) {
-                      return Visibility(
-                        visible: progress != 0,
-                        maintainSize: true,
-                        maintainState: true,
-                        maintainAnimation: true,
-                        child: LinearProgressIndicator(value: progress / 100),
-                      );
-                    },
-                  ),
-                  Row(
-                    children: [
-                      IconButton(
-                        onPressed: refresh,
-                        icon: const Icon(Icons.refresh),
-                      ),
-                      IconButton(
-                        onPressed: () async {
-                          if (error != null) {
-                            await Clipboard.setData(
-                              ClipboardData(
-                                text: errorUrl?.rawValue ?? "Unknown error",
-                              ),
-                            );
+        ),
+        bottomNavigationBar: isLoggedIn
+            ? SafeArea(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ValueListenableBuilder(
+                        valueListenable: progressIndicator,
+                        builder: (context, progress, _) {
+                          return Visibility(
+                            visible: progress != 0,
+                            maintainSize: true,
+                            maintainState: true,
+                            maintainAnimation: true,
+                            child: LinearProgressIndicator(
+                              value: progress / 100,
+                            ),
+                          );
+                        }),
+                    Row(
+                      children: [
+                        IconButton(
+                            onPressed: refresh,
+                            icon: const Icon(Icons.refresh)),
+                        IconButton(
+                            onPressed: () async {
+                              if (error != null) {
+                                await Clipboard.setData(ClipboardData(
+                                    text:
+                                        errorUrl?.rawValue ?? "Unknown error"));
 
-                            return;
-                          }
+                                return;
+                              }
 
-                          if (webViewController != null) {
-                            await Clipboard.setData(
-                              ClipboardData(
-                                text: (await webViewController!.getUrl())!
-                                    .rawValue,
-                              ),
-                            );
-                          }
-                        },
-                        icon: const Icon(Icons.link),
-                      ),
-                      Expanded(
-                        child: error == null
-                            ? Center(
-                                child: ValueListenableBuilder(
+                              if (webViewController != null) {
+                                await Clipboard.setData(ClipboardData(
+                                    text: (await webViewController!.getUrl())!
+                                        .rawValue));
+                              }
+                            },
+                            icon: const Icon(Icons.link)),
+                        Expanded(
+                          child: error == null
+                              ? Center(
+                                  child: ValueListenableBuilder(
                                   valueListenable: currentPageTitle,
                                   builder: (context, title, _) => Text(
                                     title,
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.labelLarge,
+                                    style:
+                                        Theme.of(context).textTheme.labelLarge,
                                     overflow: TextOverflow.ellipsis,
                                   ),
-                                ),
-                              )
-                            : SizedBox.shrink(),
-                      ),
-                      ValueListenableBuilder(
-                        valueListenable: canGoBack,
-                        builder: (context, can, _) {
-                          return IconButton(
-                            onPressed: can
-                                ? () {
-                                    webViewController?.goBack();
-                                  }
-                                : null,
-                            icon: const Icon(Icons.arrow_back),
-                          );
-                        },
-                      ),
-                      ValueListenableBuilder(
-                        valueListenable: canGoForward,
-                        builder: (context, can, _) {
-                          return IconButton(
-                            onPressed: can
-                                ? () {
-                                    webViewController?.goForward();
-                                  }
-                                : null,
-                            icon: const Icon(Icons.arrow_forward),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            )
-          : SizedBox.shrink(),
-    );
+                                ))
+                              : SizedBox.shrink(),
+                        ),
+                        ValueListenableBuilder(
+                            valueListenable: canGoBack,
+                            builder: (context, can, _) {
+                              return IconButton(
+                                  onPressed: can
+                                      ? () {
+                                          webViewController?.goBack();
+                                        }
+                                      : null,
+                                  icon: const Icon(Icons.arrow_back));
+                            }),
+                        ValueListenableBuilder(
+                            valueListenable: canGoForward,
+                            builder: (context, can, _) {
+                              return IconButton(
+                                  onPressed: can
+                                      ? () {
+                                          webViewController?.goForward();
+                                        }
+                                      : null,
+                                  icon: const Icon(Icons.arrow_forward));
+                            }),
+                      ],
+                    ),
+                  ],
+                ),
+              )
+            : SizedBox.shrink());
   }
 }

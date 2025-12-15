@@ -47,7 +47,9 @@ class _ScrolledDownContainerState extends State<ScrolledDownContainer> {
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
-      decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+      ),
       child: widget.child,
     );
   }

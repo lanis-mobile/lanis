@@ -45,14 +45,11 @@ class CalendarEvent {
 
   ///Parses the response of the AJAX SPH events and returns a CalendarEvent object
   factory CalendarEvent.fromLanisJson(
-    Map<String, dynamic> json,
-    List<CalendarEventCategory> categories,
-  ) {
+      Map<String, dynamic> json, List<CalendarEventCategory> categories) {
     final formatter = DateFormat('yyyy-MM-dd HH:mm:ss');
     final int? categoryId = int.tryParse('${json['category']}');
-    CalendarEventCategory? parsedCategory = categories
-        .where((element) => element.id == categoryId)
-        .firstOrNull;
+    CalendarEventCategory? parsedCategory =
+        categories.where((element) => element.id == categoryId).firstOrNull;
     final data = CalendarEvent(
       startTime: formatter.parse(json['Anfang']),
       endTime: formatter.parse(json['Ende']),

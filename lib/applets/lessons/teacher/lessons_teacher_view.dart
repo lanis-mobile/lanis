@@ -28,27 +28,26 @@ class _LessonsTeacherViewState extends State<LessonsTeacherView> {
                 onPressed: () => widget.openDrawerCb!(),
               ),
               bottom: PreferredSize(
-                preferredSize: const Size.fromHeight(20),
-                child: Container(
-                  color: Colors.redAccent,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    spacing: 8,
-                    children: [
-                      SizedBox(width: 8),
-                      const Icon(Icons.warning),
-                      Expanded(
-                        child: MarqueeWidget(
-                          child: Text(
-                            'Vorschau-Version für Lehrer! Zur Zeit nur teilweise funktionsfähig.',
+                  preferredSize: const Size.fromHeight(20),
+                  child: Container(
+                    color: Colors.redAccent,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      spacing: 8,
+                      children: [
+                        SizedBox(width: 8),
+                        const Icon(Icons.warning),
+                        Expanded(
+                          child: MarqueeWidget(
+                            child: Text(
+                              'Vorschau-Version für Lehrer! Zur Zeit nur teilweise funktionsfähig.',
+                            ),
                           ),
                         ),
-                      ),
-                      SizedBox(width: 8),
-                    ],
-                  ),
-                ),
-              ),
+                        SizedBox(width: 8),
+                      ],
+                    ),
+                  )),
             )
           : null,
       body: CombinedAppletBuilder<LessonsTeacherHome>(

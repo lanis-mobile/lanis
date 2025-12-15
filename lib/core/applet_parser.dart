@@ -7,9 +7,16 @@ import 'package:lanis/core/sph/sph.dart';
 import '../utils/logger.dart';
 import 'connection_checker.dart';
 
-enum FetcherStatus { fetching, done, error }
+enum FetcherStatus {
+  fetching,
+  done,
+  error;
+}
 
-enum ContentStatus { online, offline }
+enum ContentStatus {
+  online,
+  offline,
+}
 
 class ExceptionWithStackTrace {
   final Exception exception;
@@ -25,13 +32,13 @@ class FetcherResponse<T> {
   final DateTime fetchedAt;
   final ExceptionWithStackTrace? error;
 
-  FetcherResponse({
-    required this.status,
-    this.contentStatus = ContentStatus.online,
-    required this.error,
-    this.content,
-    DateTime? fetchedAt,
-  }) : fetchedAt = fetchedAt ?? DateTime.now();
+  FetcherResponse(
+      {required this.status,
+      this.contentStatus = ContentStatus.online,
+      required this.error,
+      this.content,
+      DateTime? fetchedAt})
+      : fetchedAt = fetchedAt ?? DateTime.now();
 }
 
 class AppletParser<T> {
@@ -54,32 +61,27 @@ class AppletParser<T> {
 
   void addResponse(final FetcherResponse<T> data) => _controller.sink.add(data);
 
-  Future<void> fetchData({
-    bool forceRefresh = false,
-    bool secondTry = false,
-  }) async {
+  Future<void> fetchData(
+      {bool forceRefresh = false, bool secondTry = false}) async {
     if (!(await connectionChecker.connected)) {
       if (isEmpty) {
-        final offlineData = await sph.prefs.getAppletData(
-          appletDefinition.appletPhpUrl,
-        );
+        final offlineData =
+            await sph.prefs.getAppletData(appletDefinition.appletPhpUrl);
         if (offlineData != null) {
           addResponse(
             FetcherResponse(
-              status: FetcherStatus.done,
-              contentStatus: ContentStatus.offline,
-              content: typeFromJson(offlineData.json!),
-              fetchedAt: offlineData.timestamp,
-              error: null,
-            ),
+                status: FetcherStatus.done,
+                contentStatus: ContentStatus.offline,
+                content: typeFromJson(offlineData.json!),
+                fetchedAt: offlineData.timestamp,
+                error: null),
           );
         } else {
           addResponse(
             FetcherResponse(
-              status: FetcherStatus.error,
-              contentStatus: ContentStatus.offline,
-              error: null,
-            ),
+                status: FetcherStatus.error,
+                contentStatus: ContentStatus.offline,
+                error: null),
           );
         }
       }
@@ -90,44 +92,31 @@ class AppletParser<T> {
     if (isEmpty || forceRefresh) {
       addResponse(FetcherResponse(status: FetcherStatus.fetching, error: null));
 
-      _getHome()
-          .then((data) async {
-            addResponse(
-              FetcherResponse<T>(
-                status: FetcherStatus.done,
-                content: data,
-                error: null,
-              ),
-            );
-            isEmpty = false;
-          })
-          .catchError((ex, stack) async {
-            logger.e(ex, stackTrace: stack);
-            if (!secondTry) {
-              await sph.session.authenticate();
-              await fetchData(forceRefresh: true, secondTry: true);
-              return;
-            }
-            addResponse(
-              FetcherResponse<T>(
-                status: FetcherStatus.error,
-                error: ExceptionWithStackTrace(
-                  exception: ex,
-                  stackTrace: stack,
-                ),
-              ),
-            );
-          });
+      _getHome().then((data) async {
+        addResponse(FetcherResponse<T>(
+            status: FetcherStatus.done, content: data, error: null));
+        isEmpty = false;
+      }).catchError((ex, stack) async {
+        logger.e(ex, stackTrace: stack);
+        if (!secondTry) {
+          await sph.session.authenticate();
+          await fetchData(forceRefresh: true, secondTry: true);
+          return;
+        }
+        addResponse(
+          FetcherResponse<T>(
+              status: FetcherStatus.error,
+              error: ExceptionWithStackTrace(exception: ex, stackTrace: stack)),
+        );
+      });
     }
   }
 
   Future<T> _getHome() async {
     final T value = await getHome();
     if (appletDefinition.allowOffline) {
-      await sph.prefs.setAppletData(
-        appletDefinition.appletPhpUrl,
-        jsonEncode(value),
-      );
+      await sph.prefs
+          .setAppletData(appletDefinition.appletPhpUrl, jsonEncode(value));
     }
     return value;
   }

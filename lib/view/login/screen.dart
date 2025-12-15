@@ -25,19 +25,24 @@ class _WelcomeLoginScreenState extends State<WelcomeLoginScreen> {
     if (currentPage == PageType.intro) {
       return SafeArea(
         child: IntroductionScreen(
-          next: const Icon(Icons.arrow_forward),
-          done: const Text("Login"),
-          onDone: () {
-            setState(() {
-              currentPage = PageType.login;
-            });
-          },
-          dotsDecorator: const DotsDecorator(spacing: EdgeInsets.all(2.0)),
-          pages: intoScreenPageViewModels(context),
-        ),
+            next: const Icon(Icons.arrow_forward),
+            done: const Text("Login"),
+            onDone: () {
+              setState(() {
+                currentPage = PageType.login;
+              });
+            },
+            dotsDecorator: const DotsDecorator(
+              spacing: EdgeInsets.all(2.0),
+            ),
+            pages: intoScreenPageViewModels(context)),
       );
     } else if (currentPage == PageType.login) {
-      return Scaffold(body: LoginForm(showBackButton: false));
+      return Scaffold(
+        body: LoginForm(
+          showBackButton: false,
+        ),
+      );
     }
 
     return const Center(child: Text("This should not happen"));

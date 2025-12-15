@@ -16,10 +16,12 @@ final lessonsDefinition = AppletDefinition(
   supportedAccountTypes: [
     AccountType.student,
     AccountType.parent,
-    AccountType.teacher,
+    AccountType.teacher
   ],
   allowOffline: false,
-  settingsDefaults: {'showHomework': false},
+  settingsDefaults: {
+    'showHomework': false,
+  },
   refreshInterval: const Duration(minutes: 15),
   bodyBuilder: (context, accountType, openDrawerCb) {
     if (accountType == AccountType.student ||

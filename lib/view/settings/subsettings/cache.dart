@@ -19,9 +19,9 @@ class CacheSettings extends SettingsColours {
     var dir = Directory(dirPath);
 
     if (dir.existsSync()) {
-      dir.listSync(recursive: true, followLinks: false).forEach((
-        FileSystemEntity entity,
-      ) {
+      dir
+          .listSync(recursive: true, followLinks: false)
+          .forEach((FileSystemEntity entity) {
         if (entity is File) {
           fileNum++;
           totalSize += entity.lengthSync();
@@ -68,16 +68,18 @@ class _CacheSettingsState extends SettingsColoursState<CacheSettings> {
       children: [
         Text(
           AppLocalizations.of(context).settingsInfoClearCache,
-          style: Theme.of(context).textTheme.bodySmall!.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
+          style: Theme.of(context)
+              .textTheme
+              .bodySmall!
+              .copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
-        SizedBox(height: 24.0),
+        SizedBox(
+          height: 24.0,
+        ),
         Callout(
           leading: Icon(Icons.delete_forever_rounded),
-          title: Text(
-            AppLocalizations.of(context).questionPermanentlyEmptyCache,
-          ),
+          title:
+              Text(AppLocalizations.of(context).questionPermanentlyEmptyCache),
           buttonText: Text(
             cacheStats['fileNum'] != 0
                 ? AppLocalizations.of(context).clearCache
@@ -89,33 +91,40 @@ class _CacheSettingsState extends SettingsColoursState<CacheSettings> {
                 }
               : null,
         ),
-        SizedBox(height: 24.0),
+        SizedBox(
+          height: 24.0,
+        ),
         Text(
           AppLocalizations.of(context).spaceUsed,
-          style: Theme.of(context).textTheme.labelLarge!.copyWith(
-            color: Theme.of(context).colorScheme.primary,
-          ),
+          style: Theme.of(context)
+              .textTheme
+              .labelLarge!
+              .copyWith(color: Theme.of(context).colorScheme.primary),
         ),
-        SizedBox(height: 16.0),
+        SizedBox(
+          height: 16.0,
+        ),
         Column(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               "${cacheStats['fileNum'].toString()} ${cacheStats['fileNum'] == 1 ? AppLocalizations.of(context).file : AppLocalizations.of(context).files}",
-              style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyLarge!
+                  .copyWith(color: Theme.of(context).colorScheme.onSurface),
             ),
             Text(
               "${cacheStats['size']! ~/ 1024} KB",
               style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
           ],
         ),
-        SizedBox(height: 28.0),
+        SizedBox(
+          height: 28.0,
+        ),
         Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
@@ -123,43 +132,43 @@ class _CacheSettingsState extends SettingsColoursState<CacheSettings> {
               Icons.info_outline_rounded,
               size: 20.0,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+            )
           ],
         ),
-        SizedBox(height: 8.0),
+        SizedBox(
+          height: 8.0,
+        ),
         Text.rich(
           TextSpan(
             children: [
               TextSpan(
-                text: AppLocalizations.of(
-                  context,
-                ).otherStorageSettingsAvailablePart1,
+                text: AppLocalizations.of(context)
+                    .otherStorageSettingsAvailablePart1,
                 style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
               ),
               TextSpan(
                 text: AppLocalizations.of(context).systemSettings,
                 style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
-                  decoration: TextDecoration.underline,
-                ),
+                      color: Theme.of(context).colorScheme.primary,
+                      decoration: TextDecoration.underline,
+                    ),
                 recognizer: TapGestureRecognizer()
                   ..onTap = () {
                     AppSettings.openAppSettings();
                   },
               ),
               TextSpan(
-                text: AppLocalizations.of(
-                  context,
-                ).otherStorageSettingsAvailablePart2,
+                text: AppLocalizations.of(context)
+                    .otherStorageSettingsAvailablePart2,
                 style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+              )
             ],
           ),
-        ),
+        )
       ],
     );
   }
