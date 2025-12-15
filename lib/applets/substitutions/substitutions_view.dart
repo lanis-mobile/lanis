@@ -8,6 +8,7 @@ import 'package:lanis/applets/substitutions/definition.dart';
 import 'package:lanis/applets/substitutions/substitutions_filter_settings.dart';
 import 'package:lanis/applets/substitutions/substitutions_listtile.dart';
 import 'package:lanis/models/substitution.dart';
+import 'package:lanis/utils/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/sph/sph.dart';
@@ -194,6 +195,18 @@ class _SubstitutionsViewState extends State<SubstitutionsView>
                           }
                           return null;
                         },
+                        onTapImage: (imageMetadata) {
+                          if (imageMetadata.sources.isNotEmpty) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => FullScreenImageView(
+                                  imageData: imageMetadata.sources.first.url,
+                                ),
+                              ),
+                            );
+                          }
+                        },
                       ),
                     ),
                     SizedBox(height: 8.0),
@@ -374,4 +387,39 @@ String formatDate(String dateString) {
 
   final germanFormat = DateFormat('E dd.MM.yyyy', 'de');
   return germanFormat.format(dateTime);
+}
+
+class FullScreenImageView extends StatelessWidget {
+  final String imageData;
+
+  const FullScreenImageView({super.key, required this.imageData});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      backgroundColor: Colors.black,
+      body: InteractiveViewer(
+        panEnabled: true,
+        minScale: 0.5,
+        maxScale: 4.0,
+        child: Container(
+          width: double.infinity,
+          height: double.infinity,
+          alignment: Alignment.center,
+          child: CachedNetworkImage(
+            placeholder: const CircularProgressIndicator(),
+            imageUrl: Uri.parse(imageData),
+            builder: (context, imageProvider) {
+              return Image(image: imageProvider);
+            },
+          ),
+        ),
+      ),
+    );
+  }
 }

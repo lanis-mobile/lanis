@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
@@ -50,10 +52,36 @@ class _CachedNetworkImageState extends State<CachedNetworkImage> {
     });
   }
 
+  void _loadBase64Data() {
+    try {
+      String uriString = widget.imageUrl.toString();
+      int commaIndex = uriString.indexOf(',');
+      if (commaIndex != -1) {
+        String base64Data = uriString
+            .substring(commaIndex + 1)
+            .replaceAll(RegExp(r'\s+'), '');
+        Uint8List bytes = base64Decode(base64Data);
+
+        imageProvider = MemoryImage(bytes);
+        setState(() {
+          loading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        loading = true;
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    loadData();
+    if (widget.imageUrl.scheme == 'data') {
+      _loadBase64Data();
+    } else {
+      loadData();
+    }
   }
 
   @override
