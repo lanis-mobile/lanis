@@ -11,8 +11,12 @@ class AccountTile extends StatelessWidget {
   final Function? onTap;
   final AccountsTableData account;
 
-  const AccountTile(
-      {super.key, required this.lastLogin, this.onTap, required this.account});
+  const AccountTile({
+    super.key,
+    required this.lastLogin,
+    this.onTap,
+    required this.account,
+  });
 
   String lastLoginInDays(BuildContext context) {
     final days = DateTime.now().difference(lastLogin).inDays;
@@ -22,14 +26,16 @@ class AccountTile extends StatelessWidget {
   bool get isLoggedInAccount => sph?.account.localId == account.id;
 
   String accountTypeLabel(BuildContext context) {
-    AccountType type =
-        AccountTypeExtension.fromString(account.accountType!.split('.').last);
+    AccountType type = AccountTypeExtension.fromString(
+      account.accountType!.split('.').last,
+    );
     return type.readableName(context);
   }
 
   Widget avatar() {
     ColorPair userColor = RandomColor.bySeed(
-        "${account.username}${account.schoolName}${account.id}");
+      "${account.username}${account.schoolName}${account.id}",
+    );
     return Container(
       height: 45,
       width: 45,
@@ -89,30 +95,28 @@ class AccountTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-        color: isLoggedInAccount
-            ? Theme.of(context).colorScheme.primaryContainer
-            : null,
-        child: ListTile(
-          onTap: onTap == null
-              ? null
-              : () {
-                  if (onTap != null) {
-                    onTap!();
-                  }
-                },
-          leading: avatar(),
-          title: Text("${account.username} (${accountTypeLabel(context)})"),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(account.schoolName),
-              Text(
-                lastLoginInDays(context),
-                style: TextStyle(fontSize: 12),
-              ),
-            ],
-          ),
-          trailing: logoutButton(context),
-        ));
+      color: isLoggedInAccount
+          ? Theme.of(context).colorScheme.primaryContainer
+          : null,
+      child: ListTile(
+        onTap: onTap == null
+            ? null
+            : () {
+                if (onTap != null) {
+                  onTap!();
+                }
+              },
+        leading: avatar(),
+        title: Text("${account.username} (${accountTypeLabel(context)})"),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(account.schoolName),
+            Text(lastLoginInDays(context), style: TextStyle(fontSize: 12)),
+          ],
+        ),
+        trailing: logoutButton(context),
+      ),
+    );
   }
 }

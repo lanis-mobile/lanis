@@ -13,41 +13,49 @@ class SubstitutionListTile extends StatelessWidget {
   }
 
   Widget? getSubstitutionInfo(
-      BuildContext context, String key, String? value, IconData icon) {
+    BuildContext context,
+    String key,
+    String? value,
+    IconData icon,
+  ) {
     if (doesNoticeExist(value)) {
       return null;
     }
 
     return Padding(
-        padding: const EdgeInsets.only(right: 30, left: 30, bottom: 2),
-        child:
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+      padding: const EdgeInsets.only(right: 30, left: 30, bottom: 2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
           Row(
             children: [
               Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: Icon(icon),
               ),
-              Text(
-                key,
-                style: Theme.of(context).textTheme.labelLarge,
-              )
+              Text(key, style: Theme.of(context).textTheme.labelLarge),
             ],
           ),
           SubstitutionsFormattedText(
-              value!, Theme.of(context).textTheme.bodyMedium!)
-        ]));
+            value!,
+            Theme.of(context).textTheme.bodyMedium!,
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final maxClassWidth = constraints.maxWidth *
+        final maxClassWidth =
+            constraints.maxWidth *
             0.3; // Limit class width to 30% of the tile width
 
         return ListTile(
-          dense: (doesNoticeExist(substitutionData.vertreter) &&
+          dense:
+              (doesNoticeExist(substitutionData.vertreter) &&
               doesNoticeExist(substitutionData.lehrer) &&
               doesNoticeExist(substitutionData.raum) &&
               doesNoticeExist(substitutionData.fach) &&
@@ -69,23 +77,37 @@ class SubstitutionListTile extends StatelessWidget {
             children: [
               Padding(
                 padding: EdgeInsets.only(
-                    top: 0,
-                    bottom: (doesNoticeExist(substitutionData.vertreter) &&
-                            doesNoticeExist(substitutionData.lehrer) &&
-                            doesNoticeExist(substitutionData.raum) &&
-                            !doesNoticeExist(substitutionData.fach))
-                        ? 12
-                        : 0),
+                  top: 0,
+                  bottom:
+                      (doesNoticeExist(substitutionData.vertreter) &&
+                          doesNoticeExist(substitutionData.lehrer) &&
+                          doesNoticeExist(substitutionData.raum) &&
+                          !doesNoticeExist(substitutionData.fach))
+                      ? 12
+                      : 0,
+                ),
                 child: Column(
                   children: [
-                    getSubstitutionInfo(context, "Vertreter",
-                            substitutionData.vertreter, Icons.person) ??
+                    getSubstitutionInfo(
+                          context,
+                          "Vertreter",
+                          substitutionData.vertreter,
+                          Icons.person,
+                        ) ??
                         const SizedBox.shrink(),
-                    getSubstitutionInfo(context, "Lehrer",
-                            substitutionData.lehrer, Icons.school) ??
+                    getSubstitutionInfo(
+                          context,
+                          "Lehrer",
+                          substitutionData.lehrer,
+                          Icons.school,
+                        ) ??
                         const SizedBox.shrink(),
-                    getSubstitutionInfo(context, "Raum", substitutionData.raum,
-                            Icons.room) ??
+                    getSubstitutionInfo(
+                          context,
+                          "Raum",
+                          substitutionData.raum,
+                          Icons.room,
+                        ) ??
                         const SizedBox.shrink(),
                   ],
                 ),
@@ -93,10 +115,11 @@ class SubstitutionListTile extends StatelessWidget {
               if (!doesNoticeExist(substitutionData.hinweis)) ...[
                 Padding(
                   padding: EdgeInsets.only(
-                      right: 30,
-                      left: 30,
-                      top: 2,
-                      bottom: doesNoticeExist(substitutionData.fach) ? 12 : 0),
+                    right: 30,
+                    left: 30,
+                    top: 2,
+                    bottom: doesNoticeExist(substitutionData.fach) ? 12 : 0,
+                  ),
                   child: Column(
                     children: [
                       Row(
@@ -115,10 +138,10 @@ class SubstitutionListTile extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4)
+                      const SizedBox(height: 4),
                     ],
                   ),
-                )
+                ),
               ],
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -147,7 +170,7 @@ class SubstitutionListTile extends StatelessWidget {
                       substitutionData.stunde,
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
-                  ]
+                  ],
                 ],
               ),
             ],
@@ -176,16 +199,19 @@ class SubstitutionsFormattedText extends StatelessWidget {
   TextSpan _format(String data, TextStyle style) {
     if (data.startsWith("<b>") && data.endsWith("</b>")) {
       return TextSpan(
-          text: data.substring(3, data.length - 4),
-          style: style.copyWith(fontWeight: FontWeight.bold));
+        text: data.substring(3, data.length - 4),
+        style: style.copyWith(fontWeight: FontWeight.bold),
+      );
     } else if (data.startsWith("<i>") && data.endsWith("</i>")) {
       return TextSpan(
-          text: data.substring(3, data.length - 4),
-          style: style.copyWith(fontStyle: FontStyle.italic));
+        text: data.substring(3, data.length - 4),
+        style: style.copyWith(fontStyle: FontStyle.italic),
+      );
     } else if (data.startsWith("<del>") && data.endsWith("</del>")) {
       return TextSpan(
-          text: data.substring(5, data.length - 6),
-          style: style.copyWith(decoration: TextDecoration.lineThrough));
+        text: data.substring(5, data.length - 6),
+        style: style.copyWith(decoration: TextDecoration.lineThrough),
+      );
     } else {
       return TextSpan(text: data, style: style);
     }

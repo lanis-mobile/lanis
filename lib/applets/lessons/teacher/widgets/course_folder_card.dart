@@ -6,8 +6,11 @@ import '../../../../models/lessons_teacher.dart';
 class CourseFolderCard extends StatelessWidget {
   final CourseFolderStartPage courseFolder;
   final void Function() onTap;
-  const CourseFolderCard(
-      {super.key, required this.courseFolder, required this.onTap});
+  const CourseFolderCard({
+    super.key,
+    required this.courseFolder,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -25,9 +28,10 @@ class CourseFolderCard extends StatelessWidget {
             ),
             if (courseFolder.entryInformation?.date != null) ...[
               Text(
-                  '${DateFormat('dd.MM.yyyy').format(courseFolder.entryInformation!.date)} ',
-                  style: Theme.of(context).textTheme.bodyMedium),
-              const Icon(Icons.calendar_today, size: 16)
+                '${DateFormat('dd.MM.yyyy').format(courseFolder.entryInformation!.date)} ',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const Icon(Icons.calendar_today, size: 16),
             ],
           ],
         ),
@@ -42,8 +46,8 @@ class CourseFolderCard extends StatelessWidget {
                   Text(
                     courseFolder.topic,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   SizedBox(width: 0),
                 ],
@@ -56,10 +60,9 @@ class CourseFolderCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         courseFolder.entryInformation!.topic,
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodyMedium
-                            ?.copyWith(fontStyle: FontStyle.italic),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontStyle: FontStyle.italic,
+                        ),
                       ),
                     ),
                     SizedBox(width: 0),
@@ -76,27 +79,27 @@ class CourseFolderCard extends StatelessWidget {
                   padding: const EdgeInsets.all(8),
                   child: Row(
                     children: [
-                      Icon(Icons.task,
-                          color: Theme.of(context).colorScheme.onPrimary),
+                      Icon(
+                        Icons.task,
+                        color: Theme.of(context).colorScheme.onPrimary,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
-                          child: Text(
-                        courseFolder.entryInformation!.homework!,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.onPrimary,
-                            ),
-                      ))
+                        child: Text(
+                          courseFolder.entryInformation!.homework!,
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.onPrimary,
+                              ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 4),
               ],
               const SizedBox(height: 8),
-              Row(
-                children: [
-                  const Spacer(),
-                ],
-              ),
+              Row(children: [const Spacer()]),
             ] else ...[
               Text(
                 'No entry information available',
@@ -105,9 +108,7 @@ class CourseFolderCard extends StatelessWidget {
             ],
           ],
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         onTap: onTap,
       ),
     );

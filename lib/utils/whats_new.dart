@@ -29,20 +29,19 @@ int compareVersions(String version1, String version2) {
   return 0;
 }
 
-Future<ReleaseNotesScreen?> showLocalUpdateInfo(BuildContext context,
-    {bool dialog = true}) async {
+Future<ReleaseNotesScreen?> showLocalUpdateInfo(
+  BuildContext context, {
+  bool dialog = true,
+}) async {
   if (dialog) {
     showDialog(
-        barrierDismissible: false,
-        context: context,
-        builder: (context) => SimpleDialog(
-              title: Text(AppLocalizations.of(context).loading),
-              children: [
-                Center(
-                  child: CircularProgressIndicator(),
-                )
-              ],
-            ));
+      barrierDismissible: false,
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: Text(AppLocalizations.of(context).loading),
+        children: [Center(child: CircularProgressIndicator())],
+      ),
+    );
   }
   final deviceReleaseTag = await getDeviceReleaseTag();
   await sph!.prefs.kv.set('last-app-version', deviceReleaseTag);
@@ -68,7 +67,8 @@ void showUpdateInfoIfRequired(BuildContext context) async {
       packageInfo.installerStore != null &&
       Platform.isAndroid) {
     logger.i(
-        "App was installed by: \"${packageInfo.installerStore}\"! Skipping version check.");
+      "App was installed by: \"${packageInfo.installerStore}\"! Skipping version check.",
+    );
     return;
   }
   final latestReleaseInfo = await getReleaseInfo(null);
@@ -182,21 +182,29 @@ class ReleaseNotesScreen extends StatelessWidget {
               children: [
                 Padding(
                   padding: const EdgeInsets.only(top: 4.0),
-                  child: Text(AppLocalizations.of(context).contributors,
-                      style: Theme.of(context).textTheme.labelLarge),
+                  child: Text(
+                    AppLocalizations.of(context).contributors,
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.only(
-                      bottom: 8.0, top: 4.0, left: 8.0, right: 8.0),
+                    bottom: 8.0,
+                    top: 4.0,
+                    left: 8.0,
+                    right: 8.0,
+                  ),
                   child: Wrap(
-                    children: getContributors(releaseInfo['body'] ?? '')
-                        .map((contributor) {
+                    children: getContributors(releaseInfo['body'] ?? '').map((
+                      contributor,
+                    ) {
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
                         child: GestureDetector(
                           onTap: () {
                             launchUrl(
-                                Uri.parse('https://github.com/$contributor'));
+                              Uri.parse('https://github.com/$contributor'),
+                            );
                           },
                           child: ClipOval(
                             clipBehavior: Clip.antiAliasWithSaveLayer,
@@ -215,8 +223,10 @@ class ReleaseNotesScreen extends StatelessWidget {
               ],
             ),
           ),
-          Text(AppLocalizations.of(context).becomeContributor,
-              style: Theme.of(context).textTheme.labelMedium),
+          Text(
+            AppLocalizations.of(context).becomeContributor,
+            style: Theme.of(context).textTheme.labelMedium,
+          ),
           const SizedBox(height: 32),
         ],
       ),
@@ -232,11 +242,12 @@ class ReleaseNotesScreen extends StatelessWidget {
 }
 
 class NewUpdateAvailableDialog extends StatelessWidget {
-  const NewUpdateAvailableDialog(
-      {super.key,
-      required this.deviceReleaseTag,
-      required this.latestReleaseTag,
-      required this.releaseInfo});
+  const NewUpdateAvailableDialog({
+    super.key,
+    required this.deviceReleaseTag,
+    required this.latestReleaseTag,
+    required this.releaseInfo,
+  });
   final String deviceReleaseTag;
   final String latestReleaseTag;
   final Map releaseInfo;
@@ -244,23 +255,14 @@ class NewUpdateAvailableDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      icon: const Icon(
-        Icons.update,
-        size: 56,
-      ),
+      icon: const Icon(Icons.update, size: 56),
       title: Text(AppLocalizations.of(context).updateAvailable),
       content: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          Text(
-            deviceReleaseTag,
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
+          Text(deviceReleaseTag, style: Theme.of(context).textTheme.bodyLarge),
           const Icon(Icons.arrow_forward),
-          Text(
-            latestReleaseTag,
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
+          Text(latestReleaseTag, style: Theme.of(context).textTheme.bodyLarge),
         ],
       ),
       actions: [
@@ -291,16 +293,15 @@ void launchStore() {
             ? "market://details?id=io.github.alessioc42.sph"
             : "https://apps.apple.com/app/id6511247743",
       );
-      launchUrl(
-        url,
-        mode: LaunchMode.externalApplication,
-      );
+      launchUrl(url, mode: LaunchMode.externalApplication);
     }
   } on PlatformException {
-    launchUrl(Uri.parse(
-      Platform.isAndroid
-          ? "https://play.google.com/store/apps/details?id=io.github.alessioc42.sph"
-          : "https://apps.apple.com/app/id6511247743",
-    ));
+    launchUrl(
+      Uri.parse(
+        Platform.isAndroid
+            ? "https://play.google.com/store/apps/details?id=io.github.alessioc42.sph"
+            : "https://apps.apple.com/app/id6511247743",
+      ),
+    );
   }
 }

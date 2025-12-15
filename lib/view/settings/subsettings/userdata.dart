@@ -28,9 +28,7 @@ class _UserDataSettingsState extends SettingsColoursState<UserDataSettings> {
             subtitle: Text(toBeginningOfSentenceCase(key)!),
             contentPadding: EdgeInsets.zero,
           ),
-        SizedBox(
-          height: 24.0,
-        ),
+        SizedBox(height: 24.0),
         Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
@@ -38,17 +36,15 @@ class _UserDataSettingsState extends SettingsColoursState<UserDataSettings> {
               Icons.info_outline_rounded,
               size: 20.0,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
-            )
+            ),
           ],
         ),
-        SizedBox(
-          height: 8.0,
-        ),
+        SizedBox(height: 8.0),
         Text(
           AppLocalizations.of(context).settingsInfoUserData,
           style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
       ],
     );

@@ -17,14 +17,12 @@ final substitutionDefinition = AppletDefinition(
   supportedAccountTypes: [
     AccountType.student,
     AccountType.teacher,
-    AccountType.parent
+    AccountType.parent,
   ],
   refreshInterval: Duration(minutes: 10),
   settingsDefaults: {},
   notificationTask: substitutionsBackgroundTask,
   bodyBuilder: (context, accountType, openDrawerCb) {
-    return SubstitutionsView(
-      openDrawerCb: openDrawerCb,
-    );
+    return SubstitutionsView(openDrawerCb: openDrawerCb);
   },
 );

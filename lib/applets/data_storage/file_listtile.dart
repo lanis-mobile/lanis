@@ -10,10 +10,10 @@ enum FileExists { yes, no, loading }
 
 extension FileExistsExtension on FileExists {
   MaterialColor? get color => {
-        FileExists.yes: Colors.green,
-        FileExists.no: Colors.red,
-        FileExists.loading: Colors.grey,
-      }[this];
+    FileExists.yes: Colors.green,
+    FileExists.no: Colors.red,
+    FileExists.loading: Colors.grey,
+  }[this];
 }
 
 class FileListTile extends StatefulWidget {
@@ -36,9 +36,9 @@ class _FileListTileState extends State<FileListTile> {
   }
 
   void updateLocalFileStatus() {
-    sph!.storage
-        .doesFileExist(widget.file.downloadUrl, widget.file.name)
-        .then((value) {
+    sph!.storage.doesFileExist(widget.file.downloadUrl, widget.file.name).then((
+      value,
+    ) {
       setState(() {
         exists = value ? FileExists.yes : FileExists.no;
       });
@@ -53,10 +53,7 @@ class _FileListTileState extends State<FileListTile> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           if (widget.file.hinweis != null)
-            Expanded(
-                child: MarqueeWidget(
-              child: Text(widget.file.hinweis!),
-            ))
+            Expanded(child: MarqueeWidget(child: Text(widget.file.hinweis!)))
           else
             Text(widget.file.groesse),
           const SizedBox(width: 5),
@@ -64,24 +61,27 @@ class _FileListTileState extends State<FileListTile> {
         ],
       ),
       leading: Badge(
-          backgroundColor: exists.color,
-          child: Icon(getIconByFileExtension(widget.file.fileExtension))),
+        backgroundColor: exists.color,
+        child: Icon(getIconByFileExtension(widget.file.fileExtension)),
+      ),
       onTap: () => launchFile(
+        context,
+        FileInfo(
+          name: widget.file.name,
+          size: widget.file.groesse,
+          url: Uri.parse(widget.file.downloadUrl),
+        ),
+        updateLocalFileStatus,
+      ),
+      onLongPress: () {
+        showFileModal(
           context,
           FileInfo(
             name: widget.file.name,
-            size: widget.file.groesse,
             url: Uri.parse(widget.file.downloadUrl),
+            size: widget.file.groesse,
           ),
-          updateLocalFileStatus),
-      onLongPress: () {
-        showFileModal(
-            context,
-            FileInfo(
-              name: widget.file.name,
-              url: Uri.parse(widget.file.downloadUrl),
-              size: widget.file.groesse,
-            ));
+        );
       },
     );
   }
@@ -92,11 +92,12 @@ class SearchFileListTile extends StatefulWidget {
   final String downloadUrl;
   final BuildContext context;
 
-  const SearchFileListTile(
-      {super.key,
-      required this.context,
-      required this.name,
-      required this.downloadUrl});
+  const SearchFileListTile({
+    super.key,
+    required this.context,
+    required this.name,
+    required this.downloadUrl,
+  });
 
   @override
   State<SearchFileListTile> createState() => _SearchFileListTileState();
@@ -128,19 +129,18 @@ class _SearchFileListTileState extends State<SearchFileListTile> {
         child: Icon(getIconByFileExtension(widget.name.split('.').last)),
       ),
       onTap: () => launchFile(
-          context,
-          FileInfo(
-            name: widget.name,
-            url: Uri.parse(widget.downloadUrl),
-          ),
-          updateLocalFileStatus),
+        context,
+        FileInfo(name: widget.name, url: Uri.parse(widget.downloadUrl)),
+        updateLocalFileStatus,
+      ),
       onLongPress: () => showFileModal(
-          context,
-          FileInfo(
-            name: widget.name,
-            url: Uri.parse(widget.downloadUrl),
-            size: "",
-          )),
+        context,
+        FileInfo(
+          name: widget.name,
+          url: Uri.parse(widget.downloadUrl),
+          size: "",
+        ),
+      ),
     );
   }
 }

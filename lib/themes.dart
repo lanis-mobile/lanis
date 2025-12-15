@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum AmoledColor {
-  background,
-  secondary,
-  third,
-}
+enum AmoledColor { background, secondary, third }
 
 // Only a collection of themes
 // Used for ColorModeNotifier to set the app theme dynamically
@@ -18,17 +14,17 @@ class Themes {
     // The basic theme, global theme data changes should be put here.
     ThemeData basicTheme(Brightness brightness) {
       return ThemeData(
-        colorScheme:
-            ColorScheme.fromSeed(seedColor: seedColor, brightness: brightness),
-        inputDecorationTheme:
-            const InputDecorationTheme(border: OutlineInputBorder()),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: seedColor,
+          brightness: brightness,
+        ),
+        inputDecorationTheme: const InputDecorationTheme(
+          border: OutlineInputBorder(),
+        ),
       );
     }
 
-    return Themes(
-      basicTheme(Brightness.light),
-      basicTheme(Brightness.dark),
-    );
+    return Themes(basicTheme(Brightness.light), basicTheme(Brightness.dark));
   }
 
   static final Map<String, Themes> flutterColorThemes = {
@@ -65,33 +61,34 @@ class Themes {
     return Themes(
       themes.lightTheme,
       themes.darkTheme?.copyWith(
-          // Amoled Background & Themes for required Components
-          scaffoldBackgroundColor: amoledColors[AmoledColor.background],
-          navigationBarTheme: NavigationBarThemeData(
-            backgroundColor: amoledColors[AmoledColor.background],
-          ),
-          navigationDrawerTheme: NavigationDrawerThemeData(
-            backgroundColor: amoledColors[AmoledColor.background],
-          ),
-          appBarTheme: AppBarTheme(
-            backgroundColor: amoledColors[AmoledColor.background],
-            surfaceTintColor: amoledColors[AmoledColor.background],
-          ),
-          dialogTheme: DialogThemeData(
-            backgroundColor: amoledColors[AmoledColor.secondary],
-            surfaceTintColor: amoledColors[AmoledColor.secondary],
-          ),
-          bottomSheetTheme: BottomSheetThemeData(
-            backgroundColor: amoledColors[AmoledColor.third],
-            surfaceTintColor: amoledColors[AmoledColor.third],
-          ),
-          colorScheme: themes.darkTheme?.colorScheme.copyWith(
-            surfaceContainer: amoledColors[AmoledColor.background],
-            surfaceContainerHighest: themes.darkTheme?.cardColor,
-            surfaceContainerHigh: amoledColors[AmoledColor.third],
-            surfaceContainerLow: amoledColors[AmoledColor.secondary],
-            surfaceContainerLowest: amoledColors[AmoledColor.third],
-          )),
+        // Amoled Background & Themes for required Components
+        scaffoldBackgroundColor: amoledColors[AmoledColor.background],
+        navigationBarTheme: NavigationBarThemeData(
+          backgroundColor: amoledColors[AmoledColor.background],
+        ),
+        navigationDrawerTheme: NavigationDrawerThemeData(
+          backgroundColor: amoledColors[AmoledColor.background],
+        ),
+        appBarTheme: AppBarTheme(
+          backgroundColor: amoledColors[AmoledColor.background],
+          surfaceTintColor: amoledColors[AmoledColor.background],
+        ),
+        dialogTheme: DialogThemeData(
+          backgroundColor: amoledColors[AmoledColor.secondary],
+          surfaceTintColor: amoledColors[AmoledColor.secondary],
+        ),
+        bottomSheetTheme: BottomSheetThemeData(
+          backgroundColor: amoledColors[AmoledColor.third],
+          surfaceTintColor: amoledColors[AmoledColor.third],
+        ),
+        colorScheme: themes.darkTheme?.colorScheme.copyWith(
+          surfaceContainer: amoledColors[AmoledColor.background],
+          surfaceContainerHighest: themes.darkTheme?.cardColor,
+          surfaceContainerHigh: amoledColors[AmoledColor.third],
+          surfaceContainerLow: amoledColors[AmoledColor.secondary],
+          surfaceContainerLowest: amoledColors[AmoledColor.third],
+        ),
+      ),
     );
   }
 }

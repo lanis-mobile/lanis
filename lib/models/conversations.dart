@@ -14,10 +14,11 @@ class ReceiverEntry extends Taggable {
   List<Object> get props => [name];
 
   ReceiverEntry.fromJson(Map<String, dynamic> json)
-      : id = json["id"] as String,
-        name = json["text"] as String,
-        isTeacher = json["type"] ==
-            "lul"; // TODO: Use PersonType in future when I have more info
+    : id = json["id"] as String,
+      name = json["text"] as String,
+      isTeacher =
+          json["type"] ==
+          "lul"; // TODO: Use PersonType in future when I have more info
 }
 
 class ChatCreationData {
@@ -25,8 +26,11 @@ class ChatCreationData {
   final String subject;
   final List<String> receivers;
 
-  ChatCreationData(
-      {required this.type, required this.subject, required this.receivers});
+  ChatCreationData({
+    required this.type,
+    required this.subject,
+    required this.receivers,
+  });
 }
 
 class CreationResponse {
@@ -84,33 +88,38 @@ class Conversation {
   final UnparsedMessage parent;
   final List<UnparsedMessage> replies;
 
-  const Conversation(
-      {required this.groupChat,
-      required this.onlyPrivateAnswers,
-      required this.noReply,
-      required this.parent,
-      required this.countParents,
-      required this.countStudents,
-      required this.countTeachers,
-      required this.knownParticipants,
-      required this.msgLastRefresh,
-      this.replies = const []});
+  const Conversation({
+    required this.groupChat,
+    required this.onlyPrivateAnswers,
+    required this.noReply,
+    required this.parent,
+    required this.countParents,
+    required this.countStudents,
+    required this.countTeachers,
+    required this.knownParticipants,
+    required this.msgLastRefresh,
+    this.replies = const [],
+  });
 }
 
 class ReplyToConversationResult {
   final bool success;
   final String messageId;
 
-  const ReplyToConversationResult(
-      {required this.success, required this.messageId});
+  const ReplyToConversationResult({
+    required this.success,
+    required this.messageId,
+  });
 }
 
 class ConversationsRefreshResult {
   final List<UnparsedMessage> messages;
   final int lastRefresh;
 
-  const ConversationsRefreshResult(
-      {required this.messages, required this.lastRefresh});
+  const ConversationsRefreshResult({
+    required this.messages,
+    required this.lastRefresh,
+  });
 }
 
 class UnparsedMessage {
@@ -120,12 +129,13 @@ class UnparsedMessage {
   final bool own;
   final String content;
 
-  const UnparsedMessage(
-      {required this.id,
-      required this.date,
-      required this.author,
-      required this.own,
-      required this.content});
+  const UnparsedMessage({
+    required this.id,
+    required this.date,
+    required this.author,
+    required this.own,
+    required this.content,
+  });
 }
 
 class KnownParticipant {
@@ -166,17 +176,19 @@ class OverviewEntry {
   });
 
   OverviewEntry.fromJson(Map<String, dynamic> json)
-      : id = (json["Uniquid"] ?? "") as String,
-        title = unescape.convert((json["Betreff"] ?? "") as String),
-        shortName = unescape.convert((json["kuerzel"] ?? "") as String),
-        fullName = unescape.convert(getUsernameInsideHTML
+    : id = (json["Uniquid"] ?? "") as String,
+      title = unescape.convert((json["Betreff"] ?? "") as String),
+      shortName = unescape.convert((json["kuerzel"] ?? "") as String),
+      fullName = unescape.convert(
+        getUsernameInsideHTML
                 .firstMatch((json["SenderName"] ?? "") as String)
                 ?.group(1) ??
-            ""),
-        date = (json["Datum"] ?? "") as String,
-        unread =
-            (json["unread"] as int?) != null && (json["unread"] as int?) == 1,
-        hidden = (json["Papierkorb"] ?? "") as String == "ja";
+            "",
+      ),
+      date = (json["Datum"] ?? "") as String,
+      unread =
+          (json["unread"] as int?) != null && (json["unread"] as int?) == 1,
+      hidden = (json["Papierkorb"] ?? "") as String == "ja";
 
   OverviewEntry copyWith({
     String? id,
@@ -186,16 +198,15 @@ class OverviewEntry {
     String? date,
     bool? unread,
     bool? hidden,
-  }) =>
-      OverviewEntry(
-        id: id ?? this.id,
-        title: title ?? this.title,
-        shortName: shortName ?? this.shortName,
-        fullName: fullName ?? this.fullName,
-        date: date ?? this.date,
-        unread: unread ?? this.unread,
-        hidden: hidden ?? this.hidden,
-      );
+  }) => OverviewEntry(
+    id: id ?? this.id,
+    title: title ?? this.title,
+    shortName: shortName ?? this.shortName,
+    fullName: fullName ?? this.fullName,
+    date: date ?? this.date,
+    unread: unread ?? this.unread,
+    hidden: hidden ?? this.hidden,
+  );
 
   @override
   bool operator ==(Object other) {

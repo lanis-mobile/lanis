@@ -10,13 +10,14 @@ class Lesson {
   Map<String, String>? attendances;
   CurrentEntry? currentEntry;
 
-  Lesson(
-      {required this.courseID,
-      required this.name,
-      required this.teachers,
-      required this.courseURL,
-      this.attendances,
-      this.currentEntry});
+  Lesson({
+    required this.courseID,
+    required this.name,
+    required this.teachers,
+    required this.courseURL,
+    this.attendances,
+    this.currentEntry,
+  });
 }
 
 class LessonTeacher {
@@ -36,15 +37,16 @@ class DetailedLesson {
   Map<String, String> attendances;
   Uri? semester1URL;
 
-  DetailedLesson(
-      {required this.courseID,
-      required this.name,
-      required this.teachers,
-      required this.history,
-      required this.marks,
-      required this.exams,
-      required this.attendances,
-      this.semester1URL});
+  DetailedLesson({
+    required this.courseID,
+    required this.name,
+    required this.teachers,
+    required this.history,
+    required this.marks,
+    required this.exams,
+    required this.attendances,
+    this.semester1URL,
+  });
 }
 
 class LessonExam {
@@ -60,11 +62,12 @@ class LessonMark {
   String mark;
   String? comment;
 
-  LessonMark(
-      {required this.name,
-      required this.date,
-      required this.mark,
-      this.comment});
+  LessonMark({
+    required this.name,
+    required this.date,
+    required this.mark,
+    this.comment,
+  });
 }
 
 class CurrentEntry {
@@ -78,16 +81,17 @@ class CurrentEntry {
   List<FileInfo> files;
   List<LessonUpload> uploads;
 
-  CurrentEntry(
-      {required this.entryID,
-      required this.files,
-      required this.uploads,
-      this.presence,
-      this.topicTitle,
-      this.topicDate,
-      this.homework,
-      this.schoolHours,
-      this.description});
+  CurrentEntry({
+    required this.entryID,
+    required this.files,
+    required this.uploads,
+    this.presence,
+    this.topicTitle,
+    this.topicDate,
+    this.homework,
+    this.schoolHours,
+    this.description,
+  });
 }
 
 class Homework {
@@ -104,12 +108,13 @@ class LessonUpload {
   String? uploaded;
   String? date; //todo @kurwjan replace with DateTime
 
-  LessonUpload(
-      {required this.name,
-      required this.status,
-      required this.url,
-      this.uploaded,
-      this.date});
+  LessonUpload({
+    required this.name,
+    required this.status,
+    required this.url,
+    this.uploaded,
+    this.date,
+  });
 }
 
 class UploadFile {
@@ -124,22 +129,24 @@ class OwnFile extends UploadFile {
   final String time;
   final String? comment;
 
-  OwnFile(
-      {required super.name,
-      required super.url,
-      required super.index,
-      required this.time,
-      this.comment});
+  OwnFile({
+    required super.name,
+    required super.url,
+    required super.index,
+    required this.time,
+    this.comment,
+  });
 }
 
 class PublicFile extends UploadFile {
   final String person;
 
-  PublicFile(
-      {required super.name,
-      required super.url,
-      required super.index,
-      required this.person});
+  PublicFile({
+    required super.name,
+    required super.url,
+    required super.index,
+    required this.person,
+  });
 }
 
 class FileStatus {

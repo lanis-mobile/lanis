@@ -10,14 +10,15 @@ class FileNode {
   String? hinweis;
   List<FileActions> supportedActions = [FileActions.download];
 
-  FileNode(
-      {required this.name,
-      required this.id,
-      required this.downloadUrl,
-      this.aenderung = "",
-      this.groesse = "",
-      this.hinweis,
-      this.folderID});
+  FileNode({
+    required this.name,
+    required this.id,
+    required this.downloadUrl,
+    this.aenderung = "",
+    this.groesse = "",
+    this.hinweis,
+    this.folderID,
+  });
 
   String get fileExtension => name.split('.').last;
 }

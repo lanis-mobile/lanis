@@ -22,12 +22,18 @@ class SubstitutionsParser extends AppletParser<SubstitutionPlan> {
   }
 
   loadFilterFromStorage() async {
-    localFilter = (await sph.prefs.kv.getAppletValue(
-                'vertretungsplan.php', 'filter') as Map<String, dynamic>?)
-            ?.map((key, value) => MapEntry(
+    localFilter =
+        (await sph.prefs.kv.getAppletValue('vertretungsplan.php', 'filter')
+                as Map<String, dynamic>?)
+            ?.map(
+              (key, value) => MapEntry(
                 key,
-                (value as Map<String, dynamic>).map((k, v) =>
-                    MapEntry(k, v is List ? v.cast<String>() : v as bool)))) ??
+                (value as Map<String, dynamic>).map(
+                  (k, v) =>
+                      MapEntry(k, v is List ? v.cast<String>() : v as bool),
+                ),
+              ),
+            ) ??
         {};
   }
 
@@ -56,12 +62,20 @@ class SubstitutionsParser extends AppletParser<SubstitutionPlan> {
       // Make sure to preserve the timestamp even when using the non-AJAX format
       fullPlan.lastUpdated = lastEdit ?? DateTime.now();
     } else {
-      List<Future<SubstitutionDay>> futures =
-          dates.map((date) => getSubstitutionsAJAX(date)).toList();
+      List<Future<SubstitutionDay>> futures = dates
+          .map((date) => getSubstitutionsAJAX(date))
+          .toList();
       List<SubstitutionDay> plans = await Future.wait(futures);
       for (SubstitutionDay day in plans) {
-        fullPlan.add(day.withDayInfo(parseInformationTables(parsedDocument
-            .getElementById('tag${entryFormat.format(day.dateTime)}')!)));
+        fullPlan.add(
+          day.withDayInfo(
+            parseInformationTables(
+              parsedDocument.getElementById(
+                'tag${entryFormat.format(day.dateTime)}',
+              )!,
+            ),
+          ),
+        );
       }
     }
 
@@ -72,8 +86,9 @@ class SubstitutionsParser extends AppletParser<SubstitutionPlan> {
 
   Future<String> getSubstitutionPlanDocument() async {
     try {
-      final response = await sph.session.dio
-          .get("https://start.schulportal.hessen.de/vertretungsplan.php");
+      final response = await sph.session.dio.get(
+        "https://start.schulportal.hessen.de/vertretungsplan.php",
+      );
       return response.data;
     } on SocketException {
       throw NetworkException();
@@ -92,8 +107,9 @@ class SubstitutionsParser extends AppletParser<SubstitutionPlan> {
       DateTime parsedDate = entryFormat.parse(date);
       String parsedDateStr = parsedDate.format('dd.MM.yyyy');
       SubstitutionDay substitutionDay = SubstitutionDay(
-          parsedDate: parsedDateStr,
-          infos: parseInformationTables(document.getElementById('tag$date')!));
+        parsedDate: parsedDateStr,
+        infos: parseInformationTables(document.getElementById('tag$date')!),
+      );
       final vtable = document.querySelector("#vtable$date");
       if (vtable == null) {
         return fullPlan;
@@ -102,14 +118,20 @@ class SubstitutionsParser extends AppletParser<SubstitutionPlan> {
           .querySelectorAll("th")
           .map((e) => e.attributes["data-field"]!)
           .toList(growable: false);
-      for (var row in vtable.querySelectorAll("tbody tr").where(
-          (element) => element.querySelectorAll("td[colspan]").isEmpty)) {
+      for (var row
+          in vtable
+              .querySelectorAll("tbody tr")
+              .where(
+                (element) => element.querySelectorAll("td[colspan]").isEmpty,
+              )) {
         final fields = row.querySelectorAll("td");
-        substitutionDay.add(Substitution(
+        substitutionDay.add(
+          Substitution(
             tag: parsedDate.format('dd.MM.yyyy'),
             tag_en: date,
             stunde: SubstitutionsParser.parseHours(
-                fields[headers.indexOf("Stunde")].text.trim()),
+              fields[headers.indexOf("Stunde")].text.trim(),
+            ),
             fach: headers.contains("Fach")
                 ? fields[headers.indexOf("Fach")].text.trim()
                 : null,
@@ -130,7 +152,9 @@ class SubstitutionsParser extends AppletParser<SubstitutionPlan> {
                 : null,
             klasse: headers.contains("Klasse")
                 ? fields[headers.indexOf("Klasse")].text.trim()
-                : null));
+                : null,
+          ),
+        );
       }
       fullPlan.add(substitutionDay);
     }
@@ -140,43 +164,47 @@ class SubstitutionsParser extends AppletParser<SubstitutionPlan> {
 
   Future<SubstitutionDay> getSubstitutionsAJAX(String date) async {
     try {
-      final response = await sph.session.dio
-          .post("https://start.schulportal.hessen.de/vertretungsplan.php",
-              queryParameters: {"a": "my"},
-              data: {"tag": date, "ganzerPlan": "true"},
-              options: Options(
-                headers: {
-                  "Accept": "*/*",
-                  "Content-Type":
-                      "application/x-www-form-urlencoded; charset=UTF-8",
-                  "Sec-Fetch-Dest": "empty",
-                  "Sec-Fetch-Mode": "cors",
-                  "Sec-Fetch-Site": "same-origin",
-                },
-              ));
+      final response = await sph.session.dio.post(
+        "https://start.schulportal.hessen.de/vertretungsplan.php",
+        queryParameters: {"a": "my"},
+        data: {"tag": date, "ganzerPlan": "true"},
+        options: Options(
+          headers: {
+            "Accept": "*/*",
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+          },
+        ),
+      );
       return SubstitutionDay(
-          parsedDate: date,
-          substitutions: (jsonDecode(response.toString()) as List)
-              .map((e) => Substitution(
-                  tag: e["Tag"],
-                  tag_en: e["Tag_en"],
-                  stunde: SubstitutionsParser.parseHours(e["Stunde"]),
-                  vertreter: e["Vertreter"],
-                  lehrer: e["Lehrer"],
-                  klasse: e["Klasse"],
-                  klasse_alt: e["Klasse_alt"],
-                  fach: e["Fach"],
-                  fach_alt: e["Fach_alt"],
-                  raum: e["Raum"],
-                  raum_alt: e["Raum_alt"],
-                  hinweis: e["Hinweis"],
-                  hinweis2: e["Hinweis2"],
-                  art: e["Art"],
-                  Lehrerkuerzel: e["Lehrerkuerzel"],
-                  Vertreterkuerzel: e["Vertreterkuerzel"],
-                  lerngruppe: e["Lerngruppe"],
-                  hervorgehoben: e["_hervorgehoben"]))
-              .toList());
+        parsedDate: date,
+        substitutions: (jsonDecode(response.toString()) as List)
+            .map(
+              (e) => Substitution(
+                tag: e["Tag"],
+                tag_en: e["Tag_en"],
+                stunde: SubstitutionsParser.parseHours(e["Stunde"]),
+                vertreter: e["Vertreter"],
+                lehrer: e["Lehrer"],
+                klasse: e["Klasse"],
+                klasse_alt: e["Klasse_alt"],
+                fach: e["Fach"],
+                fach_alt: e["Fach_alt"],
+                raum: e["Raum"],
+                raum_alt: e["Raum_alt"],
+                hinweis: e["Hinweis"],
+                hinweis2: e["Hinweis2"],
+                art: e["Art"],
+                Lehrerkuerzel: e["Lehrerkuerzel"],
+                Vertreterkuerzel: e["Vertreterkuerzel"],
+                lerngruppe: e["Lerngruppe"],
+                hervorgehoben: e["_hervorgehoben"],
+              ),
+            )
+            .toList(),
+      );
     } on SocketException {
       throw NetworkException();
     }
@@ -215,8 +243,9 @@ class SubstitutionsParser extends AppletParser<SubstitutionPlan> {
   ///"Letzte Aktualisierung: 08.05.2024 um 13:35:30 Uhr"
   DateTime? parseLastEditDate(String document) {
     RegExp lastEditPattern = RegExp(
-        r'Letzte\s+Aktualisierung:\s*(\d{2})\.(\d{2})\.(\d{4})\s+um\s+(\d{2}):(\d{2}):(\d{2})\s+Uhr',
-        caseSensitive: false);
+      r'Letzte\s+Aktualisierung:\s*(\d{2})\.(\d{2})\.(\d{4})\s+um\s+(\d{2}):(\d{2}):(\d{2})\s+Uhr',
+      caseSensitive: false,
+    );
     RegExpMatch? match = lastEditPattern.firstMatch(document);
     if (match == null) {
       return null;
@@ -238,8 +267,9 @@ class SubstitutionsParser extends AppletParser<SubstitutionPlan> {
   }
 
   static String parseHours(String hours) {
-    final numbers =
-        RegExp(r'\d+').allMatches(hours).map((m) => m.group(0)!).toList();
+    final numbers = RegExp(
+      r'\d+',
+    ).allMatches(hours).map((m) => m.group(0)!).toList();
     if (numbers.isEmpty || numbers.length > 2) return hours;
     return numbers.length == 2 ? '${numbers[0]} - ${numbers[1]}' : numbers[0];
   }

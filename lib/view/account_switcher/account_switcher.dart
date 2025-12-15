@@ -18,9 +18,7 @@ class _AccountSwitcherState extends State<AccountSwitcher> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context).switchAccount),
-      ),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).switchAccount)),
       body: StreamBuilder(
         stream: accountDatabase.select(accountDatabase.accountsTable).watch(),
         builder: (context, snapshot) {
@@ -49,13 +47,12 @@ class _AccountSwitcherState extends State<AccountSwitcher> {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-          builder: (context) => Scaffold(
-            body: LoginForm(
-              showBackButton: true,
-            ),
+        onPressed: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) =>
+                Scaffold(body: LoginForm(showBackButton: true)),
           ),
-        )),
+        ),
         label: Text(AppLocalizations.of(context).addAccount),
         icon: Icon(Icons.person_add),
       ),
