@@ -5,7 +5,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:lanis/generated/l10n.dart';
-import 'package:lanis/utils/logger.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../core/native_adapter_instance.dart';
@@ -38,9 +37,7 @@ class _SchoolSelectorState extends State<SchoolSelector> {
     try {
       final packageInfo = await PackageInfo.fromPlatform();
       final dio = Dio();
-
       dio.httpClientAdapter = getNativeAdapterInstance();
-
       final response = await dio.get(
         "https://startcache.schulportal.hessen.de/exporteur.php?a=schoollist",
         options: Options(
