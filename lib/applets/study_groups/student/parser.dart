@@ -78,7 +78,7 @@ class StudyGroupsStudentParser extends AppletParser<StudentStudyGroups> {
           for (final Element teacherButton in teacherElement.children) {
             String teacherName = teacherButton
                 .querySelector(
-                    'ul.dropdown-menu > li > a > i.fa.fa-user.fa-fw')!
+                    'ul.dropdown-menu > li > a > i.fa')!
                 .parent!
                 .text
                 .trim();
