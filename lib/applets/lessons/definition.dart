@@ -6,6 +6,13 @@ import 'package:lanis/applets/lessons/teacher/lessons_teacher_view.dart';
 
 import '../../models/account_types.dart';
 
+enum SortingType {
+  entryNameAscending,
+  entryNameDescending,
+  entryTimeAscending,
+  entryTimeDescending,
+}
+
 final lessonsDefinition = AppletDefinition(
   appletPhpUrl: 'meinunterricht.php',
   addDivider: false,
@@ -19,7 +26,7 @@ final lessonsDefinition = AppletDefinition(
     AccountType.teacher,
   ],
   allowOffline: false,
-  settingsDefaults: {'showHomework': false},
+  settingsDefaults: {'showHomework': false, 'sortOverviewBy': SortingType.entryTimeDescending},
   refreshInterval: const Duration(minutes: 15),
   bodyBuilder: (context, accountType, openDrawerCb) {
     if (accountType == AccountType.student ||
