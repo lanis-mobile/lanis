@@ -10,8 +10,15 @@ import 'error_view.dart';
 
 typedef RefreshFunction = Future<void> Function();
 typedef UpdateSetting = Future<void> Function(String key, dynamic value);
-typedef BuilderFunction<T> = Widget Function(BuildContext, T, AccountType,
-    Map<String, dynamic>, UpdateSetting, RefreshFunction? refresh);
+typedef BuilderFunction<T> =
+    Widget Function(
+      BuildContext,
+      T,
+      AccountType,
+      Map<String, dynamic>,
+      UpdateSetting,
+      RefreshFunction? refresh,
+    );
 
 class CombinedAppletBuilder<T> extends StatefulWidget {
   final AppletParser<T> parser;
@@ -45,15 +52,15 @@ class _CombinedAppletBuilderState<T> extends State<CombinedAppletBuilder<T>> {
   Widget _loadingState() {
     return Scaffold(
       appBar: widget.loadingAppBar,
-      body: Center(
-        child: CircularProgressIndicator(),
-      ),
+      body: Center(child: CircularProgressIndicator()),
     );
   }
 
   void initSettings() async {
-    appletSettings = await sph!.prefs.kv
-        .getAllApplet(widget.phpUrl, widget.settingsDefaults);
+    appletSettings = await sph!.prefs.kv.getAllApplet(
+      widget.phpUrl,
+      widget.settingsDefaults,
+    );
     if (mounted) {
       setState(() {
         _loading = false;
@@ -80,8 +87,8 @@ class _CombinedAppletBuilderState<T> extends State<CombinedAppletBuilder<T>> {
               error: snapshot.data!.contentStatus == ContentStatus.offline
                   ? NoConnectionException()
                   : snapshot.data!.error != null
-                      ? snapshot.data!.error!.exception
-                      : UnknownException(),
+                  ? snapshot.data!.error!.exception
+                  : UnknownException(),
               stack: snapshot.data!.error?.stackTrace,
               retry: snapshot.data!.contentStatus == ContentStatus.online
                   ? () => widget.parser.fetchData(forceRefresh: true)
@@ -113,18 +120,14 @@ class _CombinedAppletBuilderState<T> extends State<CombinedAppletBuilder<T>> {
                             Icons.offline_pin,
                             color: Theme.of(context).colorScheme.primary,
                           ),
-                          SizedBox(
-                            width: 4,
-                          ),
+                          SizedBox(width: 4),
                           Text(
-                              '${AppLocalizations.of(context).offline} (${snapshot.data?.fetchedAt.format('E dd.MM HH:mm')})',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium!
-                                  .copyWith(
-                                    color:
-                                        Theme.of(context).colorScheme.primary,
-                                  )),
+                            '${AppLocalizations.of(context).offline} (${snapshot.data?.fetchedAt.format('E dd.MM HH:mm')})',
+                            style: Theme.of(context).textTheme.bodyMedium!
+                                .copyWith(
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                          ),
                         ],
                       ),
                     ),
@@ -141,8 +144,11 @@ class _CombinedAppletBuilderState<T> extends State<CombinedAppletBuilder<T>> {
                     widget.accountType,
                     appletSettings,
                     (String key, dynamic value) async {
-                      await sph!.prefs.kv
-                          .setAppletValue(widget.phpUrl, key, value);
+                      await sph!.prefs.kv.setAppletValue(
+                        widget.phpUrl,
+                        key,
+                        value,
+                      );
                       setState(() {
                         appletSettings[key] = value;
                       });

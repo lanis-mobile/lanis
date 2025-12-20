@@ -23,8 +23,11 @@ class NotificationSettings extends SettingsColours {
   final int accountCount;
   final bool showBackButton;
 
-  const NotificationSettings(
-      {super.key, required this.accountCount, this.showBackButton = true});
+  const NotificationSettings({
+    super.key,
+    required this.accountCount,
+    this.showBackButton = true,
+  });
 
   @override
   State<NotificationSettings> createState() => _NotificationSettingsState();
@@ -38,11 +41,13 @@ class _NotificationSettingsState
       kvDefaults['notifications-target-interval-minutes'].toDouble();
   List<bool> enabledDays = kvDefaults['notifications-allowed-days'];
   TimeOfDay startTime = TimeOfDay(
-      hour: kvDefaults['notifications-start-time'][0],
-      minute: kvDefaults['notifications-start-time'][1]);
+    hour: kvDefaults['notifications-start-time'][0],
+    minute: kvDefaults['notifications-start-time'][1],
+  );
   TimeOfDay endTime = TimeOfDay(
-      hour: kvDefaults['notifications-end-time'][0],
-      minute: kvDefaults['notifications-end-time'][1]);
+    hour: kvDefaults['notifications-end-time'][0],
+    minute: kvDefaults['notifications-end-time'][1],
+  );
 
   PermissionStatus notificationPermissionStatus = PermissionStatus.provisional;
   Timer? checkTimer;
@@ -51,8 +56,9 @@ class _NotificationSettingsState
     List<String> result = ["notifications-allow"];
 
     // Get supported applets
-    for (final applet
-        in AppDefinitions.applets.where((a) => a.notificationTask != null)) {
+    for (final applet in AppDefinitions.applets.where(
+      (a) => a.notificationTask != null,
+    )) {
       if (sph!.session.doesSupportFeature(applet)) {
         result.add('notification-${applet.appletPhpUrl}');
         supportedApplets['notification-${applet.appletPhpUrl}'] = applet;
@@ -80,7 +86,7 @@ class _NotificationSettingsState
       'notifications-target-interval-minutes',
       'notifications-allowed-days',
       'notifications-start-time',
-      'notifications-end-time'
+      'notifications-end-time',
     ]);
 
     setState(() {
@@ -91,11 +97,13 @@ class _NotificationSettingsState
           .map<bool>((e) => e as bool)
           .toList();
       startTime = TimeOfDay(
-          hour: globalSettings['notifications-start-time'][0],
-          minute: globalSettings['notifications-start-time'][1]);
+        hour: globalSettings['notifications-start-time'][0],
+        minute: globalSettings['notifications-start-time'][1],
+      );
       endTime = TimeOfDay(
-          hour: globalSettings['notifications-end-time'][0],
-          minute: globalSettings['notifications-end-time'][1]);
+        hour: globalSettings['notifications-end-time'][0],
+        minute: globalSettings['notifications-end-time'][1],
+      );
     });
   }
 
@@ -116,9 +124,7 @@ class _NotificationSettingsState
   Widget build(BuildContext context) {
     return SettingsPageWithStreamBuilder(
       backgroundColor: backgroundColor,
-      title: Text(
-        AppLocalizations.of(context).notifications,
-      ),
+      title: Text(AppLocalizations.of(context).notifications),
       showBackButton: widget.showBackButton,
       subscription: sph!.prefs.kv.subscribeMultiple(getDatabaseKeys()),
       builder: (context, snapshot) {
@@ -131,11 +137,11 @@ class _NotificationSettingsState
             (snapshot.data!['notifications-allow'] ?? true) == true;
         final bool notificationsActive =
             (snapshot.data!['notifications-allow'] ?? true) == true &&
-                notificationPermissionStatus == PermissionStatus.granted;
+            notificationPermissionStatus == PermissionStatus.granted;
 
         final bool activateBackgroundServices =
             (widget.accountCount == 1 && notificationsActive) ||
-                widget.accountCount > 1;
+            widget.accountCount > 1;
 
         return [
           if (!notificationsPermissionAllowed) ...[
@@ -153,17 +159,17 @@ class _NotificationSettingsState
               foregroundColor: Theme.of(context).colorScheme.error,
               margin: const EdgeInsets.symmetric(horizontal: 16.0),
             ),
-            SizedBox(
-              height: 24.0,
-            ),
+            SizedBox(height: 24.0),
           ],
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: GestureDetector(
               onTap: notificationsPermissionAllowed
                   ? () {
-                      sph!.prefs.kv
-                          .set('notifications-allow', !notificationsEnabled);
+                      sph!.prefs.kv.set(
+                        'notifications-allow',
+                        !notificationsEnabled,
+                      );
                     }
                   : null,
               child: Card.filled(
@@ -173,24 +179,20 @@ class _NotificationSettingsState
                 margin: EdgeInsets.zero,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 20.0, vertical: 8.0),
+                    horizontal: 20.0,
+                    vertical: 8.0,
+                  ),
                   child: MinimalSwitchTile(
                     title: Text(
                       AppLocalizations.of(context).useNotifications,
                       style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                            color: notificationsPermissionAllowed
-                                ? Theme.of(context)
-                                    .colorScheme
-                                    .onPrimaryContainer
-                                : Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant,
-                          ),
+                        color: notificationsPermissionAllowed
+                            ? Theme.of(context).colorScheme.onPrimaryContainer
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                     subtitle: widget.accountCount > 1
-                        ? Text(
-                            AppLocalizations.of(context).forThisAccount,
-                          )
+                        ? Text(AppLocalizations.of(context).forThisAccount)
                         : null,
                     value: notificationsEnabled,
                     onChanged: notificationsPermissionAllowed
@@ -203,73 +205,61 @@ class _NotificationSettingsState
               ),
             ),
           ),
-          SizedBox(
-            height: 24.0,
-          ),
+          SizedBox(height: 24.0),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Text(
               "Applets",
               style: Theme.of(context).textTheme.labelLarge!.copyWith(
-                    color: notificationsActive
-                        ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: notificationsActive
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
-          SizedBox(
-            height: 8.0,
+          SizedBox(height: 8.0),
+          ...applets.map(
+            (key) => Padding(
+              padding: const EdgeInsets.only(bottom: 4.0),
+              child: MinimalSwitchTile(
+                title: Text(supportedApplets[key]?.label(context) ?? key),
+                leading: Icon(supportedApplets[key]?.selectedIcon.icon),
+                contentPadding: EdgeInsets.symmetric(horizontal: 16.0),
+                value: (snapshot.data![key] ?? true) == true,
+                onChanged: notificationsActive
+                    ? (value) async {
+                        await sph!.prefs.kv.set(key, value);
+                        logger.i('Set $key to $value');
+                      }
+                    : null,
+                useInkWell: true,
+              ),
+            ),
           ),
-          ...applets.map((key) => Padding(
-                padding: const EdgeInsets.only(bottom: 4.0),
-                child: MinimalSwitchTile(
-                  title: Text(
-                    supportedApplets[key]?.label(context) ?? key,
-                  ),
-                  leading: Icon(
-                    supportedApplets[key]?.selectedIcon.icon,
-                  ),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 16.0),
-                  value: (snapshot.data![key] ?? true) == true,
-                  onChanged: notificationsActive
-                      ? (value) async {
-                          await sph!.prefs.kv.set(key, value);
-                          logger.i('Set $key to $value');
-                        }
-                      : null,
-                  useInkWell: true,
-                ),
-              )),
-          SizedBox(
-            height: 8.0,
-          ),
+          SizedBox(height: 8.0),
           const Divider(),
           Padding(
             padding: const EdgeInsets.only(left: 16.0, top: 12.0),
             child: Text(
               "${AppLocalizations.of(context).backgroundService} ${widget.accountCount > 1 ? '(${AppLocalizations.of(context).forEveryAccount})' : ""}",
               style: Theme.of(context).textTheme.labelLarge!.copyWith(
-                    color: activateBackgroundServices
-                        ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: activateBackgroundServices
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
-          SizedBox(
-            height: 8.0,
-          ),
+          SizedBox(height: 8.0),
           Row(
             children: [
-              SizedBox(
-                width: 16.0,
+              SizedBox(width: 16.0),
+              Icon(
+                Icons.calendar_month,
+                color: activateBackgroundServices
+                    ? Theme.of(context).colorScheme.onSurface
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
               ),
-              Icon(Icons.calendar_month,
-                  color: activateBackgroundServices
-                      ? Theme.of(context).colorScheme.onSurface
-                      : Theme.of(context).colorScheme.onSurfaceVariant),
-              SizedBox(
-                width: 24.0,
-              ),
+              SizedBox(width: 24.0),
               Expanded(
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
@@ -279,10 +269,9 @@ class _NotificationSettingsState
                       for (int dayIndex = 1; dayIndex < 8; dayIndex++)
                         FilterChip(
                           label: Text(
-                            DateFormat.E(Localizations.localeOf(context)
-                                    .languageCode)
-                                .dateSymbols
-                                .SHORTWEEKDAYS[dayIndex % 7],
+                            DateFormat.E(
+                              Localizations.localeOf(context).languageCode,
+                            ).dateSymbols.SHORTWEEKDAYS[dayIndex % 7],
                           ),
                           selected: enabledDays[dayIndex - 1],
                           onSelected: activateBackgroundServices
@@ -291,8 +280,9 @@ class _NotificationSettingsState
                                     enabledDays[dayIndex - 1] = val;
                                   });
                                   accountDatabase.kv.set(
-                                      'notifications-allowed-days',
-                                      enabledDays);
+                                    'notifications-allowed-days',
+                                    enabledDays,
+                                  );
                                 }
                               : null,
                         ),
@@ -300,9 +290,7 @@ class _NotificationSettingsState
                   ),
                 ),
               ),
-              SizedBox(
-                width: 16.0,
-              ),
+              SizedBox(width: 16.0),
             ],
           ),
           Padding(
@@ -313,29 +301,29 @@ class _NotificationSettingsState
                   Text(
                     AppLocalizations.of(context).timePeriod,
                     style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                          color: activateBackgroundServices
-                              ? Theme.of(context).colorScheme.onSurface
-                              : Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                      color: activateBackgroundServices
+                          ? Theme.of(context).colorScheme.onSurface
+                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                   Spacer(),
                   Text(
                     "${startTime.format(context)} - ${endTime.format(context)}",
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: activateBackgroundServices
-                              ? Theme.of(context).colorScheme.onSurface
-                              : Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                      color: activateBackgroundServices
+                          ? Theme.of(context).colorScheme.onSurface
+                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
-                  SizedBox(
-                    width: 16.0,
-                  ),
+                  SizedBox(width: 16.0),
                 ],
               ),
-              leading: Icon(Icons.schedule_outlined,
-                  color: activateBackgroundServices
-                      ? Theme.of(context).colorScheme.onSurface
-                      : Theme.of(context).colorScheme.onSurfaceVariant),
+              leading: Icon(
+                Icons.schedule_outlined,
+                color: activateBackgroundServices
+                    ? Theme.of(context).colorScheme.onSurface
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
               values: RangeValues(
                 minutesSinceZero(startTime).toDouble(),
                 minutesSinceZero(endTime).toDouble(),
@@ -350,10 +338,12 @@ class _NotificationSettingsState
               onChanged: activateBackgroundServices
                   ? (newValues) {
                       setState(() {
-                        startTime =
-                            timeFromMinutesSinceZero(newValues.start.round());
-                        endTime =
-                            timeFromMinutesSinceZero(newValues.end.round());
+                        startTime = timeFromMinutesSinceZero(
+                          newValues.start.round(),
+                        );
+                        endTime = timeFromMinutesSinceZero(
+                          newValues.end.round(),
+                        );
                       });
                     }
                   : null,
@@ -361,7 +351,7 @@ class _NotificationSettingsState
                 accountDatabase.kv.setMultiple({
                   'notifications-start-time': [
                     startTime.hour,
-                    startTime.minute
+                    startTime.minute,
                   ],
                   'notifications-end-time': [endTime.hour, endTime.minute],
                 });
@@ -376,29 +366,29 @@ class _NotificationSettingsState
                   Text(
                     AppLocalizations.of(context).updateInterval,
                     style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                          color: activateBackgroundServices
-                              ? Theme.of(context).colorScheme.onSurface
-                              : Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                      color: activateBackgroundServices
+                          ? Theme.of(context).colorScheme.onSurface
+                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                   Spacer(),
                   Text(
                     "${targetNotificationInterval.round()} min",
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: activateBackgroundServices
-                              ? Theme.of(context).colorScheme.onSurface
-                              : Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                      color: activateBackgroundServices
+                          ? Theme.of(context).colorScheme.onSurface
+                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
-                  SizedBox(
-                    width: 16.0,
-                  ),
+                  SizedBox(width: 16.0),
                 ],
               ),
-              leading: Icon(Icons.timer_outlined,
-                  color: activateBackgroundServices
-                      ? Theme.of(context).colorScheme.onSurface
-                      : Theme.of(context).colorScheme.onSurfaceVariant),
+              leading: Icon(
+                Icons.timer_outlined,
+                color: activateBackgroundServices
+                    ? Theme.of(context).colorScheme.onSurface
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
               value: targetNotificationInterval,
               onChanged: activateBackgroundServices
                   ? (val) {
@@ -408,8 +398,10 @@ class _NotificationSettingsState
                     }
                   : null,
               onChangedEnd: (val) {
-                accountDatabase.kv
-                    .set('notifications-target-interval-minutes', val.round());
+                accountDatabase.kv.set(
+                  'notifications-target-interval-minutes',
+                  val.round(),
+                );
               },
               label: "${targetNotificationInterval.round().toString()} min",
               min: 15.0,
@@ -418,9 +410,7 @@ class _NotificationSettingsState
               inactiveColor: sliderColor,
             ),
           ),
-          SizedBox(
-            height: 16.0,
-          ),
+          SizedBox(height: 16.0),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Row(
@@ -430,139 +420,142 @@ class _NotificationSettingsState
                   Icons.info_outline_rounded,
                   size: 20.0,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
-                )
+                ),
               ],
             ),
           ),
-          SizedBox(
-            height: 8.0,
-          ),
+          SizedBox(height: 8.0),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Text(
               AppLocalizations.of(context).settingsInfoNotifications,
               style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
-          SizedBox(
-            height: 4.0,
-          ),
+          SizedBox(height: 4.0),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Text.rich(
               TextSpan(
                 children: [
                   TextSpan(
-                    text: AppLocalizations.of(context)
-                        .otherSettingsAvailablePart1,
+                    text: AppLocalizations.of(
+                      context,
+                    ).otherSettingsAvailablePart1,
                     style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                   TextSpan(
                     text: AppLocalizations.of(context).systemSettings,
                     style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                          color: Theme.of(context).colorScheme.primary,
-                          decoration: TextDecoration.underline,
-                        ),
+                      color: Theme.of(context).colorScheme.primary,
+                      decoration: TextDecoration.underline,
+                    ),
                     recognizer: TapGestureRecognizer()
                       ..onTap = () {
                         AppSettings.openAppSettings(
-                            type: AppSettingsType.notification);
+                          type: AppSettingsType.notification,
+                        );
                       },
                   ),
                   TextSpan(
-                    text: AppLocalizations.of(context)
-                        .otherSettingsAvailablePart2,
+                    text: AppLocalizations.of(
+                      context,
+                    ).otherSettingsAvailablePart2,
                     style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                  )
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
                 ],
               ),
             ),
           ),
           if (Platform.isAndroid)
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
               child: Text.rich(
                 TextSpan(
                   children: [
                     TextSpan(
-                      text: AppLocalizations.of(context)
-                          .ignoreBatteryOptimizationPart1,
+                      text: AppLocalizations.of(
+                        context,
+                      ).ignoreBatteryOptimizationPart1,
                       style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                     TextSpan(
-                      text: AppLocalizations.of(context)
-                          .ignoreBatteryOptimizationSettings,
+                      text: AppLocalizations.of(
+                        context,
+                      ).ignoreBatteryOptimizationSettings,
                       style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                            color: Theme.of(context).colorScheme.primary,
-                            decoration: TextDecoration.underline,
-                          ),
+                        color: Theme.of(context).colorScheme.primary,
+                        decoration: TextDecoration.underline,
+                      ),
                       recognizer: TapGestureRecognizer()
                         ..onTap = () async {
                           final permStatus = await Permission
                               .ignoreBatteryOptimizations
                               .request();
                           if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content: Text(
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
                                   permStatus == PermissionStatus.granted
-                                      ? AppLocalizations.of(context)
-                                          .ignoreBatteryOptimizationGranted
-                                      : AppLocalizations.of(context)
-                                          .ignoreBatteryOptimizationDenied,
+                                      ? AppLocalizations.of(
+                                          context,
+                                        ).ignoreBatteryOptimizationGranted
+                                      : AppLocalizations.of(
+                                          context,
+                                        ).ignoreBatteryOptimizationDenied,
                                   style: permStatus == PermissionStatus.granted
-                                      ? Theme.of(context)
-                                          .textTheme
-                                          .bodyMedium!
-                                          .copyWith(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onPrimaryContainer,
-                                          )
-                                      : Theme.of(context)
-                                          .textTheme
-                                          .bodyMedium!
-                                          .copyWith(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onErrorContainer,
-                                          )),
-                              backgroundColor:
-                                  permStatus == PermissionStatus.granted
-                                      ? Theme.of(context)
-                                          .colorScheme
-                                          .primaryContainer
-                                      : Theme.of(context)
-                                          .colorScheme
-                                          .errorContainer,
-                            ));
+                                      ? Theme.of(
+                                          context,
+                                        ).textTheme.bodyMedium!.copyWith(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onPrimaryContainer,
+                                        )
+                                      : Theme.of(
+                                          context,
+                                        ).textTheme.bodyMedium!.copyWith(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onErrorContainer,
+                                        ),
+                                ),
+                                backgroundColor:
+                                    permStatus == PermissionStatus.granted
+                                    ? Theme.of(
+                                        context,
+                                      ).colorScheme.primaryContainer
+                                    : Theme.of(
+                                        context,
+                                      ).colorScheme.errorContainer,
+                              ),
+                            );
                           }
                         },
                     ),
                     TextSpan(
-                      text: AppLocalizations.of(context)
-                          .otherSettingsAvailablePart2,
+                      text: AppLocalizations.of(
+                        context,
+                      ).otherSettingsAvailablePart2,
                       style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
-                    )
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
                   ],
                 ),
               ),
             ),
-          SizedBox(
-            height: 16.0,
-          ),
+          SizedBox(height: 16.0),
         ];
       },
     );

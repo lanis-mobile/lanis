@@ -12,16 +12,25 @@ class $AppPreferencesTableTable extends AppPreferencesTable
   static const VerificationMeta _keyMeta = const VerificationMeta('key');
   @override
   late final GeneratedColumn<String> key = GeneratedColumn<String>(
-      'key', aliasedName, false,
-      additionalChecks:
-          GeneratedColumn.checkTextLength(minTextLength: 1, maxTextLength: 50),
-      type: DriftSqlType.string,
-      requiredDuringInsert: true);
+    'key',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 50,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _valueMeta = const VerificationMeta('value');
   @override
   late final GeneratedColumn<String> value = GeneratedColumn<String>(
-      'value', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
+    'value',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [key, value];
   @override
@@ -31,19 +40,24 @@ class $AppPreferencesTableTable extends AppPreferencesTable
   static const String $name = 'app_preferences_table';
   @override
   VerificationContext validateIntegrity(
-      Insertable<AppPreferencesTableData> instance,
-      {bool isInserting = false}) {
+    Insertable<AppPreferencesTableData> instance, {
+    bool isInserting = false,
+  }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
     if (data.containsKey('key')) {
       context.handle(
-          _keyMeta, key.isAcceptableOrUnknown(data['key']!, _keyMeta));
+        _keyMeta,
+        key.isAcceptableOrUnknown(data['key']!, _keyMeta),
+      );
     } else if (isInserting) {
       context.missing(_keyMeta);
     }
     if (data.containsKey('value')) {
       context.handle(
-          _valueMeta, value.isAcceptableOrUnknown(data['value']!, _valueMeta));
+        _valueMeta,
+        value.isAcceptableOrUnknown(data['value']!, _valueMeta),
+      );
     }
     return context;
   }
@@ -51,14 +65,20 @@ class $AppPreferencesTableTable extends AppPreferencesTable
   @override
   Set<GeneratedColumn> get $primaryKey => {key};
   @override
-  AppPreferencesTableData map(Map<String, dynamic> data,
-      {String? tablePrefix}) {
+  AppPreferencesTableData map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return AppPreferencesTableData(
-      key: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}key'])!,
-      value: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}value']),
+      key: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}key'],
+      )!,
+      value: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}value'],
+      ),
     );
   }
 
@@ -86,13 +106,16 @@ class AppPreferencesTableData extends DataClass
   AppPreferencesTableCompanion toCompanion(bool nullToAbsent) {
     return AppPreferencesTableCompanion(
       key: Value(key),
-      value:
-          value == null && nullToAbsent ? const Value.absent() : Value(value),
+      value: value == null && nullToAbsent
+          ? const Value.absent()
+          : Value(value),
     );
   }
 
-  factory AppPreferencesTableData.fromJson(Map<String, dynamic> json,
-      {ValueSerializer? serializer}) {
+  factory AppPreferencesTableData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return AppPreferencesTableData(
       key: serializer.fromJson<String>(json['key']),
@@ -108,12 +131,13 @@ class AppPreferencesTableData extends DataClass
     };
   }
 
-  AppPreferencesTableData copyWith(
-          {String? key, Value<String?> value = const Value.absent()}) =>
-      AppPreferencesTableData(
-        key: key ?? this.key,
-        value: value.present ? value.value : this.value,
-      );
+  AppPreferencesTableData copyWith({
+    String? key,
+    Value<String?> value = const Value.absent(),
+  }) => AppPreferencesTableData(
+    key: key ?? this.key,
+    value: value.present ? value.value : this.value,
+  );
   AppPreferencesTableData copyWithCompanion(AppPreferencesTableCompanion data) {
     return AppPreferencesTableData(
       key: data.key.present ? data.key.value : this.key,
@@ -167,8 +191,11 @@ class AppPreferencesTableCompanion
     });
   }
 
-  AppPreferencesTableCompanion copyWith(
-      {Value<String>? key, Value<String?>? value, Value<int>? rowid}) {
+  AppPreferencesTableCompanion copyWith({
+    Value<String>? key,
+    Value<String?>? value,
+    Value<int>? rowid,
+  }) {
     return AppPreferencesTableCompanion(
       key: key ?? this.key,
       value: value ?? this.value,
@@ -208,28 +235,43 @@ class $AppletPreferencesTableTable extends AppletPreferencesTable
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
   $AppletPreferencesTableTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _appletIdMeta =
-      const VerificationMeta('appletId');
+  static const VerificationMeta _appletIdMeta = const VerificationMeta(
+    'appletId',
+  );
   @override
   late final GeneratedColumn<String> appletId = GeneratedColumn<String>(
-      'applet_id', aliasedName, false,
-      additionalChecks:
-          GeneratedColumn.checkTextLength(minTextLength: 1, maxTextLength: 30),
-      type: DriftSqlType.string,
-      requiredDuringInsert: true);
+    'applet_id',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 30,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _keyMeta = const VerificationMeta('key');
   @override
   late final GeneratedColumn<String> key = GeneratedColumn<String>(
-      'key', aliasedName, false,
-      additionalChecks:
-          GeneratedColumn.checkTextLength(minTextLength: 1, maxTextLength: 50),
-      type: DriftSqlType.string,
-      requiredDuringInsert: true);
+    'key',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 50,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _valueMeta = const VerificationMeta('value');
   @override
   late final GeneratedColumn<String> value = GeneratedColumn<String>(
-      'value', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
+    'value',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [appletId, key, value];
   @override
@@ -239,25 +281,32 @@ class $AppletPreferencesTableTable extends AppletPreferencesTable
   static const String $name = 'applet_preferences_table';
   @override
   VerificationContext validateIntegrity(
-      Insertable<AppletPreferencesTableData> instance,
-      {bool isInserting = false}) {
+    Insertable<AppletPreferencesTableData> instance, {
+    bool isInserting = false,
+  }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
     if (data.containsKey('applet_id')) {
-      context.handle(_appletIdMeta,
-          appletId.isAcceptableOrUnknown(data['applet_id']!, _appletIdMeta));
+      context.handle(
+        _appletIdMeta,
+        appletId.isAcceptableOrUnknown(data['applet_id']!, _appletIdMeta),
+      );
     } else if (isInserting) {
       context.missing(_appletIdMeta);
     }
     if (data.containsKey('key')) {
       context.handle(
-          _keyMeta, key.isAcceptableOrUnknown(data['key']!, _keyMeta));
+        _keyMeta,
+        key.isAcceptableOrUnknown(data['key']!, _keyMeta),
+      );
     } else if (isInserting) {
       context.missing(_keyMeta);
     }
     if (data.containsKey('value')) {
       context.handle(
-          _valueMeta, value.isAcceptableOrUnknown(data['value']!, _valueMeta));
+        _valueMeta,
+        value.isAcceptableOrUnknown(data['value']!, _valueMeta),
+      );
     }
     return context;
   }
@@ -265,16 +314,24 @@ class $AppletPreferencesTableTable extends AppletPreferencesTable
   @override
   Set<GeneratedColumn> get $primaryKey => {appletId, key};
   @override
-  AppletPreferencesTableData map(Map<String, dynamic> data,
-      {String? tablePrefix}) {
+  AppletPreferencesTableData map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return AppletPreferencesTableData(
-      appletId: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}applet_id'])!,
-      key: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}key'])!,
-      value: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}value']),
+      appletId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}applet_id'],
+      )!,
+      key: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}key'],
+      )!,
+      value: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}value'],
+      ),
     );
   }
 
@@ -289,8 +346,11 @@ class AppletPreferencesTableData extends DataClass
   final String appletId;
   final String key;
   final String? value;
-  const AppletPreferencesTableData(
-      {required this.appletId, required this.key, this.value});
+  const AppletPreferencesTableData({
+    required this.appletId,
+    required this.key,
+    this.value,
+  });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -306,13 +366,16 @@ class AppletPreferencesTableData extends DataClass
     return AppletPreferencesTableCompanion(
       appletId: Value(appletId),
       key: Value(key),
-      value:
-          value == null && nullToAbsent ? const Value.absent() : Value(value),
+      value: value == null && nullToAbsent
+          ? const Value.absent()
+          : Value(value),
     );
   }
 
-  factory AppletPreferencesTableData.fromJson(Map<String, dynamic> json,
-      {ValueSerializer? serializer}) {
+  factory AppletPreferencesTableData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return AppletPreferencesTableData(
       appletId: serializer.fromJson<String>(json['appletId']),
@@ -330,17 +393,18 @@ class AppletPreferencesTableData extends DataClass
     };
   }
 
-  AppletPreferencesTableData copyWith(
-          {String? appletId,
-          String? key,
-          Value<String?> value = const Value.absent()}) =>
-      AppletPreferencesTableData(
-        appletId: appletId ?? this.appletId,
-        key: key ?? this.key,
-        value: value.present ? value.value : this.value,
-      );
+  AppletPreferencesTableData copyWith({
+    String? appletId,
+    String? key,
+    Value<String?> value = const Value.absent(),
+  }) => AppletPreferencesTableData(
+    appletId: appletId ?? this.appletId,
+    key: key ?? this.key,
+    value: value.present ? value.value : this.value,
+  );
   AppletPreferencesTableData copyWithCompanion(
-      AppletPreferencesTableCompanion data) {
+    AppletPreferencesTableCompanion data,
+  ) {
     return AppletPreferencesTableData(
       appletId: data.appletId.present ? data.appletId.value : this.appletId,
       key: data.key.present ? data.key.value : this.key,
@@ -386,8 +450,8 @@ class AppletPreferencesTableCompanion
     required String key,
     this.value = const Value.absent(),
     this.rowid = const Value.absent(),
-  })  : appletId = Value(appletId),
-        key = Value(key);
+  }) : appletId = Value(appletId),
+       key = Value(key);
   static Insertable<AppletPreferencesTableData> custom({
     Expression<String>? appletId,
     Expression<String>? key,
@@ -402,11 +466,12 @@ class AppletPreferencesTableCompanion
     });
   }
 
-  AppletPreferencesTableCompanion copyWith(
-      {Value<String>? appletId,
-      Value<String>? key,
-      Value<String?>? value,
-      Value<int>? rowid}) {
+  AppletPreferencesTableCompanion copyWith({
+    Value<String>? appletId,
+    Value<String>? key,
+    Value<String?>? value,
+    Value<int>? rowid,
+  }) {
     return AppletPreferencesTableCompanion(
       appletId: appletId ?? this.appletId,
       key: key ?? this.key,
@@ -451,26 +516,41 @@ class $AppletDataTable extends AppletData
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
   $AppletDataTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _appletIdMeta =
-      const VerificationMeta('appletId');
+  static const VerificationMeta _appletIdMeta = const VerificationMeta(
+    'appletId',
+  );
   @override
   late final GeneratedColumn<String> appletId = GeneratedColumn<String>(
-      'applet_id', aliasedName, false,
-      additionalChecks:
-          GeneratedColumn.checkTextLength(minTextLength: 1, maxTextLength: 30),
-      type: DriftSqlType.string,
-      requiredDuringInsert: true);
+    'applet_id',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 30,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _jsonMeta = const VerificationMeta('json');
   @override
   late final GeneratedColumn<String> json = GeneratedColumn<String>(
-      'json', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _timestampMeta =
-      const VerificationMeta('timestamp');
+    'json',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _timestampMeta = const VerificationMeta(
+    'timestamp',
+  );
   @override
   late final GeneratedColumn<DateTime> timestamp = GeneratedColumn<DateTime>(
-      'timestamp', aliasedName, false,
-      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+    'timestamp',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
   @override
   List<GeneratedColumn> get $columns => [appletId, json, timestamp];
   @override
@@ -479,23 +559,31 @@ class $AppletDataTable extends AppletData
   String get actualTableName => $name;
   static const String $name = 'applet_data';
   @override
-  VerificationContext validateIntegrity(Insertable<AppletDataData> instance,
-      {bool isInserting = false}) {
+  VerificationContext validateIntegrity(
+    Insertable<AppletDataData> instance, {
+    bool isInserting = false,
+  }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
     if (data.containsKey('applet_id')) {
-      context.handle(_appletIdMeta,
-          appletId.isAcceptableOrUnknown(data['applet_id']!, _appletIdMeta));
+      context.handle(
+        _appletIdMeta,
+        appletId.isAcceptableOrUnknown(data['applet_id']!, _appletIdMeta),
+      );
     } else if (isInserting) {
       context.missing(_appletIdMeta);
     }
     if (data.containsKey('json')) {
       context.handle(
-          _jsonMeta, json.isAcceptableOrUnknown(data['json']!, _jsonMeta));
+        _jsonMeta,
+        json.isAcceptableOrUnknown(data['json']!, _jsonMeta),
+      );
     }
     if (data.containsKey('timestamp')) {
-      context.handle(_timestampMeta,
-          timestamp.isAcceptableOrUnknown(data['timestamp']!, _timestampMeta));
+      context.handle(
+        _timestampMeta,
+        timestamp.isAcceptableOrUnknown(data['timestamp']!, _timestampMeta),
+      );
     } else if (isInserting) {
       context.missing(_timestampMeta);
     }
@@ -508,12 +596,18 @@ class $AppletDataTable extends AppletData
   AppletDataData map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return AppletDataData(
-      appletId: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}applet_id'])!,
-      json: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}json']),
-      timestamp: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}timestamp'])!,
+      appletId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}applet_id'],
+      )!,
+      json: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}json'],
+      ),
+      timestamp: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}timestamp'],
+      )!,
     );
   }
 
@@ -527,8 +621,11 @@ class AppletDataData extends DataClass implements Insertable<AppletDataData> {
   final String appletId;
   final String? json;
   final DateTime timestamp;
-  const AppletDataData(
-      {required this.appletId, this.json, required this.timestamp});
+  const AppletDataData({
+    required this.appletId,
+    this.json,
+    required this.timestamp,
+  });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -548,8 +645,10 @@ class AppletDataData extends DataClass implements Insertable<AppletDataData> {
     );
   }
 
-  factory AppletDataData.fromJson(Map<String, dynamic> json,
-      {ValueSerializer? serializer}) {
+  factory AppletDataData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return AppletDataData(
       appletId: serializer.fromJson<String>(json['appletId']),
@@ -567,15 +666,15 @@ class AppletDataData extends DataClass implements Insertable<AppletDataData> {
     };
   }
 
-  AppletDataData copyWith(
-          {String? appletId,
-          Value<String?> json = const Value.absent(),
-          DateTime? timestamp}) =>
-      AppletDataData(
-        appletId: appletId ?? this.appletId,
-        json: json.present ? json.value : this.json,
-        timestamp: timestamp ?? this.timestamp,
-      );
+  AppletDataData copyWith({
+    String? appletId,
+    Value<String?> json = const Value.absent(),
+    DateTime? timestamp,
+  }) => AppletDataData(
+    appletId: appletId ?? this.appletId,
+    json: json.present ? json.value : this.json,
+    timestamp: timestamp ?? this.timestamp,
+  );
   AppletDataData copyWithCompanion(AppletDataCompanion data) {
     return AppletDataData(
       appletId: data.appletId.present ? data.appletId.value : this.appletId,
@@ -621,8 +720,8 @@ class AppletDataCompanion extends UpdateCompanion<AppletDataData> {
     this.json = const Value.absent(),
     required DateTime timestamp,
     this.rowid = const Value.absent(),
-  })  : appletId = Value(appletId),
-        timestamp = Value(timestamp);
+  }) : appletId = Value(appletId),
+       timestamp = Value(timestamp);
   static Insertable<AppletDataData> custom({
     Expression<String>? appletId,
     Expression<String>? json,
@@ -637,11 +736,12 @@ class AppletDataCompanion extends UpdateCompanion<AppletDataData> {
     });
   }
 
-  AppletDataCompanion copyWith(
-      {Value<String>? appletId,
-      Value<String?>? json,
-      Value<DateTime>? timestamp,
-      Value<int>? rowid}) {
+  AppletDataCompanion copyWith({
+    Value<String>? appletId,
+    Value<String?>? json,
+    Value<DateTime>? timestamp,
+    Value<int>? rowid,
+  }) {
     return AppletDataCompanion(
       appletId: appletId ?? this.appletId,
       json: json ?? this.json,
@@ -682,41 +782,67 @@ class AppletDataCompanion extends UpdateCompanion<AppletDataData> {
 
 class $NotificationsDuplicatesTableTable extends NotificationsDuplicatesTable
     with
-        TableInfo<$NotificationsDuplicatesTableTable,
-            NotificationsDuplicatesTableData> {
+        TableInfo<
+          $NotificationsDuplicatesTableTable,
+          NotificationsDuplicatesTableData
+        > {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
   $NotificationsDuplicatesTableTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _notificationIdMeta =
-      const VerificationMeta('notificationId');
+  static const VerificationMeta _notificationIdMeta = const VerificationMeta(
+    'notificationId',
+  );
   @override
   late final GeneratedColumn<int> notificationId = GeneratedColumn<int>(
-      'notification_id', aliasedName, false,
-      type: DriftSqlType.int, requiredDuringInsert: true);
-  static const VerificationMeta _appletIdMeta =
-      const VerificationMeta('appletId');
+    'notification_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _appletIdMeta = const VerificationMeta(
+    'appletId',
+  );
   @override
   late final GeneratedColumn<String> appletId = GeneratedColumn<String>(
-      'applet_id', aliasedName, false,
-      additionalChecks:
-          GeneratedColumn.checkTextLength(minTextLength: 1, maxTextLength: 30),
-      type: DriftSqlType.string,
-      requiredDuringInsert: true);
+    'applet_id',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 30,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _hashMeta = const VerificationMeta('hash');
   @override
   late final GeneratedColumn<String> hash = GeneratedColumn<String>(
-      'hash', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _timestampMeta =
-      const VerificationMeta('timestamp');
+    'hash',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _timestampMeta = const VerificationMeta(
+    'timestamp',
+  );
   @override
   late final GeneratedColumn<DateTime> timestamp = GeneratedColumn<DateTime>(
-      'timestamp', aliasedName, false,
-      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+    'timestamp',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
   @override
-  List<GeneratedColumn> get $columns =>
-      [notificationId, appletId, hash, timestamp];
+  List<GeneratedColumn> get $columns => [
+    notificationId,
+    appletId,
+    hash,
+    timestamp,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -724,33 +850,43 @@ class $NotificationsDuplicatesTableTable extends NotificationsDuplicatesTable
   static const String $name = 'notifications_duplicates_table';
   @override
   VerificationContext validateIntegrity(
-      Insertable<NotificationsDuplicatesTableData> instance,
-      {bool isInserting = false}) {
+    Insertable<NotificationsDuplicatesTableData> instance, {
+    bool isInserting = false,
+  }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
     if (data.containsKey('notification_id')) {
       context.handle(
+        _notificationIdMeta,
+        notificationId.isAcceptableOrUnknown(
+          data['notification_id']!,
           _notificationIdMeta,
-          notificationId.isAcceptableOrUnknown(
-              data['notification_id']!, _notificationIdMeta));
+        ),
+      );
     } else if (isInserting) {
       context.missing(_notificationIdMeta);
     }
     if (data.containsKey('applet_id')) {
-      context.handle(_appletIdMeta,
-          appletId.isAcceptableOrUnknown(data['applet_id']!, _appletIdMeta));
+      context.handle(
+        _appletIdMeta,
+        appletId.isAcceptableOrUnknown(data['applet_id']!, _appletIdMeta),
+      );
     } else if (isInserting) {
       context.missing(_appletIdMeta);
     }
     if (data.containsKey('hash')) {
       context.handle(
-          _hashMeta, hash.isAcceptableOrUnknown(data['hash']!, _hashMeta));
+        _hashMeta,
+        hash.isAcceptableOrUnknown(data['hash']!, _hashMeta),
+      );
     } else if (isInserting) {
       context.missing(_hashMeta);
     }
     if (data.containsKey('timestamp')) {
-      context.handle(_timestampMeta,
-          timestamp.isAcceptableOrUnknown(data['timestamp']!, _timestampMeta));
+      context.handle(
+        _timestampMeta,
+        timestamp.isAcceptableOrUnknown(data['timestamp']!, _timestampMeta),
+      );
     } else if (isInserting) {
       context.missing(_timestampMeta);
     }
@@ -760,18 +896,28 @@ class $NotificationsDuplicatesTableTable extends NotificationsDuplicatesTable
   @override
   Set<GeneratedColumn> get $primaryKey => {notificationId, appletId};
   @override
-  NotificationsDuplicatesTableData map(Map<String, dynamic> data,
-      {String? tablePrefix}) {
+  NotificationsDuplicatesTableData map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return NotificationsDuplicatesTableData(
-      notificationId: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}notification_id'])!,
-      appletId: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}applet_id'])!,
-      hash: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}hash'])!,
-      timestamp: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}timestamp'])!,
+      notificationId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}notification_id'],
+      )!,
+      appletId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}applet_id'],
+      )!,
+      hash: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}hash'],
+      )!,
+      timestamp: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}timestamp'],
+      )!,
     );
   }
 
@@ -787,11 +933,12 @@ class NotificationsDuplicatesTableData extends DataClass
   final String appletId;
   final String hash;
   final DateTime timestamp;
-  const NotificationsDuplicatesTableData(
-      {required this.notificationId,
-      required this.appletId,
-      required this.hash,
-      required this.timestamp});
+  const NotificationsDuplicatesTableData({
+    required this.notificationId,
+    required this.appletId,
+    required this.hash,
+    required this.timestamp,
+  });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -811,8 +958,10 @@ class NotificationsDuplicatesTableData extends DataClass
     );
   }
 
-  factory NotificationsDuplicatesTableData.fromJson(Map<String, dynamic> json,
-      {ValueSerializer? serializer}) {
+  factory NotificationsDuplicatesTableData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return NotificationsDuplicatesTableData(
       notificationId: serializer.fromJson<int>(json['notificationId']),
@@ -832,19 +981,20 @@ class NotificationsDuplicatesTableData extends DataClass
     };
   }
 
-  NotificationsDuplicatesTableData copyWith(
-          {int? notificationId,
-          String? appletId,
-          String? hash,
-          DateTime? timestamp}) =>
-      NotificationsDuplicatesTableData(
-        notificationId: notificationId ?? this.notificationId,
-        appletId: appletId ?? this.appletId,
-        hash: hash ?? this.hash,
-        timestamp: timestamp ?? this.timestamp,
-      );
+  NotificationsDuplicatesTableData copyWith({
+    int? notificationId,
+    String? appletId,
+    String? hash,
+    DateTime? timestamp,
+  }) => NotificationsDuplicatesTableData(
+    notificationId: notificationId ?? this.notificationId,
+    appletId: appletId ?? this.appletId,
+    hash: hash ?? this.hash,
+    timestamp: timestamp ?? this.timestamp,
+  );
   NotificationsDuplicatesTableData copyWithCompanion(
-      NotificationsDuplicatesTableCompanion data) {
+    NotificationsDuplicatesTableCompanion data,
+  ) {
     return NotificationsDuplicatesTableData(
       notificationId: data.notificationId.present
           ? data.notificationId.value
@@ -898,10 +1048,10 @@ class NotificationsDuplicatesTableCompanion
     required String hash,
     required DateTime timestamp,
     this.rowid = const Value.absent(),
-  })  : notificationId = Value(notificationId),
-        appletId = Value(appletId),
-        hash = Value(hash),
-        timestamp = Value(timestamp);
+  }) : notificationId = Value(notificationId),
+       appletId = Value(appletId),
+       hash = Value(hash),
+       timestamp = Value(timestamp);
   static Insertable<NotificationsDuplicatesTableData> custom({
     Expression<int>? notificationId,
     Expression<String>? appletId,
@@ -918,12 +1068,13 @@ class NotificationsDuplicatesTableCompanion
     });
   }
 
-  NotificationsDuplicatesTableCompanion copyWith(
-      {Value<int>? notificationId,
-      Value<String>? appletId,
-      Value<String>? hash,
-      Value<DateTime>? timestamp,
-      Value<int>? rowid}) {
+  NotificationsDuplicatesTableCompanion copyWith({
+    Value<int>? notificationId,
+    Value<String>? appletId,
+    Value<String>? hash,
+    Value<DateTime>? timestamp,
+    Value<int>? rowid,
+  }) {
     return NotificationsDuplicatesTableCompanion(
       notificationId: notificationId ?? this.notificationId,
       appletId: appletId ?? this.appletId,
@@ -983,25 +1134,25 @@ abstract class _$AccountPreferencesDatabase extends GeneratedDatabase {
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities => [
-        appPreferencesTable,
-        appletPreferencesTable,
-        appletData,
-        notificationsDuplicatesTable
-      ];
+    appPreferencesTable,
+    appletPreferencesTable,
+    appletData,
+    notificationsDuplicatesTable,
+  ];
 }
 
-typedef $$AppPreferencesTableTableCreateCompanionBuilder
-    = AppPreferencesTableCompanion Function({
-  required String key,
-  Value<String?> value,
-  Value<int> rowid,
-});
-typedef $$AppPreferencesTableTableUpdateCompanionBuilder
-    = AppPreferencesTableCompanion Function({
-  Value<String> key,
-  Value<String?> value,
-  Value<int> rowid,
-});
+typedef $$AppPreferencesTableTableCreateCompanionBuilder =
+    AppPreferencesTableCompanion Function({
+      required String key,
+      Value<String?> value,
+      Value<int> rowid,
+    });
+typedef $$AppPreferencesTableTableUpdateCompanionBuilder =
+    AppPreferencesTableCompanion Function({
+      Value<String> key,
+      Value<String?> value,
+      Value<int> rowid,
+    });
 
 class $$AppPreferencesTableTableFilterComposer
     extends Composer<_$AccountPreferencesDatabase, $AppPreferencesTableTable> {
@@ -1013,10 +1164,14 @@ class $$AppPreferencesTableTableFilterComposer
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnFilters<String> get key => $composableBuilder(
-      column: $table.key, builder: (column) => ColumnFilters(column));
+    column: $table.key,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get value => $composableBuilder(
-      column: $table.value, builder: (column) => ColumnFilters(column));
+    column: $table.value,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$AppPreferencesTableTableOrderingComposer
@@ -1029,10 +1184,14 @@ class $$AppPreferencesTableTableOrderingComposer
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnOrderings<String> get key => $composableBuilder(
-      column: $table.key, builder: (column) => ColumnOrderings(column));
+    column: $table.key,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get value => $composableBuilder(
-      column: $table.value, builder: (column) => ColumnOrderings(column));
+    column: $table.value,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$AppPreferencesTableTableAnnotationComposer
@@ -1051,95 +1210,114 @@ class $$AppPreferencesTableTableAnnotationComposer
       $composableBuilder(column: $table.value, builder: (column) => column);
 }
 
-class $$AppPreferencesTableTableTableManager extends RootTableManager<
-    _$AccountPreferencesDatabase,
-    $AppPreferencesTableTable,
-    AppPreferencesTableData,
-    $$AppPreferencesTableTableFilterComposer,
-    $$AppPreferencesTableTableOrderingComposer,
-    $$AppPreferencesTableTableAnnotationComposer,
-    $$AppPreferencesTableTableCreateCompanionBuilder,
-    $$AppPreferencesTableTableUpdateCompanionBuilder,
-    (
-      AppPreferencesTableData,
-      BaseReferences<_$AccountPreferencesDatabase, $AppPreferencesTableTable,
-          AppPreferencesTableData>
-    ),
-    AppPreferencesTableData,
-    PrefetchHooks Function()> {
+class $$AppPreferencesTableTableTableManager
+    extends
+        RootTableManager<
+          _$AccountPreferencesDatabase,
+          $AppPreferencesTableTable,
+          AppPreferencesTableData,
+          $$AppPreferencesTableTableFilterComposer,
+          $$AppPreferencesTableTableOrderingComposer,
+          $$AppPreferencesTableTableAnnotationComposer,
+          $$AppPreferencesTableTableCreateCompanionBuilder,
+          $$AppPreferencesTableTableUpdateCompanionBuilder,
+          (
+            AppPreferencesTableData,
+            BaseReferences<
+              _$AccountPreferencesDatabase,
+              $AppPreferencesTableTable,
+              AppPreferencesTableData
+            >,
+          ),
+          AppPreferencesTableData,
+          PrefetchHooks Function()
+        > {
   $$AppPreferencesTableTableTableManager(
-      _$AccountPreferencesDatabase db, $AppPreferencesTableTable table)
-      : super(TableManagerState(
+    _$AccountPreferencesDatabase db,
+    $AppPreferencesTableTable table,
+  ) : super(
+        TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
               $$AppPreferencesTableTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
               $$AppPreferencesTableTableOrderingComposer(
-                  $db: db, $table: table),
+                $db: db,
+                $table: table,
+              ),
           createComputedFieldComposer: () =>
               $$AppPreferencesTableTableAnnotationComposer(
-                  $db: db, $table: table),
-          updateCompanionCallback: ({
-            Value<String> key = const Value.absent(),
-            Value<String?> value = const Value.absent(),
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              AppPreferencesTableCompanion(
-            key: key,
-            value: value,
-            rowid: rowid,
-          ),
-          createCompanionCallback: ({
-            required String key,
-            Value<String?> value = const Value.absent(),
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              AppPreferencesTableCompanion.insert(
-            key: key,
-            value: value,
-            rowid: rowid,
-          ),
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> key = const Value.absent(),
+                Value<String?> value = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AppPreferencesTableCompanion(
+                key: key,
+                value: value,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String key,
+                Value<String?> value = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AppPreferencesTableCompanion.insert(
+                key: key,
+                value: value,
+                rowid: rowid,
+              ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
               .toList(),
           prefetchHooksCallback: null,
-        ));
+        ),
+      );
 }
 
-typedef $$AppPreferencesTableTableProcessedTableManager = ProcessedTableManager<
-    _$AccountPreferencesDatabase,
-    $AppPreferencesTableTable,
-    AppPreferencesTableData,
-    $$AppPreferencesTableTableFilterComposer,
-    $$AppPreferencesTableTableOrderingComposer,
-    $$AppPreferencesTableTableAnnotationComposer,
-    $$AppPreferencesTableTableCreateCompanionBuilder,
-    $$AppPreferencesTableTableUpdateCompanionBuilder,
-    (
+typedef $$AppPreferencesTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AccountPreferencesDatabase,
+      $AppPreferencesTableTable,
       AppPreferencesTableData,
-      BaseReferences<_$AccountPreferencesDatabase, $AppPreferencesTableTable,
-          AppPreferencesTableData>
-    ),
-    AppPreferencesTableData,
-    PrefetchHooks Function()>;
-typedef $$AppletPreferencesTableTableCreateCompanionBuilder
-    = AppletPreferencesTableCompanion Function({
-  required String appletId,
-  required String key,
-  Value<String?> value,
-  Value<int> rowid,
-});
-typedef $$AppletPreferencesTableTableUpdateCompanionBuilder
-    = AppletPreferencesTableCompanion Function({
-  Value<String> appletId,
-  Value<String> key,
-  Value<String?> value,
-  Value<int> rowid,
-});
+      $$AppPreferencesTableTableFilterComposer,
+      $$AppPreferencesTableTableOrderingComposer,
+      $$AppPreferencesTableTableAnnotationComposer,
+      $$AppPreferencesTableTableCreateCompanionBuilder,
+      $$AppPreferencesTableTableUpdateCompanionBuilder,
+      (
+        AppPreferencesTableData,
+        BaseReferences<
+          _$AccountPreferencesDatabase,
+          $AppPreferencesTableTable,
+          AppPreferencesTableData
+        >,
+      ),
+      AppPreferencesTableData,
+      PrefetchHooks Function()
+    >;
+typedef $$AppletPreferencesTableTableCreateCompanionBuilder =
+    AppletPreferencesTableCompanion Function({
+      required String appletId,
+      required String key,
+      Value<String?> value,
+      Value<int> rowid,
+    });
+typedef $$AppletPreferencesTableTableUpdateCompanionBuilder =
+    AppletPreferencesTableCompanion Function({
+      Value<String> appletId,
+      Value<String> key,
+      Value<String?> value,
+      Value<int> rowid,
+    });
 
-class $$AppletPreferencesTableTableFilterComposer extends Composer<
-    _$AccountPreferencesDatabase, $AppletPreferencesTableTable> {
+class $$AppletPreferencesTableTableFilterComposer
+    extends
+        Composer<_$AccountPreferencesDatabase, $AppletPreferencesTableTable> {
   $$AppletPreferencesTableTableFilterComposer({
     required super.$db,
     required super.$table,
@@ -1148,17 +1326,24 @@ class $$AppletPreferencesTableTableFilterComposer extends Composer<
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnFilters<String> get appletId => $composableBuilder(
-      column: $table.appletId, builder: (column) => ColumnFilters(column));
+    column: $table.appletId,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get key => $composableBuilder(
-      column: $table.key, builder: (column) => ColumnFilters(column));
+    column: $table.key,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get value => $composableBuilder(
-      column: $table.value, builder: (column) => ColumnFilters(column));
+    column: $table.value,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
-class $$AppletPreferencesTableTableOrderingComposer extends Composer<
-    _$AccountPreferencesDatabase, $AppletPreferencesTableTable> {
+class $$AppletPreferencesTableTableOrderingComposer
+    extends
+        Composer<_$AccountPreferencesDatabase, $AppletPreferencesTableTable> {
   $$AppletPreferencesTableTableOrderingComposer({
     required super.$db,
     required super.$table,
@@ -1167,17 +1352,24 @@ class $$AppletPreferencesTableTableOrderingComposer extends Composer<
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnOrderings<String> get appletId => $composableBuilder(
-      column: $table.appletId, builder: (column) => ColumnOrderings(column));
+    column: $table.appletId,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get key => $composableBuilder(
-      column: $table.key, builder: (column) => ColumnOrderings(column));
+    column: $table.key,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get value => $composableBuilder(
-      column: $table.value, builder: (column) => ColumnOrderings(column));
+    column: $table.value,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
-class $$AppletPreferencesTableTableAnnotationComposer extends Composer<
-    _$AccountPreferencesDatabase, $AppletPreferencesTableTable> {
+class $$AppletPreferencesTableTableAnnotationComposer
+    extends
+        Composer<_$AccountPreferencesDatabase, $AppletPreferencesTableTable> {
   $$AppletPreferencesTableTableAnnotationComposer({
     required super.$db,
     required super.$table,
@@ -1195,96 +1387,117 @@ class $$AppletPreferencesTableTableAnnotationComposer extends Composer<
       $composableBuilder(column: $table.value, builder: (column) => column);
 }
 
-class $$AppletPreferencesTableTableTableManager extends RootTableManager<
-    _$AccountPreferencesDatabase,
-    $AppletPreferencesTableTable,
-    AppletPreferencesTableData,
-    $$AppletPreferencesTableTableFilterComposer,
-    $$AppletPreferencesTableTableOrderingComposer,
-    $$AppletPreferencesTableTableAnnotationComposer,
-    $$AppletPreferencesTableTableCreateCompanionBuilder,
-    $$AppletPreferencesTableTableUpdateCompanionBuilder,
-    (
-      AppletPreferencesTableData,
-      BaseReferences<_$AccountPreferencesDatabase, $AppletPreferencesTableTable,
-          AppletPreferencesTableData>
-    ),
-    AppletPreferencesTableData,
-    PrefetchHooks Function()> {
+class $$AppletPreferencesTableTableTableManager
+    extends
+        RootTableManager<
+          _$AccountPreferencesDatabase,
+          $AppletPreferencesTableTable,
+          AppletPreferencesTableData,
+          $$AppletPreferencesTableTableFilterComposer,
+          $$AppletPreferencesTableTableOrderingComposer,
+          $$AppletPreferencesTableTableAnnotationComposer,
+          $$AppletPreferencesTableTableCreateCompanionBuilder,
+          $$AppletPreferencesTableTableUpdateCompanionBuilder,
+          (
+            AppletPreferencesTableData,
+            BaseReferences<
+              _$AccountPreferencesDatabase,
+              $AppletPreferencesTableTable,
+              AppletPreferencesTableData
+            >,
+          ),
+          AppletPreferencesTableData,
+          PrefetchHooks Function()
+        > {
   $$AppletPreferencesTableTableTableManager(
-      _$AccountPreferencesDatabase db, $AppletPreferencesTableTable table)
-      : super(TableManagerState(
+    _$AccountPreferencesDatabase db,
+    $AppletPreferencesTableTable table,
+  ) : super(
+        TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
               $$AppletPreferencesTableTableFilterComposer(
-                  $db: db, $table: table),
+                $db: db,
+                $table: table,
+              ),
           createOrderingComposer: () =>
               $$AppletPreferencesTableTableOrderingComposer(
-                  $db: db, $table: table),
+                $db: db,
+                $table: table,
+              ),
           createComputedFieldComposer: () =>
               $$AppletPreferencesTableTableAnnotationComposer(
-                  $db: db, $table: table),
-          updateCompanionCallback: ({
-            Value<String> appletId = const Value.absent(),
-            Value<String> key = const Value.absent(),
-            Value<String?> value = const Value.absent(),
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              AppletPreferencesTableCompanion(
-            appletId: appletId,
-            key: key,
-            value: value,
-            rowid: rowid,
-          ),
-          createCompanionCallback: ({
-            required String appletId,
-            required String key,
-            Value<String?> value = const Value.absent(),
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              AppletPreferencesTableCompanion.insert(
-            appletId: appletId,
-            key: key,
-            value: value,
-            rowid: rowid,
-          ),
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> appletId = const Value.absent(),
+                Value<String> key = const Value.absent(),
+                Value<String?> value = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AppletPreferencesTableCompanion(
+                appletId: appletId,
+                key: key,
+                value: value,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String appletId,
+                required String key,
+                Value<String?> value = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AppletPreferencesTableCompanion.insert(
+                appletId: appletId,
+                key: key,
+                value: value,
+                rowid: rowid,
+              ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
               .toList(),
           prefetchHooksCallback: null,
-        ));
+        ),
+      );
 }
 
-typedef $$AppletPreferencesTableTableProcessedTableManager
-    = ProcessedTableManager<
-        _$AccountPreferencesDatabase,
-        $AppletPreferencesTableTable,
+typedef $$AppletPreferencesTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AccountPreferencesDatabase,
+      $AppletPreferencesTableTable,
+      AppletPreferencesTableData,
+      $$AppletPreferencesTableTableFilterComposer,
+      $$AppletPreferencesTableTableOrderingComposer,
+      $$AppletPreferencesTableTableAnnotationComposer,
+      $$AppletPreferencesTableTableCreateCompanionBuilder,
+      $$AppletPreferencesTableTableUpdateCompanionBuilder,
+      (
         AppletPreferencesTableData,
-        $$AppletPreferencesTableTableFilterComposer,
-        $$AppletPreferencesTableTableOrderingComposer,
-        $$AppletPreferencesTableTableAnnotationComposer,
-        $$AppletPreferencesTableTableCreateCompanionBuilder,
-        $$AppletPreferencesTableTableUpdateCompanionBuilder,
-        (
-          AppletPreferencesTableData,
-          BaseReferences<_$AccountPreferencesDatabase,
-              $AppletPreferencesTableTable, AppletPreferencesTableData>
-        ),
-        AppletPreferencesTableData,
-        PrefetchHooks Function()>;
-typedef $$AppletDataTableCreateCompanionBuilder = AppletDataCompanion Function({
-  required String appletId,
-  Value<String?> json,
-  required DateTime timestamp,
-  Value<int> rowid,
-});
-typedef $$AppletDataTableUpdateCompanionBuilder = AppletDataCompanion Function({
-  Value<String> appletId,
-  Value<String?> json,
-  Value<DateTime> timestamp,
-  Value<int> rowid,
-});
+        BaseReferences<
+          _$AccountPreferencesDatabase,
+          $AppletPreferencesTableTable,
+          AppletPreferencesTableData
+        >,
+      ),
+      AppletPreferencesTableData,
+      PrefetchHooks Function()
+    >;
+typedef $$AppletDataTableCreateCompanionBuilder =
+    AppletDataCompanion Function({
+      required String appletId,
+      Value<String?> json,
+      required DateTime timestamp,
+      Value<int> rowid,
+    });
+typedef $$AppletDataTableUpdateCompanionBuilder =
+    AppletDataCompanion Function({
+      Value<String> appletId,
+      Value<String?> json,
+      Value<DateTime> timestamp,
+      Value<int> rowid,
+    });
 
 class $$AppletDataTableFilterComposer
     extends Composer<_$AccountPreferencesDatabase, $AppletDataTable> {
@@ -1296,13 +1509,19 @@ class $$AppletDataTableFilterComposer
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnFilters<String> get appletId => $composableBuilder(
-      column: $table.appletId, builder: (column) => ColumnFilters(column));
+    column: $table.appletId,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get json => $composableBuilder(
-      column: $table.json, builder: (column) => ColumnFilters(column));
+    column: $table.json,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<DateTime> get timestamp => $composableBuilder(
-      column: $table.timestamp, builder: (column) => ColumnFilters(column));
+    column: $table.timestamp,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$AppletDataTableOrderingComposer
@@ -1315,13 +1534,19 @@ class $$AppletDataTableOrderingComposer
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnOrderings<String> get appletId => $composableBuilder(
-      column: $table.appletId, builder: (column) => ColumnOrderings(column));
+    column: $table.appletId,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get json => $composableBuilder(
-      column: $table.json, builder: (column) => ColumnOrderings(column));
+    column: $table.json,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<DateTime> get timestamp => $composableBuilder(
-      column: $table.timestamp, builder: (column) => ColumnOrderings(column));
+    column: $table.timestamp,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$AppletDataTableAnnotationComposer
@@ -1343,25 +1568,33 @@ class $$AppletDataTableAnnotationComposer
       $composableBuilder(column: $table.timestamp, builder: (column) => column);
 }
 
-class $$AppletDataTableTableManager extends RootTableManager<
-    _$AccountPreferencesDatabase,
-    $AppletDataTable,
-    AppletDataData,
-    $$AppletDataTableFilterComposer,
-    $$AppletDataTableOrderingComposer,
-    $$AppletDataTableAnnotationComposer,
-    $$AppletDataTableCreateCompanionBuilder,
-    $$AppletDataTableUpdateCompanionBuilder,
-    (
-      AppletDataData,
-      BaseReferences<_$AccountPreferencesDatabase, $AppletDataTable,
-          AppletDataData>
-    ),
-    AppletDataData,
-    PrefetchHooks Function()> {
+class $$AppletDataTableTableManager
+    extends
+        RootTableManager<
+          _$AccountPreferencesDatabase,
+          $AppletDataTable,
+          AppletDataData,
+          $$AppletDataTableFilterComposer,
+          $$AppletDataTableOrderingComposer,
+          $$AppletDataTableAnnotationComposer,
+          $$AppletDataTableCreateCompanionBuilder,
+          $$AppletDataTableUpdateCompanionBuilder,
+          (
+            AppletDataData,
+            BaseReferences<
+              _$AccountPreferencesDatabase,
+              $AppletDataTable,
+              AppletDataData
+            >,
+          ),
+          AppletDataData,
+          PrefetchHooks Function()
+        > {
   $$AppletDataTableTableManager(
-      _$AccountPreferencesDatabase db, $AppletDataTable table)
-      : super(TableManagerState(
+    _$AccountPreferencesDatabase db,
+    $AppletDataTable table,
+  ) : super(
+        TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
@@ -1370,72 +1603,82 @@ class $$AppletDataTableTableManager extends RootTableManager<
               $$AppletDataTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
               $$AppletDataTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback: ({
-            Value<String> appletId = const Value.absent(),
-            Value<String?> json = const Value.absent(),
-            Value<DateTime> timestamp = const Value.absent(),
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              AppletDataCompanion(
-            appletId: appletId,
-            json: json,
-            timestamp: timestamp,
-            rowid: rowid,
-          ),
-          createCompanionCallback: ({
-            required String appletId,
-            Value<String?> json = const Value.absent(),
-            required DateTime timestamp,
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              AppletDataCompanion.insert(
-            appletId: appletId,
-            json: json,
-            timestamp: timestamp,
-            rowid: rowid,
-          ),
+          updateCompanionCallback:
+              ({
+                Value<String> appletId = const Value.absent(),
+                Value<String?> json = const Value.absent(),
+                Value<DateTime> timestamp = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AppletDataCompanion(
+                appletId: appletId,
+                json: json,
+                timestamp: timestamp,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String appletId,
+                Value<String?> json = const Value.absent(),
+                required DateTime timestamp,
+                Value<int> rowid = const Value.absent(),
+              }) => AppletDataCompanion.insert(
+                appletId: appletId,
+                json: json,
+                timestamp: timestamp,
+                rowid: rowid,
+              ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
               .toList(),
           prefetchHooksCallback: null,
-        ));
+        ),
+      );
 }
 
-typedef $$AppletDataTableProcessedTableManager = ProcessedTableManager<
-    _$AccountPreferencesDatabase,
-    $AppletDataTable,
-    AppletDataData,
-    $$AppletDataTableFilterComposer,
-    $$AppletDataTableOrderingComposer,
-    $$AppletDataTableAnnotationComposer,
-    $$AppletDataTableCreateCompanionBuilder,
-    $$AppletDataTableUpdateCompanionBuilder,
-    (
+typedef $$AppletDataTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AccountPreferencesDatabase,
+      $AppletDataTable,
       AppletDataData,
-      BaseReferences<_$AccountPreferencesDatabase, $AppletDataTable,
-          AppletDataData>
-    ),
-    AppletDataData,
-    PrefetchHooks Function()>;
-typedef $$NotificationsDuplicatesTableTableCreateCompanionBuilder
-    = NotificationsDuplicatesTableCompanion Function({
-  required int notificationId,
-  required String appletId,
-  required String hash,
-  required DateTime timestamp,
-  Value<int> rowid,
-});
-typedef $$NotificationsDuplicatesTableTableUpdateCompanionBuilder
-    = NotificationsDuplicatesTableCompanion Function({
-  Value<int> notificationId,
-  Value<String> appletId,
-  Value<String> hash,
-  Value<DateTime> timestamp,
-  Value<int> rowid,
-});
+      $$AppletDataTableFilterComposer,
+      $$AppletDataTableOrderingComposer,
+      $$AppletDataTableAnnotationComposer,
+      $$AppletDataTableCreateCompanionBuilder,
+      $$AppletDataTableUpdateCompanionBuilder,
+      (
+        AppletDataData,
+        BaseReferences<
+          _$AccountPreferencesDatabase,
+          $AppletDataTable,
+          AppletDataData
+        >,
+      ),
+      AppletDataData,
+      PrefetchHooks Function()
+    >;
+typedef $$NotificationsDuplicatesTableTableCreateCompanionBuilder =
+    NotificationsDuplicatesTableCompanion Function({
+      required int notificationId,
+      required String appletId,
+      required String hash,
+      required DateTime timestamp,
+      Value<int> rowid,
+    });
+typedef $$NotificationsDuplicatesTableTableUpdateCompanionBuilder =
+    NotificationsDuplicatesTableCompanion Function({
+      Value<int> notificationId,
+      Value<String> appletId,
+      Value<String> hash,
+      Value<DateTime> timestamp,
+      Value<int> rowid,
+    });
 
-class $$NotificationsDuplicatesTableTableFilterComposer extends Composer<
-    _$AccountPreferencesDatabase, $NotificationsDuplicatesTableTable> {
+class $$NotificationsDuplicatesTableTableFilterComposer
+    extends
+        Composer<
+          _$AccountPreferencesDatabase,
+          $NotificationsDuplicatesTableTable
+        > {
   $$NotificationsDuplicatesTableTableFilterComposer({
     required super.$db,
     required super.$table,
@@ -1444,21 +1687,32 @@ class $$NotificationsDuplicatesTableTableFilterComposer extends Composer<
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnFilters<int> get notificationId => $composableBuilder(
-      column: $table.notificationId,
-      builder: (column) => ColumnFilters(column));
+    column: $table.notificationId,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get appletId => $composableBuilder(
-      column: $table.appletId, builder: (column) => ColumnFilters(column));
+    column: $table.appletId,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<String> get hash => $composableBuilder(
-      column: $table.hash, builder: (column) => ColumnFilters(column));
+    column: $table.hash,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<DateTime> get timestamp => $composableBuilder(
-      column: $table.timestamp, builder: (column) => ColumnFilters(column));
+    column: $table.timestamp,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
-class $$NotificationsDuplicatesTableTableOrderingComposer extends Composer<
-    _$AccountPreferencesDatabase, $NotificationsDuplicatesTableTable> {
+class $$NotificationsDuplicatesTableTableOrderingComposer
+    extends
+        Composer<
+          _$AccountPreferencesDatabase,
+          $NotificationsDuplicatesTableTable
+        > {
   $$NotificationsDuplicatesTableTableOrderingComposer({
     required super.$db,
     required super.$table,
@@ -1467,21 +1721,32 @@ class $$NotificationsDuplicatesTableTableOrderingComposer extends Composer<
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnOrderings<int> get notificationId => $composableBuilder(
-      column: $table.notificationId,
-      builder: (column) => ColumnOrderings(column));
+    column: $table.notificationId,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get appletId => $composableBuilder(
-      column: $table.appletId, builder: (column) => ColumnOrderings(column));
+    column: $table.appletId,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<String> get hash => $composableBuilder(
-      column: $table.hash, builder: (column) => ColumnOrderings(column));
+    column: $table.hash,
+    builder: (column) => ColumnOrderings(column),
+  );
 
   ColumnOrderings<DateTime> get timestamp => $composableBuilder(
-      column: $table.timestamp, builder: (column) => ColumnOrderings(column));
+    column: $table.timestamp,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
-class $$NotificationsDuplicatesTableTableAnnotationComposer extends Composer<
-    _$AccountPreferencesDatabase, $NotificationsDuplicatesTableTable> {
+class $$NotificationsDuplicatesTableTableAnnotationComposer
+    extends
+        Composer<
+          _$AccountPreferencesDatabase,
+          $NotificationsDuplicatesTableTable
+        > {
   $$NotificationsDuplicatesTableTableAnnotationComposer({
     required super.$db,
     required super.$table,
@@ -1490,7 +1755,9 @@ class $$NotificationsDuplicatesTableTableAnnotationComposer extends Composer<
     super.$removeJoinBuilderFromRootComposer,
   });
   GeneratedColumn<int> get notificationId => $composableBuilder(
-      column: $table.notificationId, builder: (column) => column);
+    column: $table.notificationId,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get appletId =>
       $composableBuilder(column: $table.appletId, builder: (column) => column);
@@ -1502,90 +1769,107 @@ class $$NotificationsDuplicatesTableTableAnnotationComposer extends Composer<
       $composableBuilder(column: $table.timestamp, builder: (column) => column);
 }
 
-class $$NotificationsDuplicatesTableTableTableManager extends RootTableManager<
-    _$AccountPreferencesDatabase,
-    $NotificationsDuplicatesTableTable,
-    NotificationsDuplicatesTableData,
-    $$NotificationsDuplicatesTableTableFilterComposer,
-    $$NotificationsDuplicatesTableTableOrderingComposer,
-    $$NotificationsDuplicatesTableTableAnnotationComposer,
-    $$NotificationsDuplicatesTableTableCreateCompanionBuilder,
-    $$NotificationsDuplicatesTableTableUpdateCompanionBuilder,
-    (
-      NotificationsDuplicatesTableData,
-      BaseReferences<_$AccountPreferencesDatabase,
-          $NotificationsDuplicatesTableTable, NotificationsDuplicatesTableData>
-    ),
-    NotificationsDuplicatesTableData,
-    PrefetchHooks Function()> {
+class $$NotificationsDuplicatesTableTableTableManager
+    extends
+        RootTableManager<
+          _$AccountPreferencesDatabase,
+          $NotificationsDuplicatesTableTable,
+          NotificationsDuplicatesTableData,
+          $$NotificationsDuplicatesTableTableFilterComposer,
+          $$NotificationsDuplicatesTableTableOrderingComposer,
+          $$NotificationsDuplicatesTableTableAnnotationComposer,
+          $$NotificationsDuplicatesTableTableCreateCompanionBuilder,
+          $$NotificationsDuplicatesTableTableUpdateCompanionBuilder,
+          (
+            NotificationsDuplicatesTableData,
+            BaseReferences<
+              _$AccountPreferencesDatabase,
+              $NotificationsDuplicatesTableTable,
+              NotificationsDuplicatesTableData
+            >,
+          ),
+          NotificationsDuplicatesTableData,
+          PrefetchHooks Function()
+        > {
   $$NotificationsDuplicatesTableTableTableManager(
-      _$AccountPreferencesDatabase db, $NotificationsDuplicatesTableTable table)
-      : super(TableManagerState(
+    _$AccountPreferencesDatabase db,
+    $NotificationsDuplicatesTableTable table,
+  ) : super(
+        TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
               $$NotificationsDuplicatesTableTableFilterComposer(
-                  $db: db, $table: table),
+                $db: db,
+                $table: table,
+              ),
           createOrderingComposer: () =>
               $$NotificationsDuplicatesTableTableOrderingComposer(
-                  $db: db, $table: table),
+                $db: db,
+                $table: table,
+              ),
           createComputedFieldComposer: () =>
               $$NotificationsDuplicatesTableTableAnnotationComposer(
-                  $db: db, $table: table),
-          updateCompanionCallback: ({
-            Value<int> notificationId = const Value.absent(),
-            Value<String> appletId = const Value.absent(),
-            Value<String> hash = const Value.absent(),
-            Value<DateTime> timestamp = const Value.absent(),
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              NotificationsDuplicatesTableCompanion(
-            notificationId: notificationId,
-            appletId: appletId,
-            hash: hash,
-            timestamp: timestamp,
-            rowid: rowid,
-          ),
-          createCompanionCallback: ({
-            required int notificationId,
-            required String appletId,
-            required String hash,
-            required DateTime timestamp,
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              NotificationsDuplicatesTableCompanion.insert(
-            notificationId: notificationId,
-            appletId: appletId,
-            hash: hash,
-            timestamp: timestamp,
-            rowid: rowid,
-          ),
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> notificationId = const Value.absent(),
+                Value<String> appletId = const Value.absent(),
+                Value<String> hash = const Value.absent(),
+                Value<DateTime> timestamp = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => NotificationsDuplicatesTableCompanion(
+                notificationId: notificationId,
+                appletId: appletId,
+                hash: hash,
+                timestamp: timestamp,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required int notificationId,
+                required String appletId,
+                required String hash,
+                required DateTime timestamp,
+                Value<int> rowid = const Value.absent(),
+              }) => NotificationsDuplicatesTableCompanion.insert(
+                notificationId: notificationId,
+                appletId: appletId,
+                hash: hash,
+                timestamp: timestamp,
+                rowid: rowid,
+              ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
               .toList(),
           prefetchHooksCallback: null,
-        ));
+        ),
+      );
 }
 
-typedef $$NotificationsDuplicatesTableTableProcessedTableManager
-    = ProcessedTableManager<
-        _$AccountPreferencesDatabase,
-        $NotificationsDuplicatesTableTable,
+typedef $$NotificationsDuplicatesTableTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AccountPreferencesDatabase,
+      $NotificationsDuplicatesTableTable,
+      NotificationsDuplicatesTableData,
+      $$NotificationsDuplicatesTableTableFilterComposer,
+      $$NotificationsDuplicatesTableTableOrderingComposer,
+      $$NotificationsDuplicatesTableTableAnnotationComposer,
+      $$NotificationsDuplicatesTableTableCreateCompanionBuilder,
+      $$NotificationsDuplicatesTableTableUpdateCompanionBuilder,
+      (
         NotificationsDuplicatesTableData,
-        $$NotificationsDuplicatesTableTableFilterComposer,
-        $$NotificationsDuplicatesTableTableOrderingComposer,
-        $$NotificationsDuplicatesTableTableAnnotationComposer,
-        $$NotificationsDuplicatesTableTableCreateCompanionBuilder,
-        $$NotificationsDuplicatesTableTableUpdateCompanionBuilder,
-        (
-          NotificationsDuplicatesTableData,
-          BaseReferences<
-              _$AccountPreferencesDatabase,
-              $NotificationsDuplicatesTableTable,
-              NotificationsDuplicatesTableData>
-        ),
-        NotificationsDuplicatesTableData,
-        PrefetchHooks Function()>;
+        BaseReferences<
+          _$AccountPreferencesDatabase,
+          $NotificationsDuplicatesTableTable,
+          NotificationsDuplicatesTableData
+        >,
+      ),
+      NotificationsDuplicatesTableData,
+      PrefetchHooks Function()
+    >;
 
 class $AccountPreferencesDatabaseManager {
   final _$AccountPreferencesDatabase _db;
@@ -1594,11 +1878,15 @@ class $AccountPreferencesDatabaseManager {
       $$AppPreferencesTableTableTableManager(_db, _db.appPreferencesTable);
   $$AppletPreferencesTableTableTableManager get appletPreferencesTable =>
       $$AppletPreferencesTableTableTableManager(
-          _db, _db.appletPreferencesTable);
+        _db,
+        _db.appletPreferencesTable,
+      );
   $$AppletDataTableTableManager get appletData =>
       $$AppletDataTableTableManager(_db, _db.appletData);
   $$NotificationsDuplicatesTableTableTableManager
-      get notificationsDuplicatesTable =>
-          $$NotificationsDuplicatesTableTableTableManager(
-              _db, _db.notificationsDuplicatesTable);
+  get notificationsDuplicatesTable =>
+      $$NotificationsDuplicatesTableTableTableManager(
+        _db,
+        _db.notificationsDuplicatesTable,
+      );
 }

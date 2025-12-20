@@ -40,9 +40,7 @@ class _MarqueeWidgetState extends State<MarqueeWidget> {
       physics: const NeverScrollableScrollPhysics(),
       scrollDirection: widget.direction,
       controller: scrollController,
-      child: Center(
-        child: widget.child,
-      ),
+      child: Center(child: widget.child),
     );
   }
 

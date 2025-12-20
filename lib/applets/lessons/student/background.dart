@@ -6,7 +6,10 @@ import 'package:lanis/models/lessons.dart';
 import '../../../core/sph/sph.dart';
 
 Future<void> lessonsStudentBackgroundTask(
-    SPH sph, AccountType accountType, BackgroundTaskToolkit toolkit) async {
+  SPH sph,
+  AccountType accountType,
+  BackgroundTaskToolkit toolkit,
+) async {
   if (accountType != AccountType.student) return;
 
   final List<Lesson> lessons = await sph.parser.lessonsStudentParser.getHome();

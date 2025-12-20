@@ -37,11 +37,7 @@ class _StartupScreenState extends State<StartupScreen>
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => Scaffold(
-          body: LoginForm(
-            showBackButton: false,
-          ),
-        ),
+        builder: (context) => Scaffold(body: LoginForm(showBackButton: false)),
       ),
     );
   }
@@ -61,10 +57,7 @@ class _StartupScreenState extends State<StartupScreen>
       case LoginStatus.done:
         await Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-              builder: (context) => HomePage(
-                    key: homeKey,
-                  )),
+          MaterialPageRoute(builder: (context) => HomePage(key: homeKey)),
         );
         break;
 
@@ -106,29 +99,32 @@ class _StartupScreenState extends State<StartupScreen>
     if (status.isDenied && !status.isPermanentlyDenied) {
       if (mounted) {
         await showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-                  icon: Icon(Icons.notifications_off),
-                  title: Text(AppLocalizations.of(context).notifications),
-                  content: Text(AppLocalizations.of(context)
-                      .notificationPermanentlyDenied),
-                  actions: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      child: Text(AppLocalizations.of(context).close),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        AppSettings.openAppSettings(
-                            asAnotherTask: false,
-                            type: AppSettingsType.notification);
-                      },
-                      child: Text(AppLocalizations.of(context).open),
-                    ),
-                  ],
-                ));
+          context: context,
+          builder: (context) => AlertDialog(
+            icon: Icon(Icons.notifications_off),
+            title: Text(AppLocalizations.of(context).notifications),
+            content: Text(
+              AppLocalizations.of(context).notificationPermanentlyDenied,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text(AppLocalizations.of(context).close),
+              ),
+              TextButton(
+                onPressed: () {
+                  AppSettings.openAppSettings(
+                    asAnotherTask: false,
+                    type: AppSettingsType.notification,
+                  );
+                },
+                child: Text(AppLocalizations.of(context).open),
+              ),
+            ],
+          ),
+        );
       }
     }
   }
@@ -140,10 +136,10 @@ class _StartupScreenState extends State<StartupScreen>
         return Text(
           "lanis-mobile ${packageInfo.data?.version}",
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: Theme.of(context)
-                  .colorScheme
-                  .onSurface
-                  .withValues(alpha: 0.4)),
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.4),
+          ),
         );
       },
     );
@@ -152,83 +148,110 @@ class _StartupScreenState extends State<StartupScreen>
   Widget appLogo(double horizontal, double vertical) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: horizontal, vertical: vertical),
-      child: LayoutBuilder(builder: (context, constraints) {
-        return SimpleShadow(
-          color: Theme.of(context).colorScheme.surfaceTint,
-          opacity: 0.25,
-          sigma: 6,
-          offset: const Offset(4, 8),
-          child: SvgPicture.asset(
-            "assets/startup.svg",
-            colorFilter: ColorFilter.mode(
-                Theme.of(context).colorScheme.primary, BlendMode.srcIn),
-            fit: BoxFit.contain,
-            width: constraints.maxWidth.clamp(0, 300),
-            height: constraints.maxHeight.clamp(0, 250),
-          ),
-        );
-      }),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SimpleShadow(
+            color: Theme.of(context).colorScheme.surfaceTint,
+            opacity: 0.25,
+            sigma: 6,
+            offset: const Offset(4, 8),
+            child: SvgPicture.asset(
+              "assets/startup.svg",
+              colorFilter: ColorFilter.mode(
+                Theme.of(context).colorScheme.primary,
+                BlendMode.srcIn,
+              ),
+              fit: BoxFit.contain,
+              width: constraints.maxWidth.clamp(0, 300),
+              height: constraints.maxHeight.clamp(0, 250),
+            ),
+          );
+        },
+      ),
     );
   }
 
   WidgetSpan toolTipIcon(IconData icon) {
     return WidgetSpan(
-        child: Icon(
-      icon,
-      size: 18,
-      color: Theme.of(context).colorScheme.onPrimary,
-    ));
+      child: Icon(
+        icon,
+        size: 18,
+        color: Theme.of(context).colorScheme.onPrimary,
+      ),
+    );
   }
 
   Widget tipText(EdgeInsets padding, EdgeInsets margin, double? width) {
     List<Widget> toolTips = <Widget>[
-      Text.rich(TextSpan(
+      Text.rich(
+        TextSpan(
           text: AppLocalizations.of(context).startUpMessage1,
-          children: [toolTipIcon(Icons.code)])),
-      Text.rich(TextSpan(
+          children: [toolTipIcon(Icons.code)],
+        ),
+      ),
+      Text.rich(
+        TextSpan(
           text: AppLocalizations.of(context).startUpMessage2,
-          children: [toolTipIcon(Icons.people)])),
-      Text.rich(TextSpan(
+          children: [toolTipIcon(Icons.people)],
+        ),
+      ),
+      Text.rich(
+        TextSpan(
           text: AppLocalizations.of(context).startUpMessage3,
-          children: [toolTipIcon(Icons.filter_alt)])),
-      Text.rich(TextSpan(
+          children: [toolTipIcon(Icons.filter_alt)],
+        ),
+      ),
+      Text.rich(
+        TextSpan(
           text: AppLocalizations.of(context).startUpMessage4,
-          children: [toolTipIcon(Icons.star)])),
+          children: [toolTipIcon(Icons.star)],
+        ),
+      ),
       Text(AppLocalizations.of(context).startUpMessage5),
       Text(AppLocalizations.of(context).startUpMessage6),
-      Text.rich(TextSpan(
+      Text.rich(
+        TextSpan(
           text: AppLocalizations.of(context).startUpMessage7,
-          children: [toolTipIcon(Icons.favorite)])),
-      Text.rich(TextSpan(
+          children: [toolTipIcon(Icons.favorite)],
+        ),
+      ),
+      Text.rich(
+        TextSpan(
           text: AppLocalizations.of(context).startUpMessage8,
-          children: [toolTipIcon(Icons.code)])),
-      Text.rich(TextSpan(
+          children: [toolTipIcon(Icons.code)],
+        ),
+      ),
+      Text.rich(
+        TextSpan(
           text: AppLocalizations.of(context).startUpMessage9,
-          children: [toolTipIcon(Icons.settings)])),
+          children: [toolTipIcon(Icons.settings)],
+        ),
+      ),
     ];
 
     return Container(
-        decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primary,
-            boxShadow: [
-              BoxShadow(
-                color: Theme.of(context).colorScheme.primary.withAlpha(85),
-                blurRadius: 18,
-                spreadRadius: 1,
-              )
-            ],
-            borderRadius: BorderRadius.circular(16.0)),
-        padding: padding,
-        margin: margin,
-        width: width,
-        child: DefaultTextStyle(
-          style: Theme.of(context)
-              .textTheme
-              .labelLarge!
-              .copyWith(color: Theme.of(context).colorScheme.onPrimary),
-          textAlign: TextAlign.center,
-          child: toolTips.elementAt(Random().nextInt(toolTips.length)),
-        ));
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primary,
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).colorScheme.primary.withAlpha(85),
+            blurRadius: 18,
+            spreadRadius: 1,
+          ),
+        ],
+        borderRadius: BorderRadius.circular(16.0),
+      ),
+      padding: padding,
+      margin: margin,
+      width: width,
+      child: DefaultTextStyle(
+        style: Theme.of(context).textTheme.labelLarge!.copyWith(
+          color: Theme.of(context).colorScheme.onPrimary,
+        ),
+        textAlign: TextAlign.center,
+        child: toolTips.elementAt(Random().nextInt(toolTips.length)),
+      ),
+    );
   }
 
   BottomSheet errorDialog(BuildContext context) {
@@ -255,8 +278,11 @@ class _StartupScreenState extends State<StartupScreen>
               IconButton(
                 icon: const Icon(Icons.wifi_find_outlined),
                 onPressed: () {
-                  launchUrl(Uri.parse(
-                      "https://info.schulportal.hessen.de/status-des-schulportal-hessen/"));
+                  launchUrl(
+                    Uri.parse(
+                      "https://info.schulportal.hessen.de/status-des-schulportal-hessen/",
+                    ),
+                  );
                 },
                 tooltip: AppLocalizations.of(context).checkStatus,
               ),
@@ -272,13 +298,11 @@ class _StartupScreenState extends State<StartupScreen>
                   Navigator.of(context).pop();
                 },
                 tooltip: AppLocalizations.of(context).tryAgain,
-              )
+              ),
             ],
           ),
           SizedBox(height: 12),
-          Center(
-            child: Text(text),
-          ),
+          Center(child: Text(text)),
           if (authenticationState.exception.value is! NoConnectionException &&
               authenticationState.exception.value is! LanisDownException)
             Padding(
@@ -288,9 +312,10 @@ class _StartupScreenState extends State<StartupScreen>
                   text: AppLocalizations.of(context).startupErrorMessage,
                   children: [
                     TextSpan(
-                        text:
-                            "\n\n${authenticationState.exception.value.runtimeType}: ${authenticationState.exception.value?.cause}",
-                        style: Theme.of(context).textTheme.labelLarge)
+                      text:
+                          "\n\n${authenticationState.exception.value.runtimeType}: ${authenticationState.exception.value?.cause}",
+                      style: Theme.of(context).textTheme.labelLarge,
+                    ),
                   ],
                 ),
               ),
@@ -313,8 +338,9 @@ class _StartupScreenState extends State<StartupScreen>
               TextSpan(
                 children: [
                   TextSpan(
-                      text: AppLocalizations.of(context).lanisDownErrorMessage,
-                      style: Theme.of(context).textTheme.labelLarge)
+                    text: AppLocalizations.of(context).lanisDownErrorMessage,
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
                 ],
               ),
             ),
@@ -342,13 +368,16 @@ class _StartupScreenState extends State<StartupScreen>
                 children: [
                   appLogo(80.0, 20.0),
                   tipText(
-                      const EdgeInsets.symmetric(
-                          vertical: 10.0, horizontal: 12.0),
-                      const EdgeInsets.symmetric(horizontal: 36.0),
-                      null)
+                    const EdgeInsets.symmetric(
+                      vertical: 10.0,
+                      horizontal: 12.0,
+                    ),
+                    const EdgeInsets.symmetric(horizontal: 36.0),
+                    null,
+                  ),
                 ],
               ),
-              const LinearProgressIndicator()
+              const LinearProgressIndicator(),
             ],
           )
         : Stack(
@@ -362,14 +391,15 @@ class _StartupScreenState extends State<StartupScreen>
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       appLogo(0.0, 0.0),
-                      SizedBox.fromSize(
-                        size: const Size(48.0, 0.0),
-                      ),
+                      SizedBox.fromSize(size: const Size(48.0, 0.0)),
                       tipText(
-                          const EdgeInsets.symmetric(
-                              vertical: 16.0, horizontal: 12.0),
-                          const EdgeInsets.only(),
-                          250)
+                        const EdgeInsets.symmetric(
+                          vertical: 16.0,
+                          horizontal: 12.0,
+                        ),
+                        const EdgeInsets.only(),
+                        250,
+                      ),
                     ],
                   ),
                 ],
@@ -377,7 +407,7 @@ class _StartupScreenState extends State<StartupScreen>
               const Column(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [LinearProgressIndicator()],
-              )
+              ),
             ],
           );
   }

@@ -9,8 +9,9 @@ class StudyGroupsStudentParser extends AppletParser<StudentStudyGroups> {
 
   @override
   Future<StudentStudyGroups> getHome() async {
-    Response response = await sph.session.dio
-        .get('https://start.schulportal.hessen.de/lerngruppen.php');
+    Response response = await sph.session.dio.get(
+      'https://start.schulportal.hessen.de/lerngruppen.php',
+    );
 
     Document document = parse(response.data);
 
@@ -24,9 +25,10 @@ class StudyGroupsStudentParser extends AppletParser<StudentStudyGroups> {
         examTableHead.add(element.text.trim());
       });
 
-      for (final Element examTableRow in exams
-          .querySelectorAll('tbody tr')
-          .where((row) => row.attributes['data-type'] == 'klausur')) {
+      for (final Element examTableRow
+          in exams
+              .querySelectorAll('tbody tr')
+              .where((row) => row.attributes['data-type'] == 'klausur')) {
         String courseId = examTableRow.attributes['data-lerngruppe']!;
         String id = examTableRow.attributes['data-id']!;
 
@@ -38,18 +40,22 @@ class StudyGroupsStudentParser extends AppletParser<StudentStudyGroups> {
         }
 
         RegExp dateRegex = RegExp(r'.\d{2}\.\d{2}\.\d{4}');
-        String dateString =
-            dateRegex.stringMatch(elementInRow('Datum')!.text.trim())!.trim();
+        String dateString = dateRegex
+            .stringMatch(elementInRow('Datum')!.text.trim())!
+            .trim();
         dateString = dateString.split('.').reversed.join('-');
         elementInRow('Kurs')?.querySelector('small')?.innerHtml = '';
-        studyGroupExams.add(StudentStudyGroupExam(
+        studyGroupExams.add(
+          StudentStudyGroupExam(
             id: id,
             courseId: courseId,
             courseName: elementInRow('Kurs')?.text.trim() ?? "Unbekannt",
             date: DateTime.parse(dateString),
             type: elementInRow('Art')?.text.trim() ?? "Unbekannt",
             durationLabel: elementInRow('Dauer')?.text.trim(),
-            hoursOfDay: elementInRow('Stunden')?.text.trim()));
+            hoursOfDay: elementInRow('Stunden')?.text.trim(),
+          ),
+        );
       }
     }
 
@@ -60,8 +66,9 @@ class StudyGroupsStudentParser extends AppletParser<StudentStudyGroups> {
         courseTableHead.add(element.text.trim());
       });
 
-      for (final Element courseTableRow
-          in courses.querySelectorAll('tbody tr')) {
+      for (final Element courseTableRow in courses.querySelectorAll(
+        'tbody tr',
+      )) {
         final String? id = courseTableRow.attributes['data-id'];
         if (id == null) continue;
 
@@ -78,7 +85,8 @@ class StudyGroupsStudentParser extends AppletParser<StudentStudyGroups> {
           for (final Element teacherButton in teacherElement.children) {
             String teacherName = teacherButton
                 .querySelector(
-                    'ul.dropdown-menu > li > a > i.fa')!
+                  'ul.dropdown-menu > li > a > i.fa',
+                )!
                 .parent!
                 .text
                 .trim();
@@ -91,15 +99,18 @@ class StudyGroupsStudentParser extends AppletParser<StudentStudyGroups> {
                 lastName: teacherNameSplit.isNotEmpty
                     ? teacherNameSplit[0].trim()
                     : "",
-                krz: teacherButton
+                krz:
+                    teacherButton
                         .querySelector(
-                            'button.btn.btn-primary.dropdown-toggle')
+                          'button.btn.btn-primary.dropdown-toggle',
+                        )
                         ?.text
                         .trim() ??
                     "",
                 email: teacherButton
                     .querySelector(
-                        'ul.dropdown-menu > li > a > i.fa.fa-at.fa-fw')
+                      'ul.dropdown-menu > li > a > i.fa',
+                    )
                     ?.parent
                     ?.text
                     .trim(),
@@ -108,17 +119,22 @@ class StudyGroupsStudentParser extends AppletParser<StudentStudyGroups> {
           }
         }
 
-        String sysId =
-            elementInRow('Kursname')!.querySelector('small')!.text.trim();
+        String sysId = elementInRow(
+          'Kursname',
+        )!.querySelector('small')!.text.trim();
         elementInRow('Kursname')?.querySelector('small')?.innerHtml = '';
-        studyGroups.add(StudentStudyGroup(
-          id: id,
-          semester: elementInRow('Halbjahr')?.text.trim() ?? "Fehler",
-          courseName: elementInRow('Kursname')?.text.trim() ?? "Fehler",
-          courseSysId: sysId.substring(1, sysId.length - 1),
-          teachers: teachers,
-          exams: studyGroupExams.where((exam) => exam.courseId == id).toList(),
-        ));
+        studyGroups.add(
+          StudentStudyGroup(
+            id: id,
+            semester: elementInRow('Halbjahr')?.text.trim() ?? "Fehler",
+            courseName: elementInRow('Kursname')?.text.trim() ?? "Fehler",
+            courseSysId: sysId.substring(1, sysId.length - 1),
+            teachers: teachers,
+            exams: studyGroupExams
+                .where((exam) => exam.courseId == id)
+                .toList(),
+          ),
+        );
       }
     }
 

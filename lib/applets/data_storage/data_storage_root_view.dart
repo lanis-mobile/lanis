@@ -68,26 +68,21 @@ class _DataStorageRootViewState extends State<DataStorageRootView> {
     return Scaffold(
       appBar: AppBar(
         title: Text(AppLocalizations.of(context).storage),
-        actions: const [
-          AsyncSearchAnchor(),
-        ],
+        actions: const [AsyncSearchAnchor()],
       ),
       body: loading
-          ? Center(
-              child: CircularProgressIndicator(),
-            )
+          ? Center(child: CircularProgressIndicator())
           : error
-              ? Center(
-                  child: Column(
-                  children: [
-                    Icon(Icons.error_outline, size: 100),
-                    SizedBox(height: 10),
-                    Text(AppLocalizations.of(context).couldNotLoadDataStorage),
-                  ],
-                ))
-              : ListView(
-                  children: getListTiles(),
-                ),
+          ? Center(
+              child: Column(
+                children: [
+                  Icon(Icons.error_outline, size: 100),
+                  SizedBox(height: 10),
+                  Text(AppLocalizations.of(context).couldNotLoadDataStorage),
+                ],
+              ),
+            )
+          : ListView(children: getListTiles()),
     );
   }
 }
@@ -106,43 +101,51 @@ class _AsyncSearchAnchorState extends State<AsyncSearchAnchor> {
   @override
   Widget build(BuildContext context) {
     return SearchAnchor(
-        builder: (BuildContext context, SearchController controller) {
-      return IconButton(
-        icon: const Icon(Icons.search),
-        onPressed: () {
-          controller.openView();
-        },
-      );
-    }, suggestionsBuilder:
-            (BuildContext context, SearchController controller) async {
-      _searchingWithQuery = controller.text;
-      var options = await sph!.parser.dataStorageParser
-          .searchFiles(_searchingWithQuery ?? '');
+      builder: (BuildContext context, SearchController controller) {
+        return IconButton(
+          icon: const Icon(Icons.search),
+          onPressed: () {
+            controller.openView();
+          },
+        );
+      },
+      suggestionsBuilder:
+          (BuildContext context, SearchController controller) async {
+            _searchingWithQuery = controller.text;
+            var options = await sph!.parser.dataStorageParser.searchFiles(
+              _searchingWithQuery ?? '',
+            );
 
-      if (_searchingWithQuery != controller.text) {
-        return _lastOptions;
-      }
+            if (_searchingWithQuery != controller.text) {
+              return _lastOptions;
+            }
 
-      _lastOptions = List<Widget>.generate(options?.length ?? 0, (int index) {
-        final Map item = options[index];
-        return SearchFileListTile(
-            context: context,
-            name: item["text"],
-            downloadUrl:
-                "https://start.schulportal.hessen.de/dateispeicher.php?a=download&f=${item["id"]}");
-      });
+            _lastOptions = List<Widget>.generate(options?.length ?? 0, (
+              int index,
+            ) {
+              final Map item = options[index];
+              return SearchFileListTile(
+                context: context,
+                name: item["text"],
+                downloadUrl:
+                    "https://start.schulportal.hessen.de/dateispeicher.php?a=download&f=${item["id"]}",
+              );
+            });
 
-      if (_lastOptions.isEmpty) {
-        _lastOptions = <Widget>[
-          ListTile(
-            title: Text(context.mounted
-                ? AppLocalizations.of(context).noResults
-                : 'Error'),
-          )
-        ];
-      }
+            if (_lastOptions.isEmpty) {
+              _lastOptions = <Widget>[
+                ListTile(
+                  title: Text(
+                    context.mounted
+                        ? AppLocalizations.of(context).noResults
+                        : 'Error',
+                  ),
+                ),
+              ];
+            }
 
-      return _lastOptions;
-    });
+            return _lastOptions;
+          },
+    );
   }
 }

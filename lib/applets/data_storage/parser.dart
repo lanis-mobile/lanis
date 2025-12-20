@@ -31,7 +31,8 @@ class DataStorageParser
     late final Response response;
     try {
       response = await sph.session.dio.get(
-          "https://start.schulportal.hessen.de/dateispeicher.php?a=view&folder=$nodeID");
+        "https://start.schulportal.hessen.de/dateispeicher.php?a=view&folder=$nodeID",
+      );
     } catch (e) {
       throw NoConnectionException();
     }
@@ -44,8 +45,10 @@ class DataStorageParser
         .toList();
     for (var file in document.querySelectorAll("table#files tbody tr")) {
       final fields = file.querySelectorAll("td");
-      String? hinweis =
-          fields[headers.indexOf("Name")].querySelector("small")?.text.trim();
+      String? hinweis = fields[headers.indexOf("Name")]
+          .querySelector("small")
+          ?.text
+          .trim();
       if (hinweis != null) {
         fields[headers.indexOf("Name")].querySelector("small")?.text = "";
       }
@@ -53,29 +56,36 @@ class DataStorageParser
       var aenderung = fields[headers.indexOf("Änderung")].text.trim();
       var groesse = fields[headers.indexOf("Größe")].text.trim();
       var id = int.parse(file.attributes["data-id"]!.trim());
-      files.add(FileNode(
-        name: name,
-        id: id,
-        downloadUrl:
-            "https://start.schulportal.hessen.de/dateispeicher.php?a=download&f=$id",
-        aenderung: aenderung,
-        groesse: groesse,
-        hinweis: hinweis,
-      ));
+      files.add(
+        FileNode(
+          name: name,
+          id: id,
+          downloadUrl:
+              "https://start.schulportal.hessen.de/dateispeicher.php?a=download&f=$id",
+          aenderung: aenderung,
+          groesse: groesse,
+          hinweis: hinweis,
+        ),
+      );
     }
 
     List<FolderNode> folders = [];
     for (var folder in document.querySelectorAll(".folder")) {
       var name = folder.querySelector(".caption")!.text.trim();
       var desc = folder.querySelector(".desc")!.text.trim();
-      var subfolders = int.tryParse(RegExp(r"\d+")
-                  .firstMatch(folder
-                          .querySelector("[title=\"Anzahl Ordner\"]")
-                          ?.text
-                          .trim() ??
-                      "")
-                  ?.group(0) ??
-              "") ??
+      var subfolders =
+          int.tryParse(
+            RegExp(r"\d+")
+                    .firstMatch(
+                      folder
+                              .querySelector("[title=\"Anzahl Ordner\"]")
+                              ?.text
+                              .trim() ??
+                          "",
+                    )
+                    ?.group(0) ??
+                "",
+          ) ??
           0;
       var id = int.parse(folder.attributes["data-id"]!);
       folders.add(FolderNode(name, id, subfolders, desc));

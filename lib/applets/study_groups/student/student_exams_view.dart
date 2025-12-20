@@ -33,8 +33,11 @@ class StudentExamsView extends StatelessWidget {
                     Text(DateFormat('dd.MM.yy').format(today)),
                     Expanded(child: Divider()),
                     // Show days until next exam
-                    Text(AppLocalizations.of(context)
-                        .daysUntilNextExam(difference)),
+                    Text(
+                      AppLocalizations.of(
+                        context,
+                      ).daysUntilNextExam(difference),
+                    ),
                   ],
                 ),
               ),
@@ -42,13 +45,14 @@ class StudentExamsView extends StatelessWidget {
               items: [
                 FocusedMenuItem(
                   title: difference.isNegative
-                      ? AppLocalizations.of(context)
-                          .daysSinceExam(difference.abs())
+                      ? AppLocalizations.of(
+                          context,
+                        ).daysSinceExam(difference.abs())
                       : AppLocalizations.of(context).daysUntilExam(difference),
                   icon: difference.isNegative || difference == 0
                       ? Icons.hourglass_bottom_rounded
                       : Icons.hourglass_top_rounded,
-                )
+                ),
               ],
               margin: EdgeInsets.symmetric(horizontal: 8.0),
               child: Card(
@@ -64,14 +68,17 @@ class StudentExamsView extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(exams[index].courseName,
-                              style: Theme.of(context).textTheme.labelLarge),
+                          Text(
+                            exams[index].courseName,
+                            style: Theme.of(context).textTheme.labelLarge,
+                          ),
                           Row(
                             spacing: 4,
                             children: [
-                              Text(DateFormat('dd.MM.yy').format(exam.date),
-                                  style:
-                                      Theme.of(context).textTheme.labelLarge),
+                              Text(
+                                DateFormat('dd.MM.yy').format(exam.date),
+                                style: Theme.of(context).textTheme.labelLarge,
+                              ),
                               Icon(Icons.calendar_today, size: 16),
                             ],
                           ),
@@ -84,9 +91,10 @@ class StudentExamsView extends StatelessWidget {
                           if (exam.hoursOfDay != null &&
                               exam.durationLabel != "") ...[
                             Text(
-                                '${exam.hoursOfDay} ${exam.durationLabel != '' ? '(${exam.durationLabel})' : ""}'),
+                              '${exam.hoursOfDay} ${exam.durationLabel != '' ? '(${exam.durationLabel})' : ""}',
+                            ),
                             Icon(Icons.access_time, size: 16),
-                          ]
+                          ],
                         ],
                       ),
                     ],
