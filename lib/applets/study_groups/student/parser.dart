@@ -93,7 +93,7 @@ class StudyGroupsStudentParser extends AppletParser<StudentStudyGroups> {
                     : "",
                 krz: teacherButton
                         .querySelector(
-                            'button.btn.btn-primary.dropdown-toggle.btn-md')
+                            'button.btn.btn-primary.dropdown-toggle')
                         ?.text
                         .trim() ??
                     "",
