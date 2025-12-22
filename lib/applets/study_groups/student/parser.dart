@@ -85,7 +85,7 @@ class StudyGroupsStudentParser extends AppletParser<StudentStudyGroups> {
           for (final Element teacherButton in teacherElement.children) {
             String teacherName = teacherButton
                 .querySelector(
-                  'ul.dropdown-menu > li > a > i.fa.fa-user.fa-fw',
+                  'ul.dropdown-menu > li > a > i.fa',
                 )!
                 .parent!
                 .text
@@ -102,14 +102,14 @@ class StudyGroupsStudentParser extends AppletParser<StudentStudyGroups> {
                 krz:
                     teacherButton
                         .querySelector(
-                          'button.btn.btn-primary.dropdown-toggle.btn-md',
+                          'button.btn.btn-primary.dropdown-toggle',
                         )
                         ?.text
                         .trim() ??
                     "",
                 email: teacherButton
                     .querySelector(
-                      'ul.dropdown-menu > li > a > i.fa.fa-at.fa-fw',
+                      'ul.dropdown-menu > li > a > i.fa',
                     )
                     ?.parent
                     ?.text

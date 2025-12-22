@@ -28,6 +28,6 @@ final lessonsDefinition = AppletDefinition(
     } else if (accountType == AccountType.teacher) {
       return LessonsTeacherView(openDrawerCb: openDrawerCb);
     }
-    throw UnimplementedError('This account type is not supported jet');
+    throw UnimplementedError('This account type is not supported yet');
   },
 );

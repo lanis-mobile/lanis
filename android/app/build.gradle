@@ -75,6 +75,11 @@ android {
             signingConfig signingConfigs.release
             shrinkResources false //important to keep the notification icon in release mode
         }
+
+        debug {
+            applicationIdSuffix ".debug"
+            debuggable true
+        }
     }
 
     // Exclude just to be safe
