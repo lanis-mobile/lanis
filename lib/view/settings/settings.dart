@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:app_settings/app_settings.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:lanis/applets/calendar/definition.dart';
 import 'package:lanis/applets/timetable/definition.dart';
@@ -16,7 +17,6 @@ import 'package:lanis/view/settings/subsettings/cache.dart';
 import 'package:lanis/view/settings/subsettings/notifications.dart';
 import 'package:lanis/view/settings/subsettings/quick_actions.dart';
 import 'package:lanis/view/settings/subsettings/userdata.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../applets/calendar/calendar_export.dart';
 import '../../core/database/account_database/account_db.dart';
@@ -87,15 +87,41 @@ class _SettingsScreenState extends SettingsColoursState<SettingsScreen> {
           },
           icon: Icons.language_rounded,
           screen: (context) async {
+            if (Platform.isAndroid) {
+              AppSettings.openAppSettings(type: AppSettingsType.appLocale);
+            }
             if (Platform.isIOS) {
-              await showDialog(
+              await showCupertinoDialog(
                 context: context,
                 builder: (context) {
-                  return Dialog();
+                  return CupertinoAlertDialog(
+                    title: Text(
+                      AppLocalizations.of(context).openSystemSettings,
+                    ),
+                    content: Text(
+                      AppLocalizations.of(
+                        context,
+                      ).openIOSSettingsToChangeLanguage,
+                    ),
+                    actions: [
+                      CupertinoDialogAction(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text(AppLocalizations.of(context).cancel),
+                      ),
+                      CupertinoDialogAction(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          AppSettings.openAppSettings(
+                            type: AppSettingsType.appLocale,
+                          );
+                        },
+                        child: Text(AppLocalizations.of(context).ok),
+                      ),
+                    ],
+                  );
                 },
               );
             }
-            AppSettings.openAppSettings(type: AppSettingsType.appLocale);
           },
           show: () async {
             DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
