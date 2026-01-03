@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
+import 'dart:developer' as developer;
 
 class Logger {
   final DateFormat _dateFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
@@ -16,7 +17,7 @@ class Logger {
 
   void i(dynamic message) {
     if (kDebugMode) {
-      print(
+      developer.log(
         '$_blue${_dateFormat.format(DateTime.now())} [INFO] $_name: $message$_reset',
       );
     }
@@ -24,7 +25,7 @@ class Logger {
 
   void e(dynamic message, {StackTrace? stackTrace}) {
     if (kDebugMode) {
-      print(
+      developer.log(
         '$_red${_dateFormat.format(DateTime.now())} [ERROR] $_name: $message$_reset',
       );
       if (stackTrace != null) {
@@ -35,7 +36,7 @@ class Logger {
 
   void w(dynamic message) {
     if (kDebugMode) {
-      print(
+      developer.log(
         '$_yellow${_dateFormat.format(DateTime.now())} [WARNING] $_name: $message$_reset',
       );
     }
@@ -43,7 +44,7 @@ class Logger {
 
   void f(dynamic message) {
     if (kDebugMode) {
-      print(
+      developer.log(
         '$_magenta${_dateFormat.format(DateTime.now())} [FATAL] $_name: $message$_reset',
       );
     }
@@ -51,7 +52,7 @@ class Logger {
 
   void d(dynamic message) {
     if (kDebugMode) {
-      print(
+      developer.log(
         '$_magenta${_dateFormat.format(DateTime.now())} [DEBUG] $_name: $message$_reset',
       );
     }
@@ -59,7 +60,7 @@ class Logger {
 
   void database(String message) {
     if (kDebugMode) {
-      print(
+      developer.log(
         '$_cyan${_dateFormat.format(DateTime.now())} [DATABASE] $_name: $message$_reset',
       );
     }
@@ -67,14 +68,14 @@ class Logger {
 }
 
 class MemoryLogger {
-  String logs = '';
+  StringBuffer logs = StringBuffer();
 
   void log(String message) {
-    logs += '${DateTime.now().toIso8601String().split(".")[0]}| $message\n';
+    logs.write('${DateTime.now().toIso8601String().split(".")[0]}| $message\n');
   }
 
   void write(String message) {
-    logs += message += '\n';
+    logs.write('$message\n');
   }
 }
 
