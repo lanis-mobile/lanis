@@ -16,6 +16,7 @@ import 'package:lanis/view/settings/subsettings/cache.dart';
 import 'package:lanis/view/settings/subsettings/notifications.dart';
 import 'package:lanis/view/settings/subsettings/quick_actions.dart';
 import 'package:lanis/view/settings/subsettings/userdata.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../applets/calendar/calendar_export.dart';
 import '../../core/database/account_database/account_db.dart';
@@ -85,16 +86,29 @@ class _SettingsScreenState extends SettingsColoursState<SettingsScreen> {
             }
           },
           icon: Icons.language_rounded,
-          screen: (context) =>
-              AppSettings.openAppSettings(type: AppSettingsType.appLocale),
-          show: () async {
-            if (!Platform.isAndroid) {
-              return false;
+          screen: (context) async {
+            if (Platform.isIOS) {
+              await showDialog(
+                context: context,
+                builder: (context) {
+                  return Dialog();
+                },
+              );
             }
-
+            AppSettings.openAppSettings(type: AppSettingsType.appLocale);
+          },
+          show: () async {
             DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
-            final androidInfo = await deviceInfo.androidInfo;
-            return androidInfo.version.sdkInt >= 33;
+            if (Platform.isAndroid) {
+              final androidInfo = await deviceInfo.androidInfo;
+              return androidInfo.version.sdkInt >= 33;
+            } else if (Platform.isIOS) {
+              final iosInfo = await deviceInfo.iosInfo;
+              final versionParts = iosInfo.systemVersion.split('.');
+              final majorVersion = int.tryParse(versionParts[0]) ?? 0;
+              return majorVersion >= 13;
+            }
+            return false;
           },
         ),
         SettingsTile(

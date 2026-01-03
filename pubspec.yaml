@@ -313,3 +313,6 @@ flutter:
 flutter_intl:
   enabled: true
   class_name: AppLocalizations
+  preferred_supported_locales:
+    - en
+    - de
