@@ -64,7 +64,7 @@ dart run intl_utils:generate # Localisations
 ```
 ### 3. Development
 Note the flags here:
-#### --dart-define=cronetHttpNoPlay=true
+#### `--dart-define=cronetHttpNoPlay=true`
 **[Partially optional]**
 This flag is used to include the Cronet binary for networking on non-Play-Services-enabled devices (we also ship this version on the Play Store)
 
@@ -72,9 +72,13 @@ If you are currently using the default Android emulator image, consider using an
 
 On iOS builds this flag is not required.
 
-#### --dart-define=ANSI=true 
+#### `--dart-define=ANSI=true` 
 **[Optional]**
 This flag allows the application's logs to be colorized, which can help a lot if you are not already using your IDE's log-filtering tools. (Recommended to omit on macOS due to lack of support in the default Terminal)
+
+```shell
+flutter run --dart-define=cronetHttpNoPlay=true --dart-define=ANSI=true
+```
 
 ### 4. Production
 For actual release mode signing is required, which can be added via placing the respective `key.properties` and `local.properties` in the `android` directory. On iOS the Development team has to be changed in Xcode. 
