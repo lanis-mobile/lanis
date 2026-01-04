@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:app_settings/app_settings.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:lanis/applets/calendar/definition.dart';
 import 'package:lanis/applets/timetable/definition.dart';
@@ -85,16 +86,55 @@ class _SettingsScreenState extends SettingsColoursState<SettingsScreen> {
             }
           },
           icon: Icons.language_rounded,
-          screen: (context) =>
-              AppSettings.openAppSettings(type: AppSettingsType.appLocale),
-          show: () async {
-            if (!Platform.isAndroid) {
-              return false;
+          screen: (context) async {
+            if (Platform.isAndroid) {
+              AppSettings.openAppSettings(type: AppSettingsType.appLocale);
             }
-
+            if (Platform.isIOS) {
+              await showCupertinoDialog(
+                context: context,
+                builder: (context) {
+                  return CupertinoAlertDialog(
+                    title: Text(
+                      AppLocalizations.of(context).openSystemSettings,
+                    ),
+                    content: Text(
+                      AppLocalizations.of(
+                        context,
+                      ).openIOSSettingsToChangeLanguage,
+                    ),
+                    actions: [
+                      CupertinoDialogAction(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text(AppLocalizations.of(context).cancel),
+                      ),
+                      CupertinoDialogAction(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          AppSettings.openAppSettings(
+                            type: AppSettingsType.appLocale,
+                          );
+                        },
+                        child: Text(AppLocalizations.of(context).ok),
+                      ),
+                    ],
+                  );
+                },
+              );
+            }
+          },
+          show: () async {
             DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
-            final androidInfo = await deviceInfo.androidInfo;
-            return androidInfo.version.sdkInt >= 33;
+            if (Platform.isAndroid) {
+              final androidInfo = await deviceInfo.androidInfo;
+              return androidInfo.version.sdkInt >= 33;
+            } else if (Platform.isIOS) {
+              final iosInfo = await deviceInfo.iosInfo;
+              final versionParts = iosInfo.systemVersion.split('.');
+              final majorVersion = int.tryParse(versionParts[0]) ?? 0;
+              return majorVersion >= 13;
+            }
+            return false;
           },
         ),
         SettingsTile(

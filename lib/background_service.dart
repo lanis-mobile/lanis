@@ -191,7 +191,7 @@ Future<void> callbackDispatcher() async {
     backgroundLogger.i("Background fetch completed");
     return;
   } catch (e, s) {
-    backgroundLogger.f('Error in background fetch');
+    backgroundLogger.e('Error in background fetch');
     backgroundLogger.e(e, stackTrace: s);
   }
   return;

@@ -231,6 +231,6 @@ class _DebugExportState extends State<DebugExport> {
       report.write(e.toString());
       report.write(stackTrace.toString());
     }
-    return report.logs;
+    return report.logs.toString();
   }
 }

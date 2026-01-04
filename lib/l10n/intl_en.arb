@@ -398,5 +398,6 @@
   "addAccount": "Add Account",
   "lastSeen": "{days, plural, =0{Today} one{Yesterday} other{{days} days ago}}",
   "student": "Student",
-  "parent": "Parent"
+  "parent": "Parent",
+  "openIOSSettingsToChangeLanguage": "On the next screen, select \"Lanis\" and then change the language in the \"Preferred Language\" section."
 }
