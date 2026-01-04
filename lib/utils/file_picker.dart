@@ -11,7 +11,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:mime/mime.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:lanis/utils/file_operations.dart';
-import 'package:lanis/utils/logger.dart';
 import 'package:lanis/utils/random.dart';
 import 'package:pdf/widgets.dart' as pw;
 
@@ -337,8 +336,6 @@ Future<PickedFile?> pickFileUsingDocumentScanner(BuildContext context) async {
     } on PlatformException {
       return null;
     }
-
-    logger.d("scannedDocuments: $scannedDocuments");
 
     final List<Object?> list = scannedDocuments;
 

@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:lanis/utils/logger.dart';
 import 'package:lanis/utils/mono_text_viewer.dart';
 import 'package:lanis/core/sph/sph.dart';
 import 'package:lanis/generated/l10n.dart';
@@ -44,6 +45,8 @@ void main() async {
   await setupBackgroundService(accountDatabase);
   await initializeNotifications();
   await initializeDateFormatting();
+
+  logger.testLogger();
 
   runApp(Phoenix(child: const App()));
 }

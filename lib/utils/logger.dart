@@ -1,6 +1,6 @@
+import 'package:colored_logger/colored_logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
-import 'dart:developer' as developer;
 
 class Logger {
   final DateFormat _dateFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
@@ -8,25 +8,20 @@ class Logger {
 
   Logger([this._name]);
 
-  static const String _reset = '\x1B[0m';
-  static const String _red = '\x1B[31m';
-  static const String _yellow = '\x1B[33m';
-  static const String _blue = '\x1B[34m';
-  static const String _magenta = '\x1B[35m';
-  static const String _cyan = '\x1B[36m';
-
   void i(dynamic message) {
     if (kDebugMode) {
-      developer.log(
-        '$_blue${_dateFormat.format(DateTime.now())} [INFO] $_name: $message$_reset',
+      ColoredLogger.info(
+        message.toString(),
+        prefix: '${_dateFormat.format(DateTime.now())}    [INFO] $_name: ',
       );
     }
   }
 
   void e(dynamic message, {StackTrace? stackTrace}) {
     if (kDebugMode) {
-      developer.log(
-        '$_red${_dateFormat.format(DateTime.now())} [ERROR] $_name: $message$_reset',
+      ColoredLogger.error(
+        message.toString(),
+        prefix: '${_dateFormat.format(DateTime.now())}   [ERROR] $_name: ',
       );
       if (stackTrace != null) {
         debugPrintStack(stackTrace: stackTrace, label: _name);
@@ -36,34 +31,29 @@ class Logger {
 
   void w(dynamic message) {
     if (kDebugMode) {
-      developer.log(
-        '$_yellow${_dateFormat.format(DateTime.now())} [WARNING] $_name: $message$_reset',
-      );
-    }
-  }
-
-  void f(dynamic message) {
-    if (kDebugMode) {
-      developer.log(
-        '$_magenta${_dateFormat.format(DateTime.now())} [FATAL] $_name: $message$_reset',
+      ColoredLogger.warning(
+        message.toString(),
+        prefix: '${_dateFormat.format(DateTime.now())} [WARNING] $_name: ',
       );
     }
   }
 
   void d(dynamic message) {
     if (kDebugMode) {
-      developer.log(
-        '$_magenta${_dateFormat.format(DateTime.now())} [DEBUG] $_name: $message$_reset',
+      // Info but bold;
+      ColoredLogger.colorize(
+        message.toString(),
+        prefix: '${_dateFormat.format(DateTime.now())}   [DEBUG] $_name: ',
+        styles: [Ansi.bold, Ansi.brightBlue],
       );
     }
   }
 
-  void database(String message) {
-    if (kDebugMode) {
-      developer.log(
-        '$_cyan${_dateFormat.format(DateTime.now())} [DATABASE] $_name: $message$_reset',
-      );
-    }
+  void testLogger() {
+    i('This is an info message');
+    e('This is an error message');
+    w('This is a warning message');
+    d('This is a debug message');
   }
 }
 
@@ -80,4 +70,4 @@ class MemoryLogger {
 }
 
 Logger logger = Logger('Lanis');
-Logger backgroundLogger = Logger('Lanis Background');
+Logger backgroundLogger = Logger('Lanis BG');

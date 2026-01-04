@@ -182,7 +182,7 @@ class SessionHandler {
       );
     } catch (e) {
       logger.w(
-        'Failed to log account login to orion. (${sph.account.schoolID}, ${packageInfo.buildNumber})',
+        'Failed to log account login to orion. (${sph.account.schoolID}, ${packageInfo.buildNumber}) Likely the user in in a private network which only allows for school portal access.',
       );
     }
   }
@@ -246,8 +246,6 @@ class SessionHandler {
         },
       ),
     );
-
-    logger.d("Response Headers: ${response1.headers.toString()}");
 
     if (response1.statusCode == 503) {
       throw LanisDownException();
@@ -350,7 +348,7 @@ class SessionHandler {
     } else if (iconClassList.contains('fa-user')) {
       return AccountType.teacher;
     } else {
-      logger.f('Unknown account type observed, while parsing account data');
+      logger.e('Unknown account type observed, while parsing account data');
       throw Exception('Unknown account type');
     }
   }
