@@ -7,18 +7,19 @@ class SubstitutionListTile extends StatelessWidget {
   final Substitution substitutionData;
   const SubstitutionListTile({super.key, required this.substitutionData});
 
-  bool doesNoticeExist(String? info) {
+  bool isBlankNotice(String? info) {
     List empty = [null, "", " ", "-", "---"];
     return empty.contains(info);
   }
 
-  Widget? getSubstitutionInfo(
-    BuildContext context,
-    String key,
-    String? value,
-    IconData icon,
-  ) {
-    if (doesNoticeExist(value)) {
+  Widget? getSubstitutionInfo({
+    required BuildContext context,
+    required String displayKey,
+    required String? value,
+    required String? valueAlt,
+    required IconData icon,
+  }) {
+    if (isBlankNotice(value) && isBlankNotice(valueAlt)) {
       return null;
     }
 
@@ -33,11 +34,17 @@ class SubstitutionListTile extends StatelessWidget {
                 padding: const EdgeInsets.only(right: 8),
                 child: Icon(icon),
               ),
-              Text(key, style: Theme.of(context).textTheme.labelLarge),
+              Text(displayKey, style: Theme.of(context).textTheme.labelLarge),
+              if (isBlankNotice(value)) Icon(
+                Icons.help_outline_outlined,
+                size: Theme.of(context).textTheme.titleLarge?.fontSize,
+              ),
             ],
           ),
           SubstitutionsFormattedText(
-            value!,
+            !isBlankNotice(value)
+                ? value!
+                : valueAlt!,
             Theme.of(context).textTheme.bodyMedium!,
           ),
         ],
@@ -55,11 +62,11 @@ class SubstitutionListTile extends StatelessWidget {
 
         return ListTile(
           dense:
-              (doesNoticeExist(substitutionData.vertreter) &&
-              doesNoticeExist(substitutionData.lehrer) &&
-              doesNoticeExist(substitutionData.raum) &&
-              doesNoticeExist(substitutionData.fach) &&
-              doesNoticeExist(substitutionData.hinweis)),
+              (isBlankNotice(substitutionData.vertreter) &&
+              isBlankNotice(substitutionData.lehrer) &&
+              isBlankNotice(substitutionData.raum) &&
+              isBlankNotice(substitutionData.fach) &&
+              isBlankNotice(substitutionData.hinweis)),
           title: Padding(
             padding: const EdgeInsets.only(top: 2),
             child: (substitutionData.art != null)
@@ -79,46 +86,49 @@ class SubstitutionListTile extends StatelessWidget {
                 padding: EdgeInsets.only(
                   top: 0,
                   bottom:
-                      (doesNoticeExist(substitutionData.vertreter) &&
-                          doesNoticeExist(substitutionData.lehrer) &&
-                          doesNoticeExist(substitutionData.raum) &&
-                          !doesNoticeExist(substitutionData.fach))
+                      (isBlankNotice(substitutionData.vertreter) &&
+                          isBlankNotice(substitutionData.lehrer) &&
+                          isBlankNotice(substitutionData.raum) &&
+                          !isBlankNotice(substitutionData.fach))
                       ? 12
                       : 0,
                 ),
                 child: Column(
                   children: [
                     getSubstitutionInfo(
-                          context,
-                          "Vertreter",
-                          substitutionData.vertreter,
-                          Icons.person,
+                          context: context,
+                          displayKey: "Vertreter",
+                          value: substitutionData.vertreter,
+                          valueAlt: null,
+                          icon: Icons.person,
                         ) ??
                         const SizedBox.shrink(),
                     getSubstitutionInfo(
-                          context,
-                          "Lehrer",
-                          substitutionData.lehrer,
-                          Icons.school,
+                          context: context,
+                          displayKey: "Lehrer",
+                          value: substitutionData.lehrer,
+                          valueAlt: null,
+                          icon: Icons.school,
                         ) ??
                         const SizedBox.shrink(),
                     getSubstitutionInfo(
-                          context,
-                          "Raum",
-                          substitutionData.raum,
-                          Icons.room,
+                          context: context,
+                          displayKey: "Raum",
+                          value: substitutionData.raum,
+                          valueAlt: substitutionData.raum_alt,
+                          icon: Icons.room,
                         ) ??
                         const SizedBox.shrink(),
                   ],
                 ),
               ),
-              if (!doesNoticeExist(substitutionData.hinweis)) ...[
+              if (!isBlankNotice(substitutionData.hinweis)) ...[
                 Padding(
                   padding: EdgeInsets.only(
                     right: 30,
                     left: 30,
                     top: 2,
-                    bottom: doesNoticeExist(substitutionData.fach) ? 12 : 0,
+                    bottom: isBlankNotice(substitutionData.fach) ? 12 : 0,
                   ),
                   child: Column(
                     children: [
@@ -146,26 +156,53 @@ class SubstitutionListTile extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  if (!doesNoticeExist(substitutionData.klasse)) ...[
+                  if (!isBlankNotice(substitutionData.klasse) || !isBlankNotice(substitutionData.klasse_alt)) ...[
                     ConstrainedBox(
                       constraints: BoxConstraints(maxWidth: maxClassWidth),
                       child: MarqueeWidget(
                         direction: Axis.horizontal,
-                        child: Text(
-                          substitutionData.klasse!,
-                          style: Theme.of(context).textTheme.titleMedium,
-                          overflow: TextOverflow.ellipsis,
+                        child: Row(
+                          spacing: 2,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (isBlankNotice(substitutionData.klasse)) ...[
+                              Icon(
+                                Icons.help_outline_outlined,
+                                size: Theme.of(context).textTheme.titleMedium?.fontSize,
+                              ),
+                            ],
+                            Text(
+                              substitutionData.klasse!,
+                              style: Theme.of(context).textTheme.titleMedium,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
                       ),
                     ),
                   ],
-                  if (!doesNoticeExist(substitutionData.fach)) ...[
-                    Text(
-                      substitutionData.fach!,
-                      style: Theme.of(context).textTheme.titleLarge,
+                  if (!isBlankNotice(substitutionData.fach) || !isBlankNotice(substitutionData.fach_alt)) ...[
+                    Row(
+                      spacing: 2,
+                      mainAxisSize: .min,
+                      children: [
+                        if (isBlankNotice(substitutionData.fach)) ...[
+                          Icon(
+                            Icons.help_outline_outlined,
+                            size: Theme.of(context).textTheme.titleLarge?.fontSize,
+                          ),
+                        ],
+                        Text(
+                          // prioritize new subject over old subject
+                          !isBlankNotice(substitutionData.fach)
+                              ? substitutionData.fach!
+                              : substitutionData.fach_alt!,
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                      ],
                     ),
                   ],
-                  if (!doesNoticeExist(substitutionData.stunde)) ...[
+                  if (!isBlankNotice(substitutionData.stunde)) ...[
                     Text(
                       substitutionData.stunde,
                       style: Theme.of(context).textTheme.titleLarge,
