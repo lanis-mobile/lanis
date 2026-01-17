@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:lanis/generated/l10n.dart';
 
 import '../../../models/lessons.dart';
 import 'course_overview.dart';
@@ -95,7 +96,9 @@ class _LessonListTileState extends State<LessonListTile> {
                     ),
                   const Spacer(),
                   Text(
-                    '${dateFormat.format(widget.lesson.currentEntry?.topicDate ?? DateTime(0))} ',
+                    widget.lesson.currentEntry?.topicDate != null
+                      ? dateFormat.format(widget.lesson.currentEntry!.topicDate!)
+                      : AppLocalizations.of(context).noEntries
                   ),
                   const Icon(Icons.calendar_today, size: 16),
                 ],

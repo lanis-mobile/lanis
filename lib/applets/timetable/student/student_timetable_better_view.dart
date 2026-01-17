@@ -263,7 +263,7 @@ class TimeTableView extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: SizedBox(
-                        height: headerHeight - 4,
+                        height: headerHeight + 10,
                         width: hourWidth,
                         child: Column(
                           children: [
