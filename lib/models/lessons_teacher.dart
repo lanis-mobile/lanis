@@ -1,5 +1,5 @@
 class LessonsTeacherHome {
-  final List<CourseFolderStartPage> courseFolders;
+  List<CourseFolderStartPage> courseFolders;
 
   LessonsTeacherHome({required this.courseFolders});
 
