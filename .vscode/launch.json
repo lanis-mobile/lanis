@@ -7,7 +7,6 @@
             "type": "dart",
             "program": "lib/main.dart",
             "args": [
-                "--no-enable-impeller",
                 "--dart-define=cronetHttpNoPlay=true",
                 "--dart-define=ANSI=true"
             ],
@@ -20,7 +19,6 @@
             "type": "dart",
             "program": "lib/main.dart",
             "args": [
-                "--no-enable-impeller",
                 "--dart-define=cronetHttpNoPlay=true",
                 "--dart-define=ANSI=true"
             ],

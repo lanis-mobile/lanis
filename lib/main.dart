@@ -17,6 +17,8 @@ import 'package:lanis/startup.dart';
 import 'package:lanis/themes.dart';
 import 'package:lanis/utils/authentication_state.dart';
 import 'package:lanis/utils/quick_actions.dart';
+import 'package:lanis/view/startup_error_view.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:stack_trace/stack_trace.dart';
 
 import 'applets/conversations/view/shared.dart';
@@ -25,30 +27,78 @@ import 'core/database/account_database/account_db.dart'
     show accountDatabase, AccountDatabase;
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    WidgetsFlutterBinding.ensureInitialized();
 
-  if (kReleaseMode) {
-    ErrorWidget.builder = (FlutterErrorDetails details) {
-      return errorWidget(details);
-    };
+    if (kReleaseMode) {
+      ErrorWidget.builder = (FlutterErrorDetails details) {
+        return errorWidget(details);
+      };
+    }
+
+    await moveDatabases();
+
+    driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+
+    accountDatabase = AccountDatabase();
+
+    enableTransparentNavigationBar();
+
+    authenticationState.login().then((v) {
+      if (sph?.session != null) QuickActionsStartUp();
+    });
+
+    await setupBackgroundService(accountDatabase);
+    await initializeNotifications();
+    await initializeDateFormatting();
+
+    // logger.testLogger();
+
+    runApp(Phoenix(child: const App()));
+  } catch (e, st) {
+    logger.e(e, stackTrace: st);
+
+    runApp(
+      MaterialApp(
+        home: Scaffold(
+          body: StartupErrorView(
+            errorDetails: FlutterErrorDetails(exception: e, stack: st),
+          ),
+        ),
+      ),
+    );
   }
+}
 
-  driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
-  accountDatabase = AccountDatabase();
+// Move all .sqlite files from documents to cache, to avoid them being backed up by Android.
+// Temporary migration; Remove maybe like May 26 or keep if it causes no issues.
+Future<void> moveDatabases() async {
+  final oldPath = await getApplicationDocumentsDirectory();
+  final newPath = await getApplicationCacheDirectory();
 
-  enableTransparentNavigationBar();
-
-  authenticationState.login().then((v) {
-    if (sph?.session != null) QuickActionsStartUp();
+  final oldFiles = oldPath.listSync().whereType<File>().where((file) {
+    return file.path.endsWith('.sqlite');
   });
 
-  await setupBackgroundService(accountDatabase);
-  await initializeNotifications();
-  await initializeDateFormatting();
+  logger.i('Found ${oldFiles.length} .sqlite files to migrate');
 
-  logger.testLogger();
+  for (var file in oldFiles) {
+    final newFile = File('${newPath.path}/${file.uri.pathSegments.last}');
+    if (!await newFile.exists()) {
+      try {
+        await file.rename(newFile.path);
+        logger.i('Migrated ${file.uri.pathSegments.last} to cache directory');
+      } catch (e) {
+        logger.e('Failed to migrate ${file.uri.pathSegments.last}: $e');
+      }
+    } else {
+      logger.i(
+        '${file.uri.pathSegments.last} already exists in cache directory',
+      );
+    }
+  }
 
-  runApp(Phoenix(child: const App()));
+  logger.i('Database migration completed');
 }
 
 // Or translucent when 3-Way.

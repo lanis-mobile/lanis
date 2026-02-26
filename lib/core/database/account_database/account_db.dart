@@ -261,7 +261,12 @@ class AccountDatabase extends _$AccountDatabase {
   }
 
   static QueryExecutor _openConnection() {
-    return driftDatabase(name: 'accounts_database');
+    return driftDatabase(
+      name: 'accounts_database',
+      native: DriftNativeOptions(
+        databaseDirectory: () async => await getApplicationCacheDirectory(),
+      ),
+    );
   }
 }
 

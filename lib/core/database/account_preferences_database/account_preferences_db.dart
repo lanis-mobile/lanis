@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'kv_defaults.dart';
 
@@ -62,7 +63,12 @@ class AccountPreferencesDatabase extends _$AccountPreferencesDatabase {
   int get schemaVersion => 1;
 
   static QueryExecutor _openConnection(int id) {
-    return driftDatabase(name: 'session_${id}_db');
+    return driftDatabase(
+      name: 'session_${id}_db',
+      native: DriftNativeOptions(
+        databaseDirectory: () async => await getApplicationCacheDirectory(),
+      ),
+    );
   }
 
   Future<NotificationsDuplicatesTableData?> getNotificationDuplicates(
