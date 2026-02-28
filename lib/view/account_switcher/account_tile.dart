@@ -27,7 +27,7 @@ class AccountTile extends StatelessWidget {
 
   String accountTypeLabel(BuildContext context) {
     AccountType type = AccountTypeExtension.fromString(
-      account.accountType!.split('.').last,
+      account.accountType?.split('.').last ?? "unknown",
     );
     return type.readableName(context);
   }

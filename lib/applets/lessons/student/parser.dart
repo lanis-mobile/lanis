@@ -150,12 +150,18 @@ class LessonsStudentParser extends AppletParser<Lessons> {
     return lessons;
   }
 
-  Future<DetailedLesson> getDetailedCourseView(String url) async {
+  Future<DetailedLesson> getDetailedCourseView(
+    String url, {
+    bool force = false,
+  }) async {
     try {
       String courseID = url.split("id=")[1];
 
       final response = await sph.session.dio.get(
         "https://start.schulportal.hessen.de/$url",
+        queryParameters: {
+          if (force) "cacheBreaker": DateTime.now().millisecondsSinceEpoch,
+        },
       );
       Document document = parse(response.data);
 
