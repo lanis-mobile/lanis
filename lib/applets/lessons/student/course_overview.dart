@@ -31,6 +31,7 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
   int _currentIndex = 0;
   bool loading = true;
   DetailedLesson? data;
+  final _refreshIndicatorKey = GlobalKey<RefreshIndicatorState>();
 
   @override
   void initState() {
@@ -38,17 +39,21 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
     _loadData();
   }
 
-  Future<void> _loadData({secondTry = false}) async {
+  Future<void> _loadData({bool secondTry = false, bool force = false}) async {
     try {
       if (secondTry) {
         await sph!.session.authenticate();
       }
 
       String url = widget.dataFetchURL;
-      data = await sph!.parser.lessonsStudentParser.getDetailedCourseView(url);
+      data = await sph!.parser.lessonsStudentParser.getDetailedCourseView(
+        url,
+        force: force,
+      );
 
-      loading = false;
-      setState(() {});
+      setState(() {
+        loading = false;
+      });
     } catch (e) {
       if (!secondTry) {
         _loadData(secondTry: true);
@@ -56,13 +61,20 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
     }
   }
 
-  Widget noDataScreen(context) => Center(
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        const Icon(Icons.search, size: 60),
-        Text(AppLocalizations.of(context).noDataFound),
+  Widget noDataScreen(BuildContext context) => Center(
+    child: CustomScrollView(
+      slivers: [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const Icon(Icons.search, size: 60),
+              Text(AppLocalizations.of(context).noDataFound),
+            ],
+          ),
+        ),
       ],
     ),
   );
@@ -540,7 +552,11 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
     }
 
     return Scaffold(
-      body: _buildBody(),
+      body: RefreshIndicator(
+        key: _refreshIndicatorKey,
+        onRefresh: () async => await _loadData(force: true),
+        child: _buildBody(),
+      ),
       appBar: AppBar(
         title: Text(widget.title),
         actions: [
