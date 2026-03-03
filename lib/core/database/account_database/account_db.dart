@@ -22,6 +22,10 @@ AndroidOptions _getAndroidOptions() =>
 /// iOS uses Keychain by default.
 final FlutterSecureStorage secureStorage = FlutterSecureStorage(
   aOptions: _getAndroidOptions(),
+  iOptions: IOSOptions(
+    accessibility: KeychainAccessibility.first_unlock_this_device,
+    synchronizable: true,
+  ),
 );
 
 class ClearTextAccount {
