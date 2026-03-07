@@ -57,6 +57,29 @@ class _LessonsTeacherViewState extends State<LessonsTeacherView> {
         settingsDefaults: lessonsDefinition.settingsDefaults,
         accountType: sph!.session.accountType,
         builder: (context, data, _, settings, updateSettings, refresh) {
+          switch (settings["sortOverviewBy"]) {
+            case SortingType.entryNameAscending:
+              data.courseFolders.sort((a, b) => a.name.compareTo(b.name));
+              break;
+            case SortingType.entryNameDescending:
+              data.courseFolders.sort((a, b) => a.name.compareTo(b.name));
+              data.courseFolders = data.courseFolders.reversed.toList();
+              break;
+            case SortingType.entryTimeAscending:
+              data.courseFolders.sort((a, b) => (
+                  a.entryInformation?.date ?? DateTime.fromMillisecondsSinceEpoch(0, isUtc: true))
+                  .compareTo(b.entryInformation?.date ?? DateTime.fromMillisecondsSinceEpoch(0, isUtc: true))
+              );
+              break;
+            case SortingType.entryTimeDescending:
+              data.courseFolders.sort((a, b) => (
+                  a.entryInformation?.date ?? DateTime.fromMillisecondsSinceEpoch(0, isUtc: true))
+                  .compareTo(b.entryInformation?.date ?? DateTime.fromMillisecondsSinceEpoch(0, isUtc: true))
+              );
+              data.courseFolders = data.courseFolders.reversed.toList();
+              break;
+          }
+
           return RefreshIndicator(
             onRefresh: refresh!,
             child: ListView.builder(
