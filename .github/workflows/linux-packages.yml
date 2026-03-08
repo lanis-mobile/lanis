@@ -1,0 +1,140 @@
+name: Linux Packages (Flatpak + RPM)
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  # ── 1. Build the Flutter Linux release bundle ──────────────────────────────
+  build-bundle:
+    name: Build Flutter Linux bundle
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version from pubspec.yaml
+        id: version
+        run: |
+          echo "version=$(grep '^version:' pubspec.yaml | sed 's/version: //;s/+.*//')" >> "$GITHUB_OUTPUT"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y \
+            ninja-build \
+            libgtk-3-dev \
+            libsecret-1-dev \
+            libjsoncpp-dev \
+            libwebkit2gtk-4.1-dev
+
+      - run: flutter pub get
+
+      - name: Generate localisations
+        run: dart run intl_utils:generate
+
+      - name: Build Linux release
+        run: flutter build linux --release
+
+      - name: Upload bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-bundle
+          path: build/linux/x64/release/bundle/
+
+  # ── 2. Package as Flatpak ──────────────────────────────────────────────────
+  build-flatpak:
+    name: Build Flatpak
+    needs: build-bundle
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Flutter bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-bundle
+          path: build/linux/x64/release/bundle/
+
+      - name: Install Flatpak tools
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y flatpak flatpak-builder
+
+      - name: Cache Flatpak runtimes
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/flatpak/repo
+          key: flatpak-gnome-47-${{ runner.os }}
+
+      - name: Add Flathub and install GNOME runtime
+        run: |
+          flatpak remote-add --user --if-not-exists flathub \
+            https://dl.flathub.org/repo/flathub.flatpakrepo
+          flatpak install --user --noninteractive -y flathub \
+            org.gnome.Platform//47 \
+            org.gnome.Sdk//47
+
+      - name: Build Flatpak bundle
+        run: |
+          flatpak-builder \
+            --user \
+            --force-clean \
+            --repo=flatpak-repo \
+            flatpak-build-dir \
+            packaging/flatpak/io.github.alessioc42.lanis.yml
+          flatpak build-bundle \
+            flatpak-repo \
+            lanis-${{ needs.build-bundle.outputs.version }}.flatpak \
+            io.github.alessioc42.lanis
+
+      - name: Upload Flatpak artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lanis-flatpak
+          path: lanis-${{ needs.build-bundle.outputs.version }}.flatpak
+
+  # ── 3. Package as RPM ─────────────────────────────────────────────────────
+  build-rpm:
+    name: Build RPM
+    needs: build-bundle
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Flutter bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-bundle
+          path: bundle/
+
+      - name: Install rpmbuild
+        run: sudo apt-get update -y && sudo apt-get install -y rpm
+
+      - name: Set up rpmbuild tree
+        run: |
+          mkdir -p ~/rpmbuild/{SPECS,SOURCES,BUILD,RPMS,SRPMS}
+          cp -r bundle ~/rpmbuild/SOURCES/bundle
+
+      - name: Build RPM
+        run: |
+          rpmbuild -bb \
+            --define "app_version ${{ needs.build-bundle.outputs.version }}" \
+            --define "_sourcedir $HOME/rpmbuild/SOURCES" \
+            packaging/rpm/lanis.spec
+
+      - name: Collect RPM
+        run: find ~/rpmbuild/RPMS -name "*.rpm" -exec cp {} . \;
+
+      - name: Upload RPM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lanis-rpm
+          path: "*.rpm"

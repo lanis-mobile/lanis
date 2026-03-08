@@ -37,7 +37,7 @@ class _SchoolSelectorState extends State<SchoolSelector> {
     try {
       final packageInfo = await PackageInfo.fromPlatform();
       final dio = Dio();
-      dio.httpClientAdapter = getNativeAdapterInstance();
+      dio.httpClientAdapter = getHttpClientAdapter();
       final response = await dio.get(
         "https://startcache.schulportal.hessen.de/exporteur.php?a=schoollist",
         options: Options(

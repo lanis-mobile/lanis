@@ -47,7 +47,7 @@ class SessionHandler {
 
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
 
-    dio.httpClientAdapter = getNativeAdapterInstance();
+    dio.httpClientAdapter = getHttpClientAdapter();
     dio.interceptors.add(CookieManager(jar));
     dio.interceptors.add(
       InterceptorsWrapper(
@@ -203,7 +203,7 @@ class SessionHandler {
     final packageInfoFuture = PackageInfo.fromPlatform();
     final dioHttp = Dio();
     final cookieJar = CookieJar(ignoreExpires: true);
-    dioHttp.httpClientAdapter = getNativeAdapterInstance();
+    dioHttp.httpClientAdapter = getHttpClientAdapter();
 
     // CookieJar cannot handle "Set-Cookie" headers with "HttpOnly=1" instead of just "HttpOnly"
     dioHttp.interceptors.add(

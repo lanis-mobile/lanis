@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:dart_date/dart_date.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:lanis/applets/timetable/definition.dart';
@@ -356,26 +357,34 @@ class TimeTableView extends StatelessWidget {
                           child: DefaultTabController(
                             length: days.length,
                             initialIndex: initialIndex,
-                            child: TabBarView(
-                              children: days.map((e) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(
-                                    left: 4.0,
-                                    right: 8.0,
-                                  ),
-                                  child: Stack(
-                                    children: [
-                                      e,
-                                      TimeMarkerWidget(
-                                        data: data,
-                                        timetable: timetable,
-                                        settings: settings,
-                                        day: days.indexOf(e),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
+                            child: ScrollConfiguration(
+                              behavior: ScrollConfiguration.of(context).copyWith(
+                                dragDevices: {
+                                  PointerDeviceKind.touch,
+                                  PointerDeviceKind.mouse,
+                                },
+                              ),
+                              child: TabBarView(
+                                children: days.map((e) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(
+                                      left: 4.0,
+                                      right: 8.0,
+                                    ),
+                                    child: Stack(
+                                      children: [
+                                        e,
+                                        TimeMarkerWidget(
+                                          data: data,
+                                          timetable: timetable,
+                                          settings: settings,
+                                          day: days.indexOf(e),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
                             ),
                           ),
                         );

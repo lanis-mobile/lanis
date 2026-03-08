@@ -16,7 +16,7 @@ class CustomConnectionChecker {
 
   CustomConnectionChecker() {
     dio = Dio(BaseOptions(validateStatus: (status) => status != null));
-    dio.httpClientAdapter = getNativeAdapterInstance();
+    dio.httpClientAdapter = getHttpClientAdapter();
 
     testConnection();
   }

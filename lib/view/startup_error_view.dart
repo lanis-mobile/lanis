@@ -46,11 +46,13 @@ class _StartupErrorViewState extends State<StartupErrorView> {
               },
               child: Text("Fehlerbericht kopieren"),
             ),
-            SizedBox(height: 8),
-            ElevatedButton(
-              onPressed: () => sendEmail(widget.errorDetails),
-              child: Text("E-Mail"),
-            ),
+            if (!Platform.isLinux) ...[
+              SizedBox(height: 8),
+              ElevatedButton(
+                onPressed: () => sendEmail(widget.errorDetails),
+                child: Text("E-Mail"),
+              ),
+            ],
             ElevatedButton(
               onPressed: () async {
                 final confirmation = await showDialog<bool>(

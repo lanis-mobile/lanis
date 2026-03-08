@@ -146,7 +146,9 @@ class _CacheSettingsState extends SettingsColoursState<CacheSettings> {
                 ),
                 recognizer: TapGestureRecognizer()
                   ..onTap = () {
-                    AppSettings.openAppSettings();
+                    if (Platform.isAndroid || Platform.isIOS) {
+                      AppSettings.openAppSettings();
+                    }
                   },
               ),
               TextSpan(

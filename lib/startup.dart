@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'package:app_settings/app_settings.dart';
@@ -91,6 +92,7 @@ class _StartupScreenState extends State<StartupScreen>
   }
 
   void requestPermissions() async {
+    if (!Platform.isAndroid && !Platform.isIOS) return;
     var status = await Permission.notification.request();
     if (status.isGranted) return;
     status = await Permission.notification.request();
@@ -358,7 +360,7 @@ class _StartupScreenState extends State<StartupScreen>
   Widget build(BuildContext context) {
     // Sets the apps context as soon as possible
     AppLocalizations.of(context);
-    QuickActionsStartUp.setNames(context);
+    if (Platform.isAndroid || Platform.isIOS) QuickActionsStartUp.setNames(context);
     return MediaQuery.of(context).orientation == Orientation.portrait
         ? Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

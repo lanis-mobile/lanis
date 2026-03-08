@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:quick_actions/quick_actions.dart';
@@ -17,6 +18,11 @@ class QuickActionsStartUp {
   bool _initialized = false;
 
   QuickActionsStartUp() {
+    if (!Platform.isAndroid && !Platform.isIOS) {
+      if (!_initializationCompleter.isCompleted) _initializationCompleter.complete();
+      _initialized = true;
+      return;
+    }
     if (_initialized) return;
     quickActions = QuickActions();
     quickActions.initialize((String shortcutType) {
@@ -88,6 +94,7 @@ class QuickActionsStartUp {
   }
 
   static void setNames(BuildContext context) async {
+    if (!Platform.isAndroid && !Platform.isIOS) return;
     if (_quickActionsSet) return;
     if (_requestFailed) return;
     var result = await waitForInitialization();

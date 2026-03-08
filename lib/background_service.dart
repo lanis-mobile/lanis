@@ -17,6 +17,7 @@ import 'core/database/account_database/account_db.dart'
 import 'core/sph/sph.dart' show SPH;
 
 Future<void> setupBackgroundService(AccountDatabase accountDatabase) async {
+  if (!Platform.isAndroid && !Platform.isIOS) return;
   if ((await Permission.notification.isDenied)) {
     logger.d("User disallowed notifications");
     await FlutterBackgroundExecutor().cancelAllTasks();
@@ -93,6 +94,7 @@ Future<void> setupBackgroundService(AccountDatabase accountDatabase) async {
 }
 
 Future<void> initializeNotifications() async {
+  if (!Platform.isAndroid && !Platform.isIOS) return;
   try {
     FlutterLocalNotificationsPlugin().initialize(
       const InitializationSettings(

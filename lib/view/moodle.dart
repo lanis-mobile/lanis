@@ -92,7 +92,7 @@ class _MoodleWebViewState extends State<MoodleWebView> {
     try {
       final dio = Dio(BaseOptions(validateStatus: (status) => status != null));
       final jar = CookieJar();
-      dio.httpClientAdapter = getNativeAdapterInstance();
+      dio.httpClientAdapter = getHttpClientAdapter();
       dio.options.followRedirects = false;
       dio.interceptors.add(
         InterceptorsWrapper(

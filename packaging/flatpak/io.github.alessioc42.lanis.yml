@@ -1,0 +1,41 @@
+app-id: io.github.alessioc42.lanis
+runtime: org.gnome.Platform
+runtime-version: '47'
+sdk: org.gnome.Sdk
+command: lanis
+
+finish-args:
+  - --share=network
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --device=dri
+  # Keyring access for flutter_secure_storage
+  - --talk-name=org.freedesktop.secrets
+  # Desktop notifications
+  - --talk-name=org.freedesktop.Notifications
+
+modules:
+  - name: lanis
+    buildsystem: simple
+    build-commands:
+      # Install binary — its rpath is $ORIGIN/lib, so libs must live next to it
+      - install -Dm755 lanis /app/bin/lanis
+      # Flutter assets & ICU data
+      - cp -r data /app/bin/data
+      # Bundled Flutter engine + plugin shared libraries
+      - mkdir -p /app/bin/lib
+      - cp lib/*.so /app/bin/lib/
+      # Desktop entry
+      - install -Dm644 io.github.alessioc42.lanis.desktop /app/share/applications/io.github.alessioc42.lanis.desktop
+      # Icon
+      - install -Dm644 icon.png /app/share/icons/hicolor/512x512/apps/io.github.alessioc42.lanis.png
+    sources:
+      # Pre-built Flutter release bundle — built by the CI job before flatpak-builder runs.
+      # flatpak-builder is invoked from the repo root, so this path is relative to it.
+      - type: dir
+        path: build/linux/x64/release/bundle
+      - type: file
+        path: assets/icon.png
+      - type: file
+        path: packaging/flatpak/io.github.alessioc42.lanis.desktop

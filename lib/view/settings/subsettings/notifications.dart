@@ -69,6 +69,7 @@ class _NotificationSettingsState
   }
 
   void startPermissionCheck() {
+    if (!Platform.isAndroid && !Platform.isIOS) return;
     checkTimer = Timer.periodic(Duration(seconds: 1), (timer) async {
       final newStatus = await Permission.notification.status;
       if (newStatus != notificationPermissionStatus && mounted) {
@@ -80,7 +81,11 @@ class _NotificationSettingsState
   }
 
   void initVars() async {
-    notificationPermissionStatus = await Permission.notification.status;
+    if (Platform.isAndroid || Platform.isIOS) {
+      notificationPermissionStatus = await Permission.notification.status;
+    } else {
+      notificationPermissionStatus = PermissionStatus.granted;
+    }
 
     final globalSettings = await accountDatabase.kv.getMultiple([
       'notifications-target-interval-minutes',
@@ -152,7 +157,9 @@ class _NotificationSettingsState
               ),
               buttonText: Text(AppLocalizations.of(context).openSystemSettings),
               onPressed: () {
-                AppSettings.openAppSettings(type: AppSettingsType.notification);
+                if (Platform.isAndroid || Platform.isIOS) {
+                  AppSettings.openAppSettings(type: AppSettingsType.notification);
+                }
               },
               backgroundColor: Theme.of(context).colorScheme.errorContainer,
               buttonTextColor: Theme.of(context).colorScheme.onError,
@@ -456,9 +463,11 @@ class _NotificationSettingsState
                     ),
                     recognizer: TapGestureRecognizer()
                       ..onTap = () {
-                        AppSettings.openAppSettings(
-                          type: AppSettingsType.notification,
-                        );
+                        if (Platform.isAndroid || Platform.isIOS) {
+                          AppSettings.openAppSettings(
+                            type: AppSettingsType.notification,
+                          );
+                        }
                       },
                   ),
                   TextSpan(

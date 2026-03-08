@@ -45,7 +45,7 @@ void main() async {
     enableTransparentNavigationBar();
 
     authenticationState.login().then((v) {
-      if (sph?.session != null) QuickActionsStartUp();
+      if (sph?.session != null && (Platform.isAndroid || Platform.isIOS)) QuickActionsStartUp();
     });
 
     await setupBackgroundService(accountDatabase);

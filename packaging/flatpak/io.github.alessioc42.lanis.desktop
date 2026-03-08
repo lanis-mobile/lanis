@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Lanis Mobile
+Comment=App for the Hessian school portal (SPH)
+Exec=lanis
+Icon=io.github.alessioc42.lanis
+Terminal=false
+Type=Application
+Categories=Education;Network;
+StartupWMClass=lanis
