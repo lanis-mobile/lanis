@@ -48,6 +48,8 @@ jobs:
         with:
           name: linux-bundle
           path: build/linux/x64/release/bundle/
+          # Preserve execute bits — download-artifact restores them when include-hidden-files is used
+          include-hidden-files: false
 
   # ── 2. Package as Flatpak ──────────────────────────────────────────────────
   build-flatpak:
@@ -62,6 +64,9 @@ jobs:
         with:
           name: linux-bundle
           path: build/linux/x64/release/bundle/
+
+      - name: Restore execute bit on binary
+        run: chmod 755 build/linux/x64/release/bundle/lanis
 
       - name: Install Flatpak tools
         run: |
@@ -115,13 +120,16 @@ jobs:
           name: linux-bundle
           path: bundle/
 
+      - name: Restore execute bit on binary
+        run: chmod 755 bundle/lanis
+
       - name: Install rpmbuild
         run: sudo apt-get update -y && sudo apt-get install -y rpm
 
       - name: Set up rpmbuild tree
         run: |
           mkdir -p ~/rpmbuild/{SPECS,SOURCES,BUILD,RPMS,SRPMS}
-          cp -r bundle ~/rpmbuild/SOURCES/bundle
+          cp -rp bundle ~/rpmbuild/SOURCES/bundle
 
       - name: Build RPM
         run: |

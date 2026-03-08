@@ -19,6 +19,8 @@ used by 35,000+ students and teachers daily across schools in Hesse, Germany.
 # Install the pre-built Flutter bundle to /opt/lanis
 mkdir -p %{buildroot}/opt/%{name}
 cp -r %{_sourcedir}/bundle/. %{buildroot}/opt/%{name}/
+# Ensure the binary is executable (cp may not preserve the bit from CI artifacts)
+chmod 755 %{buildroot}/opt/%{name}/%{name}
 
 # Launcher wrapper so the binary (and its rpath $ORIGIN/lib) resolves correctly
 mkdir -p %{buildroot}%{_bindir}

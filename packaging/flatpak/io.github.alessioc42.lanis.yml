@@ -31,11 +31,12 @@ modules:
       # Icon
       - install -Dm644 icon.png /app/share/icons/hicolor/512x512/apps/io.github.alessioc42.lanis.png
     sources:
-      # Pre-built Flutter release bundle — built by the CI job before flatpak-builder runs.
-      # flatpak-builder is invoked from the repo root, so this path is relative to it.
+      # Pre-built Flutter release bundle.
+      # Paths are resolved relative to THIS manifest file (packaging/flatpak/),
+      # so we go up two levels to reach the repo root.
       - type: dir
-        path: build/linux/x64/release/bundle
+        path: ../../build/linux/x64/release/bundle
       - type: file
-        path: assets/icon.png
+        path: ../../assets/icon.png
       - type: file
-        path: packaging/flatpak/io.github.alessioc42.lanis.desktop
+        path: io.github.alessioc42.lanis.desktop
