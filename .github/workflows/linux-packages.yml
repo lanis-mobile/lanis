@@ -68,6 +68,11 @@ jobs:
       - name: Restore execute bit on binary
         run: chmod 755 build/linux/x64/release/bundle/lanis
 
+      - name: Resize icon to 512x512 for Flatpak
+        run: |
+          sudo apt-get install -y imagemagick
+          convert assets/icon.png -resize 512x512 packaging/flatpak/icon-512.png
+
       - name: Install Flatpak tools
         run: |
           sudo apt-get update -y

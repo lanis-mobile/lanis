@@ -29,7 +29,7 @@ modules:
       # Desktop entry
       - install -Dm644 io.github.alessioc42.lanis.desktop /app/share/applications/io.github.alessioc42.lanis.desktop
       # Icon
-      - install -Dm644 icon.png /app/share/icons/hicolor/512x512/apps/io.github.alessioc42.lanis.png
+      - install -Dm644 icon-512.png /app/share/icons/hicolor/512x512/apps/io.github.alessioc42.lanis.png
     sources:
       # Pre-built Flutter release bundle.
       # Paths are resolved relative to THIS manifest file (packaging/flatpak/),
@@ -37,6 +37,6 @@ modules:
       - type: dir
         path: ../../build/linux/x64/release/bundle
       - type: file
-        path: ../../assets/icon.png
+        path: icon-512.png
       - type: file
         path: io.github.alessioc42.lanis.desktop
