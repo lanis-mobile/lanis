@@ -61,4 +61,5 @@ app.*.map.json
 artifacts
 artifacts/*
 
-generated/packaging/flatpak/icon-512.png
+generated/
+packaging/flatpak/icon-512.png
