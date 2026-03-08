@@ -110,6 +110,7 @@ jobs:
         with:
           name: lanis-flatpak
           path: lanis-${{ needs.build-bundle.outputs.version }}.flatpak
+          compression-level: 0
 
   # ── 3. Package as RPM ─────────────────────────────────────────────────────
   build-rpm:
@@ -151,3 +152,31 @@ jobs:
         with:
           name: lanis-rpm
           path: "*.rpm"
+          compression-level: 0
+
+  # ── 4. Create Release ───────────────────────────────────────────────────────
+  create-release:
+    name: Create GitHub Release
+    needs: [build-bundle, build-flatpak, build-rpm]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ needs.build-bundle.outputs.version }}
+          draft: false
+          prerelease: false
+          files: |
+            artifacts/lanis-flatpak/lanis-*.flatpak
+            artifacts/lanis-rpm/*.rpm
+
