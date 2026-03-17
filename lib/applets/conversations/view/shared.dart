@@ -1,9 +1,9 @@
 // Shared classes and functions between the conversation screens.
 
+import 'dart:math' as math;
+
 import 'package:color_hash/color_hash.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_chat_bubble/bubble_type.dart';
-import 'package:flutter_chat_bubble/clippers/chat_bubble_clipper_1.dart';
 
 import '../../../models/conversations.dart';
 import '../../../widgets/format_text.dart';
@@ -69,6 +69,8 @@ enum MessageStatus { sending, sent, error }
 
 enum MessageState { first, series }
 
+enum ChatBubbleType { own, other }
+
 class DateHeader {
   final DateTime date;
 
@@ -87,8 +89,8 @@ class BubbleStructure {
   }
 
   static CustomClipper<Path> getFirstStateClipper(final bool own) {
-    return ChatBubbleClipper1(
-      type: own ? BubbleType.sendBubble : BubbleType.receiverBubble,
+    return ChatBubbleClipper(
+      type: own ? ChatBubbleType.own : ChatBubbleType.other,
       nipWidth: nipWidth,
       nipHeight: 14,
       radius: 16,
@@ -119,6 +121,102 @@ class BubbleStructure {
       right: combinedMargin,
       top: state == MessageState.first ? 8.0 : 2.0,
     );
+  }
+}
+
+class ChatBubbleClipper extends CustomClipper<Path> {
+  final ChatBubbleType type;
+  final double nipWidth;
+  final double nipHeight;
+  final double radius;
+  final double nipRadius;
+
+  const ChatBubbleClipper({
+    required this.type,
+    required this.nipWidth,
+    required this.nipHeight,
+    required this.radius,
+    required this.nipRadius,
+  });
+
+  @override
+  Path getClip(Size size) {
+    final double safeRadius = math.min(
+      math.max(radius, 0),
+      size.shortestSide / 2,
+    );
+    final double safeNipWidth = math.min(math.max(nipWidth, 0), size.width / 2);
+    final double safeNipHeight = math.min(
+      math.max(nipHeight, 0),
+      size.height - safeRadius,
+    );
+    final double availableBottom = math.max(size.height - safeRadius, 0);
+    final double yTop = 0;
+    final double yBottom = math.min(safeNipHeight, availableBottom);
+    final double controlOffset = math.min(
+      math.max(safeNipWidth * 0.55, 0),
+      safeNipWidth + nipRadius,
+    );
+
+    final Rect bodyRect = type == ChatBubbleType.other
+        ? Rect.fromLTWH(safeNipWidth, 0, size.width - safeNipWidth, size.height)
+        : Rect.fromLTWH(0, 0, size.width - safeNipWidth, size.height);
+
+    final Radius rounded = Radius.circular(safeRadius);
+    final RRect bodyRRect = type == ChatBubbleType.other
+        ? RRect.fromRectAndCorners(
+            bodyRect,
+            topLeft: Radius.zero,
+            topRight: rounded,
+            bottomRight: rounded,
+            bottomLeft: rounded,
+          )
+        : RRect.fromRectAndCorners(
+            bodyRect,
+            topLeft: rounded,
+            topRight: Radius.zero,
+            bottomRight: rounded,
+            bottomLeft: rounded,
+          );
+
+    final Path path = Path()..addRRect(bodyRRect);
+
+    if (type == ChatBubbleType.other) {
+      path
+        ..moveTo(safeNipWidth, yTop)
+        ..lineTo(0, yTop)
+        ..quadraticBezierTo(
+          controlOffset,
+          yBottom - nipRadius,
+          safeNipWidth,
+          yBottom,
+        )
+        ..close();
+    } else {
+      final double right = size.width;
+      final double nipStart = right - safeNipWidth;
+      path
+        ..moveTo(nipStart, yTop)
+        ..lineTo(right, yTop)
+        ..quadraticBezierTo(
+          right - controlOffset,
+          yBottom - nipRadius,
+          nipStart,
+          yBottom,
+        )
+        ..close();
+    }
+
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant ChatBubbleClipper oldClipper) {
+    return oldClipper.type != type ||
+        oldClipper.nipWidth != nipWidth ||
+        oldClipper.nipHeight != nipHeight ||
+        oldClipper.radius != radius ||
+        oldClipper.nipRadius != nipRadius;
   }
 }
 
