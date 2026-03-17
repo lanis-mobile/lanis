@@ -56,7 +56,6 @@ dependencies:
     sdk: flutter
   app_settings: ^7.0.0
   device_info_plus: ^10.1.0
-  color_hash: ^1.0.1
   flutter_quill: ^10.0.0
   flutter_tagging_plus: ^4.0.2
   flutter_inappwebview: ^6.1.5

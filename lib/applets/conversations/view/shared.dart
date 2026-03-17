@@ -2,10 +2,10 @@
 
 import 'dart:math' as math;
 
-import 'package:color_hash/color_hash.dart';
 import 'package:flutter/material.dart';
 
 import '../../../models/conversations.dart';
+import '../../../utils/color_hash.dart';
 import '../../../widgets/format_text.dart';
 
 class ConversationSettings {
