@@ -63,7 +63,6 @@ dependencies:
   flutter_chat_bubble: ^2.0.2
   color_hash: ^1.0.1
   flutter_quill: ^10.0.0
-  quill_html_converter: ^9.3.2
   flutter_tagging_plus: ^4.0.2
   flutter_inappwebview: ^6.1.5
   drift: ^2.21.0
