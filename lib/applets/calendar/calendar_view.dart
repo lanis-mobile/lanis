@@ -1,6 +1,7 @@
 import 'package:dart_date/dart_date.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_linkify/flutter_linkify.dart';
+import 'package:linkify/linkify.dart';
 import 'package:lanis/applets/calendar/definition.dart';
 import 'package:lanis/globals.dart';
 import 'package:lanis/utils/keyboard_observer.dart';
@@ -292,16 +293,35 @@ class _CalendarViewState extends State<CalendarView> {
           if (doesEntryExist(calendarData.description)) ...[
             Padding(
               padding: const EdgeInsets.only(top: 8.0),
-              child: Linkify(
-                onOpen: (link) async {
-                  if (!await launchUrl(Uri.parse(link.url))) {
-                    logger.w("${link.url} konnte nicht geöffnet werden.");
-                  }
-                },
-                text: calendarData.description.replaceAll("<br />", "\n"),
-                style: Theme.of(context).textTheme.bodyLarge,
-                linkStyle: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
+              child: Text.rich(
+                TextSpan(
+                  children:
+                      linkify(
+                        calendarData.description.replaceAll("<br />", "\n"),
+                        options: const LinkifyOptions(humanize: true),
+                        linkifiers: const [EmailLinkifier(), UrlLinkifier()],
+                      ).map((element) {
+                        if (element is LinkableElement) {
+                          return TextSpan(
+                            text: element.text,
+                            style: Theme.of(context).textTheme.bodyMedium!
+                                .copyWith(
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () async {
+                                try {
+                                  await launchUrl(Uri.parse(element.url));
+                                } catch (e) {
+                                  logger.e(
+                                    "Could not launch url: ${element.url}",
+                                  );
+                                }
+                              },
+                          );
+                        }
+                        return TextSpan(text: element.text);
+                      }).toList(),
                 ),
               ),
             ),

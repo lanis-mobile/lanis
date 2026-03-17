@@ -38,7 +38,6 @@ dependencies:
   package_info_plus: ^9.0.0
   encrypt: ^5.0.3
   pointycastle: ^3.7.3
-  flutter_linkify: ^6.0.0
   crypto: ^3.0.3
   open_file: ^3.3.2
   share_plus: ^12.0.0
