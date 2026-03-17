@@ -43,7 +43,6 @@ dependencies:
   open_file: ^3.3.2
   share_plus: ^12.0.0
   rxdart: ^0.28.0
-  stack_trace: ^1.11.1
   styled_text: ^9.0.0-beta-4
   linkify: ^5.0.0
   introduction_screen: ^4.0.0

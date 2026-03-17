@@ -19,7 +19,6 @@ import 'package:lanis/utils/authentication_state.dart';
 import 'package:lanis/utils/quick_actions.dart';
 import 'package:lanis/view/startup_error_view.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:stack_trace/stack_trace.dart';
 
 import 'applets/conversations/view/shared.dart';
 import 'background_service.dart';
@@ -268,7 +267,7 @@ Widget errorWidget(FlutterErrorDetails details, {BuildContext? context}) {
             onPressed: () async {
               await Clipboard.setData(
                 ClipboardData(
-                  text: Trace.from(details.stack!).terse.toString(),
+                  text: "${details.exception}\n${details.stack.toString()}",
                 ),
               );
               if (context!.mounted) {
