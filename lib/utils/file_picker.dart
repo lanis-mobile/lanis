@@ -6,7 +6,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
-import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mime/mime.dart';
 import 'package:path_provider/path_provider.dart';
@@ -29,7 +28,7 @@ class PickedFile {
   /// May be null if no mimeType was found
   String? get mimeType => lookupMimeType(path!);
 
-  MediaType? get mediaType => MediaType.parse(mimeType!);
+  DioMediaType? get mediaType => DioMediaType.parse(mimeType!);
 
   PickedFile({required this.name, this.size, this.path});
 }
