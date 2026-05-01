@@ -89,4 +89,4 @@ If you are producing a build that you intend to distribute to other people, plea
 flutter build <apk|aab|ipa> --release --dart-define=cronetHttpNoPlay=true
 ```
 
-An alternative is the `build.sh` script, which builds the android binarys when on linux and the macOS binarys when on macOS and opens the file manager with the build output when complete.
+An alternative is the `build.sh` script, which builds the android binarys when on linux and the iOS binarys when on macOS and opens the file manager with the build output when complete.
