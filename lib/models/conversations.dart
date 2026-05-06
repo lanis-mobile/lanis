@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_tagging_plus/flutter_tagging_plus.dart';
+import '../utils/flutter_tagging.dart';
 
 import '../globals.dart';
 

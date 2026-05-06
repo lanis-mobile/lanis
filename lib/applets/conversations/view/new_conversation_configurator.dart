@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lanis/generated/l10n.dart';
-import 'package:flutter_tagging_plus/flutter_tagging_plus.dart';
+import '../../../utils/flutter_tagging.dart';
 import '../../../core/connection_checker.dart';
 import '../../../core/sph/sph.dart';
 import '../../../models/conversations.dart';

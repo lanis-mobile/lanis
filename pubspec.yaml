@@ -57,7 +57,7 @@ dependencies:
   app_settings: ^7.0.0
   device_info_plus: ^10.1.0
   flutter_quill: ^10.0.0
-  flutter_tagging_plus: ^4.0.2
+  quill_html_converter: ^9.3.2
   flutter_inappwebview: ^6.1.5
   drift: ^2.21.0
   drift_flutter: ^0.2.1
