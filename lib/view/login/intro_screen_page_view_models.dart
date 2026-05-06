@@ -1,7 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:introduction_screen/introduction_screen.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lanis/generated/l10n.dart';
+
+class PageViewModel {
+  final Widget image;
+  final String title;
+  final String body;
+
+  const PageViewModel({
+    required this.image,
+    required this.title,
+    required this.body,
+  });
+}
 
 List<PageViewModel> intoScreenPageViewModels(BuildContext context) => [
   PageViewModel(

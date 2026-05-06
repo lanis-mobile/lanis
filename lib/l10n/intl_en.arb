@@ -39,6 +39,7 @@
   "supported": "supported",
   "unsupported": "unsupported",
   "noResults": "No results",
+  "introSkip": "Skip",
   "theme": "Theme",
   "light": "Light",
   "dark": "Dark",

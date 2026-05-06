@@ -39,6 +39,7 @@
   "standard": "Standart",
   "dynamicColor": "Dynamisch",
   "updateInterval": "Aktualisierungsintervall",
+  "introSkip": "Weiter",
   "files": "Dateien",
   "file": "Datei",
   "calendarFormatMonth": "Woche",

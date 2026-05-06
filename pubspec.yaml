@@ -44,7 +44,6 @@ dependencies:
   rxdart: ^0.28.0
   styled_text: ^9.0.0-beta-4
   linkify: ^5.0.0
-  introduction_screen: ^4.0.0
   flutter_svg: ^2.0.10+1
   dynamic_color: ^1.6.9
   flutter_markdown: ^0.7.1
@@ -81,7 +80,6 @@ dependencies:
   colored_logger: ^2.1.1
   flutter_email_sender: ^8.0.0
 
-# flutter_tagging_plus is old and isn't being updated since a long time.
 dependency_overrides:
   flutter_keyboard_visibility: ^6.0.0
   intl: ^0.20.2
