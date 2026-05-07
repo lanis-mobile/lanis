@@ -33,15 +33,30 @@ class FetcherResponse<T> {
   }) : fetchedAt = fetchedAt ?? DateTime.now();
 }
 
+class AppletResponseStream<T> extends StreamView<FetcherResponse<T>> {
+  final FetcherResponse<T>? Function() _valueGetter;
+
+  AppletResponseStream(super.stream, this._valueGetter);
+
+  FetcherResponse<T> get value => _valueGetter()!;
+}
+
 class AppletParser<T> {
   final SPH sph;
   final StreamController<FetcherResponse<T>> _controller =
       StreamController<FetcherResponse<T>>.broadcast();
   final AppletDefinition appletDefinition;
-  FetcherResponse<T>? _latestResponse;
+  FetcherResponse<T> _latestResponse = FetcherResponse(
+    status: FetcherStatus.fetching,
+    error: null,
+  );
+  late final AppletResponseStream<T> _stream = AppletResponseStream<T>(
+    _controller.stream,
+    () => _latestResponse,
+  );
   bool isEmpty = true;
 
-  Stream<FetcherResponse<T>> get stream => _controller.stream;
+  AppletResponseStream<T> get stream => _stream;
 
   FetcherResponse<T>? get latestResponse => _latestResponse;
 

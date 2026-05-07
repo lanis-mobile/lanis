@@ -79,7 +79,7 @@ class _CombinedAppletBuilderState<T> extends State<CombinedAppletBuilder<T>> {
   Widget build(BuildContext context) {
     return StreamBuilder(
       stream: widget.parser.stream,
-      initialData: widget.parser.latestResponse,
+      initialData: widget.parser.stream.value,
       builder: (context, snapshot) {
         if (snapshot.hasError || snapshot.data?.status == FetcherStatus.error) {
           return Scaffold(
