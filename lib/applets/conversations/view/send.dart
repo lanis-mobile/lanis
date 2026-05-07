@@ -122,8 +122,8 @@ class _FullScreenConversationsMessageInputState
           children: [
             Expanded(
               child: QuillEditor.basic(
-                configurations: QuillEditorConfigurations(
-                  controller: _controller,
+                controller: _controller,
+                config: QuillEditorConfig(
                   placeholder: AppLocalizations.of(
                     context,
                   ).sendMessagePlaceholder,
@@ -131,60 +131,58 @@ class _FullScreenConversationsMessageInputState
                 ),
               ),
             ),
-            QuillToolbar(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainer,
-                ),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Wrap(
-                    children: [
-                      QuillToolbarHistoryButton(
-                        isUndo: true,
-                        controller: _controller,
-                      ),
-                      QuillToolbarHistoryButton(
-                        isUndo: false,
-                        controller: _controller,
-                      ),
-                      QuillToolbarClearFormatButton(controller: _controller),
-                      QuillToolbarToggleStyleButton(
-                        options: const QuillToolbarToggleStyleButtonOptions(),
-                        controller: _controller,
-                        attribute: Attribute.bold,
-                      ),
-                      QuillToolbarToggleStyleButton(
-                        options: const QuillToolbarToggleStyleButtonOptions(),
-                        controller: _controller,
-                        attribute: Attribute.italic,
-                      ),
-                      QuillToolbarToggleStyleButton(
-                        controller: _controller,
-                        attribute: Attribute.underline,
-                      ),
-                      QuillToolbarToggleStyleButton(
-                        controller: _controller,
-                        attribute: Attribute.strikeThrough,
-                      ),
-                      QuillToolbarToggleStyleButton(
-                        controller: _controller,
-                        attribute: Attribute.inlineCode,
-                      ),
-                      QuillToolbarToggleStyleButton(
-                        controller: _controller,
-                        attribute: Attribute.ul,
-                      ),
-                      QuillToolbarToggleStyleButton(
-                        controller: _controller,
-                        attribute: Attribute.superscript,
-                      ),
-                      QuillToolbarToggleStyleButton(
-                        controller: _controller,
-                        attribute: Attribute.subscript,
-                      ),
-                    ],
-                  ),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainer,
+              ),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Wrap(
+                  children: [
+                    QuillToolbarHistoryButton(
+                      isUndo: true,
+                      controller: _controller,
+                    ),
+                    QuillToolbarHistoryButton(
+                      isUndo: false,
+                      controller: _controller,
+                    ),
+                    QuillToolbarClearFormatButton(controller: _controller),
+                    QuillToolbarToggleStyleButton(
+                      options: const QuillToolbarToggleStyleButtonOptions(),
+                      controller: _controller,
+                      attribute: Attribute.bold,
+                    ),
+                    QuillToolbarToggleStyleButton(
+                      options: const QuillToolbarToggleStyleButtonOptions(),
+                      controller: _controller,
+                      attribute: Attribute.italic,
+                    ),
+                    QuillToolbarToggleStyleButton(
+                      controller: _controller,
+                      attribute: Attribute.underline,
+                    ),
+                    QuillToolbarToggleStyleButton(
+                      controller: _controller,
+                      attribute: Attribute.strikeThrough,
+                    ),
+                    QuillToolbarToggleStyleButton(
+                      controller: _controller,
+                      attribute: Attribute.inlineCode,
+                    ),
+                    QuillToolbarToggleStyleButton(
+                      controller: _controller,
+                      attribute: Attribute.ul,
+                    ),
+                    QuillToolbarToggleStyleButton(
+                      controller: _controller,
+                      attribute: Attribute.superscript,
+                    ),
+                    QuillToolbarToggleStyleButton(
+                      controller: _controller,
+                      attribute: Attribute.subscript,
+                    ),
+                  ],
                 ),
               ),
             ),

@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:simple_shadow/simple_shadow.dart';
 import 'package:lanis/home_page.dart';
 import 'package:lanis/models/client_status_exceptions.dart';
 import 'package:lanis/utils/authentication_state.dart';
@@ -150,21 +149,15 @@ class _StartupScreenState extends State<StartupScreen>
       padding: EdgeInsets.symmetric(horizontal: horizontal, vertical: vertical),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          return SimpleShadow(
-            color: Theme.of(context).colorScheme.surfaceTint,
-            opacity: 0.25,
-            sigma: 6,
-            offset: const Offset(4, 8),
-            child: SvgPicture.asset(
-              "assets/startup.svg",
-              colorFilter: ColorFilter.mode(
-                Theme.of(context).colorScheme.primary,
-                BlendMode.srcIn,
-              ),
-              fit: BoxFit.contain,
-              width: constraints.maxWidth.clamp(0, 300),
-              height: constraints.maxHeight.clamp(0, 250),
+          return SvgPicture.asset(
+            "assets/startup.svg",
+            colorFilter: ColorFilter.mode(
+              Theme.of(context).colorScheme.primary,
+              BlendMode.srcIn,
             ),
+            fit: BoxFit.contain,
+            width: constraints.maxWidth.clamp(0, 300),
+            height: constraints.maxHeight.clamp(0, 250),
           );
         },
       ),

@@ -31,45 +31,34 @@ dependencies:
   dio: ^5.9.0
   html: ^0.15.4
   flutter_launcher_icons: ^0.14.0
-  flutter_local_notifications: ^19.0.0
-  background_fetch: 1.4.0
+  flutter_local_notifications: ^21.0.0
+  background_fetch: ^1.6.2
   flutter_background_executor: ^1.0.0
   permission_handler: ^12.0.1
   package_info_plus: ^9.0.0
   encrypt: ^5.0.3
   pointycastle: ^3.7.3
-  flutter_linkify: ^6.0.0
   crypto: ^3.0.3
   open_file: ^3.3.2
   share_plus: ^12.0.0
-  rxdart: ^0.28.0
-  stack_trace: ^1.11.1
   styled_text: ^9.0.0-beta-4
   linkify: ^5.0.0
-  introduction_screen: ^4.0.0
   flutter_svg: ^2.0.10+1
   dynamic_color: ^1.6.9
   flutter_markdown: ^0.7.1
-  file_picker: ^10.3.2
-  http_parser: ^4.0.2
+  file_picker: ^11.0.2
   mime: ^2.0.0
   flutter_native_splash: ^2.4.1
   table_calendar: ^3.0.9
   flutter_localizations:
     sdk: flutter
-  simple_shadow: ^0.3.1
   app_settings: ^7.0.0
-  device_info_plus: ^10.1.0
-  flutter_chat_bubble: ^2.0.2
-  color_hash: ^1.0.1
-  flutter_quill: ^10.0.0
-  quill_html_converter: ^9.3.2
-  flutter_tagging_plus: ^4.0.2
+  device_info_plus: ^12.4.0
+  flutter_quill: ^11.5.0
   flutter_inappwebview: ^6.1.5
   drift: ^2.21.0
-  drift_flutter: ^0.2.1
+  drift_flutter: ^0.3.0
   flutter_secure_storage: ^10.0.0
-  flutter_phoenix: ^1.1.1
   native_dio_adapter: ^1.5.0
   flutter_widget_from_html_core: ^0.17.0
   flutter_colorpicker: ^1.1.0
@@ -86,12 +75,6 @@ dependencies:
   intl: ^0.20.2
   uuid: ^4.5.2
   colored_logger: ^2.1.1
-  flutter_email_sender: ^8.0.0
-
-# flutter_tagging_plus is old and isn't being updated since a long time.
-dependency_overrides:
-  flutter_keyboard_visibility: ^6.0.0
-  intl: ^0.20.2
 
 flutter_launcher_icons:
   android: false

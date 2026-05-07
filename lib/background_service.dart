@@ -95,7 +95,7 @@ Future<void> setupBackgroundService(AccountDatabase accountDatabase) async {
 Future<void> initializeNotifications() async {
   try {
     FlutterLocalNotificationsPlugin().initialize(
-      const InitializationSettings(
+      settings: const InitializationSettings(
         android: AndroidInitializationSettings('@drawable/ic_launcher'),
         iOS: DarwinInitializationSettings(
           requestAlertPermission: true,
@@ -260,10 +260,10 @@ class BackgroundTaskToolkit {
         iOS: iOSDetails,
       );
       await FlutterLocalNotificationsPlugin().show(
-        id,
-        title,
-        message,
-        platformDetails,
+        id: id,
+        title: title,
+        body: message,
+        notificationDetails: platformDetails,
       );
     } catch (e, s) {
       backgroundLogger.e(e, stackTrace: s);

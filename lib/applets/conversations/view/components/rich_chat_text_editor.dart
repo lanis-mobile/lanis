@@ -129,8 +129,8 @@ class _RichChatTextEditorState extends State<RichChatTextEditor> {
                         padding: const EdgeInsets.symmetric(vertical: 4.0),
                         constraints: const BoxConstraints(maxHeight: 150),
                         child: QuillEditor.basic(
-                          configurations: QuillEditorConfigurations(
-                            controller: quillController,
+                          controller: quillController,
+                          config: QuillEditorConfig(
                             placeholder: widget.tooltip,
                             customStyles: DefaultStyles(
                               placeHolder: DefaultTextBlockStyle(
@@ -140,6 +140,7 @@ class _RichChatTextEditorState extends State<RichChatTextEditor> {
                                     context,
                                   ).colorScheme.onSurface.withAlpha(80),
                                 ),
+                                HorizontalSpacing.zero,
                                 VerticalSpacing(0, 0),
                                 VerticalSpacing(0, 0),
                                 null,
@@ -151,6 +152,7 @@ class _RichChatTextEditorState extends State<RichChatTextEditor> {
                                     context,
                                   ).colorScheme.onSurface,
                                 ),
+                                HorizontalSpacing.zero,
                                 VerticalSpacing(0, 0),
                                 VerticalSpacing(0, 0),
                                 null,
@@ -206,67 +208,65 @@ class _RichChatTextEditorState extends State<RichChatTextEditor> {
           curve: Curves.easeInOut,
           onEnd: () => _notifyHeightChange(),
           child: showToolbar
-              ? QuillToolbar(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surfaceContainer,
-                    ),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Wrap(
-                          alignment: WrapAlignment.center,
-                          children: [
-                            QuillToolbarHistoryButton(
-                              isUndo: true,
-                              controller: quillController,
-                            ),
-                            QuillToolbarHistoryButton(
-                              isUndo: false,
-                              controller: quillController,
-                            ),
-                            QuillToolbarClearFormatButton(
-                              controller: quillController,
-                            ),
-                            QuillToolbarToggleStyleButton(
-                              options:
-                                  const QuillToolbarToggleStyleButtonOptions(),
-                              controller: quillController,
-                              attribute: Attribute.bold,
-                            ),
-                            QuillToolbarToggleStyleButton(
-                              options:
-                                  const QuillToolbarToggleStyleButtonOptions(),
-                              controller: quillController,
-                              attribute: Attribute.italic,
-                            ),
-                            QuillToolbarToggleStyleButton(
-                              controller: quillController,
-                              attribute: Attribute.underline,
-                            ),
-                            QuillToolbarToggleStyleButton(
-                              controller: quillController,
-                              attribute: Attribute.strikeThrough,
-                            ),
-                            QuillToolbarToggleStyleButton(
-                              controller: quillController,
-                              attribute: Attribute.inlineCode,
-                            ),
-                            QuillToolbarToggleStyleButton(
-                              controller: quillController,
-                              attribute: Attribute.ul,
-                            ),
-                            QuillToolbarToggleStyleButton(
-                              controller: quillController,
-                              attribute: Attribute.superscript,
-                            ),
-                            QuillToolbarToggleStyleButton(
-                              controller: quillController,
-                              attribute: Attribute.subscript,
-                            ),
-                          ],
-                        ),
+              ? DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceContainer,
+                  ),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Wrap(
+                        alignment: WrapAlignment.center,
+                        children: [
+                          QuillToolbarHistoryButton(
+                            isUndo: true,
+                            controller: quillController,
+                          ),
+                          QuillToolbarHistoryButton(
+                            isUndo: false,
+                            controller: quillController,
+                          ),
+                          QuillToolbarClearFormatButton(
+                            controller: quillController,
+                          ),
+                          QuillToolbarToggleStyleButton(
+                            options:
+                                const QuillToolbarToggleStyleButtonOptions(),
+                            controller: quillController,
+                            attribute: Attribute.bold,
+                          ),
+                          QuillToolbarToggleStyleButton(
+                            options:
+                                const QuillToolbarToggleStyleButtonOptions(),
+                            controller: quillController,
+                            attribute: Attribute.italic,
+                          ),
+                          QuillToolbarToggleStyleButton(
+                            controller: quillController,
+                            attribute: Attribute.underline,
+                          ),
+                          QuillToolbarToggleStyleButton(
+                            controller: quillController,
+                            attribute: Attribute.strikeThrough,
+                          ),
+                          QuillToolbarToggleStyleButton(
+                            controller: quillController,
+                            attribute: Attribute.inlineCode,
+                          ),
+                          QuillToolbarToggleStyleButton(
+                            controller: quillController,
+                            attribute: Attribute.ul,
+                          ),
+                          QuillToolbarToggleStyleButton(
+                            controller: quillController,
+                            attribute: Attribute.superscript,
+                          ),
+                          QuillToolbarToggleStyleButton(
+                            controller: quillController,
+                            attribute: Attribute.subscript,
+                          ),
+                        ],
                       ),
                     ),
                   ),
