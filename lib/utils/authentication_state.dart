@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:lanis/home_page.dart';
 
 import '../core/database/account_database/account_db.dart';
 import '../core/sph/sph.dart';
 import '../models/client_status_exceptions.dart';
+import 'phoenix.dart';
 import 'logger.dart';
 
 enum LoginStatus { waiting, done, error, setup }
