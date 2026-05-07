@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:rxdart/rxdart.dart';
 import 'package:lanis/applets/definitions.dart';
 import 'package:lanis/core/sph/sph.dart';
 
@@ -36,11 +35,15 @@ class FetcherResponse<T> {
 
 class AppletParser<T> {
   final SPH sph;
-  final BehaviorSubject<FetcherResponse<T>> _controller = BehaviorSubject();
+  final StreamController<FetcherResponse<T>> _controller =
+      StreamController<FetcherResponse<T>>.broadcast();
   final AppletDefinition appletDefinition;
+  FetcherResponse<T>? _latestResponse;
   bool isEmpty = true;
 
-  ValueStream<FetcherResponse<T>> get stream => _controller.stream;
+  Stream<FetcherResponse<T>> get stream => _controller.stream;
+
+  FetcherResponse<T>? get latestResponse => _latestResponse;
 
   AppletParser(this.sph, this.appletDefinition) {
     Timer.periodic(appletDefinition.refreshInterval, timerCallback);
@@ -52,7 +55,14 @@ class AppletParser<T> {
     }
   }
 
-  void addResponse(final FetcherResponse<T> data) => _controller.sink.add(data);
+  void addResponse(final FetcherResponse<T> data) {
+    _latestResponse = data;
+    _controller.add(data);
+  }
+
+  void dispose() {
+    _controller.close();
+  }
 
   Future<void> fetchData({
     bool forceRefresh = false,

@@ -2,10 +2,10 @@ import 'dart:io' show exit, Platform;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_email_sender/flutter_email_sender.dart';
 import 'package:lanis/core/database/account_database/account_db.dart'
     show secureStorage;
 import 'package:lanis/utils/logger.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -146,11 +146,14 @@ void forceReset() async {
 void sendEmail(FlutterErrorDetails errorDetails) async {
   final errorReport = await generateErrorReport(errorDetails);
 
-  final Email email = Email(
-    subject: "[FEHLERBERICHT] ${errorDetails.exceptionAsString()}",
-    recipients: ["lanis-mobile@alessioc42.dev"],
-    body: "\n\n\n$errorReport",
+  final emailUri = Uri(
+    scheme: 'mailto',
+    path: 'lanis-mobile@alessioc42.dev',
+    queryParameters: {
+      'subject': '[FEHLERBERICHT] ${errorDetails.exceptionAsString()}',
+      'body': '\n\n\n$errorReport',
+    },
   );
 
-  await FlutterEmailSender.send(email);
+  await launchUrl(emailUri);
 }
