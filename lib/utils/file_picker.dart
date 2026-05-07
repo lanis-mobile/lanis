@@ -198,7 +198,7 @@ Future<List<PickedFile>> showPickerUI(
 Future<List<PickedFile>> pickFileUsingDocumentsUI(
   List<String>? allowedExtensions,
 ) async {
-  FilePickerResult? result = await FilePicker.platform.pickFiles(
+  FilePickerResult? result = await FilePicker.pickFiles(
     type: FileType.custom,
     allowedExtensions: allowedExtensions,
     allowMultiple: true,

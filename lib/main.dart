@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
+import 'package:flutter_quill/flutter_quill.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:lanis/utils/logger.dart';
 import 'package:lanis/utils/mono_text_viewer.dart';
@@ -210,6 +211,7 @@ class App extends StatelessWidget {
                     GlobalMaterialLocalizations.delegate,
                     GlobalWidgetsLocalizations.delegate,
                     GlobalCupertinoLocalizations.delegate,
+                    FlutterQuillLocalizations.delegate,
                   ],
                   supportedLocales: AppLocalizations.delegate.supportedLocales,
                   home: const Scaffold(body: StartupScreen()),
