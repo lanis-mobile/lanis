@@ -93,6 +93,12 @@ android {
         includeInApk = false
         includeInBundle = false
     }
+
+    // Reduce apk size
+    packagingOptions {
+        dex.useLegacyPackaging = true
+        jniLibs.useLegacyPackaging = true
+    }
 }
 
 flutter {
