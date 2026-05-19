@@ -252,8 +252,9 @@ class BackgroundTaskToolkit {
         ongoing: false,
       );
       const iOSDetails = DarwinNotificationDetails(
-        presentAlert: false,
+        presentAlert: true,
         presentBadge: true,
+        presentSound: true,
       );
       var platformDetails = NotificationDetails(
         android: androidDetails,
