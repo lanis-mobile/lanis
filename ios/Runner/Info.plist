@@ -41,6 +41,8 @@
 	<true/>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>When uploading a photo to the Lanis servers the app requires access to the users photos.</string>
+	<key>NSUserNotificationsUsageDescription</key>
+	<string>Lanis uses notifications for substitutions and messages.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UIBackgroundModes</key>
