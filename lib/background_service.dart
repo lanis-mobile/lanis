@@ -94,16 +94,21 @@ Future<void> setupBackgroundService(AccountDatabase accountDatabase) async {
 
 Future<void> initializeNotifications() async {
   try {
-    FlutterLocalNotificationsPlugin().initialize(
-      settings: const InitializationSettings(
-        android: AndroidInitializationSettings('@drawable/ic_launcher'),
-        iOS: DarwinInitializationSettings(
-          requestAlertPermission: true,
-          requestBadgePermission: true,
-          requestSoundPermission: true,
-        ),
-      ),
+
+    const android = AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    const ios = DarwinInitializationSettings(
+        requestAlertPermission: true,
+        requestBadgePermission: true,
+        requestSoundPermission: true,
     );
+
+    const settings = InitializationSettings(
+        android: android,
+        iOS: ios,
+    );
+        
+    await flutterLocalNotificationsPlugin.initialize(settings);
   } catch (e, s) {
     backgroundLogger.e(e, stackTrace: s);
   }
