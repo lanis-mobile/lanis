@@ -16,6 +16,9 @@ import 'core/database/account_database/account_db.dart'
     show AccountDatabase, ClearTextAccount;
 import 'core/sph/sph.dart' show SPH;
 
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
+
 Future<void> setupBackgroundService(AccountDatabase accountDatabase) async {
   if ((await Permission.notification.isDenied)) {
     logger.d("User disallowed notifications");
@@ -259,7 +262,7 @@ class BackgroundTaskToolkit {
         android: androidDetails,
         iOS: iOSDetails,
       );
-      await FlutterLocalNotificationsPlugin().show(
+      await flutterLocalNotificationsPlugin.show(
         id: id,
         title: title,
         body: message,
