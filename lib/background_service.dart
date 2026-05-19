@@ -17,7 +17,9 @@ import 'core/database/account_database/account_db.dart'
 import 'core/sph/sph.dart' show SPH;
 
 Future<void> setupBackgroundService(AccountDatabase accountDatabase) async {
-  if ((await Permission.notification.isDenied)) {
+  final statusNotificationPermission = await Permission.notification.status;
+    
+  if (!statusNotificationPermission.isGranted) {
     logger.d("User disallowed notifications");
     await FlutterBackgroundExecutor().cancelAllTasks();
     return;
