@@ -100,3 +100,65 @@ struct StundenLiveActivityWidget: Widget {
         }
     }
 }
+
+// MARK: - Previews
+
+@available(iOS 16.2, *)
+#Preview("Lock Screen", as: .content, using: LessonActivityAttributes(
+    lessonName: "Mathematik",
+    teacher: "Müller",
+    room: "204"
+)) {
+    StundenLiveActivityWidget()
+} contentStates: {
+    LessonActivityAttributes.ContentState(
+        endTime: Date().addingTimeInterval(25 * 60),
+        nextLessonName: "Deutsch",
+        nextLessonStart: "08:45"
+    )
+}
+
+@available(iOS 16.2, *)
+#Preview("Dynamic Island Expanded", as: .dynamicIsland(.expanded), using: LessonActivityAttributes(
+    lessonName: "Mathematik",
+    teacher: "Müller",
+    room: "204"
+)) {
+    StundenLiveActivityWidget()
+} contentStates: {
+    LessonActivityAttributes.ContentState(
+        endTime: Date().addingTimeInterval(25 * 60),
+        nextLessonName: "Deutsch",
+        nextLessonStart: "08:45"
+    )
+}
+
+@available(iOS 16.2, *)
+#Preview("Dynamic Island Compact", as: .dynamicIsland(.compact), using: LessonActivityAttributes(
+    lessonName: "Mathematik",
+    teacher: "Müller",
+    room: "204"
+)) {
+    StundenLiveActivityWidget()
+} contentStates: {
+    LessonActivityAttributes.ContentState(
+        endTime: Date().addingTimeInterval(25 * 60),
+        nextLessonName: "Deutsch",
+        nextLessonStart: "08:45"
+    )
+}
+
+@available(iOS 16.2, *)
+#Preview("Dynamic Island Minimal", as: .dynamicIsland(.minimal), using: LessonActivityAttributes(
+    lessonName: "Mathematik",
+    teacher: "Müller",
+    room: "204"
+)) {
+    StundenLiveActivityWidget()
+} contentStates: {
+    LessonActivityAttributes.ContentState(
+        endTime: Date().addingTimeInterval(25 * 60),
+        nextLessonName: "Deutsch",
+        nextLessonStart: "08:45"
+    )
+}

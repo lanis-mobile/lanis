@@ -69,3 +69,51 @@ struct VertretungsLiveActivityWidget: Widget {
         }
     }
 }
+
+// MARK: - Previews
+
+@available(iOS 16.2, *)
+#Preview("Lock Screen", as: .content, using: SubstitutionActivityAttributes(date: "03.06.2026")) {
+    VertretungsLiveActivityWidget()
+} contentStates: {
+    SubstitutionActivityAttributes.ContentState(
+        entries: [
+            LiveSubstitutionEntry(stunde: "3", fach: "Mathematik", art: "Vertretung"),
+            LiveSubstitutionEntry(stunde: "5", fach: "Englisch", art: "Ausfall"),
+        ],
+        count: 2
+    )
+}
+
+@available(iOS 16.2, *)
+#Preview("Dynamic Island Expanded", as: .dynamicIsland(.expanded), using: SubstitutionActivityAttributes(date: "03.06.2026")) {
+    VertretungsLiveActivityWidget()
+} contentStates: {
+    SubstitutionActivityAttributes.ContentState(
+        entries: [
+            LiveSubstitutionEntry(stunde: "3", fach: "Mathematik", art: "Vertretung"),
+            LiveSubstitutionEntry(stunde: "5", fach: "Englisch", art: "Ausfall"),
+        ],
+        count: 2
+    )
+}
+
+@available(iOS 16.2, *)
+#Preview("Dynamic Island Compact", as: .dynamicIsland(.compact), using: SubstitutionActivityAttributes(date: "03.06.2026")) {
+    VertretungsLiveActivityWidget()
+} contentStates: {
+    SubstitutionActivityAttributes.ContentState(
+        entries: [LiveSubstitutionEntry(stunde: "3", fach: "Mathematik", art: "Vertretung")],
+        count: 1
+    )
+}
+
+@available(iOS 16.2, *)
+#Preview("Dynamic Island Minimal", as: .dynamicIsland(.minimal), using: SubstitutionActivityAttributes(date: "03.06.2026")) {
+    VertretungsLiveActivityWidget()
+} contentStates: {
+    SubstitutionActivityAttributes.ContentState(
+        entries: [LiveSubstitutionEntry(stunde: "3", fach: "Mathematik", art: "Vertretung")],
+        count: 1
+    )
+}
