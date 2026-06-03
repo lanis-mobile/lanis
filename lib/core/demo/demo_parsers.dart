@@ -22,7 +22,7 @@ import 'package:lanis/applets/study_groups/student/parser.dart';
 import 'package:lanis/applets/substitutions/parser.dart';
 import 'package:lanis/applets/timetable/student/parser.dart';
 
-// Only used in debug builds — tree-shaken in release.
+// Debug-only: all entry points are guarded by kDebugMode checks.
 class DemoParsers extends Parsers {
   DemoParsers({required super.sph}) : assert(kDebugMode);
 

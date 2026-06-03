@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:lanis/core/connection_checker.dart';
 import 'package:lanis/core/demo/demo_parsers.dart';
 import 'package:lanis/core/widget_data_service.dart';
 import 'package:lanis/home_page.dart';
@@ -68,7 +69,7 @@ class AuthenticationState {
   }
 
   Future<void> loginDemo(AccountType accountType) async {
-    assert(kDebugMode, 'loginDemo must only be called in debug mode');
+    if (!kDebugMode) throw StateError('loginDemo must only be called in debug mode');
     status.value = LoginStatus.waiting;
     exception.value = null;
     sph?.prefs.close();
@@ -88,6 +89,7 @@ class AuthenticationState {
     sph!.session.userData = {'vorname': 'Max', 'nachname': 'Mustermann'};
     sph!.session.setDemoAccountType(accountType);
     sph!.parser = DemoParsers(sph: sph!);
+    connectionChecker.status = ConnectionStatus.connected;
 
     status.value = LoginStatus.done;
   }
