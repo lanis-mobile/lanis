@@ -132,7 +132,7 @@ struct NachrichtenWidget: Widget {
         .configurationDisplayName("Nachrichten")
         .description("Zeigt ungelesene Nachrichten.")
         .supportedFamilies({
-            var f: [WidgetFamily] = [.systemSmall, .systemMedium, .systemLarge]
+            var f: [WidgetFamily] = [.systemSmall, .systemMedium]
             if #available(iOSApplicationExtension 16.0, *) { f += [.accessoryCircular, .accessoryRectangular, .accessoryInline] }
             return f
         }())
@@ -147,7 +147,6 @@ struct NachrichtenWidgetView: View {
         switch family {
         case .systemSmall: NachrichtenSmallView(data: entry.data)
         case .systemMedium: NachrichtenMediumView(data: entry.data)
-        case .systemLarge: NachrichtenLargeView(data: entry.data)
         default:
             if #available(iOSApplicationExtension 16.0, *) {
                 let count = entry.data?.unreadCount ?? 0
