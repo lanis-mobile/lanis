@@ -372,6 +372,7 @@ struct KalenderWidgetView: View {
 
 // MARK: - Previews
 
+#if DEBUG
 private let previewEvents: [CalendarEventEntry] = [
     CalendarEventEntry(title: "Klassenfahrt Berlin", start: ISO8601DateFormatter().string(from: Calendar.current.date(byAdding: .day, value: 1, to: Date())!), allDay: true, color: "#E53935"),
     CalendarEventEntry(title: "Elternsprechtag", start: ISO8601DateFormatter().string(from: Calendar.current.date(byAdding: .day, value: 2, to: Date())!), allDay: false, color: "#1E88E5"),
@@ -400,3 +401,4 @@ private let previewEvents: [CalendarEventEntry] = [
 } timeline: {
     CalendarTimelineEntry(date: .now, data: CalendarData(updatedAt: "", events: previewEvents))
 }
+#endif

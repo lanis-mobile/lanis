@@ -180,6 +180,7 @@ struct VertretungsWidgetView: View {
 
 // MARK: - Previews
 
+#if DEBUG
 private let previewSubData = SubstitutionData(
     updatedAt: "",
     date: "03.06.2026",
@@ -203,4 +204,5 @@ private let previewSubData = SubstitutionData(
 } timeline: {
     SubstitutionTimelineEntry(date: .now, data: previewSubData)
 }
+#endif
 

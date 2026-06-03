@@ -398,6 +398,7 @@ struct StundenplanWidgetView: View {
 
 // MARK: - Previews
 
+#if DEBUG
 @available(iOS 17.0, *)
 #Preview("Small", as: .systemSmall) {
     StundenplanWidget()
@@ -451,3 +452,4 @@ struct StundenplanWidgetView: View {
         currentLesson: nil
     ))
 }
+#endif

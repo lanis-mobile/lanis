@@ -207,6 +207,7 @@ struct StundenLiveActivityWidget: Widget {
 
 // MARK: - Previews
 
+#if DEBUG
 @available(iOS 17.0, *)
 #Preview("Lock Screen – Lesson", as: .content, using: LessonActivityAttributes(
     lessonName: "Mathematik",
@@ -282,3 +283,4 @@ struct StundenLiveActivityWidget: Widget {
         nextLessonStart: "09:30"
     )
 }
+#endif

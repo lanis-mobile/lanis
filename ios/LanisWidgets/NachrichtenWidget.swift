@@ -179,6 +179,7 @@ struct NachrichtenWidgetView: View {
 
 // MARK: - Previews
 
+#if DEBUG
 private let previewConvData = ConversationsData(
     updatedAt: "",
     unreadCount: 2,
@@ -202,3 +203,4 @@ private let previewConvData = ConversationsData(
 } timeline: {
     ConversationsTimelineEntry(date: .now, data: previewConvData)
 }
+#endif
