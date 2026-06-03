@@ -1,6 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:lanis/core/demo/demo_parsers.dart';
 import 'package:lanis/core/widget_data_service.dart';
 import 'package:lanis/home_page.dart';
+import 'package:lanis/models/account_types.dart';
 
 import '../core/database/account_database/account_db.dart';
 import '../core/sph/sph.dart';
@@ -62,6 +65,31 @@ class AuthenticationState {
   void reset(final BuildContext context) {
     Phoenix.rebirth(context);
     login();
+  }
+
+  Future<void> loginDemo(AccountType accountType) async {
+    assert(kDebugMode, 'loginDemo must only be called in debug mode');
+    status.value = LoginStatus.waiting;
+    exception.value = null;
+    sph?.prefs.close();
+    sph = null;
+
+    sph = SPH(
+      account: ClearTextAccount(
+        localId: -1,
+        schoolID: 0,
+        username: 'demo',
+        password: '',
+        schoolName: 'Demo-Schule',
+        accountType: accountType,
+      ),
+    );
+
+    sph!.session.userData = {'vorname': 'Max', 'nachname': 'Mustermann'};
+    sph!.session.setDemoAccountType(accountType);
+    sph!.parser = DemoParsers(sph: sph!);
+
+    status.value = LoginStatus.done;
   }
 }
 
