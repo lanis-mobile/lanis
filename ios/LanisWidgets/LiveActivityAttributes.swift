@@ -2,12 +2,23 @@ import ActivityKit
 import Foundation
 
 // MARK: - Stunden Live Activity
+
+enum ActivityPhase: String, Codable {
+    case lesson
+    case `break`
+    case dayEnd
+}
+
 @available(iOS 16.2, *)
 struct LessonActivityAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {
-        var endTime: Date
+        var phase: ActivityPhase
+        var phaseStartTime: Date   // start of current phase (for progress bar)
+        var phaseEndTime: Date     // end of current phase (countdown target)
         var nextLessonName: String?
-        var nextLessonStart: String?
+        var nextLessonRoom: String?
+        var nextLessonTeacher: String?
+        var nextLessonStart: String?  // "HH:mm" display string
     }
 
     var lessonName: String
