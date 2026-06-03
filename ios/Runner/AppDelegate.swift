@@ -18,6 +18,10 @@ import flutter_local_notifications
       GeneratedPluginRegistrant.register(with: registry)
     }
 
+    if let controller = window?.rootViewController as? FlutterViewController {
+        WidgetChannel.register(with: controller)
+    }
+
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 }
