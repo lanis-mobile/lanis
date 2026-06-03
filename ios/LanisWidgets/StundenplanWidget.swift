@@ -145,7 +145,7 @@ private struct LessonRow: View {
                     .font(.system(size: 10, design: .monospaced))
                     .foregroundStyle(.secondary)
             }
-            .frame(width: 30, alignment: .trailing)
+            .frame(width: 38, alignment: .trailing)
 
             // Right: colored block
             LessonBlock(entry: entry, showTime: false)
