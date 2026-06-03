@@ -31,6 +31,12 @@ enum LessonActivityManager {
             return
         }
 
+        // Adjust for midnight crossing: if endDate is before startDate, add one day
+        var adjustedEndDate = endDate
+        if adjustedEndDate < startDate {
+            adjustedEndDate = Calendar.current.date(byAdding: .day, value: 1, to: adjustedEndDate) ?? adjustedEndDate
+        }
+
         let attrs = LessonActivityAttributes(
             lessonName: lesson.name,
             teacher: lesson.teacher,
@@ -39,7 +45,7 @@ enum LessonActivityManager {
         let state = LessonActivityAttributes.ContentState(
             phase: phase,
             phaseStartTime: startDate,
-            phaseEndTime: endDate,
+            phaseEndTime: adjustedEndDate,
             nextLessonName: lesson.nextName,
             nextLessonRoom: lesson.nextRoom,
             nextLessonTeacher: lesson.nextTeacher,
@@ -80,10 +86,16 @@ enum LessonActivityManager {
             return
         }
 
+        // Adjust for midnight crossing: if endDate is before startDate, add one day
+        var adjustedEndDate = endDate
+        if adjustedEndDate < startDate {
+            adjustedEndDate = Calendar.current.date(byAdding: .day, value: 1, to: adjustedEndDate) ?? adjustedEndDate
+        }
+
         let state = LessonActivityAttributes.ContentState(
             phase: phase,
             phaseStartTime: startDate,
-            phaseEndTime: endDate,
+            phaseEndTime: adjustedEndDate,
             nextLessonName: lesson.nextName,
             nextLessonRoom: lesson.nextRoom,
             nextLessonTeacher: lesson.nextTeacher,

@@ -29,7 +29,8 @@ private func nowMinutes() -> Int {
 
 private func toMinutes(_ time: String) -> Int {
     let parts = time.split(separator: ":").compactMap { Int($0) }
-    return (parts.first ?? 0) * 60 + (parts.last ?? 0)
+    guard parts.count == 2 else { return 0 }
+    return parts[0] * 60 + parts[1]
 }
 
 private func progressInLesson(_ entry: TimetableEntry) -> Double {
