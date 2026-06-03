@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_background_executor/flutter_background_executor.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:lanis/core/connection_checker.dart';
+import 'package:lanis/core/widget_data_service.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:lanis/applets/definitions.dart';
 import 'package:lanis/models/account_types.dart';
@@ -138,49 +139,54 @@ Future<void> callbackDispatcher() async {
       final ClearTextAccount clearTextAccount =
           await AccountDatabase.getAccountFromTableData(account);
       final sph = SPH(account: clearTextAccount);
-      if (!await sph.prefs.kv.get('notifications-allow')) {
-        sph.prefs.close();
-        continue;
-      }
       accountBackgroundTasks.add(() async {
-        List<Future> appletTasks = [];
-        bool authenticated = false;
-        for (final applet in AppDefinitions.applets.where(
-          (a) => a.notificationTask != null,
-        )) {
-          if (applet.supportedAccountTypes.contains(
-                clearTextAccount.accountType,
-              ) &&
-              (await sph.prefs.kv.get('notification-${applet.appletPhpUrl}') ??
-                  true)) {
-            if (!authenticated) {
-              await sph.session.prepareDio();
-              await sph.session.authenticate(withoutData: true);
-              authenticated = true;
-            }
-            if (!sph.session.doesSupportFeature(
-              applet,
-              overrideAccountType: clearTextAccount.accountType,
-            )) {
-              continue;
-            }
-            appletTasks.add(
-              applet.notificationTask!(
-                sph,
-                clearTextAccount.accountType ?? AccountType.student,
-                BackgroundTaskToolkit(
+        final accountType =
+            clearTextAccount.accountType ?? AccountType.student;
+        final notificationsAllowed =
+            await sph.prefs.kv.get('notifications-allow');
+
+        if (notificationsAllowed) {
+          List<Future> appletTasks = [];
+          bool authenticated = false;
+          for (final applet in AppDefinitions.applets.where(
+            (a) => a.notificationTask != null,
+          )) {
+            if (applet.supportedAccountTypes.contains(
+                  clearTextAccount.accountType,
+                ) &&
+                (await sph.prefs.kv.get('notification-${applet.appletPhpUrl}') ??
+                    true)) {
+              if (!authenticated) {
+                await sph.session.prepareDio();
+                await sph.session.authenticate(withoutData: true);
+                authenticated = true;
+              }
+              if (!sph.session.doesSupportFeature(
+                applet,
+                overrideAccountType: clearTextAccount.accountType,
+              )) {
+                continue;
+              }
+              appletTasks.add(
+                applet.notificationTask!(
                   sph,
-                  applet.appletPhpUrl,
-                  multiAccount: accounts.length > 1,
+                  clearTextAccount.accountType ?? AccountType.student,
+                  BackgroundTaskToolkit(
+                    sph,
+                    applet.appletPhpUrl,
+                    multiAccount: accounts.length > 1,
+                  ),
                 ),
-              ),
-            );
+              );
+            }
+          }
+          await Future.wait(appletTasks);
+          if (authenticated) {
+            await sph.session.deAuthenticate();
           }
         }
-        await Future.wait(appletTasks);
-        if (authenticated) {
-          await sph.session.deAuthenticate();
-        }
+
+        await WidgetDataService.instance.updateAll(sph, accountType);
         sph.prefs.close();
       }());
     }

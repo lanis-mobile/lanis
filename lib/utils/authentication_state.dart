@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lanis/core/widget_data_service.dart';
 import 'package:lanis/home_page.dart';
 
 import '../core/database/account_database/account_db.dart';
@@ -43,6 +44,11 @@ class AuthenticationState {
 
       if (exception.value == null) {
         status.value = LoginStatus.done;
+        if (sph != null) {
+          WidgetDataService.instance
+              .updateAll(sph!, sph!.session.accountType)
+              .ignore();
+        }
       }
     } on (WrongCredentialsException, CredentialsIncompleteException) {
       status.value = LoginStatus.setup;
