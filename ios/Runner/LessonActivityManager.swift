@@ -64,8 +64,12 @@ enum LessonActivityManager {
         }
     }
 
+    private static func existingActivity() -> Activity<LessonActivityAttributes>? {
+        Activity<LessonActivityAttributes>.activities.first
+    }
+
     static func update(json: String, result: @escaping FlutterResult) {
-        guard let activity = currentActivity,
+        guard let activity = currentActivity ?? existingActivity(),
               let data = json.data(using: .utf8),
               let lesson = try? JSONDecoder().decode(LessonJson.self, from: data),
               let phase = ActivityPhase(rawValue: lesson.phase),
@@ -92,14 +96,13 @@ enum LessonActivityManager {
     }
 
     static func end(result: @escaping FlutterResult) {
-        guard let activity = currentActivity else {
+        guard let activity = currentActivity ?? existingActivity() else {
             result(nil)
             return
         }
+        currentActivity = nil
         Task {
-            let activityToEnd = activity
-            currentActivity = nil
-            await activityToEnd.end(dismissalPolicy: .immediate)
+            await activity.end(dismissalPolicy: .immediate)
             result(nil)
         }
     }

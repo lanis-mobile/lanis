@@ -38,14 +38,18 @@ enum SubstitutionActivityManager {
         }
     }
 
+    private static func existingActivity() -> Activity<SubstitutionActivityAttributes>? {
+        Activity<SubstitutionActivityAttributes>.activities.first
+    }
+
     static func end(result: @escaping FlutterResult) {
-        guard let activity = currentActivity else {
+        guard let activity = currentActivity ?? existingActivity() else {
             result(nil)
             return
         }
+        currentActivity = nil
         Task {
             await activity.end(dismissalPolicy: .immediate)
-            currentActivity = nil
             result(nil)
         }
     }
