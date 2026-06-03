@@ -14,6 +14,7 @@ import 'package:lanis/view/settings/settings_page_builder.dart';
 import 'package:lanis/view/settings/subsettings/about.dart';
 import 'package:lanis/view/settings/subsettings/appearance.dart';
 import 'package:lanis/view/settings/subsettings/cache.dart';
+import 'package:lanis/view/settings/subsettings/live_activities.dart';
 import 'package:lanis/view/settings/subsettings/notifications.dart';
 import 'package:lanis/view/settings/subsettings/quick_actions.dart';
 import 'package:lanis/view/settings/subsettings/userdata.dart';
@@ -159,6 +160,16 @@ class _SettingsScreenState extends SettingsColoursState<SettingsScreen> {
               );
             }
           },
+        ),
+        SettingsTile(
+          title: (context) => 'Live Activities',
+          subtitle: (context) async => 'Aktuelle Stunde, Vertretungen',
+          icon: Icons.dynamic_feed_rounded,
+          show: () async => Platform.isIOS,
+          screen: (context) => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const LiveActivitySettings()),
+          ),
         ),
         SettingsTile(
           title: (context) => AppLocalizations.of(context).clearCache,
