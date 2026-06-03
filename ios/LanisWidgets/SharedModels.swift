@@ -44,8 +44,10 @@ struct CalendarEventEntry: Decodable {
     let allDay: Bool
     let color: String?
 
+    private static let iso8601 = ISO8601DateFormatter()
+
     var startDate: Date? {
-        ISO8601DateFormatter().date(from: start)
+        CalendarEventEntry.iso8601.date(from: start)
     }
 
     var accentColor: Color {

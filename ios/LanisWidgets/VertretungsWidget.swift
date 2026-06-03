@@ -134,7 +134,7 @@ struct VertretungsWidget: Widget {
         .supportedFamilies(supportedFamilies)
     }
     private var supportedFamilies: [WidgetFamily] {
-        var f: [WidgetFamily] = [.systemSmall, .systemMedium]
+        var f: [WidgetFamily] = [.systemSmall, .systemMedium, .systemLarge]
         if #available(iOSApplicationExtension 16.0, *) { f += [.accessoryCircular, .accessoryRectangular, .accessoryInline] }
         return f
     }
@@ -149,6 +149,7 @@ struct VertretungsWidgetView: View {
             switch family {
             case .systemSmall: VertretungsSmallView(data: entry.data)
             case .systemMedium: VertretungsMediumView(data: entry.data)
+            case .systemLarge: VertretungsLargeView(data: entry.data)
             default:
                 if #available(iOSApplicationExtension 16.0, *) {
                     let count = entry.data?.entries.count ?? 0
@@ -200,6 +201,13 @@ private let previewSubData = SubstitutionData(
 
 @available(iOS 17.0, *)
 #Preview("Medium", as: .systemMedium) {
+    VertretungsWidget()
+} timeline: {
+    SubstitutionTimelineEntry(date: .now, data: previewSubData)
+}
+
+@available(iOS 17.0, *)
+#Preview("Large", as: .systemLarge) {
     VertretungsWidget()
 } timeline: {
     SubstitutionTimelineEntry(date: .now, data: previewSubData)
