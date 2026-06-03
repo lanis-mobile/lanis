@@ -46,15 +46,21 @@ enum LessonActivityManager {
             nextLessonStart: lesson.nextStart
         )
 
-        do {
-            currentActivity = try Activity.request(
-                attributes: attrs,
-                contentState: state,
-                pushType: nil
-            )
-            result(nil)
-        } catch {
-            result(FlutterError(code: "ACTIVITY_ERROR", message: error.localizedDescription, details: nil))
+        Task {
+            if let existing = currentActivity {
+                await existing.end(dismissalPolicy: .immediate)
+                currentActivity = nil
+            }
+            do {
+                currentActivity = try Activity.request(
+                    attributes: attrs,
+                    contentState: state,
+                    pushType: nil
+                )
+                result(nil)
+            } catch {
+                result(FlutterError(code: "ACTIVITY_ERROR", message: error.localizedDescription, details: nil))
+            }
         }
     }
 
@@ -91,8 +97,9 @@ enum LessonActivityManager {
             return
         }
         Task {
-            await activity.end(dismissalPolicy: .immediate)
+            let activityToEnd = activity
             currentActivity = nil
+            await activityToEnd.end(dismissalPolicy: .immediate)
             result(nil)
         }
     }

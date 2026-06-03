@@ -32,6 +32,9 @@ import ActivityKit
             for activity in Activity<SubstitutionActivityAttributes>.activities {
                 await activity.end(dismissalPolicy: .immediate)
             }
+            for activity in Activity<LessonActivityAttributes>.activities {
+                await activity.end(dismissalPolicy: .immediate)
+            }
         }
     }
 
