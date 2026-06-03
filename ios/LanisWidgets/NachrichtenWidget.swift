@@ -173,3 +173,29 @@ struct NachrichtenWidgetView: View {
         }
     }
 }
+
+// MARK: - Previews
+
+private let previewConvData = ConversationsData(
+    updatedAt: "",
+    unreadCount: 2,
+    latest: [
+        ConversationEntry(sender: "Herr Brandt", subject: "Klassenfahrt: Wichtige Infos", isUnread: true),
+        ConversationEntry(sender: "Schulleitung", subject: "Informationen zum Schuljahresabschluss", isUnread: false),
+        ConversationEntry(sender: "Frau Koch", subject: "Hausaufgaben Deutsch", isUnread: false),
+    ]
+)
+
+@available(iOS 17.0, *)
+#Preview("Small", as: .systemSmall) {
+    NachrichtenWidget()
+} timeline: {
+    ConversationsTimelineEntry(date: .now, data: previewConvData)
+}
+
+@available(iOS 17.0, *)
+#Preview("Medium", as: .systemMedium) {
+    NachrichtenWidget()
+} timeline: {
+    ConversationsTimelineEntry(date: .now, data: previewConvData)
+}

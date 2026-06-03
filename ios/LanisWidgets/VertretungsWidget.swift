@@ -175,3 +175,36 @@ struct VertretungsWidgetView: View {
         }
     }
 }
+
+// MARK: - Previews
+
+private let previewSubData = SubstitutionData(
+    updatedAt: "",
+    date: "03.06.2026",
+    entries: [
+        SubstitutionEntry(stunde: "3", fach: "Mathematik", art: "Vertretung", raum: "204", vertreter: "Schmidt"),
+        SubstitutionEntry(stunde: "5", fach: "Englisch", art: "Ausfall", raum: nil, vertreter: nil),
+        SubstitutionEntry(stunde: "6", fach: "Sport", art: "Raumänderung", raum: "Halle 2", vertreter: "Hoffmann"),
+    ]
+)
+
+@available(iOS 17.0, *)
+#Preview("Small", as: .systemSmall) {
+    VertretungsWidget()
+} timeline: {
+    SubstitutionTimelineEntry(date: .now, data: previewSubData)
+}
+
+@available(iOS 17.0, *)
+#Preview("Medium", as: .systemMedium) {
+    VertretungsWidget()
+} timeline: {
+    SubstitutionTimelineEntry(date: .now, data: previewSubData)
+}
+
+@available(iOS 17.0, *)
+#Preview("Large", as: .systemLarge) {
+    VertretungsWidget()
+} timeline: {
+    SubstitutionTimelineEntry(date: .now, data: previewSubData)
+}

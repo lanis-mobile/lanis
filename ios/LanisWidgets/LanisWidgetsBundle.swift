@@ -2,6 +2,7 @@ import WidgetKit
 import SwiftUI
 
 @main
+@available(iOSApplicationExtension 17.0, *)
 struct LanisWidgetsBundle: WidgetBundle {
     var body: some Widget {
         StundenplanWidget()

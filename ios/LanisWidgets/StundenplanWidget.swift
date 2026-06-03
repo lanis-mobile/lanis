@@ -391,3 +391,59 @@ struct StundenplanWidgetView: View {
         }
     }
 }
+
+// MARK: - Previews
+
+@available(iOS 17.0, *)
+#Preview("Small", as: .systemSmall) {
+    StundenplanWidget()
+} timeline: {
+    TimetableTimelineEntry(date: .now, data: TimetableData(
+        updatedAt: "",
+        today: [
+            TimetableEntry(name: "Mathematik", room: "204", teacher: "Müller", start: "07:55", end: "08:40", stunde: 1, color: "#E53935"),
+            TimetableEntry(name: "Deutsch", room: "101", teacher: "Koch", start: "08:45", end: "09:30", stunde: 2, color: "#1E88E5"),
+            TimetableEntry(name: "Englisch", room: "102", teacher: "Weber", start: "09:50", end: "10:35", stunde: 3, color: "#43A047"),
+            TimetableEntry(name: "Biologie", room: "301", teacher: "Fischer", start: "10:40", end: "11:25", stunde: 4, color: "#8E24AA"),
+            TimetableEntry(name: "Sport", room: "Halle", teacher: "Hoffmann", start: "11:40", end: "12:25", stunde: 5, color: "#FB8C00"),
+            TimetableEntry(name: "Musik", room: "103", teacher: "Braun", start: "12:30", end: "13:15", stunde: 6, color: "#00897B"),
+        ],
+        currentLesson: TimetableEntry(name: "Mathematik", room: "204", teacher: "Müller", start: "07:55", end: "08:40", stunde: 1, color: "#E53935")
+    ))
+}
+
+@available(iOS 17.0, *)
+#Preview("Medium", as: .systemMedium) {
+    StundenplanWidget()
+} timeline: {
+    TimetableTimelineEntry(date: .now, data: TimetableData(
+        updatedAt: "",
+        today: [
+            TimetableEntry(name: "Mathematik", room: "204", teacher: "Müller", start: "07:55", end: "08:40", stunde: 1, color: "#E53935"),
+            TimetableEntry(name: "Deutsch", room: "101", teacher: "Koch", start: "08:45", end: "09:30", stunde: 2, color: "#1E88E5"),
+            TimetableEntry(name: "Englisch", room: "102", teacher: "Weber", start: "09:50", end: "10:35", stunde: 3, color: "#43A047"),
+            TimetableEntry(name: "Biologie", room: "301", teacher: "Fischer", start: "10:40", end: "11:25", stunde: 4, color: "#8E24AA"),
+            TimetableEntry(name: "Sport", room: "Halle", teacher: "Hoffmann", start: "11:40", end: "12:25", stunde: 5, color: "#FB8C00"),
+            TimetableEntry(name: "Musik", room: "103", teacher: "Braun", start: "12:30", end: "13:15", stunde: 6, color: "#00897B"),
+        ],
+        currentLesson: TimetableEntry(name: "Mathematik", room: "204", teacher: "Müller", start: "07:55", end: "08:40", stunde: 1, color: "#E53935")
+    ))
+}
+
+@available(iOS 17.0, *)
+#Preview("Large", as: .systemLarge) {
+    StundenplanWidget()
+} timeline: {
+    TimetableTimelineEntry(date: .now, data: TimetableData(
+        updatedAt: "",
+        today: [
+            TimetableEntry(name: "Mathematik", room: "204", teacher: "Müller", start: "07:55", end: "08:40", stunde: 1, color: "#E53935"),
+            TimetableEntry(name: "Deutsch", room: "101", teacher: "Koch", start: "08:45", end: "09:30", stunde: 2, color: "#1E88E5"),
+            TimetableEntry(name: "Englisch", room: "102", teacher: "Weber", start: "09:50", end: "10:35", stunde: 3, color: "#43A047"),
+            TimetableEntry(name: "Biologie", room: "301", teacher: "Fischer", start: "10:40", end: "11:25", stunde: 4, color: "#8E24AA"),
+            TimetableEntry(name: "Sport", room: "Halle", teacher: "Hoffmann", start: "11:40", end: "12:25", stunde: 5, color: "#FB8C00"),
+            TimetableEntry(name: "Musik", room: "103", teacher: "Braun", start: "12:30", end: "13:15", stunde: 6, color: "#00897B"),
+        ],
+        currentLesson: nil
+    ))
+}

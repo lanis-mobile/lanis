@@ -371,3 +371,34 @@ struct KalenderWidgetView: View {
         }
     }
 }
+
+// MARK: - Previews
+
+private let previewEvents: [CalendarEventEntry] = [
+    CalendarEventEntry(title: "Klassenfahrt Berlin", start: ISO8601DateFormatter().string(from: Calendar.current.date(byAdding: .day, value: 1, to: Date())!), allDay: true, color: "#E53935"),
+    CalendarEventEntry(title: "Elternsprechtag", start: ISO8601DateFormatter().string(from: Calendar.current.date(byAdding: .day, value: 2, to: Date())!), allDay: false, color: "#1E88E5"),
+    CalendarEventEntry(title: "Sportfest", start: ISO8601DateFormatter().string(from: Calendar.current.date(byAdding: .day, value: 3, to: Date())!), allDay: true, color: "#43A047"),
+    CalendarEventEntry(title: "Schulfeier 50 Jahre", start: ISO8601DateFormatter().string(from: Calendar.current.date(byAdding: .day, value: 5, to: Date())!), allDay: false, color: "#FB8C00"),
+    CalendarEventEntry(title: "Hausaufgaben Mathe", start: ISO8601DateFormatter().string(from: Calendar.current.date(byAdding: .day, value: 7, to: Date())!), allDay: true, color: "#8E24AA"),
+]
+
+@available(iOS 17.0, *)
+#Preview("Small", as: .systemSmall) {
+    KalenderWidget()
+} timeline: {
+    CalendarTimelineEntry(date: .now, data: CalendarData(updatedAt: "", events: previewEvents))
+}
+
+@available(iOS 17.0, *)
+#Preview("Medium", as: .systemMedium) {
+    KalenderWidget()
+} timeline: {
+    CalendarTimelineEntry(date: .now, data: CalendarData(updatedAt: "", events: previewEvents))
+}
+
+@available(iOS 17.0, *)
+#Preview("Large", as: .systemLarge) {
+    KalenderWidget()
+} timeline: {
+    CalendarTimelineEntry(date: .now, data: CalendarData(updatedAt: "", events: previewEvents))
+}
