@@ -1,7 +1,8 @@
 import 'package:lanis/applets/calendar/parser.dart';
+import 'package:lanis/core/demo/demo_fetch_mixin.dart';
 import 'package:lanis/models/calendar_event.dart';
 
-class DemoCalendarParser extends CalendarParser {
+class DemoCalendarParser extends CalendarParser with DemoFetchMixin<List<CalendarEvent>> {
   DemoCalendarParser(super.sph, super.appletDefinition);
 
   @override

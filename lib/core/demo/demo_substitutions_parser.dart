@@ -1,8 +1,9 @@
 import 'package:lanis/applets/substitutions/parser.dart';
+import 'package:lanis/core/demo/demo_fetch_mixin.dart';
 import 'package:lanis/models/substitution.dart';
 import 'package:intl/intl.dart';
 
-class DemoSubstitutionsParser extends SubstitutionsParser {
+class DemoSubstitutionsParser extends SubstitutionsParser with DemoFetchMixin<SubstitutionPlan> {
   DemoSubstitutionsParser(super.sph, super.appletDefinition);
 
   @override

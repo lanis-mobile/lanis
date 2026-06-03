@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:lanis/applets/timetable/student/parser.dart';
+import 'package:lanis/core/demo/demo_fetch_mixin.dart';
 import 'package:lanis/models/timetable.dart';
 
-class DemoTimetableStudentParser extends TimetableStudentParser {
+class DemoTimetableStudentParser extends TimetableStudentParser with DemoFetchMixin<TimeTable> {
   DemoTimetableStudentParser(super.sph, super.appletDefinition);
 
   @override

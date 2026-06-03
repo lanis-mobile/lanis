@@ -1,7 +1,8 @@
 import 'package:lanis/applets/conversations/parser.dart';
+import 'package:lanis/core/demo/demo_fetch_mixin.dart';
 import 'package:lanis/models/conversations.dart';
 
-class DemoConversationsParser extends ConversationsParser {
+class DemoConversationsParser extends ConversationsParser with DemoFetchMixin<List<OverviewEntry>> {
   DemoConversationsParser(super.sph, super.appletDefinition);
 
   @override

@@ -1,7 +1,8 @@
 import 'package:lanis/applets/lessons/student/parser.dart';
+import 'package:lanis/core/demo/demo_fetch_mixin.dart';
 import 'package:lanis/models/lessons.dart';
 
-class DemoLessonsStudentParser extends LessonsStudentParser {
+class DemoLessonsStudentParser extends LessonsStudentParser with DemoFetchMixin<Lessons> {
   DemoLessonsStudentParser(super.sph, super.appletDefinition);
 
   @override

@@ -1,7 +1,8 @@
 import 'package:lanis/applets/data_storage/parser.dart';
+import 'package:lanis/core/demo/demo_fetch_mixin.dart';
 import 'package:lanis/models/datastorage.dart';
 
-class DemoDataStorageParser extends DataStorageParser {
+class DemoDataStorageParser extends DataStorageParser with DemoFetchMixin<(List<FileNode>, List<FolderNode>)> {
   DemoDataStorageParser(super.sph, super.appletDefinition);
 
   @override
