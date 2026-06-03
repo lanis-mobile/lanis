@@ -63,9 +63,11 @@ enum LessonActivityManager {
                     contentState: state,
                     pushType: nil
                 )
-                result(nil)
+                DispatchQueue.main.async { result(nil) }
             } catch {
-                result(FlutterError(code: "ACTIVITY_ERROR", message: error.localizedDescription, details: nil))
+                DispatchQueue.main.async {
+                    result(FlutterError(code: "ACTIVITY_ERROR", message: error.localizedDescription, details: nil))
+                }
             }
         }
     }
@@ -103,7 +105,7 @@ enum LessonActivityManager {
         )
         Task {
             await activity.update(using: state)
-            result(nil)
+            DispatchQueue.main.async { result(nil) }
         }
     }
 
@@ -115,7 +117,7 @@ enum LessonActivityManager {
         currentActivity = nil
         Task {
             await activity.end(dismissalPolicy: .immediate)
-            result(nil)
+            DispatchQueue.main.async { result(nil) }
         }
     }
 

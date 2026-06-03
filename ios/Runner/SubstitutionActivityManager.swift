@@ -26,15 +26,23 @@ enum SubstitutionActivityManager {
             count: payload.newEntries.count
         )
 
-        do {
-            currentActivity = try Activity.request(
-                attributes: attrs,
-                contentState: state,
-                pushType: nil
-            )
-            result(nil)
-        } catch {
-            result(FlutterError(code: "ACTIVITY_ERROR", message: error.localizedDescription, details: nil))
+        Task {
+            if let existing = currentActivity ?? existingActivity() {
+                await existing.end(dismissalPolicy: .immediate)
+                currentActivity = nil
+            }
+            do {
+                currentActivity = try Activity.request(
+                    attributes: attrs,
+                    contentState: state,
+                    pushType: nil
+                )
+                DispatchQueue.main.async { result(nil) }
+            } catch {
+                DispatchQueue.main.async {
+                    result(FlutterError(code: "ACTIVITY_ERROR", message: error.localizedDescription, details: nil))
+                }
+            }
         }
     }
 
@@ -50,7 +58,7 @@ enum SubstitutionActivityManager {
         currentActivity = nil
         Task {
             await activity.end(dismissalPolicy: .immediate)
-            result(nil)
+            DispatchQueue.main.async { result(nil) }
         }
     }
 }
