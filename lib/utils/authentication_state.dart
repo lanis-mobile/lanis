@@ -92,6 +92,7 @@ class AuthenticationState {
     connectionChecker.status = ConnectionStatus.connected;
 
     status.value = LoginStatus.done;
+    WidgetDataService.instance.updateAll(sph!, accountType).ignore();
   }
 }
 
