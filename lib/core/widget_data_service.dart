@@ -15,6 +15,8 @@ class WidgetDataService {
 
   static const _channel = MethodChannel('io.github.alessioc42.sph/widgets');
 
+  bool _dayEndScheduled = false;
+
   bool get _isIOS => Platform.isIOS;
 
   Future<void> _write(String key, Map<String, dynamic> data) async {
@@ -58,11 +60,42 @@ class WidgetDataService {
 
       TimetableSubject? current;
       TimetableSubject? next;
+      String? phase;
+      String? phaseStartTime;
+      String? phaseEndTime;
+
       for (int i = 0; i < today.length; i++) {
         if (_isOngoing(today[i], now)) {
           current = today[i];
-          if (i + 1 < today.length) next = today[i + 1];
+          next = (i + 1 < today.length) ? today[i + 1] : null;
+          phase = 'lesson';
+          phaseStartTime = _formatTime(today[i].startTime);
+          phaseEndTime = _formatTime(today[i].endTime);
           break;
+        }
+        if (i + 1 < today.length && _isInBreak(today[i], today[i + 1], now)) {
+          current = today[i];
+          next = today[i + 1];
+          phase = 'break';
+          phaseStartTime = _formatTime(today[i].endTime);
+          phaseEndTime = _formatTime(today[i + 1].startTime);
+          break;
+        }
+      }
+
+      // Day end: after last lesson, before midnight
+      if (current == null && today.isNotEmpty) {
+        final lastLesson = today.last;
+        final lastEndMinutes =
+            lastLesson.endTime.hour * 60 + lastLesson.endTime.minute;
+        final nowMinutes = now.hour * 60 + now.minute;
+        if (nowMinutes >= lastEndMinutes) {
+          current = lastLesson;
+          phase = 'dayEnd';
+          phaseStartTime = _formatTime(lastLesson.endTime);
+          phaseEndTime = _formatTime(TimeOfDay(
+              hour: lastLesson.endTime.hour,
+              minute: lastLesson.endTime.minute + 1));
         }
       }
 
@@ -72,15 +105,31 @@ class WidgetDataService {
         'currentLesson': current != null ? _lessonToJson(current) : null,
       });
 
-      // Live Activity: start/update when a lesson is ongoing, end otherwise
       final liveActivityEnabled =
           await sph.prefs.kv.get('live-activity-lesson') ?? true;
-      if (liveActivityEnabled == true) {
-        if (current != null) {
-          await startLessonActivity(current, next);
+      if (liveActivityEnabled == true && current != null && phase != null) {
+        if (phase == 'dayEnd') {
+          if (!_dayEndScheduled) {
+            _dayEndScheduled = true;
+            await updateLessonActivity(current, null,
+                phase: phase,
+                phaseStartTime: phaseStartTime!,
+                phaseEndTime: phaseEndTime!);
+            Future.delayed(const Duration(seconds: 50), () async {
+              await endLessonActivity();
+              _dayEndScheduled = false;
+            });
+          }
         } else {
-          await endLessonActivity();
+          _dayEndScheduled = false;
+          await startLessonActivity(current, next,
+              phase: phase,
+              phaseStartTime: phaseStartTime!,
+              phaseEndTime: phaseEndTime!);
         }
+      } else if (phase == null) {
+        _dayEndScheduled = false;
+        await endLessonActivity();
       }
     } catch (e) {
       logger.w('WidgetDataService: updateTimetable failed: $e');
@@ -107,21 +156,6 @@ class WidgetDataService {
                 })
             .toList(),
       });
-
-      // Live Activity: start if new entries exist and setting is enabled
-      final liveActivityEnabled =
-          await sph.prefs.kv.get('live-activity-substitution') ?? true;
-      if (liveActivityEnabled == true && entries.isNotEmpty) {
-        await startSubstitutionActivity(
-          entries
-              .map((s) => {
-                    'stunde': s.stunde,
-                    'fach': s.fach,
-                    'art': s.art,
-                  })
-              .toList(),
-        );
-      }
     } catch (e) {
       logger.w('WidgetDataService: updateSubstitutions failed: $e');
     }
@@ -176,22 +210,40 @@ class WidgetDataService {
   }
 
   Future<void> startLessonActivity(
-      TimetableSubject current, TimetableSubject? next) async {
+      TimetableSubject current,
+      TimetableSubject? next, {
+      required String phase,
+      required String phaseStartTime,
+      required String phaseEndTime,
+    }) async {
     if (!_isIOS) return;
     try {
       await _channel.invokeMethod(
-          'startLessonActivity', jsonEncode(_lessonActivityJson(current, next)));
+          'startLessonActivity',
+          jsonEncode(_lessonActivityJson(current, next,
+              phase: phase,
+              phaseStartTime: phaseStartTime,
+              phaseEndTime: phaseEndTime)));
     } catch (e) {
       logger.w('WidgetDataService: startLessonActivity failed: $e');
     }
   }
 
   Future<void> updateLessonActivity(
-      TimetableSubject current, TimetableSubject? next) async {
+      TimetableSubject current,
+      TimetableSubject? next, {
+      required String phase,
+      required String phaseStartTime,
+      required String phaseEndTime,
+    }) async {
     if (!_isIOS) return;
     try {
-      await _channel.invokeMethod('updateLessonActivity',
-          jsonEncode(_lessonActivityJson(current, next)));
+      await _channel.invokeMethod(
+          'updateLessonActivity',
+          jsonEncode(_lessonActivityJson(current, next,
+              phase: phase,
+              phaseStartTime: phaseStartTime,
+              phaseEndTime: phaseEndTime)));
     } catch (e) {
       logger.w('WidgetDataService: updateLessonActivity failed: $e');
     }
@@ -244,6 +296,13 @@ class WidgetDataService {
     return nowMinutes >= startMinutes && nowMinutes < endMinutes;
   }
 
+  bool _isInBreak(TimetableSubject prev, TimetableSubject next, TimeOfDay now) {
+    final prevEnd = prev.endTime.hour * 60 + prev.endTime.minute;
+    final nextStart = next.startTime.hour * 60 + next.startTime.minute;
+    final nowMinutes = now.hour * 60 + now.minute;
+    return nowMinutes >= prevEnd && nowMinutes < nextStart;
+  }
+
   Map<String, dynamic> _lessonToJson(TimetableSubject l) => {
         'name': l.name ?? '',
         'room': l.raum,
@@ -277,19 +336,22 @@ class WidgetDataService {
   }
 
   Map<String, dynamic> _lessonActivityJson(
-      TimetableSubject current, TimetableSubject? next) {
+      TimetableSubject current, TimetableSubject? next, {
+      required String phase,
+      required String phaseStartTime,
+      required String phaseEndTime,
+    }) {
     return {
       'name': current.name ?? '',
       'room': current.raum,
       'teacher': current.lehrer,
-      'start':
-          '${current.startTime.hour.toString().padLeft(2, '0')}:${current.startTime.minute.toString().padLeft(2, '0')}',
-      'end':
-          '${current.endTime.hour.toString().padLeft(2, '0')}:${current.endTime.minute.toString().padLeft(2, '0')}',
+      'phase': phase,
+      'phaseStartTime': phaseStartTime,
+      'phaseEndTime': phaseEndTime,
       'nextName': next?.name,
-      'nextStart': next != null
-          ? '${next.startTime.hour.toString().padLeft(2, '0')}:${next.startTime.minute.toString().padLeft(2, '0')}'
-          : null,
+      'nextRoom': next?.raum,
+      'nextTeacher': next?.lehrer,
+      'nextStart': next != null ? _formatTime(next.startTime) : null,
     };
   }
 
@@ -302,4 +364,7 @@ class WidgetDataService {
     final b = (color.b * 255).round().toRadixString(16).padLeft(2, '0');
     return '#$r$g$b';
   }
+
+  String _formatTime(TimeOfDay t) =>
+      '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
 }
