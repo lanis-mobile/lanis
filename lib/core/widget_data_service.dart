@@ -225,8 +225,28 @@ class WidgetDataService {
         'end':
             '${l.endTime.hour.toString().padLeft(2, '0')}:${l.endTime.minute.toString().padLeft(2, '0')}',
         'stunde': l.stunde ?? 0,
-        'color': null,
+        'color': _colorForLesson(l),
       };
+
+  /// Generates a deterministic color from the lesson name/id so each subject
+  /// always gets the same distinct color in the widget.
+  String _colorForLesson(TimetableSubject l) {
+    final key = (l.id?.split('-').first ?? l.name ?? '').toLowerCase();
+    final hash = key.codeUnits.fold(0, (h, c) => (h * 31 + c) & 0xFFFFFFFF);
+    const colors = [
+      '#E53935', // Rot
+      '#8E24AA', // Violett
+      '#1E88E5', // Blau
+      '#00897B', // Teal
+      '#43A047', // Grün
+      '#FB8C00', // Orange
+      '#F4511E', // Tiefes Orange
+      '#6D4C41', // Braun
+      '#00ACC1', // Cyan
+      '#3949AB', // Indigo
+    ];
+    return colors[hash % colors.length];
+  }
 
   Map<String, dynamic> _lessonActivityJson(
       TimetableSubject current, TimetableSubject? next) {
