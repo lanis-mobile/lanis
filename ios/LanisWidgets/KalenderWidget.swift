@@ -20,12 +20,6 @@ struct CalendarProvider: TimelineProvider {
 
 // MARK: - Helpers
 
-private let weekdaySymbols: [String] = {
-    var cal = Calendar.current
-    cal.locale = Locale(identifier: "de_DE")
-    return cal.veryShortWeekdaySymbols
-}()
-
 private func dayLabel(_ date: Date?) -> String {
     guard let date else { return "" }
     let cal = Calendar.current
@@ -246,9 +240,10 @@ private struct MiniMonthView: View {
 
     private var firstWeekday: Int {
         let components = cal.dateComponents([.year, .month], from: today)
-        guard let firstOfMonth = cal.date(from: components) else { return 1 }
-        // Adjust so Monday = 0
-        return (cal.component(.weekday, from: firstOfMonth) - cal.firstWeekday + 7) % 7
+        guard let firstOfMonth = cal.date(from: components) else { return 0 }
+        // weekday: 1=Sunday, 2=Monday, ..., 7=Saturday — shift so Monday=0
+        let weekday = cal.component(.weekday, from: firstOfMonth)
+        return (weekday + 5) % 7  // Sun(1)→6, Mon(2)→0, Tue(3)→1, ..., Sat(7)→5
     }
 
     private var monthName: String {
