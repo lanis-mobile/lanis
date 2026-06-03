@@ -178,6 +178,9 @@ struct TimetableSmallView: View {
                     .font(.caption2.bold())
                     .foregroundStyle(Color.accentColor)
                 Spacer()
+                Text(Date(), style: .time)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
             }
 
             if let lesson = featured {
