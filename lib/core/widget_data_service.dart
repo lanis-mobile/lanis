@@ -93,9 +93,7 @@ class WidgetDataService {
           current = lastLesson;
           phase = 'dayEnd';
           phaseStartTime = _formatTime(lastLesson.endTime);
-          phaseEndTime = _formatTime(TimeOfDay(
-              hour: lastLesson.endTime.hour,
-              minute: lastLesson.endTime.minute + 1));
+          phaseEndTime = phaseStartTime; // dayEnd has no countdown
         }
       }
 
