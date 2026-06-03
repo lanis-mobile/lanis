@@ -26,31 +26,39 @@ import 'package:lanis/applets/timetable/student/parser.dart';
 class DemoParsers extends Parsers {
   DemoParsers({required super.sph}) : assert(kDebugMode);
 
+  DemoSubstitutionsParser? _demoSubstitutionsParser;
+  DemoCalendarParser? _demoCalendarParser;
+  DemoTimetableStudentParser? _demoTimetableParser;
+  DemoLessonsStudentParser? _demoLessonsStudentParser;
+  DemoConversationsParser? _demoConversationsParser;
+  DemoDataStorageParser? _demoDataStorageParser;
+  DemoStudyGroupsStudentParser? _demoStudyGroupsParser;
+
   @override
   SubstitutionsParser get substitutionsParser =>
-      DemoSubstitutionsParser(sph, substitutionDefinition);
+      _demoSubstitutionsParser ??= DemoSubstitutionsParser(sph, substitutionDefinition);
 
   @override
   CalendarParser get calendarParser =>
-      DemoCalendarParser(sph, calendarDefinition);
+      _demoCalendarParser ??= DemoCalendarParser(sph, calendarDefinition);
 
   @override
   TimetableStudentParser get timetableStudentParser =>
-      DemoTimetableStudentParser(sph, timeTableDefinition);
+      _demoTimetableParser ??= DemoTimetableStudentParser(sph, timeTableDefinition);
 
   @override
   LessonsStudentParser get lessonsStudentParser =>
-      DemoLessonsStudentParser(sph, lessonsDefinition);
+      _demoLessonsStudentParser ??= DemoLessonsStudentParser(sph, lessonsDefinition);
 
   @override
   ConversationsParser get conversationsParser =>
-      DemoConversationsParser(sph, conversationsDefinition);
+      _demoConversationsParser ??= DemoConversationsParser(sph, conversationsDefinition);
 
   @override
   DataStorageParser get dataStorageParser =>
-      DemoDataStorageParser(sph, dataStorageDefinition);
+      _demoDataStorageParser ??= DemoDataStorageParser(sph, dataStorageDefinition);
 
   @override
   StudyGroupsStudentParser get studyGroupsStudentParser =>
-      DemoStudyGroupsStudentParser(sph, studyGroupsDefinition);
+      _demoStudyGroupsParser ??= DemoStudyGroupsStudentParser(sph, studyGroupsDefinition);
 }
