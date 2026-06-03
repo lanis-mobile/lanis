@@ -178,9 +178,6 @@ struct TimetableSmallView: View {
                     .font(.caption2.bold())
                     .foregroundStyle(Color.accentColor)
                 Spacer()
-                Text(Date(), style: .time)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
             }
 
             if let lesson = featured {
@@ -235,9 +232,6 @@ struct TimetableMediumView: View {
                     .font(.caption2.bold())
                     .foregroundStyle(.secondary)
                 Spacer()
-                Text(Date(), style: .time)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
             }
 
             if visible.isEmpty {
@@ -274,9 +268,6 @@ struct TimetableLargeView: View {
                     .font(.caption.bold())
                     .foregroundStyle(.secondary)
                 Spacer()
-                Text(Date(), style: .time)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
             }
             Divider()
 
