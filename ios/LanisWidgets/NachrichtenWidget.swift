@@ -144,33 +144,36 @@ struct NachrichtenWidgetView: View {
     let entry: ConversationsTimelineEntry
     @Environment(\.widgetFamily) var family
     var body: some View {
-        switch family {
-        case .systemSmall: NachrichtenSmallView(data: entry.data)
-        case .systemMedium: NachrichtenMediumView(data: entry.data)
-        default:
-            if #available(iOSApplicationExtension 16.0, *) {
-                let count = entry.data?.unreadCount ?? 0
-                switch family {
-                case .accessoryCircular:
-                    ZStack {
-                        AccessoryWidgetBackground()
-                        Text("\(count)").font(.headline.bold()).widgetAccentable()
-                    }
-                case .accessoryRectangular:
-                    VStack(alignment: .leading) {
-                        if let first = entry.data?.latest.first {
-                            Text(first.sender).font(.headline).widgetAccentable().lineLimit(1)
-                            Text(first.subject).font(.caption).lineLimit(1)
-                        } else {
-                            Text("Keine Nachrichten").font(.caption)
+        Group {
+            switch family {
+            case .systemSmall: NachrichtenSmallView(data: entry.data)
+            case .systemMedium: NachrichtenMediumView(data: entry.data)
+            default:
+                if #available(iOSApplicationExtension 16.0, *) {
+                    let count = entry.data?.unreadCount ?? 0
+                    switch family {
+                    case .accessoryCircular:
+                        ZStack {
+                            AccessoryWidgetBackground()
+                            Text("\(count)").font(.headline.bold()).widgetAccentable()
                         }
+                    case .accessoryRectangular:
+                        VStack(alignment: .leading) {
+                            if let first = entry.data?.latest.first {
+                                Text(first.sender).font(.headline).widgetAccentable().lineLimit(1)
+                                Text(first.subject).font(.caption).lineLimit(1)
+                            } else {
+                                Text("Keine Nachrichten").font(.caption)
+                            }
+                        }
+                    case .accessoryInline:
+                        Text(count > 0 ? "\(count) ungelesene Nachricht\(count == 1 ? "" : "en")" : "Keine neuen Nachrichten")
+                    default: EmptyView()
                     }
-                case .accessoryInline:
-                    Text(count > 0 ? "\(count) ungelesene Nachricht\(count == 1 ? "" : "en")" : "Keine neuen Nachrichten")
-                default: EmptyView()
                 }
             }
         }
+        .widgetURL(URL(string: "lanis://applet/nachrichten.php")!)
     }
 }
 

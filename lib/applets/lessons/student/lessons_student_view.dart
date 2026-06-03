@@ -193,13 +193,11 @@ class _LessonsStudentViewState extends State<LessonsStudentView>
 
               return Scaffold(
                 appBar: settings['showHomework'] != true
-                    ? PreferredSize(
-                        preferredSize: const Size.fromHeight(kToolbarHeight + 52),
-                        child: AppBar(
-                          bottom: PreferredSize(
-                            preferredSize: const Size.fromHeight(52),
-                            child: _sortChips(settings, updateSetting),
-                          ),
+                    ? AppBar(
+                        toolbarHeight: 0,
+                        bottom: PreferredSize(
+                          preferredSize: const Size.fromHeight(52),
+                          child: _sortChips(settings, updateSetting),
                         ),
                       )
                     : null,
@@ -233,8 +231,11 @@ class _LessonsStudentViewState extends State<LessonsStudentView>
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              AttendancesScreen(lessons: attendanceLessons!),
+                          builder: (context) => AttendancesScreen(
+                            lessons: attendanceLessons!,
+                            settings: settings,
+                            updateSetting: updateSetting,
+                          ),
                         ),
                       );
                     },

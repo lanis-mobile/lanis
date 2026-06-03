@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'dart:io';
+import 'package:flutter/services.dart';
 import 'package:lanis/core/database/account_database/account_db.dart';
 import 'package:lanis/core/sph/session.dart';
 import 'package:lanis/core/widget_data_service.dart';
@@ -89,6 +90,7 @@ class HomePage extends StatefulWidget {
 
 class HomePageState extends State<HomePage> {
   final GlobalKey<ScaffoldState> _drawerKey = GlobalKey();
+  static const _channel = MethodChannel('io.github.alessioc42.sph/widgets');
 
   bool doesSupportAnyApplet = true;
   List<Destination> destinations = [];
@@ -116,6 +118,7 @@ class HomePageState extends State<HomePage> {
     super.initState();
     showUpdateInfoIfRequired(context);
     _checkLiveActivityOnLaunch();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _handleInitialWidgetLink());
   }
 
   void _checkLiveActivityOnLaunch() {
@@ -163,6 +166,19 @@ class HomePageState extends State<HomePage> {
         );
       }
     });
+  }
+
+  Future<void> _handleInitialWidgetLink() async {
+    if (!Platform.isIOS) return;
+    try {
+      final url = await _channel.invokeMethod<String>('getInitialWidget');
+      if (url == null || !mounted) return;
+      final phpId = Uri.parse(url).pathSegments.last;
+      final idx = AppDefinitions.getIndexByPhpIdentifier(phpId);
+      if (idx < 0) return;
+      if (!destinations[idx].isSupported || !destinations[idx].enableBottomNavigation) return;
+      setState(() => selectedDestinationDrawer = idx);
+    } catch (_) {}
   }
 
   Future<(TimetableSubject, TimetableSubject?)?> _getCurrentLesson() async {

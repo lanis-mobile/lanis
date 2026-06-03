@@ -335,40 +335,43 @@ struct KalenderWidgetView: View {
     let entry: CalendarTimelineEntry
     @Environment(\.widgetFamily) var family
     var body: some View {
-        switch family {
-        case .systemSmall:  KalenderSmallView(data: entry.data)
-        case .systemMedium: KalenderMediumView(data: entry.data)
-        case .systemLarge:  KalenderLargeView(data: entry.data)
-        default:
-            if #available(iOSApplicationExtension 16.0, *) {
-                let next = entry.data?.events.first
-                switch family {
-                case .accessoryCircular:
-                    ZStack {
-                        AccessoryWidgetBackground()
-                        if let d = next?.startDate {
-                            let days = Calendar.current.dateComponents([.day], from: Date(), to: d).day ?? 0
-                            Text(days == 0 ? "Heute" : "+\(days)").font(.caption2.bold()).widgetAccentable()
-                        } else {
-                            Image(systemName: "calendar").widgetAccentable()
+        Group {
+            switch family {
+            case .systemSmall:  KalenderSmallView(data: entry.data)
+            case .systemMedium: KalenderMediumView(data: entry.data)
+            case .systemLarge:  KalenderLargeView(data: entry.data)
+            default:
+                if #available(iOSApplicationExtension 16.0, *) {
+                    let next = entry.data?.events.first
+                    switch family {
+                    case .accessoryCircular:
+                        ZStack {
+                            AccessoryWidgetBackground()
+                            if let d = next?.startDate {
+                                let days = Calendar.current.dateComponents([.day], from: Date(), to: d).day ?? 0
+                                Text(days == 0 ? "Heute" : "+\(days)").font(.caption2.bold()).widgetAccentable()
+                            } else {
+                                Image(systemName: "calendar").widgetAccentable()
+                            }
                         }
-                    }
-                case .accessoryRectangular:
-                    VStack(alignment: .leading) {
-                        if let e = next {
-                            Text(e.title).font(.headline).widgetAccentable().lineLimit(1)
-                            Text(dayLabel(e.startDate)).font(.caption)
-                        } else {
-                            Text("Kein Ereignis").font(.caption)
+                    case .accessoryRectangular:
+                        VStack(alignment: .leading) {
+                            if let e = next {
+                                Text(e.title).font(.headline).widgetAccentable().lineLimit(1)
+                                Text(dayLabel(e.startDate)).font(.caption)
+                            } else {
+                                Text("Kein Ereignis").font(.caption)
+                            }
                         }
+                    case .accessoryInline:
+                        if let e = next { Text("\(dayLabel(e.startDate)): \(e.title)") }
+                        else { Text("Keine Ereignisse") }
+                    default: EmptyView()
                     }
-                case .accessoryInline:
-                    if let e = next { Text("\(dayLabel(e.startDate)): \(e.title)") }
-                    else { Text("Keine Ereignisse") }
-                default: EmptyView()
                 }
             }
         }
+        .widgetURL(URL(string: "lanis://applet/kalender.php")!)
     }
 }
 

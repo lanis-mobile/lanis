@@ -98,6 +98,7 @@ class _StudentTimetableBetterViewState
               currentWeekIndex == 0 ? null : uniqueBadges[currentWeekIndex - 1],
             );
 
+
             headerHeight =
                 timetable.weekBadge != null && timetable.weekBadge!.isNotEmpty
                 ? 40

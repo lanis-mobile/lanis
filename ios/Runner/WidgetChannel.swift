@@ -72,6 +72,10 @@ class WidgetChannel {
                     result(nil)
                 }
 
+            case "getInitialWidget":
+                result(AppDelegate.pendingWidgetURL)
+                AppDelegate.pendingWidgetURL = nil
+
             default:
                 result(FlutterMethodNotImplemented)
             }

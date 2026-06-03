@@ -11,7 +11,6 @@ struct LanisWidgetsBundle: WidgetBundle {
         NachrichtenWidget()
         if #available(iOSApplicationExtension 16.2, *) {
             StundenLiveActivityWidget()
-            VertretungsLiveActivityWidget()
         }
     }
 }

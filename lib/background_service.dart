@@ -286,21 +286,26 @@ class BackgroundTaskToolkit {
 Future<bool> isTaskWithinConstraints(AccountDatabase accountDB) async {
   final globalSettings = await accountDB.kv.getMultiple([
     'notifications-allowed-days',
-    'notifications-start-time',
-    'notifications-end-time',
+    'notifications-time-periods',
   ]);
-  TimeOfDay currentTime = TimeOfDay.now();
-  TimeOfDay startTime = TimeOfDay(
-    hour: globalSettings['notifications-start-time'][0],
-    minute: globalSettings['notifications-start-time'][1],
-  );
-  TimeOfDay endTime = TimeOfDay(
-    hour: globalSettings['notifications-end-time'][0],
-    minute: globalSettings['notifications-end-time'][1],
-  );
-  if (currentTime.hour < startTime.hour || currentTime.hour > endTime.hour) {
+
+  final int currentDayIndex = DateTime.now().weekday - 1;
+  if (!(globalSettings['notifications-allowed-days'][currentDayIndex] as bool)) {
     return false;
   }
-  int currentDayIndex = DateTime.now().weekday - 1;
-  return globalSettings['notifications-allowed-days'][currentDayIndex];
+
+  final now = TimeOfDay.now();
+  final int nowMinutes = now.hour * 60 + now.minute;
+
+  final List<dynamic> periods = globalSettings['notifications-time-periods'];
+  return periods.any((period) {
+    final int start = (period[0] as int) * 60 + (period[1] as int);
+    final int end = (period[2] as int) * 60 + (period[3] as int);
+    if (end >= start) {
+      return nowMinutes >= start && nowMinutes <= end;
+    } else {
+      // Midnight-spanning period (e.g. 23:00–01:00)
+      return nowMinutes >= start || nowMinutes <= end;
+    }
+  });
 }

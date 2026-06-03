@@ -36,6 +36,7 @@ class _CalendarViewState extends State<CalendarView> {
 
   KeyboardObserver keyboardObserver = KeyboardObserver();
   bool noTrigger = false;
+  Set<int> _activeFilterIds = {};
 
   @override
   void dispose() {
@@ -78,6 +79,7 @@ class _CalendarViewState extends State<CalendarView> {
     searchResults.addAll(searchResultsAfterToday);
     searchResults.addAll(searchResultsBeforeToday);
 
+    searchResults = _applyFilter(searchResults);
     return searchResults;
   }
 
@@ -120,7 +122,7 @@ class _CalendarViewState extends State<CalendarView> {
       }
     }
 
-    return validEvents;
+    return _applyFilter(validEvents);
   }
 
   void _onDaySelected(DateTime selectedDay, DateTime focusedDay) {
@@ -132,6 +134,65 @@ class _CalendarViewState extends State<CalendarView> {
 
       _selectedEvents.value = _getEventsForDay(selectedDay);
     }
+  }
+
+  List<CalendarEvent> _applyFilter(List<CalendarEvent> events) {
+    if (_activeFilterIds.isEmpty) return events;
+    return events.where((e) {
+      if (e.category == null) return false;
+      return _activeFilterIds.contains(e.category!.id);
+    }).toList();
+  }
+
+  Widget _categoryChips() {
+    final categories = eventList
+        .map((e) => e.category)
+        .whereType<CalendarEventCategory>()
+        .fold<Map<int, CalendarEventCategory>>({}, (map, cat) {
+          map[cat.id] = cat;
+          return map;
+        })
+        .values
+        .toList()
+      ..sort((a, b) => a.name.compareTo(b.name));
+
+    if (categories.isEmpty) return const SizedBox.shrink();
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: Row(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: FilterChip(
+              label: const Text('Alle'),
+              selected: _activeFilterIds.isEmpty,
+              onSelected: (_) => setState(() => _activeFilterIds = {}),
+            ),
+          ),
+          ...categories.map((cat) {
+            final active = _activeFilterIds.contains(cat.id);
+            return Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: FilterChip(
+                avatar: CircleAvatar(backgroundColor: cat.color, radius: 8),
+                label: Text(cat.name),
+                selected: active,
+                onSelected: (_) => setState(() {
+                  if (active) {
+                    _activeFilterIds = Set.from(_activeFilterIds)..remove(cat.id);
+                  } else {
+                    _activeFilterIds = Set.from(_activeFilterIds)..add(cat.id);
+                  }
+                  _selectedEvents.value = _getEventsForDay(_selectedDay!);
+                }),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
   }
 
   bool doesEntryExist(dynamic entry) => entry != null && entry != "";
@@ -364,7 +425,7 @@ class _CalendarViewState extends State<CalendarView> {
     }
   }
 
-  Widget _itemsListView(context) {
+  Widget _itemsListView(BuildContext context) {
     return ValueListenableBuilder<List<CalendarEvent>>(
       valueListenable: _selectedEvents,
       builder: (context, value, _) {
@@ -670,25 +731,32 @@ class _CalendarViewState extends State<CalendarView> {
                     eventList = data;
                     _selectedEvents.value = _getEventsForDay(_selectedDay!);
 
-                    return LayoutBuilder(
-                      builder: (context, constrains) {
-                        if (constrains.maxWidth > 550) {
-                          return Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Expanded(child: _tableCalendar(context)),
-                              const VerticalDivider(),
-                              Expanded(child: _itemsListView(context)),
-                            ],
-                          );
-                        }
-                        return Column(
-                          children: [
-                            _tableCalendar(context),
-                            Expanded(child: _itemsListView(context)),
-                          ],
-                        );
-                      },
+                    return Column(
+                      children: [
+                        _categoryChips(),
+                        Expanded(
+                          child: LayoutBuilder(
+                            builder: (context, constrains) {
+                              if (constrains.maxWidth > 550) {
+                                return Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Expanded(child: _tableCalendar(context)),
+                                    const VerticalDivider(),
+                                    Expanded(child: _itemsListView(context)),
+                                  ],
+                                );
+                              }
+                              return Column(
+                                children: [
+                                  _tableCalendar(context),
+                                  Expanded(child: _itemsListView(context)),
+                                ],
+                              );
+                            },
+                          ),
+                        ),
+                      ],
                     );
                   },
             ),

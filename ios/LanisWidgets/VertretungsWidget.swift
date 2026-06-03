@@ -145,33 +145,36 @@ struct VertretungsWidgetView: View {
     let entry: SubstitutionTimelineEntry
     @Environment(\.widgetFamily) var family
     var body: some View {
-        switch family {
-        case .systemSmall: VertretungsSmallView(data: entry.data)
-        case .systemMedium: VertretungsMediumView(data: entry.data)
-        default:
-            if #available(iOSApplicationExtension 16.0, *) {
-                let count = entry.data?.entries.count ?? 0
-                switch family {
-                case .accessoryCircular:
-                    ZStack {
-                        AccessoryWidgetBackground()
-                        Text("\(count)").font(.headline.bold()).widgetAccentable()
-                    }
-                case .accessoryRectangular:
-                    VStack(alignment: .leading) {
-                        if let first = entry.data?.entries.first {
-                            Text("\(first.stunde). Std · \(first.art ?? "")").font(.headline).widgetAccentable()
-                            Text(first.fach ?? "–").font(.caption)
-                        } else {
-                            Text("Keine Vertretungen").font(.caption)
+        Group {
+            switch family {
+            case .systemSmall: VertretungsSmallView(data: entry.data)
+            case .systemMedium: VertretungsMediumView(data: entry.data)
+            default:
+                if #available(iOSApplicationExtension 16.0, *) {
+                    let count = entry.data?.entries.count ?? 0
+                    switch family {
+                    case .accessoryCircular:
+                        ZStack {
+                            AccessoryWidgetBackground()
+                            Text("\(count)").font(.headline.bold()).widgetAccentable()
                         }
+                    case .accessoryRectangular:
+                        VStack(alignment: .leading) {
+                            if let first = entry.data?.entries.first {
+                                Text("\(first.stunde). Std · \(first.art ?? "")").font(.headline).widgetAccentable()
+                                Text(first.fach ?? "–").font(.caption)
+                            } else {
+                                Text("Keine Vertretungen").font(.caption)
+                            }
+                        }
+                    case .accessoryInline:
+                        Text(count > 0 ? "\(count) Vertretung\(count == 1 ? "" : "en") heute" : "Keine Vertretungen")
+                    default: EmptyView()
                     }
-                case .accessoryInline:
-                    Text(count > 0 ? "\(count) Vertretung\(count == 1 ? "" : "en") heute" : "Keine Vertretungen")
-                default: EmptyView()
                 }
             }
         }
+        .widgetURL(URL(string: "lanis://applet/vertretungsplan.php")!)
     }
 }
 

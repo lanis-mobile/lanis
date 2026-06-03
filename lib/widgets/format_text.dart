@@ -2,6 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:linkify/linkify.dart';
 import 'package:styled_text/styled_text.dart';
 import '../utils/url_modal.dart';
+import '../applets/definitions.dart';
+import '../core/sph/sph.dart';
+
+/// Navigates in-app to the matching applet if [uri] is a known SPH URL.
+/// Returns true if navigation was handled, false if the caller should fall back.
+bool navigateToSphUrl(BuildContext context, Uri uri) {
+  if (uri.host.toLowerCase() != 'start.schulportal.hessen.de') return false;
+
+  final phpFile = uri.pathSegments.isNotEmpty ? uri.pathSegments.last : '';
+  if (phpFile.isEmpty) return false;
+
+  final applet = AppDefinitions.applets
+      .where((a) => a.appletPhpUrl == phpFile)
+      .firstOrNull;
+  if (applet == null) return false;
+  if (applet.bodyBuilder == null) return false;
+  if (!sph!.session.doesSupportFeature(applet)) return false;
+
+  Navigator.of(context).push(
+    MaterialPageRoute(
+      builder: (ctx) =>
+          applet.bodyBuilder!(ctx, sph!.session.accountType, () {}),
+    ),
+  );
+  return true;
+}
 
 class FormatPattern {
   late final RegExp regExp;
@@ -356,7 +382,11 @@ class FormattedText extends StatelessWidget {
               padding: const EdgeInsets.only(top: 2, bottom: 2),
               child: InkWell(
                 onTap: () async {
-                  await openUrlModal(context, Uri.parse(attributes["href"]!));
+                  final uri = Uri.tryParse(attributes["href"]!);
+                  if (uri == null) return;
+                  if (!navigateToSphUrl(context, uri)) {
+                    await openUrlModal(context, uri);
+                  }
                 },
                 borderRadius: BorderRadius.circular(6),
                 child: Container(

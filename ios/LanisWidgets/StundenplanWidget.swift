@@ -368,27 +368,30 @@ struct StundenplanWidgetView: View {
     @Environment(\.widgetFamily) var family
 
     var body: some View {
-        switch family {
-        case .systemSmall:
-            TimetableSmallView(data: entry.data)
-        case .systemMedium:
-            TimetableMediumView(data: entry.data)
-        case .systemLarge:
-            TimetableLargeView(data: entry.data)
-        default:
-            if #available(iOSApplicationExtension 16.0, *) {
-                switch family {
-                case .accessoryCircular:
-                    TimetableAccessoryCircularView(data: entry.data)
-                case .accessoryRectangular:
-                    TimetableAccessoryRectangularView(data: entry.data)
-                case .accessoryInline:
-                    TimetableAccessoryInlineView(data: entry.data)
-                default:
-                    EmptyView()
+        Group {
+            switch family {
+            case .systemSmall:
+                TimetableSmallView(data: entry.data)
+            case .systemMedium:
+                TimetableMediumView(data: entry.data)
+            case .systemLarge:
+                TimetableLargeView(data: entry.data)
+            default:
+                if #available(iOSApplicationExtension 16.0, *) {
+                    switch family {
+                    case .accessoryCircular:
+                        TimetableAccessoryCircularView(data: entry.data)
+                    case .accessoryRectangular:
+                        TimetableAccessoryRectangularView(data: entry.data)
+                    case .accessoryInline:
+                        TimetableAccessoryInlineView(data: entry.data)
+                    default:
+                        EmptyView()
+                    }
                 }
             }
         }
+        .widgetURL(URL(string: "lanis://applet/stundenplan.php")!)
     }
 }
 
