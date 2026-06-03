@@ -48,7 +48,8 @@ import ActivityKit
   ) -> Bool {
     if url.scheme == "lanis" {
       AppDelegate.pendingWidgetURL = url.absoluteString
+      return true
     }
-    return true
+    return super.application(app, open: url, options: options)
   }
 }
