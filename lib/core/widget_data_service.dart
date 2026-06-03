@@ -57,9 +57,11 @@ class WidgetDataService {
       final today = _getTodayLessons(data);
 
       TimetableSubject? current;
-      for (final lesson in today) {
-        if (_isOngoing(lesson, now)) {
-          current = lesson;
+      TimetableSubject? next;
+      for (int i = 0; i < today.length; i++) {
+        if (_isOngoing(today[i], now)) {
+          current = today[i];
+          if (i + 1 < today.length) next = today[i + 1];
           break;
         }
       }
@@ -69,6 +71,17 @@ class WidgetDataService {
         'today': today.map((l) => _lessonToJson(l)).toList(),
         'currentLesson': current != null ? _lessonToJson(current) : null,
       });
+
+      // Live Activity: start/update when a lesson is ongoing, end otherwise
+      final liveActivityEnabled =
+          await sph.prefs.kv.get('live-activity-lesson') ?? true;
+      if (liveActivityEnabled == true) {
+        if (current != null) {
+          await startLessonActivity(current, next);
+        } else {
+          await endLessonActivity();
+        }
+      }
     } catch (e) {
       logger.w('WidgetDataService: updateTimetable failed: $e');
     }
@@ -94,6 +107,21 @@ class WidgetDataService {
                 })
             .toList(),
       });
+
+      // Live Activity: start if new entries exist and setting is enabled
+      final liveActivityEnabled =
+          await sph.prefs.kv.get('live-activity-substitution') ?? true;
+      if (liveActivityEnabled == true && entries.isNotEmpty) {
+        await startSubstitutionActivity(
+          entries
+              .map((s) => {
+                    'stunde': s.stunde,
+                    'fach': s.fach,
+                    'art': s.art,
+                  })
+              .toList(),
+        );
+      }
     } catch (e) {
       logger.w('WidgetDataService: updateSubstitutions failed: $e');
     }
