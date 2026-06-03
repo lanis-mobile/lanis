@@ -69,5 +69,9 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Required when uploading a camera photo to Lanis</string>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
+	<key>NSSupportsLiveActivitiesFrequentUpdates</key>
+	<true/>
 </dict>
 </plist>
