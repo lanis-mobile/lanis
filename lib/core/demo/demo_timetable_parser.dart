@@ -8,15 +8,24 @@ class DemoTimetableStudentParser extends TimetableStudentParser with DemoFetchMi
 
   @override
   Future<TimeTable> getHome() async {
+    final now = TimeOfDay.now();
+    // First lesson starts 1 minute from now so small/medium widgets always show content
+    final startMinutes = now.hour * 60 + now.minute + 1;
+
+    TimeOfDay offset(int addMinutes) {
+      final total = startMinutes + addMinutes;
+      return TimeOfDay(hour: (total ~/ 60) % 24, minute: total % 60);
+    }
+
     final hours = [
-      TimeTableRow(TimeTableRowType.lesson, const TimeOfDay(hour: 7, minute: 55), const TimeOfDay(hour: 8, minute: 40), '1', 0),
-      TimeTableRow(TimeTableRowType.lesson, const TimeOfDay(hour: 8, minute: 45), const TimeOfDay(hour: 9, minute: 30), '2', 1),
-      TimeTableRow(TimeTableRowType.pause,  const TimeOfDay(hour: 9, minute: 30), const TimeOfDay(hour: 9, minute: 50), 'Pause', 2),
-      TimeTableRow(TimeTableRowType.lesson, const TimeOfDay(hour: 9, minute: 50), const TimeOfDay(hour: 10, minute: 35), '3', 3),
-      TimeTableRow(TimeTableRowType.lesson, const TimeOfDay(hour: 10, minute: 40), const TimeOfDay(hour: 11, minute: 25), '4', 4),
-      TimeTableRow(TimeTableRowType.pause,  const TimeOfDay(hour: 11, minute: 25), const TimeOfDay(hour: 11, minute: 40), 'Pause', 5),
-      TimeTableRow(TimeTableRowType.lesson, const TimeOfDay(hour: 11, minute: 40), const TimeOfDay(hour: 12, minute: 25), '5', 6),
-      TimeTableRow(TimeTableRowType.lesson, const TimeOfDay(hour: 12, minute: 30), const TimeOfDay(hour: 13, minute: 15), '6', 7),
+      TimeTableRow(TimeTableRowType.lesson, offset(0),   offset(45),  '1', 0),
+      TimeTableRow(TimeTableRowType.lesson, offset(50),  offset(95),  '2', 1),
+      TimeTableRow(TimeTableRowType.pause,  offset(95),  offset(115), 'Pause', 2),
+      TimeTableRow(TimeTableRowType.lesson, offset(115), offset(160), '3', 3),
+      TimeTableRow(TimeTableRowType.lesson, offset(165), offset(210), '4', 4),
+      TimeTableRow(TimeTableRowType.pause,  offset(210), offset(225), 'Pause', 5),
+      TimeTableRow(TimeTableRowType.lesson, offset(225), offset(270), '5', 6),
+      TimeTableRow(TimeTableRowType.lesson, offset(275), offset(320), '6', 7),
     ];
 
     TimetableSubject s(String id, String name, String raum, String lehrer, int stunde) =>
