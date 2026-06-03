@@ -103,7 +103,7 @@ struct StundenLiveActivityWidget: Widget {
 
 // MARK: - Previews
 
-@available(iOS 16.2, *)
+@available(iOS 17.0, *)
 #Preview("Lock Screen", as: .content, using: LessonActivityAttributes(
     lessonName: "Mathematik",
     teacher: "Müller",
@@ -118,7 +118,7 @@ struct StundenLiveActivityWidget: Widget {
     )
 }
 
-@available(iOS 16.2, *)
+@available(iOS 17.0, *)
 #Preview("Dynamic Island Expanded", as: .dynamicIsland(.expanded), using: LessonActivityAttributes(
     lessonName: "Mathematik",
     teacher: "Müller",
@@ -133,7 +133,7 @@ struct StundenLiveActivityWidget: Widget {
     )
 }
 
-@available(iOS 16.2, *)
+@available(iOS 17.0, *)
 #Preview("Dynamic Island Compact", as: .dynamicIsland(.compact), using: LessonActivityAttributes(
     lessonName: "Mathematik",
     teacher: "Müller",
@@ -148,7 +148,7 @@ struct StundenLiveActivityWidget: Widget {
     )
 }
 
-@available(iOS 16.2, *)
+@available(iOS 17.0, *)
 #Preview("Dynamic Island Minimal", as: .dynamicIsland(.minimal), using: LessonActivityAttributes(
     lessonName: "Mathematik",
     teacher: "Müller",
