@@ -7,8 +7,12 @@ struct LessonJson: Decodable {
     let name: String
     let room: String?
     let teacher: String?
-    let end: String  // "HH:mm"
+    let phase: String          // "lesson" | "break" | "dayEnd"
+    let phaseStartTime: String // "HH:mm"
+    let phaseEndTime: String   // "HH:mm"
     let nextName: String?
+    let nextRoom: String?
+    let nextTeacher: String?
     let nextStart: String?
 }
 
@@ -19,7 +23,9 @@ enum LessonActivityManager {
     static func start(json: String, result: @escaping FlutterResult) {
         guard let data = json.data(using: .utf8),
               let lesson = try? JSONDecoder().decode(LessonJson.self, from: data),
-              let endDate = parseTime(lesson.end)
+              let phase = ActivityPhase(rawValue: lesson.phase),
+              let startDate = parseTime(lesson.phaseStartTime),
+              let endDate = parseTime(lesson.phaseEndTime)
         else {
             result(FlutterError(code: "PARSE_ERROR", message: "Could not parse lesson json", details: nil))
             return
@@ -31,8 +37,12 @@ enum LessonActivityManager {
             room: lesson.room
         )
         let state = LessonActivityAttributes.ContentState(
-            endTime: endDate,
+            phase: phase,
+            phaseStartTime: startDate,
+            phaseEndTime: endDate,
             nextLessonName: lesson.nextName,
+            nextLessonRoom: lesson.nextRoom,
+            nextLessonTeacher: lesson.nextTeacher,
             nextLessonStart: lesson.nextStart
         )
 
@@ -52,15 +62,21 @@ enum LessonActivityManager {
         guard let activity = currentActivity,
               let data = json.data(using: .utf8),
               let lesson = try? JSONDecoder().decode(LessonJson.self, from: data),
-              let endDate = parseTime(lesson.end)
+              let phase = ActivityPhase(rawValue: lesson.phase),
+              let startDate = parseTime(lesson.phaseStartTime),
+              let endDate = parseTime(lesson.phaseEndTime)
         else {
             result(nil)
             return
         }
 
         let state = LessonActivityAttributes.ContentState(
-            endTime: endDate,
+            phase: phase,
+            phaseStartTime: startDate,
+            phaseEndTime: endDate,
             nextLessonName: lesson.nextName,
+            nextLessonRoom: lesson.nextRoom,
+            nextLessonTeacher: lesson.nextTeacher,
             nextLessonStart: lesson.nextStart
         )
         Task {
