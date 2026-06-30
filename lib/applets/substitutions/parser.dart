@@ -166,7 +166,7 @@ class SubstitutionsParser extends AppletParser<SubstitutionPlan> {
     try {
       final response = await sph.session.dio.post(
         "https://start.schulportal.hessen.de/vertretungsplan.php",
-        queryParameters: {"a": "my"},
+        queryParameters: {"a": "data"},
         data: {"tag": date, "ganzerPlan": "true"},
         options: Options(
           headers: {
