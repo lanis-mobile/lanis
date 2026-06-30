@@ -70,7 +70,7 @@ class _AttendancesScreenState extends State<AttendancesScreen> {
         return AttendanceCard(
           title: lesson.name,
           teachers: lesson.teachers,
-          attendances: lesson.attendances!,
+          attendances: lesson.attendances ?? {},
         );
       },
     );

@@ -158,7 +158,7 @@ class ConversationsParser extends AppletParser<List<OverviewEntry>> {
       return username;
     }
 
-    return getUsernameInsideHTML.firstMatch(username)!.group(1)!;
+    return getUsernameInsideHTML.firstMatch(username)?.group(1) ?? username;
   }
 
   /// Gets a whole single conversation with statistics.

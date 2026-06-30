@@ -25,7 +25,7 @@ class LessonsStudentParser extends AppletParser<Lessons> {
 
     var kursmappenDOM = document.getElementById("mappen");
     final row = kursmappenDOM?.getElementsByClassName("row");
-    var mappen = row!.isEmpty ? null : row[0].children;
+    var mappen = (row == null || row.isEmpty) ? null : row[0].children;
     if (mappen != null) {
       for (var mappe in mappen) {
         String url = mappe
@@ -118,6 +118,7 @@ class LessonsStudentParser extends AppletParser<Lessons> {
       Map<String, String> attendances = {};
 
       for (int i = 0; i < keys.length; i++) {
+        if (i >= textElements.length) break;
         var key = keys[i].toLowerCase();
         var value = textElements[i];
         if (['kurs', 'lehrkraft'].contains(key)) continue;
@@ -370,10 +371,12 @@ class LessonsStudentParser extends AppletParser<Lessons> {
 
       List<LessonExam> lessonExams = [];
 
-      if (!(examSection?.children)![0].text.contains(
+      if (examSection != null &&
+          examSection.children.isNotEmpty &&
+          !examSection.children[0].text.contains(
         "Diese Kursmappe beinhaltet leider noch keine Leistungskontrollen!",
       )) {
-        for (var element in examSection?.children ?? []) {
+        for (var element in examSection.children) {
           String exams = "";
 
           final elements = element.querySelectorAll("ul li");

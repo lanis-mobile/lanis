@@ -55,13 +55,14 @@ class AppletParser<T> {
     () => _latestResponse,
   );
   bool isEmpty = true;
+  Timer? _refreshTimer;
 
   AppletResponseStream<T> get stream => _stream;
 
   FetcherResponse<T>? get latestResponse => _latestResponse;
 
   AppletParser(this.sph, this.appletDefinition) {
-    Timer.periodic(appletDefinition.refreshInterval, timerCallback);
+    _refreshTimer = Timer.periodic(appletDefinition.refreshInterval, timerCallback);
   }
 
   void timerCallback(Timer timer) async {
@@ -76,6 +77,7 @@ class AppletParser<T> {
   }
 
   void dispose() {
+    _refreshTimer?.cancel();
     _controller.close();
   }
 
