@@ -365,5 +365,25 @@
   "openIOSSettingsToChangeLanguage": "Wählen Sie auf dem nächsten Bildschirm \"Lanis\" und ändern dann die Sprache im Abschnitt \"Bevorzugte Sprache\".",
   "copy": "Kopieren",
   "openExternalUrl": "Externe URL öffnen",
-  "openExternalUrlDescription": "Möchtest du die folgende URL öffnen?"
+  "openExternalUrlDescription": "Möchtest du die folgende URL öffnen?",
+
+  "messageTeacher": "Lehrer anschreiben",
+  "messageTeacherSearching": "Suche Lehrer...",
+  "messageTeacherNotFound": "Lehrer \"{name}\" nicht gefunden.",
+  "@messageTeacherNotFound": { "placeholders": { "name": { "type": "String" } } },
+  "messageTeacherMultipleFound": "Mehrere Lehrer gefunden. Bitte wähle einen aus:",
+  "allMarks": "Alle Leistungen",
+  "allMarksLoading": "{loaded} / {total} Kurse geladen",
+  "@allMarksLoading": { "placeholders": { "loaded": { "type": "int" }, "total": { "type": "int" } } },
+  "allMarksNoData": "Keine Leistungen gefunden.",
+  "gradeCalculator": "Notenrechner",
+  "gradeCalculatorAverage": "Durchschnitt",
+  "gradeCalculatorWeighting": "Gewichtung",
+  "gradeCalculatorOral": "Mündlich",
+  "gradeCalculatorWritten": "Schriftlich",
+  "gradeCalculatorOther": "Sonstig",
+  "gradeCalculatorAddNote": "Note hinzufügen",
+  "gradeCalculatorNoteName": "Bezeichnung",
+  "gradeCalculatorNoteValue": "Note / Punkte",
+  "gradeCalculatorUnknownFormat": "Unbekanntes Format"
 }
