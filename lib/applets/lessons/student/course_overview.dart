@@ -43,7 +43,8 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
 
   Future<void> _messageTeacher() async {
     if (data == null || data!.teachers.isEmpty) return;
-    if (sph?.parser.conversationsParser == null) return;
+    final parser = sph?.parser.conversationsParser;
+    if (parser == null) return;
 
     final teacherNames = data!.teachers
         .map((t) => t.teacher)
@@ -65,10 +66,16 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
       ),
     );
 
-    final results = await Future.wait(
-      teacherNames.map((n) =>
-          sph!.parser.conversationsParser.searchTeacher(n)),
-    );
+    final List<ReceiverEntry> found;
+    try {
+      final results = await Future.wait(
+        teacherNames.map((n) => parser.searchTeacher(n)),
+      );
+      found = results.expand((r) => r).toList();
+    } catch (_) {
+      if (mounted) Navigator.pop(context);
+      return;
+    }
     if (!mounted) return;
     Navigator.pop(context);
 
