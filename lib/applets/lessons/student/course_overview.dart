@@ -9,6 +9,7 @@ import '../../../models/conversations.dart';
 import '../../../models/lessons.dart';
 import '../../../utils/file_operations.dart';
 import '../../../widgets/format_text.dart';
+import 'grade_calculator.dart';
 import 'homework_box.dart';
 
 class CourseOverviewAnsicht extends StatefulWidget {
@@ -519,35 +520,42 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
       case 1: // leistungen
         return data!.marks.isNotEmpty
             ? ListView.builder(
-                itemCount: data!.marks.length,
+                itemCount: data!.marks.length + 1,
                 itemBuilder: (context, index) {
+                  if (index == 0) {
+                    return GradeCalculatorCard(
+                      sphMarks: data!.marks,
+                      courseId: data!.courseID,
+                    );
+                  }
+                  final mark = data!.marks[index - 1];
                   return Padding(
                     padding: EdgeInsets.only(
                       left: padding,
                       right: padding,
-                      bottom: index == data!.marks.length - 1 ? 14 : 8,
+                      bottom: index == data!.marks.length ? 14 : 8,
                     ),
                     child: Card(
                       child: Column(
                         children: [
                           ListTile(
                             title: Text(
-                              data!.marks[index].name,
+                              mark.name,
                               style: Theme.of(context).textTheme.titleMedium,
                             ),
                             trailing: Text(
-                              data!.marks[index].mark,
+                              mark.mark,
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 20.0,
                               ),
                             ),
                             subtitle: Text(
-                              data!.marks[index].date,
+                              mark.date,
                               style: Theme.of(context).textTheme.bodyMedium,
                             ),
                           ),
-                          if (data!.marks[index].comment != null)
+                          if (mark.comment != null)
                             ListTile(
                               title: Text(
                                 "${AppLocalizations.of(context).comment}: ",
@@ -555,7 +563,7 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
                                 textAlign: TextAlign.left,
                               ),
                               subtitle: Text(
-                                data!.marks[index].comment ?? "",
+                                mark.comment ?? "",
                                 style: TextStyle(
                                   fontSize: Theme.of(
                                     context,
