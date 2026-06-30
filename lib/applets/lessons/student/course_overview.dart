@@ -3,7 +3,9 @@ import 'package:intl/intl.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/applets/lessons/student/upload_page.dart';
 
+import '../../../applets/conversations/view/new_conversation_configurator.dart';
 import '../../../core/sph/sph.dart';
+import '../../../models/conversations.dart';
 import '../../../models/lessons.dart';
 import '../../../utils/file_operations.dart';
 import '../../../widgets/format_text.dart';
@@ -37,6 +39,89 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
   void initState() {
     super.initState();
     _loadData();
+  }
+
+  Future<void> _messageTeacher() async {
+    if (data == null || data!.teachers.isEmpty) return;
+    if (sph?.parser.conversationsParser == null) return;
+
+    final teacherNames = data!.teachers
+        .map((t) => t.teacher)
+        .where((n) => n != null)
+        .cast<String>()
+        .toList();
+    if (teacherNames.isEmpty) return;
+
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        content: Row(children: [
+          const CircularProgressIndicator(),
+          const SizedBox(width: 16),
+          Expanded(child: Text(AppLocalizations.of(context).messageTeacherSearching)),
+        ]),
+      ),
+    );
+
+    final results = await Future.wait(
+      teacherNames.map((n) =>
+          sph!.parser.conversationsParser.searchTeacher(n)),
+    );
+    if (!mounted) return;
+    Navigator.pop(context);
+
+    final List<ReceiverEntry> found = results.expand((r) => r).toList();
+
+    if (found.isEmpty) {
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: Text(AppLocalizations.of(context).messageTeacher),
+          content: Text(AppLocalizations.of(context)
+              .messageTeacherNotFound(teacherNames.join(', '))),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK')),
+          ],
+        ),
+      );
+      return;
+    }
+
+    ReceiverEntry receiver;
+    if (found.length == 1) {
+      receiver = found.first;
+    } else {
+      final picked = await showDialog<ReceiverEntry>(
+        context: context,
+        builder: (_) => SimpleDialog(
+          title: Text(
+              AppLocalizations.of(context).messageTeacherMultipleFound),
+          children: found
+              .map((e) => SimpleDialogOption(
+                    onPressed: () => Navigator.pop(context, e),
+                    child: Text(e.name),
+                  ))
+              .toList(),
+        ),
+      );
+      if (picked == null || !mounted) return;
+      receiver = picked;
+    }
+
+    if (!mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => NewConversationConfigurator(
+          prefillReceiver: receiver,
+        ),
+      ),
+    );
   }
 
   Future<void> _loadData({bool secondTry = false, bool force = false}) async {
@@ -574,6 +659,13 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
                   ),
                 );
               },
+            ),
+          if (sph?.parser.conversationsParser != null &&
+              data!.teachers.any((t) => t.teacher != null))
+            IconButton(
+              icon: const Icon(Icons.mail_outline),
+              tooltip: AppLocalizations.of(context).messageTeacher,
+              onPressed: _messageTeacher,
             ),
         ],
       ),

@@ -6,7 +6,8 @@ import '../../../core/sph/sph.dart';
 import '../../../models/conversations.dart';
 
 class NewConversationConfigurator extends StatefulWidget {
-  const NewConversationConfigurator({super.key});
+  final ReceiverEntry? prefillReceiver;
+  const NewConversationConfigurator({super.key, this.prefillReceiver});
 
   @override
   State<NewConversationConfigurator> createState() =>
@@ -25,6 +26,14 @@ class _NewConversationConfiguratorState
   final List<ReceiverEntry> receivers = [];
   final TriggerRebuild rebuildSearch = TriggerRebuild();
   ChatType selectedChatType = ChatType.values[2];
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.prefillReceiver != null) {
+      receivers.add(widget.prefillReceiver!);
+    }
+  }
 
   bool get isFormValid =>
       subjectController.text.trim().isNotEmpty && receivers.isNotEmpty;
