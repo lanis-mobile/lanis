@@ -125,7 +125,9 @@ class _SubstitutionFilterEditorState extends State<SubstitutionFilterEditor> {
                 child: Text(widget.title, style: const TextStyle(fontSize: 18)),
               ),
               ActionChip(
-                label: strict ? const Text("All") : const Text("One"),
+                label: strict
+                    ? Text(AppLocalizations.of(context).substitutionsFilterAll)
+                    : Text(AppLocalizations.of(context).substitutionsFilterOne),
                 padding: const EdgeInsets.only(top: 0, bottom: 0),
                 onPressed: () {
                   setState(() {
