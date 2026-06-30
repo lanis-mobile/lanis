@@ -79,8 +79,6 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
     if (!mounted) return;
     Navigator.pop(context);
 
-    final List<ReceiverEntry> found = results.expand((r) => r).toList();
-
     if (found.isEmpty) {
       if (!mounted) return;
       showDialog(
