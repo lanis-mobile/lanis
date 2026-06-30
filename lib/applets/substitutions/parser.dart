@@ -178,9 +178,17 @@ class SubstitutionsParser extends AppletParser<SubstitutionPlan> {
           },
         ),
       );
+      final responseBody = response.toString();
+      if (responseBody.isEmpty || responseBody == 'null') {
+        return SubstitutionDay(parsedDate: date, substitutions: []);
+      }
+      final decoded = jsonDecode(responseBody);
+      if (decoded == null || decoded is! List) {
+        return SubstitutionDay(parsedDate: date, substitutions: []);
+      }
       return SubstitutionDay(
         parsedDate: date,
-        substitutions: (jsonDecode(response.toString()) as List)
+        substitutions: (decoded as List)
             .map(
               (e) => Substitution(
                 tag: e["Tag"],
