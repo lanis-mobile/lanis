@@ -86,15 +86,18 @@ class _LessonListTileState extends State<LessonListTile> {
                         : Icons.person,
                     size: 16,
                   ),
-                  if (widget.lesson.teachers.length == 1)
-                    Text(
-                      " ${widget.lesson.teachers[0].teacher} (${widget.lesson.teachers[0].teacherKuerzel})",
-                    )
-                  else
-                    Text(
-                      " ${widget.lesson.teachers.map((e) => e.teacherKuerzel).join(', ')}",
-                    ),
-                  const Spacer(),
+                  Flexible(
+                    child: widget.lesson.teachers.length == 1
+                        ? Text(
+                            " ${widget.lesson.teachers[0].teacher} (${widget.lesson.teachers[0].teacherKuerzel})",
+                            overflow: TextOverflow.ellipsis,
+                          )
+                        : Text(
+                            " ${widget.lesson.teachers.map((e) => e.teacherKuerzel).join(', ')}",
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                  ),
+                  const SizedBox(width: 4),
                   Text(
                     widget.lesson.currentEntry?.topicDate != null
                       ? dateFormat.format(widget.lesson.currentEntry!.topicDate!)

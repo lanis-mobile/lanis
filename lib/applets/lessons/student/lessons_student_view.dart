@@ -33,6 +33,64 @@ class _LessonsStudentViewState extends State<LessonsStudentView>
   Future<void> Function(String, dynamic)? globalUpdateSetting;
   Lessons? homeworkLessons;
 
+  Lessons _sortLessons(Lessons lessons, String sortOption) {
+    final sorted = List<Lesson>.from(lessons);
+    switch (sortOption) {
+      case 'date_asc':
+        sorted.sort((a, b) {
+          if (a.currentEntry?.topicDate == null) return 1;
+          if (b.currentEntry?.topicDate == null) return -1;
+          return a.currentEntry!.topicDate!.compareTo(b.currentEntry!.topicDate!);
+        });
+      case 'alpha':
+        sorted.sort((a, b) => a.name.compareTo(b.name));
+      case 'teacher':
+        sorted.sort((a, b) {
+          final aT = a.teachers.firstOrNull?.teacher ?? '';
+          final bT = b.teachers.firstOrNull?.teacher ?? '';
+          return aT.compareTo(bT);
+        });
+      case 'date_desc':
+      default:
+        sorted.sort((a, b) {
+          if (a.currentEntry?.topicDate == null) return 1;
+          if (b.currentEntry?.topicDate == null) return -1;
+          return b.currentEntry!.topicDate!.compareTo(a.currentEntry!.topicDate!);
+        });
+    }
+    return sorted;
+  }
+
+  Widget _sortChips(
+    Map<String, dynamic> settings,
+    Future<void> Function(String, dynamic) updateSetting,
+  ) {
+    const options = [
+      ('date_desc', 'Datum ↓'),
+      ('date_asc', 'Datum ↑'),
+      ('alpha', 'A–Z'),
+      ('teacher', 'Lehrer'),
+    ];
+    final current = settings['sortOption'] as String? ?? 'date_desc';
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: Row(
+        children: options.map((opt) {
+          final (value, label) = opt;
+          return Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: FilterChip(
+              label: Text(label),
+              selected: current == value,
+              onSelected: (_) => updateSetting('sortOption', value),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -126,12 +184,23 @@ class _LessonsStudentViewState extends State<LessonsStudentView>
                       : -1;
                 });
               } else {
+                final sortOption = settings['sortOption'] as String? ?? 'date_desc';
+                lessons = _sortLessons(lessons, sortOption);
                 attendanceLessons = lessons
                     .where((element) => element.attendances != null)
                     .toList();
               }
 
               return Scaffold(
+                appBar: settings['showHomework'] != true
+                    ? AppBar(
+                        toolbarHeight: 0,
+                        bottom: PreferredSize(
+                          preferredSize: const Size.fromHeight(52),
+                          child: _sortChips(settings, updateSetting),
+                        ),
+                      )
+                    : null,
                 body: RefreshIndicator(
                   onRefresh: () => refresh!(),
                   child: lessons.isNotEmpty
@@ -162,8 +231,11 @@ class _LessonsStudentViewState extends State<LessonsStudentView>
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              AttendancesScreen(lessons: attendanceLessons!),
+                          builder: (context) => AttendancesScreen(
+                            lessons: attendanceLessons!,
+                            settings: settings,
+                            updateSetting: updateSetting,
+                          ),
                         ),
                       );
                     },
