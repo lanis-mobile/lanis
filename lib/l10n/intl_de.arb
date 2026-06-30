@@ -359,5 +359,15 @@
   "openIOSSettingsToChangeLanguage": "Wählen Sie auf dem nächsten Bildschirm \"Lanis\" und ändern dann die Sprache im Abschnitt \"Bevorzugte Sprache\".",
   "copy": "Kopieren",
   "openExternalUrl": "Externe URL öffnen",
-  "openExternalUrlDescription": "Möchtest du die folgende URL öffnen?"
+  "openExternalUrlDescription": "Möchtest du die folgende URL öffnen?",
+  "sortBy": "Sortieren nach",
+  "sortDateDescending": "Datum ↓ (neueste zuerst)",
+  "sortDateAscending": "Datum ↑ (älteste zuerst)",
+  "sortNameAscending": "A–Z",
+  "sortNameDescending": "Z–A",
+  "sortTeacherAscending": "Lehrer A–Z",
+  "sortTeacherDescending": "Lehrer Z–A",
+  "cardView": "Kartenansicht",
+  "tableView": "Tabellenansicht",
+  "course": "Kurs"
 }

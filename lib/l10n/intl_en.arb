@@ -403,5 +403,15 @@
   "openIOSSettingsToChangeLanguage": "On the next screen, select \"Lanis\" and then change the language in the \"Preferred Language\" section.",
   "copy": "Copy",
   "openExternalUrl": "Open external URL",
-  "openExternalUrlDescription": "Do you want to open the following URL in your browser?"
+  "openExternalUrlDescription": "Do you want to open the following URL in your browser?",
+  "sortBy": "Sort by",
+  "sortDateDescending": "Date ↓ (newest first)",
+  "sortDateAscending": "Date ↑ (oldest first)",
+  "sortNameAscending": "A–Z",
+  "sortNameDescending": "Z–A",
+  "sortTeacherAscending": "Teacher A–Z",
+  "sortTeacherDescending": "Teacher Z–A",
+  "cardView": "Card view",
+  "tableView": "Table view",
+  "course": "Course"
 }

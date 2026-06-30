@@ -32,6 +32,7 @@ class _LessonsStudentViewState extends State<LessonsStudentView>
   Map<String, dynamic>? globalSettings;
   Future<void> Function(String, dynamic)? globalUpdateSetting;
   Lessons? homeworkLessons;
+  Lessons? attendanceLessons;
 
   Lessons _sortLessons(Lessons lessons, String sortOption) {
     final sorted = List<Lesson>.from(lessons);
@@ -42,13 +43,21 @@ class _LessonsStudentViewState extends State<LessonsStudentView>
           if (b.currentEntry?.topicDate == null) return -1;
           return a.currentEntry!.topicDate!.compareTo(b.currentEntry!.topicDate!);
         });
-      case 'alpha':
+      case 'alpha_asc':
         sorted.sort((a, b) => a.name.compareTo(b.name));
-      case 'teacher':
+      case 'alpha_desc':
+        sorted.sort((a, b) => b.name.compareTo(a.name));
+      case 'teacher_asc':
         sorted.sort((a, b) {
           final aT = a.teachers.firstOrNull?.teacher ?? '';
           final bT = b.teachers.firstOrNull?.teacher ?? '';
           return aT.compareTo(bT);
+        });
+      case 'teacher_desc':
+        sorted.sort((a, b) {
+          final aT = a.teachers.firstOrNull?.teacher ?? '';
+          final bT = b.teachers.firstOrNull?.teacher ?? '';
+          return bT.compareTo(aT);
         });
       case 'date_desc':
       default:
@@ -61,33 +70,38 @@ class _LessonsStudentViewState extends State<LessonsStudentView>
     return sorted;
   }
 
-  Widget _sortChips(
+  Widget _sortButton(
+    BuildContext context,
     Map<String, dynamic> settings,
     Future<void> Function(String, dynamic) updateSetting,
   ) {
-    const options = [
-      ('date_desc', 'Datum ↓'),
-      ('date_asc', 'Datum ↑'),
-      ('alpha', 'A–Z'),
-      ('teacher', 'Lehrer'),
-    ];
     final current = settings['sortOption'] as String? ?? 'date_desc';
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: Row(
-        children: options.map((opt) {
-          final (value, label) = opt;
-          return Padding(
-            padding: const EdgeInsets.only(right: 6),
-            child: FilterChip(
-              label: Text(label),
-              selected: current == value,
-              onSelected: (_) => updateSetting('sortOption', value),
-            ),
-          );
-        }).toList(),
-      ),
+    final l10n = AppLocalizations.of(context);
+    final options = [
+      ('date_desc', l10n.sortDateDescending),
+      ('date_asc', l10n.sortDateAscending),
+      ('alpha_asc', l10n.sortNameAscending),
+      ('alpha_desc', l10n.sortNameDescending),
+      ('teacher_asc', l10n.sortTeacherAscending),
+      ('teacher_desc', l10n.sortTeacherDescending),
+    ];
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.sort),
+      tooltip: l10n.sortBy,
+      initialValue: current,
+      onSelected: (value) => updateSetting('sortOption', value),
+      itemBuilder: (_) => options
+          .map((opt) => PopupMenuItem<String>(
+                value: opt.$1,
+                child: Row(
+                  children: [
+                    Expanded(child: Text(opt.$2)),
+                    if (current == opt.$1)
+                      const Icon(Icons.check, size: 18),
+                  ],
+                ),
+              ))
+          .toList(),
     );
   }
 
@@ -104,38 +118,44 @@ class _LessonsStudentViewState extends State<LessonsStudentView>
               actions:
                   globalSettings != null &&
                       globalUpdateSetting != null &&
-                      homeworkLessons != null &&
-                      homeworkLessons!.isNotEmpty
+                      homeworkLessons != null
                   ? [
-                      globalSettings!['showHomework'] == true
-                          ? Tooltip(
-                              message: AppLocalizations.of(context).lessons,
-                              child: IconButton(
-                                icon: const Icon(Icons.school_outlined),
-                                onPressed: () {
-                                  globalUpdateSetting!('showHomework', false);
-                                  WidgetsBinding.instance.addPostFrameCallback((
-                                    _,
-                                  ) {
-                                    setState(() {});
-                                  });
-                                },
+                      if (globalSettings!['showHomework'] != true)
+                        _sortButton(
+                          context,
+                          globalSettings!,
+                          globalUpdateSetting!,
+                        ),
+                      if (homeworkLessons!.isNotEmpty)
+                        globalSettings!['showHomework'] == true
+                            ? Tooltip(
+                                message: AppLocalizations.of(context).lessons,
+                                child: IconButton(
+                                  icon: const Icon(Icons.school_outlined),
+                                  onPressed: () {
+                                    globalUpdateSetting!('showHomework', false);
+                                    WidgetsBinding.instance.addPostFrameCallback((
+                                      _,
+                                    ) {
+                                      setState(() {});
+                                    });
+                                  },
+                                ),
+                              )
+                            : Tooltip(
+                                message: AppLocalizations.of(context).homework,
+                                child: IconButton(
+                                  icon: const Icon(Icons.task_outlined),
+                                  onPressed: () {
+                                    globalUpdateSetting!('showHomework', true);
+                                    WidgetsBinding.instance.addPostFrameCallback((
+                                      _,
+                                    ) {
+                                      setState(() {});
+                                    });
+                                  },
+                                ),
                               ),
-                            )
-                          : Tooltip(
-                              message: AppLocalizations.of(context).homework,
-                              child: IconButton(
-                                icon: const Icon(Icons.task_outlined),
-                                onPressed: () {
-                                  globalUpdateSetting!('showHomework', true);
-                                  WidgetsBinding.instance.addPostFrameCallback((
-                                    _,
-                                  ) {
-                                    setState(() {});
-                                  });
-                                },
-                              ),
-                            ),
                     ]
                   : null,
             )
@@ -191,61 +211,43 @@ class _LessonsStudentViewState extends State<LessonsStudentView>
                     .toList();
               }
 
-              return Scaffold(
-                appBar: settings['showHomework'] != true
-                    ? AppBar(
-                        toolbarHeight: 0,
-                        bottom: PreferredSize(
-                          preferredSize: const Size.fromHeight(52),
-                          child: _sortChips(settings, updateSetting),
-                        ),
-                      )
-                    : null,
-                body: RefreshIndicator(
-                  onRefresh: () => refresh!(),
-                  child: lessons.isNotEmpty
-                      ? ListView.builder(
-                          itemCount: lessons.length,
-                          itemBuilder: (BuildContext context, int index) =>
-                              Padding(
-                                padding: EdgeInsets.only(
-                                  top: 4,
-                                  bottom: index == lessons.length - 1 ? 80 : 0,
-                                  left: 8,
-                                  right: 8,
-                                ),
-                                child: LessonListTile(lesson: lessons[index]),
+              return RefreshIndicator(
+                onRefresh: () => refresh!(),
+                child: lessons.isNotEmpty
+                    ? ListView.builder(
+                        itemCount: lessons.length,
+                        itemBuilder: (BuildContext context, int index) =>
+                            Padding(
+                              padding: EdgeInsets.only(
+                                top: 4,
+                                bottom: index == lessons.length - 1 ? 80 : 0,
+                                left: 8,
+                                right: 8,
                               ),
-                        )
-                      : Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [noDataScreen(context)],
-                        ),
-                ),
-                floatingActionButton: Visibility(
-                  visible:
-                      attendanceLessons != null && attendanceLessons.isNotEmpty,
-                  child: FloatingActionButton.extended(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => AttendancesScreen(
-                            lessons: attendanceLessons!,
-                            settings: settings,
-                            updateSetting: updateSetting,
-                          ),
-                        ),
-                      );
-                    },
-                    label: Text(AppLocalizations.of(context).attendances),
-                    icon: const Icon(Icons.access_alarm),
-                  ),
-                ),
+                              child: LessonListTile(lesson: lessons[index]),
+                            ),
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [noDataScreen(context)],
+                      ),
               );
             },
       ),
+      floatingActionButton: globalSettings != null &&
+              globalUpdateSetting != null &&
+              homeworkLessons != null &&
+              globalSettings!['showHomework'] != true
+          ? Builder(
+              builder: (context) {
+                return Visibility(
+                  visible: false,
+                  child: const SizedBox.shrink(),
+                );
+              },
+            )
+          : null,
     );
   }
 }
