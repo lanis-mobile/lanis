@@ -112,7 +112,7 @@ class SessionHandler {
     bool withoutData = false,
     String? withLoginUrl,
   }) async {
-    if (!(await connectionChecker.connected)) {
+    if (!(await connectionChecker.testConnection())) {
       throw NoConnectionException();
     }
 
@@ -366,5 +366,12 @@ class SessionHandler {
     return applet.supportedAccountTypes.contains(
       overrideAccountType ?? accountType,
     );
+  }
+
+  void setDemoAccountType(AccountType type) {
+    _accountType = type;
+    travelMenu = AppDefinitions.applets
+        .map((a) => {'link': a.appletPhpUrl})
+        .toList();
   }
 }

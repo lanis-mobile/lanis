@@ -53,6 +53,7 @@ class _MoodleWebViewState extends State<MoodleWebView> {
 
   bool showWebView = true;
   bool isLoggedIn = false;
+  bool _reAuthInProgress = false;
 
   InAppWebViewController? webViewController;
   PullToRefreshController? pullToRefreshController;
@@ -74,7 +75,63 @@ class _MoodleWebViewState extends State<MoodleWebView> {
     }
   }
 
-  Future<void> getCookies() async {
+  Future<void> _saveMoodleCookies(
+    dio_core.Cookie moProd01,
+    dio_core.Cookie moodleId1,
+    dio_core.Cookie moodleSession,
+    String moProd01Url,
+    String moodleUrl,
+  ) async {
+    final data = [
+      {
+        'name': moProd01.name,
+        'value': moProd01.value,
+        'domain': moProd01.domain ?? '',
+        'path': moProd01.path ?? '/',
+        'url': moProd01Url,
+      },
+      {
+        'name': moodleId1.name,
+        'value': moodleId1.value,
+        'domain': moodleId1.domain ?? '',
+        'path': moodleId1.path ?? '/',
+        'url': moodleUrl,
+      },
+      {
+        'name': moodleSession.name,
+        'value': moodleSession.value,
+        'domain': moodleSession.domain ?? '',
+        'path': moodleSession.path ?? '/',
+        'url': moodleUrl,
+      },
+    ];
+    await sph!.prefs.kv.set('moodle-cached-cookies', data);
+  }
+
+  Future<bool> _loadCachedMoodleCookies() async {
+    final cached = await sph!.prefs.kv.get('moodle-cached-cookies');
+    if (cached == null) return false;
+    try {
+      final List<dynamic> cookies = cached as List<dynamic>;
+      for (final c in cookies) {
+        await cookieManager.setCookie(
+          url: WebUri(c['url'] as String),
+          name: c['name'] as String,
+          value: c['value'] as String,
+          domain: c['domain'] as String,
+          path: c['path'] as String,
+          isHttpOnly: true,
+          isSecure: true,
+        );
+      }
+      return true;
+    } catch (_) {
+      await sph!.prefs.kv.set('moodle-cached-cookies', null);
+      return false;
+    }
+  }
+
+  Future<void> getCookies({bool forceFull = false}) async {
     if (!(await connectionChecker.connected)) {
       setState(() {
         isLoginError = true;
@@ -88,6 +145,21 @@ class _MoodleWebViewState extends State<MoodleWebView> {
       isLoginError = false;
       noInternetLogin = false;
     });
+
+    if (!forceFull) {
+      final restored = await _loadCachedMoodleCookies();
+      if (restored && webViewController != null) {
+        webViewController!.loadUrl(
+          urlRequest: URLRequest(
+            url: WebUri(
+              "https://mo${sph!.account.schoolID}.schulportal.hessen.de",
+            ),
+          ),
+        );
+        if (mounted) setState(() { isLoggedIn = true; });
+        return;
+      }
+    }
 
     try {
       final dio = Dio(BaseOptions(validateStatus: (status) => status != null));
@@ -178,6 +250,14 @@ class _MoodleWebViewState extends State<MoodleWebView> {
       addWebViewCookies(
         [moProd01Cookie, moodleId1Cookie, moodleSessionCookie],
         [location3, location4, location4],
+      );
+
+      await _saveMoodleCookies(
+        moProd01Cookie,
+        moodleId1Cookie,
+        moodleSessionCookie,
+        location3,
+        location4,
       );
 
       webViewController!.loadUrl(
@@ -352,7 +432,27 @@ class _MoodleWebViewState extends State<MoodleWebView> {
                   pullToRefreshController!.endRefreshing();
                   progressIndicator.value = 0;
 
-                  setState(() {}); // error
+                  // Detect Moodle session expiry: login page without a wantsurl param.
+                  if (url != null && !_reAuthInProgress) {
+                    final uri = Uri.tryParse(url.rawValue);
+                    if (uri != null &&
+                        uri.path.contains('/login/index.php') &&
+                        !uri.queryParameters.containsKey('wantsurl')) {
+                      // Session expired — clear cache and re-auth silently.
+                      _reAuthInProgress = true;
+                      await sph!.prefs.kv.set('moodle-cached-cookies', null);
+                      await cookieManager.deleteAllCookies();
+                      if (mounted) setState(() { isLoggedIn = false; });
+                      try {
+                        await getCookies(forceFull: true);
+                      } finally {
+                        _reAuthInProgress = false;
+                      }
+                      return;
+                    }
+                  }
+
+                  if (mounted) setState(() {}); // error
                 },
                 onTitleChanged: (controller, title) {
                   currentPageTitle.value = title ?? "";

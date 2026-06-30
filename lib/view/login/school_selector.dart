@@ -73,7 +73,8 @@ class _SchoolSelectorState extends State<SchoolSelector> {
       setState(() {
         schoolBezirke = result;
       });
-    } catch (e) {
+    } catch (e, st) {
+      debugPrint('[SchoolSelector] loadSchoolList error: $e\n$st');
       // Show a SnackBar to inform the user
       if (widget.outContext.mounted) {
         ScaffoldMessenger.of(widget.outContext).showSnackBar(

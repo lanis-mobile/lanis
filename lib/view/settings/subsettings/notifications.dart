@@ -16,7 +16,6 @@ import 'package:lanis/generated/l10n.dart';
 import '../../../core/sph/sph.dart';
 import '../../../utils/callout.dart';
 import '../../../utils/logger.dart';
-import '../../../utils/range_slider_tile.dart';
 import '../../../utils/slider_tile.dart';
 
 class NotificationSettings extends SettingsColours {
@@ -40,13 +39,10 @@ class _NotificationSettingsState
   double targetNotificationInterval =
       kvDefaults['notifications-target-interval-minutes'].toDouble();
   List<bool> enabledDays = kvDefaults['notifications-allowed-days'];
-  TimeOfDay startTime = TimeOfDay(
-    hour: kvDefaults['notifications-start-time'][0],
-    minute: kvDefaults['notifications-start-time'][1],
-  );
-  TimeOfDay endTime = TimeOfDay(
-    hour: kvDefaults['notifications-end-time'][0],
-    minute: kvDefaults['notifications-end-time'][1],
+  List<List<int>> timePeriods = List<List<int>>.from(
+    (kvDefaults['notifications-time-periods'] as List).map(
+      (p) => List<int>.from(p as List),
+    ),
   );
 
   PermissionStatus notificationPermissionStatus = PermissionStatus.provisional;
@@ -85,10 +81,30 @@ class _NotificationSettingsState
     final globalSettings = await accountDatabase.kv.getMultiple([
       'notifications-target-interval-minutes',
       'notifications-allowed-days',
+      'notifications-time-periods',
       'notifications-start-time',
       'notifications-end-time',
     ]);
 
+    // Migration: if new key missing, seed from old keys.
+    List<List<int>> periods;
+    final raw = globalSettings['notifications-time-periods'];
+    if (raw == null) {
+      final oldStart = globalSettings['notifications-start-time'] ??
+          kvDefaults['notifications-start-time'];
+      final oldEnd = globalSettings['notifications-end-time'] ??
+          kvDefaults['notifications-end-time'];
+      periods = [
+        [oldStart[0] as int, oldStart[1] as int, oldEnd[0] as int, oldEnd[1] as int],
+      ];
+      await accountDatabase.kv.set('notifications-time-periods', periods);
+    } else {
+      periods = List<List<int>>.from(
+        (raw as List).map((p) => List<int>.from(p as List)),
+      );
+    }
+
+    if (!mounted) return;
     setState(() {
       notificationPermissionStatus = notificationPermissionStatus;
       targetNotificationInterval =
@@ -96,14 +112,7 @@ class _NotificationSettingsState
       enabledDays = globalSettings['notifications-allowed-days']
           .map<bool>((e) => e as bool)
           .toList();
-      startTime = TimeOfDay(
-        hour: globalSettings['notifications-start-time'][0],
-        minute: globalSettings['notifications-start-time'][1],
-      );
-      endTime = TimeOfDay(
-        hour: globalSettings['notifications-end-time'][0],
-        minute: globalSettings['notifications-end-time'][1],
-      );
+      timePeriods = periods;
     });
   }
 
@@ -118,6 +127,55 @@ class _NotificationSettingsState
   void dispose() {
     checkTimer?.cancel();
     super.dispose();
+  }
+
+  String _formatPeriod(List<int> period) {
+    final start = TimeOfDay(hour: period[0], minute: period[1]);
+    final end = TimeOfDay(hour: period[2], minute: period[3]);
+    return '${start.format(context)} – ${end.format(context)}';
+  }
+
+  Future<void> _editPeriod(int index) async {
+    final existing = index < timePeriods.length ? timePeriods[index] : null;
+    final initialStart = existing != null
+        ? TimeOfDay(hour: existing[0], minute: existing[1])
+        : TimeOfDay(hour: 6, minute: 30);
+    final initialEnd = existing != null
+        ? TimeOfDay(hour: existing[2], minute: existing[3])
+        : TimeOfDay(hour: 15, minute: 0);
+
+    final start = await showTimePicker(
+      context: context,
+      initialTime: initialStart,
+      helpText: 'Startzeit',
+    );
+    if (start == null || !mounted) return;
+
+    final end = await showTimePicker(
+      context: context,
+      initialTime: initialEnd,
+      helpText: 'Endzeit',
+    );
+    if (end == null || !mounted) return;
+
+    final newPeriod = [start.hour, start.minute, end.hour, end.minute];
+    if (start.hour * 60 + start.minute == end.hour * 60 + end.minute) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Start- und Endzeit dürfen nicht gleich sein.')),
+        );
+      }
+      return;
+    }
+    final updated = List<List<int>>.from(timePeriods);
+    if (index < updated.length) {
+      updated[index] = newPeriod;
+    } else {
+      updated.add(newPeriod);
+    }
+
+    setState(() => timePeriods = updated);
+    await accountDatabase.kv.set('notifications-time-periods', updated);
   }
 
   @override
@@ -293,69 +351,61 @@ class _NotificationSettingsState
               SizedBox(width: 16.0),
             ],
           ),
-          Padding(
-            padding: const EdgeInsets.only(left: 16.0, top: 8.0),
-            child: RangeSliderTile(
-              title: Row(
+          ...timePeriods.asMap().entries.map((entry) {
+            final i = entry.key;
+            final period = entry.value;
+            return Padding(
+              padding: const EdgeInsets.only(left: 16.0, right: 8.0, bottom: 4.0),
+              child: Row(
                 children: [
-                  Text(
-                    AppLocalizations.of(context).timePeriod,
-                    style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                      color: activateBackgroundServices
-                          ? Theme.of(context).colorScheme.onSurface
-                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                  Icon(
+                    Icons.schedule_outlined,
+                    color: activateBackgroundServices
+                        ? Theme.of(context).colorScheme.onSurface
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 24.0),
+                  Expanded(
+                    child: Text(
+                      _formatPeriod(period),
+                      style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                        color: activateBackgroundServices
+                            ? Theme.of(context).colorScheme.onSurface
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
-                  Spacer(),
-                  Text(
-                    "${startTime.format(context)} - ${endTime.format(context)}",
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: activateBackgroundServices
-                          ? Theme.of(context).colorScheme.onSurface
-                          : Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                  IconButton(
+                    icon: const Icon(Icons.edit_outlined),
+                    onPressed: activateBackgroundServices
+                        ? () => _editPeriod(i)
+                        : null,
                   ),
-                  SizedBox(width: 16.0),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline),
+                    onPressed: activateBackgroundServices && timePeriods.length > 1
+                        ? () async {
+                            final updated = List<List<int>>.from(timePeriods)..removeAt(i);
+                            setState(() => timePeriods = updated);
+                            await accountDatabase.kv.set(
+                              'notifications-time-periods',
+                              updated,
+                            );
+                          }
+                        : null,
+                  ),
                 ],
               ),
-              leading: Icon(
-                Icons.schedule_outlined,
-                color: activateBackgroundServices
-                    ? Theme.of(context).colorScheme.onSurface
-                    : Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-              values: RangeValues(
-                minutesSinceZero(startTime).toDouble(),
-                minutesSinceZero(endTime).toDouble(),
-              ),
-              max: 24 * 60,
-              min: 0,
-              divisions: 48,
-              labels: RangeLabels(
-                startTime.format(context),
-                endTime.format(context),
-              ),
-              onChanged: activateBackgroundServices
-                  ? (newValues) {
-                      setState(() {
-                        startTime = timeFromMinutesSinceZero(
-                          newValues.start.round(),
-                        );
-                        endTime = timeFromMinutesSinceZero(
-                          newValues.end.round(),
-                        );
-                      });
-                    }
+            );
+          }),
+          Padding(
+            padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 8.0),
+            child: TextButton.icon(
+              icon: const Icon(Icons.add),
+              label: const Text('Zeitraum hinzufügen'),
+              onPressed: activateBackgroundServices
+                  ? () => _editPeriod(timePeriods.length)
                   : null,
-              onChangeEnd: (newValues) {
-                accountDatabase.kv.setMultiple({
-                  'notifications-start-time': [
-                    startTime.hour,
-                    startTime.minute,
-                  ],
-                  'notifications-end-time': [endTime.hour, endTime.minute],
-                });
-              },
             ),
           ),
           Padding(

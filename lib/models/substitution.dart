@@ -72,10 +72,18 @@ class Substitution {
           filterElement(vertreter, filter["filter"], filter["strict"]),
       "Stunde": (filter) =>
           filterElement(stunde, filter["filter"], filter["strict"]),
-      "Lehrerkuerzel": (filter) =>
-          filterElement(Lehrerkuerzel, filter["filter"], filter["strict"]),
-      "Vertreterkuerzel": (filter) =>
-          filterElement(Vertreterkuerzel, filter["filter"], filter["strict"]),
+      "Lehrerkuerzel": (filter) => filterElement(
+        Lehrerkuerzel,
+        filter["filter"],
+        filter["strict"],
+        exactMatch: true,
+      ),
+      "Vertreterkuerzel": (filter) => filterElement(
+        Vertreterkuerzel,
+        filter["filter"],
+        filter["strict"],
+        exactMatch: true,
+      ),
       "Klasse_alt": (filter) =>
           filterElement(klasse_alt, filter["filter"], filter["strict"]),
       "Raum_alt": (filter) =>
@@ -99,17 +107,24 @@ class Substitution {
   }
 
   ///returns true if the value contains all of the filter elements
-  bool filterElement(String? value, List<String> filter, bool? strict) {
+  bool filterElement(
+    String? value,
+    List<String> filter,
+    bool? strict, {
+    bool exactMatch = false,
+  }) {
     if (value == null) {
       return false;
     }
     // remove all HTML tags from the value
     value = value.replaceAll(RegExp(r'<[^>]*>'), '');
+    bool matches(String filterEl) =>
+        exactMatch ? value! == filterEl : value!.contains(filterEl);
     if (!(strict ?? true)) {
-      return filter.any((element) => value!.contains(element));
+      return filter.any(matches);
     }
     for (var singleFilter in filter) {
-      if (!value.contains(singleFilter)) {
+      if (!matches(singleFilter)) {
         return false;
       }
     }

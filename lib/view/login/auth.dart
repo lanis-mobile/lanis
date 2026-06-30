@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:lanis/models/account_types.dart';
 import 'package:lanis/core/database/account_database/account_db.dart';
 import 'package:lanis/core/sph/session.dart';
 import 'package:lanis/models/client_status_exceptions.dart';
@@ -102,6 +104,39 @@ class LoginFormState extends State<LoginForm> {
         );
       });
     }
+  }
+
+  void _showDemoDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Demo starten'),
+        content: const Text('Wähle einen Account-Typ für die Demo-Session:'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              authenticationState.loginDemo(AccountType.student);
+            },
+            child: const Text('Schüler'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              authenticationState.loginDemo(AccountType.teacher);
+            },
+            child: const Text('Lehrer'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              authenticationState.loginDemo(AccountType.parent);
+            },
+            child: const Text('Elternteil'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -265,6 +300,14 @@ class LoginFormState extends State<LoginForm> {
                                 : null,
                             child: Text(AppLocalizations.of(context).logIn),
                           ),
+                          if (kDebugMode) ...[
+                            const SizedBox(height: padding),
+                            OutlinedButton.icon(
+                              icon: const Icon(Icons.bug_report_outlined),
+                              label: const Text('Demo starten'),
+                              onPressed: () => _showDemoDialog(context),
+                            ),
+                          ],
                           Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [

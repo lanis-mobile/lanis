@@ -1,8 +1,12 @@
 import 'dart:ui';
+import 'dart:io';
+import 'package:flutter/services.dart';
 import 'package:lanis/core/database/account_database/account_db.dart';
 import 'package:lanis/core/sph/session.dart';
+import 'package:lanis/core/widget_data_service.dart';
 import 'package:lanis/models/account_types.dart';
 import 'package:lanis/models/client_status_exceptions.dart';
+import 'package:lanis/models/timetable.dart';
 import 'package:lanis/generated/l10n.dart';
 
 import 'package:flutter/material.dart';
@@ -86,6 +90,7 @@ class HomePage extends StatefulWidget {
 
 class HomePageState extends State<HomePage> {
   final GlobalKey<ScaffoldState> _drawerKey = GlobalKey();
+  static const _channel = MethodChannel('io.github.alessioc42.sph/widgets');
 
   bool doesSupportAnyApplet = true;
   List<Destination> destinations = [];
@@ -112,6 +117,90 @@ class HomePageState extends State<HomePage> {
     setDefaultDestination();
     super.initState();
     showUpdateInfoIfRequired(context);
+    _checkLiveActivityOnLaunch();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _handleInitialWidgetLink());
+  }
+
+  void _checkLiveActivityOnLaunch() {
+    if (!Platform.isIOS) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final enabled = await sph?.prefs.kv.get('live-activity-lesson') ?? true;
+      if (enabled != true) return;
+
+      final timetableData = await _getCurrentLesson();
+      if (timetableData == null) return;
+      final (current, next) = timetableData;
+
+      if (!mounted) return;
+      // ignore: use_build_context_synchronously
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Live Activity starten?'),
+          content: Text(
+            '${current.name} läuft gerade. Soll die Live Activity auf dem Sperrbildschirm angezeigt werden?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Nein'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text('Ja'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed == true) {
+        await WidgetDataService.instance.startLessonActivity(
+          current,
+          next,
+          phase: 'lesson',
+          phaseStartTime:
+              '${current.startTime.hour.toString().padLeft(2, '0')}:${current.startTime.minute.toString().padLeft(2, '0')}',
+          phaseEndTime:
+              '${current.endTime.hour.toString().padLeft(2, '0')}:${current.endTime.minute.toString().padLeft(2, '0')}',
+        );
+      }
+    });
+  }
+
+  Future<void> _handleInitialWidgetLink() async {
+    if (!Platform.isIOS) return;
+    try {
+      final url = await _channel.invokeMethod<String>('getInitialWidget');
+      if (url == null || !mounted) return;
+      final phpId = Uri.parse(url).pathSegments.last;
+      final idx = AppDefinitions.getIndexByPhpIdentifier(phpId);
+      if (idx < 0) return;
+      if (!destinations[idx].isSupported || !destinations[idx].enableBottomNavigation) return;
+      setState(() => selectedDestinationDrawer = idx);
+    } catch (_) {}
+  }
+
+  Future<(TimetableSubject, TimetableSubject?)?> _getCurrentLesson() async {
+    try {
+      final data = await sph!.parser.timetableStudentParser.getHome();
+      final now = TimeOfDay.now();
+      final weekday = DateTime.now().weekday - 1;
+      final plan = data.planForOwn ?? data.planForAll ?? [];
+      if (weekday < 0 || weekday >= plan.length) return null;
+      final today = plan[weekday];
+      for (int i = 0; i < today.length; i++) {
+        final l = today[i];
+        final start = l.startTime.hour * 60 + l.startTime.minute;
+        final end = l.endTime.hour * 60 + l.endTime.minute;
+        final nowMin = now.hour * 60 + now.minute;
+        if (nowMin >= start && nowMin < end) {
+          final next = i + 1 < today.length ? today[i + 1] : null;
+          return (l, next);
+        }
+      }
+    } catch (_) {}
+    return null;
   }
 
   @override
