@@ -35,6 +35,7 @@ class Destination {
   final ActionFunction? action;
   final Widget Function(BuildContext, AccountType, Function openDrawerCb)? body;
   late final bool isSupported;
+  final String? phpUrl;
 
   Destination({
     this.body,
@@ -46,6 +47,7 @@ class Destination {
     required this.icon,
     required this.selectedIcon,
     required this.label,
+    this.phpUrl,
   });
 
   factory Destination.fromAppletDefinition(AppletDefinition appletDefinition) {
@@ -73,6 +75,7 @@ class Destination {
       icon: appletDefinition.icon,
       selectedIcon: appletDefinition.selectedIcon,
       label: appletDefinition.label,
+      phpUrl: appletDefinition.appletPhpUrl,
     );
   }
 }
@@ -249,6 +252,13 @@ class HomePageState extends State<HomePage> {
     }
   }
 
+  Widget _badgeIcon(Widget icon, String? phpUrl) {
+    if (phpUrl == null) return icon;
+    final count = sph!.session.appletBadges[phpUrl] ?? 0;
+    if (count <= 0) return icon;
+    return Badge(label: Text(count > 9 ? '9+' : '$count'), child: icon);
+  }
+
   NavigationDrawer navDrawer(context) {
     List<Widget> drawerDestinations = [];
 
@@ -260,8 +270,8 @@ class HomePageState extends State<HomePage> {
         drawerDestinations.add(
           NavigationDrawerDestination(
             label: Text(destination.label(context)),
-            icon: destination.icon,
-            selectedIcon: destination.selectedIcon,
+            icon: _badgeIcon(destination.icon, destination.phpUrl),
+            selectedIcon: _badgeIcon(destination.selectedIcon, destination.phpUrl),
             enabled: destination.isSupported,
           ),
         );
@@ -385,8 +395,8 @@ class HomePageState extends State<HomePage> {
         barDestinations.add(
           NavigationDestination(
             label: destination.label(context),
-            icon: destination.icon,
-            selectedIcon: destination.selectedIcon,
+            icon: _badgeIcon(destination.icon, destination.phpUrl),
+            selectedIcon: _badgeIcon(destination.selectedIcon, destination.phpUrl),
             enabled: destination.isSupported,
           ),
         );

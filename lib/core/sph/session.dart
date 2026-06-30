@@ -38,6 +38,10 @@ class SessionHandler {
   /// 'https://start.schulportal.hessen.de/startseite.php?a=ajax&f=apps'
   List<dynamic> travelMenu = [];
 
+  /// Badge counts per applet PHP URL (e.g. "nachrichten.php" -> 3).
+  /// Only populated for applets that have a non-zero info value.
+  Map<String, int> appletBadges = {};
+
   AccountType get accountType => _accountType ?? sph.account.accountType!;
 
   SessionHandler({required this.sph, String? withLoginURL});
@@ -147,6 +151,7 @@ class SessionHandler {
     );
 
     travelMenu = await getFastTravelMenu();
+    appletBadges = _parseBadges(travelMenu);
     if (!withoutData) {
       if (kReleaseMode) asyncLogRequest();
       accountDatabase.updateLastLogin(sph.account.localId);
@@ -310,6 +315,20 @@ class SessionHandler {
       "https://start.schulportal.hessen.de/startseite.php?a=ajax&f=apps",
     );
     return jsonDecode(response.data.toString())["entrys"];
+  }
+
+  Map<String, int> _parseBadges(List<dynamic> entries) {
+    final badges = <String, int>{};
+    for (final entry in entries) {
+      final link = entry["link"]?.toString();
+      final info = entry["info"];
+      if (link == null) continue;
+      final count = int.tryParse(info?.toString() ?? "");
+      if (count != null && count > 0) {
+        badges[link] = count;
+      }
+    }
+    return badges;
   }
 
   ///Parses the user data from the user data page.
