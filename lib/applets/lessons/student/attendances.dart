@@ -31,7 +31,9 @@ class _AttendancesScreenState extends State<AttendancesScreen> {
         actions: [
           IconButton(
             icon: Icon(_isTableView ? Icons.view_agenda : Icons.table_chart),
-            tooltip: _isTableView ? 'Kartenansicht' : 'Tabellenansicht',
+            tooltip: _isTableView
+                ? AppLocalizations.of(context).attendancesCardView
+                : AppLocalizations.of(context).attendancesTableView,
             onPressed: () async {
               await widget.updateSetting(
                 'attendanceView',
@@ -106,7 +108,7 @@ class AttendanceTableView extends StatelessWidget {
           Theme.of(context).colorScheme.secondaryContainer,
         ),
         columns: [
-          const DataColumn(label: Text('Kurs')),
+          DataColumn(label: Text(AppLocalizations.of(context).attendancesCourseColumn)),
           ...allKeys.map((k) => DataColumn(label: Text(k))),
         ],
         rows: [

@@ -49,6 +49,7 @@ class _MoodleWebViewState extends State<MoodleWebView> {
 
   bool isLoginError = false;
   String loginError = "";
+  bool loginErrorIsNetwork = false;
   bool noInternetLogin = false;
 
   bool showWebView = true;
@@ -144,6 +145,7 @@ class _MoodleWebViewState extends State<MoodleWebView> {
     setState(() {
       isLoginError = false;
       noInternetLogin = false;
+      loginErrorIsNetwork = false;
     });
 
     if (!forceFull) {
@@ -281,8 +283,9 @@ class _MoodleWebViewState extends State<MoodleWebView> {
         isLoginError = true;
 
         if (e is dio_core.SocketException || e is DioException) {
-          loginError = "Netzwerkfehler - $e";
-        } else {
+            loginError = e.toString();
+            loginErrorIsNetwork = true;
+          } else {
           loginError = e.toString();
         }
       });
@@ -565,7 +568,9 @@ class _MoodleWebViewState extends State<MoodleWebView> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
-                        loginError,
+                        loginErrorIsNetwork
+                            ? AppLocalizations.of(context).moodleNetworkError(loginError)
+                            : loginError,
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),

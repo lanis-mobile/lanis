@@ -131,7 +131,7 @@ class _SubstitutionsViewState extends State<SubstitutionsView>
     return substitutionViews;
   }
 
-  List<Tab> getTabs(SubstitutionPlan substitutionPlan) {
+  List<Tab> getTabs(SubstitutionPlan substitutionPlan, String locale) {
     List<Tab> tabs = [];
 
     for (SubstitutionDay day in substitutionPlan.days) {
@@ -144,7 +144,7 @@ class _SubstitutionsViewState extends State<SubstitutionsView>
                   child: const Icon(Icons.calendar_today),
                 )
               : const Icon(Icons.calendar_today),
-          text: formatDate(day.parsedDate),
+          text: formatDate(day.parsedDate, locale: locale),
         ),
       );
     }
@@ -367,7 +367,7 @@ class _SubstitutionsViewState extends State<SubstitutionsView>
                 TabBar(
                   isScrollable: true,
                   controller: _tabController,
-                  tabs: getTabs(data),
+                  tabs: getTabs(data, Localizations.localeOf(context).toLanguageTag()),
                 ),
                 Expanded(
                   child: TabBarView(
@@ -384,12 +384,12 @@ class _SubstitutionsViewState extends State<SubstitutionsView>
   }
 }
 
-String formatDate(String dateString) {
+String formatDate(String dateString, {String? locale}) {
   final inputFormat = DateFormat('dd.MM.yyyy');
   final dateTime = inputFormat.parse(dateString);
 
-  final germanFormat = DateFormat('E dd.MM.yyyy', 'de');
-  return germanFormat.format(dateTime);
+  final localizedFormat = DateFormat('E dd.MM.yyyy', locale);
+  return localizedFormat.format(dateTime);
 }
 
 class FullScreenImageView extends StatelessWidget {
