@@ -14,7 +14,7 @@ class DemoLessonsStudentParser extends LessonsStudentParser with DemoFetchMixin<
         name: 'Mathematik (10a)',
         teachers: [LessonTeacher(teacher: 'Herr Müller', teacherKuerzel: 'MÜL')],
         courseURL: Uri.parse('https://start.schulportal.hessen.de/meinunterricht.php?id=demo-ma'),
-        attendances: {'anwesend': '22', 'entschuldigt': '1', 'unentschuldigt': '0'},
+        attendances: {'anwesend': '22', 'entschuldigt': '1', 'unentschuldigt': '0', 'verspätet': '2'},
         currentEntry: CurrentEntry(
           entryID: 'demo-ma-1',
           topicTitle: 'Quadratische Gleichungen',
@@ -32,7 +32,7 @@ class DemoLessonsStudentParser extends LessonsStudentParser with DemoFetchMixin<
         name: 'Deutsch (10a)',
         teachers: [LessonTeacher(teacher: 'Frau Koch', teacherKuerzel: 'KOC')],
         courseURL: Uri.parse('https://start.schulportal.hessen.de/meinunterricht.php?id=demo-de'),
-        attendances: {'anwesend': '23', 'entschuldigt': '0', 'unentschuldigt': '0'},
+        attendances: {'anwesend': '23', 'entschuldigt': '0', 'unentschuldigt': '0', 'verspätet': '0'},
         currentEntry: CurrentEntry(
           entryID: 'demo-de-1',
           topicTitle: 'Erörterung schreiben',
@@ -50,7 +50,7 @@ class DemoLessonsStudentParser extends LessonsStudentParser with DemoFetchMixin<
         name: 'Englisch (10a)',
         teachers: [LessonTeacher(teacher: 'Frau Weber', teacherKuerzel: 'WEB')],
         courseURL: Uri.parse('https://start.schulportal.hessen.de/meinunterricht.php?id=demo-en'),
-        attendances: {'anwesend': '21', 'entschuldigt': '2', 'unentschuldigt': '0'},
+        attendances: {'anwesend': '21', 'entschuldigt': '2', 'unentschuldigt': '0', 'verspätet': '1'},
         currentEntry: CurrentEntry(
           entryID: 'demo-en-1',
           topicTitle: 'Present Perfect vs. Simple Past',
@@ -68,7 +68,7 @@ class DemoLessonsStudentParser extends LessonsStudentParser with DemoFetchMixin<
         name: 'Biologie (10a)',
         teachers: [LessonTeacher(teacher: 'Herr Fischer', teacherKuerzel: 'FIS')],
         courseURL: Uri.parse('https://start.schulportal.hessen.de/meinunterricht.php?id=demo-bi'),
-        attendances: {'anwesend': '23', 'entschuldigt': '0', 'unentschuldigt': '0'},
+        attendances: {'anwesend': '23', 'entschuldigt': '0', 'unentschuldigt': '0', 'verspätet': '0'},
         currentEntry: CurrentEntry(
           entryID: 'demo-bi-1',
           topicTitle: 'Zellteilung: Mitose',
