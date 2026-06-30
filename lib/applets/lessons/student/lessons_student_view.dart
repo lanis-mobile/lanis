@@ -5,6 +5,7 @@ import 'package:lanis/widgets/combined_applet_builder.dart';
 
 import '../../../core/sph/sph.dart';
 import '../../../models/lessons.dart';
+import 'all_marks_screen.dart';
 import 'attendances.dart';
 import 'lesson_list_tile.dart';
 
@@ -223,25 +224,48 @@ class _LessonsStudentViewState extends State<LessonsStudentView>
                           children: [noDataScreen(context)],
                         ),
                 ),
-                floatingActionButton: Visibility(
-                  visible:
-                      attendanceLessons != null && attendanceLessons.isNotEmpty,
-                  child: FloatingActionButton.extended(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => AttendancesScreen(
-                            lessons: attendanceLessons!,
-                            settings: settings,
-                            updateSetting: updateSetting,
+                floatingActionButton: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    FloatingActionButton.small(
+                      heroTag: 'allMarks',
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                AllMarksScreen(lessons: lessons),
                           ),
-                        ),
-                      );
-                    },
-                    label: Text(AppLocalizations.of(context).attendances),
-                    icon: const Icon(Icons.access_alarm),
-                  ),
+                        );
+                      },
+                      tooltip: AppLocalizations.of(context).allMarks,
+                      child: const Icon(Icons.bar_chart),
+                    ),
+                    const SizedBox(height: 8),
+                    Visibility(
+                      visible:
+                          attendanceLessons != null &&
+                          attendanceLessons.isNotEmpty,
+                      child: FloatingActionButton.extended(
+                        heroTag: 'attendances',
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AttendancesScreen(
+                                lessons: attendanceLessons!,
+                                settings: settings,
+                                updateSetting: updateSetting,
+                              ),
+                            ),
+                          );
+                        },
+                        label: Text(AppLocalizations.of(context).attendances),
+                        icon: const Icon(Icons.access_alarm),
+                      ),
+                    ),
+                  ],
                 ),
               );
             },

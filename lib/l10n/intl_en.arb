@@ -82,6 +82,15 @@
   "homeworkSavingError": "Error when saving the homework.",
   "error": "Error",
   "history": "History",
+  "allMarks": "All grades",
+  "allMarksLoading": "{loaded} / {total} courses loaded",
+  "@allMarksLoading": {
+    "placeholders": {
+      "loaded": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+  "allMarksNoData": "No grades found.",
   "performance": "Performance",
   "comment": "Comment",
   "exams": "Exams",
@@ -409,5 +418,20 @@
   "openIOSSettingsToChangeLanguage": "On the next screen, select \"Lanis\" and then change the language in the \"Preferred Language\" section.",
   "copy": "Copy",
   "openExternalUrl": "Open external URL",
-  "openExternalUrlDescription": "Do you want to open the following URL in your browser?"
+  "openExternalUrlDescription": "Do you want to open the following URL in your browser?",
+  "messageTeacher": "Message teacher",
+  "messageTeacherSearching": "Searching for teacher...",
+  "messageTeacherNotFound": "Teacher \"{name}\" not found.",
+  "@messageTeacherNotFound": { "placeholders": { "name": { "type": "String" } } },
+  "messageTeacherMultipleFound": "Multiple teachers found. Please select one:",
+  "gradeCalculator": "Grade calculator",
+  "gradeCalculatorAverage": "Average",
+  "gradeCalculatorWeighting": "Weighting",
+  "gradeCalculatorOral": "Oral",
+  "gradeCalculatorWritten": "Written",
+  "gradeCalculatorOther": "Other",
+  "gradeCalculatorAddNote": "Add grade",
+  "gradeCalculatorNoteName": "Name",
+  "gradeCalculatorNoteValue": "Grade / Points",
+  "gradeCalculatorUnknownFormat": "Unknown format"
 }
