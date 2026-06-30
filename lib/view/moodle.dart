@@ -293,9 +293,6 @@ class _MoodleWebViewState extends State<MoodleWebView> {
                 pullToRefreshController: pullToRefreshController,
                 initialSettings: InAppWebViewSettings(
                   transparentBackground: true,
-                  mediaPlaybackRequiresUserGesture: true,
-                  allowsInlineMediaPlayback: true,
-                  useHybridComposition: true,
                 ),
                 onWebViewCreated: (controller) {
                   webViewController = controller;

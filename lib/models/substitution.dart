@@ -105,20 +105,11 @@ class Substitution {
     }
     // remove all HTML tags from the value
     value = value.replaceAll(RegExp(r'<[^>]*>'), '');
-    // Split on common delimiters so "BA, BAT" yields ["BA", "BAT"] and an
-    // exact token match is used instead of substring matching. This prevents
-    // filtering for "BA" from also matching "BAT".
-    final tokens = value
-        .split(RegExp(r',\s*|/|\s+'))
-        .map((t) => t.toLowerCase())
-        .toList();
-    bool tokenMatch(String element) =>
-        tokens.contains(element.toLowerCase());
     if (!(strict ?? true)) {
-      return filter.any((element) => tokenMatch(element));
+      return filter.any((element) => value!.contains(element));
     }
     for (var singleFilter in filter) {
-      if (!tokenMatch(singleFilter)) {
+      if (!value.contains(singleFilter)) {
         return false;
       }
     }

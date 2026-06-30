@@ -108,9 +108,7 @@ class LessonsStudentParser extends AppletParser<Lessons> {
       var textElements = [];
       for (var i = 0; i < row.children.length; i++) {
         var col = row.children[i];
-        for (var e in col.getElementsByClassName("hidden_encoded")) {
-          e.innerHtml = "";
-        }
+        col.querySelector("div.hidden.hidden_encoded")?.innerHtml = "";
 
         textElements.add(col.text.trim());
       }

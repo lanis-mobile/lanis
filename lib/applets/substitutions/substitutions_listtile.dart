@@ -29,7 +29,6 @@ class SubstitutionListTile extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
-            mainAxisSize: MainAxisSize.min,
             children: [
               Padding(
                 padding: const EdgeInsets.only(right: 8),
@@ -42,16 +41,11 @@ class SubstitutionListTile extends StatelessWidget {
               ),
             ],
           ),
-          Flexible(
-            child: Padding(
-              padding: const EdgeInsets.only(left: 8),
-              child: SubstitutionsFormattedText(
-                !isBlankNotice(value)
-                    ? value!
-                    : valueAlt!,
-                Theme.of(context).textTheme.bodyMedium!,
-              ),
-            ),
+          SubstitutionsFormattedText(
+            !isBlankNotice(value)
+                ? value!
+                : valueAlt!,
+            Theme.of(context).textTheme.bodyMedium!,
           ),
         ],
       ),
@@ -236,12 +230,7 @@ class SubstitutionsFormattedText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RichText(
-      text: _format(data, style),
-      overflow: TextOverflow.ellipsis,
-      maxLines: 1,
-      textAlign: TextAlign.end,
-    );
+    return RichText(text: _format(data, style));
   }
 
   TextSpan _format(String data, TextStyle style) {
