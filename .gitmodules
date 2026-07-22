@@ -1,0 +1,3 @@
+[submodule "liblanis"]
+	path = liblanis
+	url = https://github.com/lanis-mobile/liblanis
