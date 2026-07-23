@@ -14,7 +14,7 @@ import 'package:lanis/view/settings/settings_page_builder.dart';
 import 'package:lanis/widgets/combined_applet_builder.dart';
 
 
-class StudentTimetableSettings extends SettingsColours {
+class StudentTimetableSettings extends ConsumerSettingsColours {
   final Function? openDrawerCb;
   final bool showBack;
   const StudentTimetableSettings({
@@ -24,12 +24,12 @@ class StudentTimetableSettings extends SettingsColours {
   });
 
   @override
-  State<StudentTimetableSettings> createState() =>
+  ConsumerState<StudentTimetableSettings> createState() =>
       _StudentTimetableSettingsState();
 }
 
 class _StudentTimetableSettingsState
-    extends SettingsColoursState<StudentTimetableSettings> {
+    extends ConsumerSettingsColoursState<StudentTimetableSettings> {
   List<TimetableDay> getSelectedPlan(
     TimeTable data,
     TimeTableType selectedType,
@@ -288,10 +288,11 @@ class _StudentTimetableSettingsState
       showBackButton: widget.showBack,
       children: [
         CombinedAppletBuilder<TimeTable>(
-          parser: ProviderScope.containerOf(context).read(timetableParserProvider),
+          parser: ref.watch(timetableParserProvider),
           phpUrl: timeTableDefinition.appletPhpUrl,
           settingsDefaults: timeTableDefinition.settingsDefaults,
-          accountType: AccountType.student,
+          accountType: ref.watch(sessionProvider).asData?.value?.accountType ??
+              AccountType.student,
           builder: (context, timetable, _, settings, updateSettings, refresh) {
             final ids = settings['hidden-lessons'];
             Map<int, List<TimetableSubject>> lessons = {};
