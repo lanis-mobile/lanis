@@ -707,14 +707,22 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                                                       file: snapshot
                                                           .data["own_files"][index]
                                                           .index,
-                                                      userPasswordEncrypted: ref
-                                                          .read(sessionProvider)
-                                                          .requireValue!
-                                                          .cryptor
-                                                          .encryptString(
-                                                            passwordController
-                                                                .text,
-                                                          ),
+                                                      userPasswordEncrypted: () {
+                                                        final session = ref
+                                                            .read(sessionProvider)
+                                                            .asData
+                                                            ?.value;
+                                                        if (session == null) {
+                                                          throw ConfigurationException(
+                                                            'No active session',
+                                                          );
+                                                        }
+                                                        return session.cryptor
+                                                            .encryptString(
+                                                          passwordController
+                                                              .text,
+                                                        );
+                                                      }(),
                                                     );
                                               } on LanisException catch (ex) {
                                                 if (context.mounted) {

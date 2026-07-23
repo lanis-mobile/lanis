@@ -107,7 +107,11 @@ class _AboutSettingsState extends ConsumerSettingsColoursState<AboutSettings> {
     });
 
     try {
-      final session = ref.read(sessionProvider).requireValue!;
+      final session = ref.read(sessionProvider).asData?.value;
+      if (session == null) {
+        setState(() => error = true);
+        return;
+      }
       final response = await session.dio.get(
         'https://api.github.com/repos/lanis-mobile/lanis/contributors',
       );

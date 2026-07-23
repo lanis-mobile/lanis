@@ -36,7 +36,9 @@ class _CourseFolderHistoryEntryFileChipState
       "v": widget.file.isVisibleForStudents ? '0' : '1',
     };
     logger.i(body);
-    final response = await ref.read(sessionProvider).requireValue!.dio.post(
+    final session = ref.read(sessionProvider).asData?.value;
+    if (session == null) return;
+    final response = await session.dio.post(
       'https://start.schulportal.hessen.de/meinunterricht.php',
       queryParameters: body,
       data: body,
@@ -109,7 +111,9 @@ class _CourseFolderHistoryEntryFileChipState
       "e": widget.file.entryId,
       "file": Uri.encodeComponent(widget.file.name),
     };
-    final response = await ref.read(sessionProvider).requireValue!.dio.post(
+    final session = ref.read(sessionProvider).asData?.value;
+    if (session == null) return;
+    final response = await session.dio.post(
       'https://start.schulportal.hessen.de/meinunterricht.php',
       queryParameters: data,
       data: data,
