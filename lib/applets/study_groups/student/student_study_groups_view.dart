@@ -19,7 +19,10 @@ class _StudentStudyGroupsViewState
     extends ConsumerState<StudentStudyGroupsView> {
   @override
   Widget build(BuildContext context) {
-    final session = ref.watch(sessionProvider).requireValue!;
+    final session = ref.watch(sessionProvider).asData?.value;
+    if (session == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     final parser = ref.watch(studyGroupsParserProvider);
     return CombinedAppletBuilder(
       parser: parser,

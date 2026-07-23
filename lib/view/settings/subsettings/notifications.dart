@@ -134,6 +134,17 @@ class _NotificationSettingsState
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(supportedAppletPhpUrlsProvider, (prev, next) {
+      if (prev == next) return;
+      setState(() {
+        supportedApplets.clear();
+        accountNotificationSettings.removeWhere(
+          (k, _) => k.startsWith('notification-'),
+        );
+        _loadSupportedApplets();
+      });
+    });
+
     final shared = ref.read(sharedOverAccountSettingsProvider);
     final accountSettings = ref.read(accountSpecificSettingsProvider);
     final resolvedAccountCount =

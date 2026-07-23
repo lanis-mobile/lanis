@@ -616,7 +616,9 @@ class _ConversationsViewState extends ConsumerState<ConversationsView> {
                   parser: ref.watch(conversationsParserProvider),
                   phpUrl: conversationsDefinition.appletPhpUrl,
                   settingsDefaults: conversationsDefinition.settingsDefaults,
-                  accountType: ref.watch(sessionProvider).requireValue!.accountType,
+                  accountType: ref.watch(sessionProvider).asData?.value?.accountType ??
+                      ref.watch(activeAccountProvider)?.accountType ??
+                      AccountType.student,
                   builder:
                       (
                         context,

@@ -245,6 +245,7 @@ class _SettingsScreenState extends ConsumerSettingsColoursState<SettingsScreen> 
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(supportedAppletPhpUrlsProvider);
     final settingsTiles = _buildSettingsTiles();
     final accounts = ref.watch(accountsProvider).asData?.value ?? [];
     final isTablet = Responsive.isTablet(context);

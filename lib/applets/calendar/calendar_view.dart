@@ -659,7 +659,9 @@ class _CalendarViewState extends ConsumerState<CalendarView> {
               parser: ref.watch(calendarParserProvider),
               phpUrl: calendarDefinition.appletPhpUrl,
               settingsDefaults: calendarDefinition.settingsDefaults,
-              accountType: ref.watch(sessionProvider).requireValue!.accountType,
+              accountType: ref.watch(sessionProvider).asData?.value?.accountType ??
+                  ref.watch(activeAccountProvider)?.accountType ??
+                  AccountType.student,
               builder:
                   (
                     context,
