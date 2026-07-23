@@ -7,6 +7,7 @@ import '../../models/account_types.dart';
 
 final dataStorageDefinition = AppletDefinition(
   appletPhpUrl: 'dateispeicher.php',
+  routePath: '/storage',
   addDivider: true,
   appletType: AppletType.navigation,
   icon: const Icon(Icons.folder_copy),

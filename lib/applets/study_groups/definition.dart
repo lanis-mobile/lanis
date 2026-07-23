@@ -7,6 +7,7 @@ import '../../models/account_types.dart';
 
 final studyGroupsDefinition = AppletDefinition(
   appletPhpUrl: 'lerngruppen.php',
+  routePath: '/study-groups',
   addDivider: false,
   appletType: AppletType.navigation,
   icon: const Icon(Icons.groups),

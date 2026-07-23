@@ -8,6 +8,7 @@ import '../../models/account_types.dart';
 
 final lessonsDefinition = AppletDefinition(
   appletPhpUrl: 'meinunterricht.php',
+  routePath: '/home/lessons',
   addDivider: false,
   appletType: AppletType.nested,
   icon: const Icon(Icons.school),

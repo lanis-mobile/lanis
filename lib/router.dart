@@ -2,16 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:liblanis/liblanis.dart';
-import 'package:lanis/applets/calendar/calendar_view.dart';
-import 'package:lanis/applets/conversations/view/conversations_view.dart';
-import 'package:lanis/applets/data_storage/data_storage_root_view.dart';
-import 'package:lanis/applets/lessons/student/lessons_student_view.dart';
-import 'package:lanis/applets/lessons/teacher/lessons_teacher_view.dart';
-import 'package:lanis/applets/study_groups/student/student_study_groups_view.dart';
+import 'package:lanis/applets/definitions.dart';
 import 'package:lanis/applets/substitutions/substitutions_filter_settings.dart';
-import 'package:lanis/applets/substitutions/substitutions_view.dart';
-import 'package:lanis/applets/timetable/student/student_timetable_better_view.dart';
 import 'package:lanis/home_page.dart';
+import 'package:lanis/models/account_types.dart';
 import 'package:lanis/startup.dart';
 import 'package:lanis/utils/auth_controller.dart';
 import 'package:lanis/view/account_switcher/account_switcher.dart';
@@ -28,20 +22,58 @@ import 'package:lanis/view/settings/subsettings/quick_actions.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 
-bool _isSupportedHomePath(Ref ref, String loc) {
-  final idx = homeAppletPaths.indexWhere(
-    (p) => loc == p || loc.startsWith('$p/'),
+Widget _homeAppletBody(AppletDefinition def) {
+  return Consumer(
+    builder: (context, ref, _) {
+      final accountType =
+          ref.watch(activeAccountProvider.select((a) => a?.accountType)) ??
+          AccountType.student;
+      final openDrawer = () => Scaffold.of(context).openDrawer();
+      final builder = def.bodyBuilder;
+      if (builder == null) {
+        return const SizedBox.shrink();
+      }
+      return builder(context, accountType, openDrawer);
+    },
   );
-  if (idx < 0) return true;
-  return ref
-      .read(supportedAppletPhpUrlsProvider)
-      .contains(homeAppletPhpUrls[idx]);
+}
+
+bool _isSupportedHomePath(Ref ref, String loc) {
+  for (final def in AppDefinitions.homeApplets) {
+    if (loc == def.routePath || loc.startsWith('${def.routePath}/')) {
+      return ref
+          .read(supportedAppletPhpUrlsProvider)
+          .contains(def.appletPhpUrl);
+    }
+  }
+  return true;
 }
 
 final goRouterProvider = Provider<GoRouter>((ref) {
   // Do not watch auth here — recreating GoRouter resets the navigation stack.
   final listenable = _AuthListenable(ref);
   ref.onDispose(listenable.dispose);
+
+  final homeBranches = [
+    for (final def in AppDefinitions.homeApplets)
+      StatefulShellBranch(
+        routes: [
+          GoRoute(
+            path: def.routePath,
+            builder: (context, state) => _homeAppletBody(def),
+            routes: [
+              if (def.appletPhpUrl == 'vertretungsplan.php')
+                GoRoute(
+                  path: 'filter',
+                  parentNavigatorKey: rootNavigatorKey,
+                  builder: (context, state) =>
+                      const SubstitutionsFilterSettings(),
+                ),
+            ],
+          ),
+        ],
+      ),
+  ];
 
   return GoRouter(
     navigatorKey: rootNavigatorKey,
@@ -80,13 +112,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             return firstSupportedHomePathFromRef(ref);
           }
           final supported = ref.read(supportedAppletPhpUrlsProvider);
-          if (loc.startsWith('/storage') &&
-              !supported.contains('dateispeicher.php')) {
-            return firstSupportedHomePathFromRef(ref);
-          }
-          if (loc.startsWith('/study-groups') &&
-              !supported.contains('lerngruppen.php')) {
-            return firstSupportedHomePathFromRef(ref);
+          for (final def in AppDefinitions.navigationApplets) {
+            if (loc == def.routePath || loc.startsWith('${def.routePath}/')) {
+              if (!supported.contains(def.appletPhpUrl)) {
+                return firstSupportedHomePathFromRef(ref);
+              }
+            }
           }
           return null;
       }
@@ -109,95 +140,24 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state, navigationShell) {
           return HomePage(navigationShell: navigationShell);
         },
-        branches: [
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: '/home/substitutions',
-                builder: (context, state) => SubstitutionsView(
-                  openDrawerCb: () => Scaffold.of(context).openDrawer(),
-                ),
-                routes: [
-                  GoRoute(
-                    path: 'filter',
-                    parentNavigatorKey: rootNavigatorKey,
-                    builder: (context, state) =>
-                        const SubstitutionsFilterSettings(),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: '/home/calendar',
-                builder: (context, state) => CalendarView(
-                  openDrawerCb: () => Scaffold.of(context).openDrawer(),
-                ),
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: '/home/timetable',
-                builder: (context, state) => StudentTimetableBetterView(
-                  openDrawerCb: () => Scaffold.of(context).openDrawer(),
-                ),
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: '/home/conversations',
-                builder: (context, state) => ConversationsView(
-                  openDrawerCb: () => Scaffold.of(context).openDrawer(),
-                ),
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: '/home/lessons',
-                builder: (context, state) {
-                  return Consumer(
-                    builder: (context, ref, _) {
-                      final accountType = ref.watch(
-                        activeAccountProvider.select((a) => a?.accountType),
-                      );
-                      final openDrawer = () =>
-                          Scaffold.of(context).openDrawer();
-                      if (accountType == AccountType.teacher) {
-                        return LessonsTeacherView(
-                          key: const ValueKey('lessons-teacher'),
-                          openDrawerCb: openDrawer,
-                        );
-                      }
-                      return LessonsStudentView(
-                        key: const ValueKey('lessons-student'),
-                        openDrawerCb: openDrawer,
-                      );
-                    },
-                  );
-                },
-              ),
-            ],
-          ),
-        ],
+        branches: homeBranches,
       ),
-      GoRoute(
-        path: '/storage',
-        parentNavigatorKey: rootNavigatorKey,
-        builder: (context, state) => const DataStorageRootView(),
-      ),
-      GoRoute(
-        path: '/study-groups',
-        parentNavigatorKey: rootNavigatorKey,
-        builder: (context, state) => const StudentStudyGroupsView(),
-      ),
+      for (final def in AppDefinitions.navigationApplets)
+        GoRoute(
+          path: def.routePath,
+          parentNavigatorKey: rootNavigatorKey,
+          builder: (context, state) => Consumer(
+            builder: (context, ref, _) {
+              final accountType = ref.watch(
+                    activeAccountProvider.select((a) => a?.accountType),
+                  ) ??
+                  AccountType.student;
+              final builder = def.bodyBuilder;
+              if (builder == null) return const SizedBox.shrink();
+              return builder(context, accountType, null);
+            },
+          ),
+        ),
       GoRoute(
         path: '/moodle',
         parentNavigatorKey: rootNavigatorKey,

@@ -7,6 +7,7 @@ import '../../models/account_types.dart';
 
 final timeTableDefinition = AppletDefinition(
   appletPhpUrl: 'stundenplan.php',
+  routePath: '/home/timetable',
   icon: Icon(Icons.timelapse),
   selectedIcon: Icon(Icons.timelapse_outlined),
   appletType: AppletType.nested,

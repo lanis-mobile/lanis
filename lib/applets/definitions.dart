@@ -5,7 +5,7 @@ import 'package:lanis/applets/conversations/definition.dart';
 import 'package:lanis/applets/data_storage/definition.dart';
 import 'package:lanis/applets/external_definitions.dart';
 import 'package:lanis/applets/lessons/definition.dart';
-import 'package:lanis/applets/study_groups/definitions.dart';
+import 'package:lanis/applets/study_groups/definition.dart';
 import 'package:lanis/applets/substitutions/definition.dart';
 import 'package:lanis/applets/timetable/definition.dart';
 import 'package:lanis/models/account_types.dart';
@@ -30,6 +30,9 @@ enum AppletType { nested, navigation }
 
 class AppletDefinition {
   final String appletPhpUrl;
+
+  /// go_router path, e.g. `/home/substitutions` or `/storage`.
+  final String routePath;
   final Icon icon;
   final Icon selectedIcon;
   final AppletType appletType;
@@ -46,6 +49,7 @@ class AppletDefinition {
 
   AppletDefinition({
     required this.appletPhpUrl,
+    required this.routePath,
     required this.icon,
     required this.selectedIcon,
     required this.appletType,
@@ -80,6 +84,14 @@ class AppDefinitions {
     studyGroupsDefinition,
   ];
 
+  /// Bottom-nav / [StatefulShellRoute] branches (order = branch index).
+  static List<AppletDefinition> get homeApplets =>
+      applets.where((a) => a.appletType == AppletType.nested).toList();
+
+  /// Full-screen applets outside the home shell (`/storage`, `/study-groups`).
+  static List<AppletDefinition> get navigationApplets =>
+      applets.where((a) => a.appletType == AppletType.navigation).toList();
+
   static List<ExternalDefinition> external = [
     openLanisDefinition,
     openMoodleDefinition,
@@ -93,13 +105,13 @@ class AppDefinitions {
     );
   }
 
-  static getByPhpIdentifier(String phpIdentifier) {
+  static AppletDefinition getByPhpIdentifier(String phpIdentifier) {
     return applets.firstWhere(
       (element) => element.appletPhpUrl == phpIdentifier,
     );
   }
 
-  static getIndexByPhpIdentifier(String phpIdentifier) {
+  static int getIndexByPhpIdentifier(String phpIdentifier) {
     return applets.indexWhere(
       (element) => element.appletPhpUrl == phpIdentifier,
     );

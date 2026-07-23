@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lanis/applets/study_groups/definitions.dart';
+import 'package:lanis/applets/study_groups/definition.dart';
 import 'package:lanis/applets/study_groups/student/student_course_view.dart';
 import 'package:lanis/applets/study_groups/student/student_exams_view.dart';
 import 'package:lanis/generated/l10n.dart';

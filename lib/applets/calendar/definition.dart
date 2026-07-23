@@ -7,6 +7,7 @@ import '../../models/account_types.dart';
 
 final calendarDefinition = AppletDefinition(
   appletPhpUrl: 'kalender.php',
+  routePath: '/home/calendar',
   addDivider: false,
   appletType: AppletType.nested,
   icon: const Icon(Icons.calendar_today),

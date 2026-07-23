@@ -13,38 +13,28 @@ import 'package:lanis/utils/whats_new.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Nested home applet paths (order matches bottom-nav / shell branches).
-const homeAppletPaths = [
-  '/home/substitutions',
-  '/home/calendar',
-  '/home/timetable',
-  '/home/conversations',
-  '/home/lessons',
-];
+List<String> get homeAppletPaths =>
+    AppDefinitions.homeApplets.map((a) => a.routePath).toList();
 
-const homeAppletPhpUrls = [
-  'vertretungsplan.php',
-  'kalender.php',
-  'stundenplan.php',
-  'nachrichten.php',
-  'meinunterricht.php',
-];
+List<String> get homeAppletPhpUrls =>
+    AppDefinitions.homeApplets.map((a) => a.appletPhpUrl).toList();
 
 /// First home tab path supported by the current session's feature set.
 String firstSupportedHomePath(WidgetRef ref) {
   final supported = ref.read(supportedAppletPhpUrlsProvider);
-  for (var i = 0; i < homeAppletPhpUrls.length; i++) {
-    if (supported.contains(homeAppletPhpUrls[i])) return homeAppletPaths[i];
+  for (final def in AppDefinitions.homeApplets) {
+    if (supported.contains(def.appletPhpUrl)) return def.routePath;
   }
-  return homeAppletPaths.first;
+  return AppDefinitions.homeApplets.first.routePath;
 }
 
 /// Same as [firstSupportedHomePath] for non-widget [Ref] (e.g. go_router).
 String firstSupportedHomePathFromRef(Ref ref) {
   final supported = ref.read(supportedAppletPhpUrlsProvider);
-  for (var i = 0; i < homeAppletPhpUrls.length; i++) {
-    if (supported.contains(homeAppletPhpUrls[i])) return homeAppletPaths[i];
+  for (final def in AppDefinitions.homeApplets) {
+    if (supported.contains(def.appletPhpUrl)) return def.routePath;
   }
-  return homeAppletPaths.first;
+  return AppDefinitions.homeApplets.first.routePath;
 }
 
 class HomePage extends ConsumerStatefulWidget {

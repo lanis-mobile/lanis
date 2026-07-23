@@ -8,6 +8,7 @@ import 'background.dart';
 
 final conversationsDefinition = AppletDefinition(
   appletPhpUrl: 'nachrichten.php',
+  routePath: '/home/conversations',
   addDivider: false,
   appletType: AppletType.nested,
   icon: const Icon(Icons.forum),

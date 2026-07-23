@@ -8,6 +8,7 @@ import 'background.dart';
 
 final substitutionDefinition = AppletDefinition(
   appletPhpUrl: 'vertretungsplan.php',
+  routePath: '/home/substitutions',
   icon: Icon(Icons.people),
   selectedIcon: Icon(Icons.people_outline),
   appletType: AppletType.nested,
