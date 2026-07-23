@@ -3,7 +3,7 @@ import 'package:lanis/applets/conversations/view/conversations_view.dart';
 import 'package:lanis/applets/definitions.dart';
 import 'package:lanis/generated/l10n.dart';
 
-import '../../models/account_types.dart';
+import 'package:lanis/l10n/account_type_ui.dart';
 import 'background.dart';
 
 final conversationsDefinition = AppletDefinition(

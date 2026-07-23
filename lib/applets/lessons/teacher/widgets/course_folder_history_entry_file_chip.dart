@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:liblanis/liblanis.dart' hide FileInfo;
+import 'package:liblanis/liblanis.dart';
 
 import '../../../../utils/file_icons.dart';
 import '../../../../utils/file_operations.dart';
@@ -247,7 +247,7 @@ class _CourseFolderHistoryEntryFileChipState
               if (context.mounted)
                 showFileModal(
                   context,
-                  FileInfo(name: widget.file.name, url: widget.file.url),
+                  DownloadableFile(name: widget.file.name, url: widget.file.url),
                 );
               break;
             case 'visibility':

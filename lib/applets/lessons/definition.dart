@@ -4,7 +4,7 @@ import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/applets/lessons/student/lessons_student_view.dart';
 import 'package:lanis/applets/lessons/teacher/lessons_teacher_view.dart';
 
-import '../../models/account_types.dart';
+import 'package:lanis/l10n/account_type_ui.dart';
 
 final lessonsDefinition = AppletDefinition(
   appletPhpUrl: 'meinunterricht.php',

@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:lanis/generated/l10n.dart';
-import 'package:lanis/utils/auth_controller.dart';
-import 'package:lanis/utils/large_appbar.dart';
+import 'package:lanis/features/auth/auth_controller.dart';
+import 'package:lanis/widgets/large_appbar.dart';
 
 class ResetAccountPage extends ConsumerStatefulWidget {
   const ResetAccountPage({super.key});

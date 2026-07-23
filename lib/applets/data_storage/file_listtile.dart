@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:liblanis/liblanis.dart' hide FileInfo;
+import 'package:liblanis/liblanis.dart';
 
 import '../../utils/file_operations.dart';
 import '../../utils/file_icons.dart';
@@ -72,7 +72,7 @@ class _FileListTileState extends ConsumerState<FileListTile> {
       ),
       onTap: () => launchFile(
         context,
-        FileInfo(
+        DownloadableFile(
           name: widget.file.name,
           size: widget.file.groesse,
           url: Uri.parse(widget.file.downloadUrl),
@@ -82,7 +82,7 @@ class _FileListTileState extends ConsumerState<FileListTile> {
       onLongPress: () {
         showFileModal(
           context,
-          FileInfo(
+          DownloadableFile(
             name: widget.file.name,
             url: Uri.parse(widget.file.downloadUrl),
             size: widget.file.groesse,
@@ -142,12 +142,12 @@ class _SearchFileListTileState extends ConsumerState<SearchFileListTile> {
       ),
       onTap: () => launchFile(
         context,
-        FileInfo(name: widget.name, url: Uri.parse(widget.downloadUrl)),
+        DownloadableFile(name: widget.name, url: Uri.parse(widget.downloadUrl)),
         updateLocalFileStatus,
       ),
       onLongPress: () => showFileModal(
         context,
-        FileInfo(
+        DownloadableFile(
           name: widget.name,
           url: Uri.parse(widget.downloadUrl),
           size: "",

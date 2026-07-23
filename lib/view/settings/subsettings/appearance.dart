@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lanis/themes.dart';
-import 'package:lanis/utils/radio_pills.dart';
-import 'package:lanis/utils/switch_tile.dart';
+import 'package:lanis/widgets/radio_pills.dart';
+import 'package:lanis/widgets/switch_tile.dart';
 import 'package:lanis/utils/theme_settings.dart';
 import 'package:lanis/view/settings/settings_page_builder.dart';
 import 'package:lanis/generated/l10n.dart';

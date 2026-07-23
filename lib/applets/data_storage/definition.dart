@@ -3,7 +3,7 @@ import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/applets/data_storage/data_storage_root_view.dart';
 import 'package:lanis/applets/definitions.dart';
 
-import '../../models/account_types.dart';
+import 'package:lanis/l10n/account_type_ui.dart';
 
 final dataStorageDefinition = AppletDefinition(
   appletPhpUrl: 'dateispeicher.php',

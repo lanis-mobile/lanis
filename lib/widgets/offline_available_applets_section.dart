@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lanis/applets/definitions.dart';
 import 'package:liblanis/liblanis.dart';
 
-import '../models/account_types.dart';
+import 'package:lanis/l10n/account_type_ui.dart';
 
 class OfflineAvailableAppletsSection extends ConsumerStatefulWidget {
   const OfflineAvailableAppletsSection({super.key});

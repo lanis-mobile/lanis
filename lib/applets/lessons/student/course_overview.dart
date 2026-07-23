@@ -136,7 +136,7 @@ class _CourseOverviewAnsichtState extends ConsumerState<CourseOverviewAnsicht> {
 
                   List<GestureDetector> files = [];
                   for (FileInfo file in data!.history[index].files) {
-                    final foFile = fo.FileInfo(
+                    final foFile = fo.DownloadableFile(
                       name: file.name,
                       size: file.size,
                       url: file.url,

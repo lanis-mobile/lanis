@@ -7,7 +7,7 @@ import 'package:liblanis/liblanis.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:lanis/generated/l10n.dart';
-import 'package:lanis/utils/auth_controller.dart';
+import 'package:lanis/features/auth/auth_controller.dart';
 import 'package:lanis/utils/quick_actions.dart';
 import 'package:lanis/widgets/offline_available_applets_section.dart';
 import 'package:lanis/widgets/reset_account_page.dart';

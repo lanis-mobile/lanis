@@ -1,7 +1,7 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lanis/background_service.dart';
-import 'package:lanis/models/account_types.dart';
+import 'package:lanis/l10n/account_type_ui.dart';
 import 'package:liblanis/liblanis.dart';
 
 Future<void> conversationsBackgroundTask(

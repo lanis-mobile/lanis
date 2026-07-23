@@ -4,7 +4,7 @@ import 'package:liblanis/liblanis.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:intl/intl.dart';
 
-import '../../../utils/focused_menu.dart';
+import 'package:lanis/widgets/focused_menu.dart';
 
 class StudentExamsView extends StatelessWidget {
   final List<StudentStudyGroupExam> exams;

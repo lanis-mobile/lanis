@@ -8,7 +8,7 @@ import 'package:lanis/view/settings/settings_page_builder.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:liblanis/liblanis.dart';
 
-import '../../../utils/callout.dart';
+import 'package:lanis/widgets/callout.dart';
 
 class CacheSettings extends ConsumerSettingsColours {
   final bool showBackButton;

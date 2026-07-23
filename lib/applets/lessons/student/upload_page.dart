@@ -4,7 +4,7 @@ import 'package:dart_date/dart_date.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:liblanis/liblanis.dart' hide FileInfo;
+import 'package:liblanis/liblanis.dart';
 import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
 import 'package:lanis/generated/l10n.dart';
@@ -838,7 +838,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                             ? () {
                                 showFileModal(
                                   context,
-                                  FileInfo(
+                                  DownloadableFile(
                                     name:
                                         snapshot.data["own_files"][index].name,
                                     url: Uri.parse(
@@ -853,7 +853,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                                 logger.d(snapshot.data["own_files"][index]);
                                 launchFile(
                                   context,
-                                  FileInfo(
+                                  DownloadableFile(
                                     name:
                                         snapshot.data["own_files"][index].name,
                                     url: Uri.parse(

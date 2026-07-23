@@ -18,7 +18,7 @@ Future<String> _downloadRemote(BuildContext context, String url, String filename
   return storage.downloadFile(url, filename);
 }
 
-class FileInfo {
+class DownloadableFile {
   String? name;
 
   /// The size + the unit. Often enclosed with parentheses.
@@ -41,10 +41,10 @@ class FileInfo {
   }
 
   /// Create a file info for a remote file
-  FileInfo({this.name, this.size, this.url}) : localPath = null;
+  DownloadableFile({this.name, this.size, this.url}) : localPath = null;
 
   /// Create a file info for a local file
-  FileInfo.local({String? name, String? size, required String filePath})
+  DownloadableFile.local({String? name, String? size, required String filePath})
     : this.name = name ?? filePath.split('/').last,
       this.size = size,
       this.localPath = filePath,
@@ -54,7 +54,7 @@ class FileInfo {
   bool get isLocal => localPath != null;
 }
 
-void showFileModal(BuildContext context, FileInfo file) {
+void showFileModal(BuildContext context, DownloadableFile file) {
   showModalBottomSheet(
     context: context,
     showDragHandle: true,
@@ -132,7 +132,7 @@ void showFileModal(BuildContext context, FileInfo file) {
   );
 }
 
-void launchFile(BuildContext context, FileInfo file, Function callback) {
+void launchFile(BuildContext context, DownloadableFile file, Function callback) {
   final String filename = file.name ?? AppLocalizations.of(context).unknownFile;
 
   if (file.isLocal) {
@@ -209,7 +209,7 @@ void launchFile(BuildContext context, FileInfo file, Function callback) {
   });
 }
 
-void saveFile(BuildContext context, FileInfo file, Function callback) {
+void saveFile(BuildContext context, DownloadableFile file, Function callback) {
   const platform = MethodChannel('io.github.lanis-mobile/storage');
   final String filename = file.name ?? AppLocalizations.of(context).unknownFile;
 
@@ -257,7 +257,7 @@ void saveFile(BuildContext context, FileInfo file, Function callback) {
   });
 }
 
-void shareFile(BuildContext context, FileInfo file, Function callback) {
+void shareFile(BuildContext context, DownloadableFile file, Function callback) {
   final String filename = file.name ?? AppLocalizations.of(context).unknownFile;
 
   if (file.isLocal) {

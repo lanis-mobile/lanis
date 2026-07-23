@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lanis/applets/definitions.dart';
 import 'package:lanis/generated/l10n.dart';
-import 'package:lanis/utils/switch_tile.dart';
+import 'package:lanis/widgets/switch_tile.dart';
 import 'package:lanis/view/settings/settings_page_builder.dart';
 import 'package:liblanis/liblanis.dart';
 

@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:liblanis/liblanis.dart' hide FileInfo;
+import 'package:liblanis/liblanis.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'dart:io' as dio_core;
@@ -429,7 +429,7 @@ class _MoodleWebViewState extends ConsumerState<MoodleWebView> {
 
                   showFileModal(
                     context,
-                    FileInfo(
+                    DownloadableFile(
                       name: request.suggestedFilename ?? fallbackName,
                       url: request.url,
                       size: "(${fileSize.toStringAsFixed(2)} MB)",

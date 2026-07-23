@@ -11,7 +11,7 @@ import 'package:liblanis/liblanis.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:lanis/applets/definitions.dart';
 import 'package:lanis/bridge/lanis_bootstrap.dart';
-import 'package:lanis/models/account_types.dart';
+import 'package:lanis/l10n/account_type_ui.dart';
 import 'package:lanis/utils/logger.dart';
 
 Future<void> setupBackgroundService() async {

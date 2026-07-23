@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:liblanis/liblanis.dart' hide FileInfo;
+import 'package:liblanis/liblanis.dart';
 import 'package:flutter/services.dart';
 import 'package:lanis/utils/file_operations.dart';
 import 'package:lanis/view/settings/settings.dart';
@@ -405,7 +405,7 @@ class _CalendarExportFileState
             ? () async {
                 showFileModal(
                   context,
-                  FileInfo(
+                  DownloadableFile(
                     name:
                         "${DateTime.now().day}${DateTime.now().month}${DateTime.now().year}-${selected!.type}-${AppLocalizations.of(context).calendar.toLowerCase()}.${widget.fileType}",
                     url: Uri.parse(selected!.link),

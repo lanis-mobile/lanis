@@ -10,7 +10,7 @@ import 'package:liblanis/liblanis.dart';
 import 'package:lanis/applets/calendar/calendar_export.dart';
 import 'package:lanis/applets/timetable/student/student_timetable_settings.dart';
 import 'package:lanis/generated/l10n.dart';
-import 'package:lanis/utils/large_appbar.dart';
+import 'package:lanis/widgets/large_appbar.dart';
 import 'package:lanis/utils/responsive.dart';
 import 'package:lanis/view/settings/settings_page_builder.dart';
 import 'package:lanis/view/settings/subsettings/about.dart';
@@ -20,7 +20,7 @@ import 'package:lanis/view/settings/subsettings/notifications.dart';
 import 'package:lanis/view/settings/subsettings/quick_actions.dart';
 import 'package:lanis/view/settings/subsettings/userdata.dart';
 
-import '../../utils/press_tile.dart';
+import 'package:lanis/widgets/press_tile.dart';
 import '../../utils/whats_new.dart';
 
 class SettingsGroup {

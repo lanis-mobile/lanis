@@ -8,15 +8,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:lanis/applets/definitions.dart';
-import 'package:lanis/utils/switch_tile.dart';
+import 'package:lanis/widgets/switch_tile.dart';
 import 'package:lanis/view/settings/settings_page_builder.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:liblanis/liblanis.dart';
 
-import '../../../utils/callout.dart';
+import 'package:lanis/widgets/callout.dart';
 import '../../../utils/logger.dart';
-import '../../../utils/range_slider_tile.dart';
-import '../../../utils/slider_tile.dart';
+import 'package:lanis/widgets/range_slider_tile.dart';
+import 'package:lanis/widgets/slider_tile.dart';
 
 final Map<String, dynamic> _notificationDefaults = {
   "notifications-target-interval-minutes": 30,

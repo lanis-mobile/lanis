@@ -9,7 +9,7 @@ import 'package:lanis/applets/conversations/view/shared.dart';
 import 'package:lanis/applets/timetable/definition.dart';
 import 'package:lanis/applets/timetable/student/timetable_helper.dart';
 import 'package:lanis/generated/l10n.dart';
-import 'package:lanis/models/account_types.dart';
+import 'package:lanis/l10n/account_type_ui.dart';
 import 'package:lanis/view/settings/settings_page_builder.dart';
 import 'package:lanis/widgets/combined_applet_builder.dart';
 

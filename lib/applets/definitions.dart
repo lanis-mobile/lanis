@@ -8,7 +8,7 @@ import 'package:lanis/applets/lessons/definition.dart';
 import 'package:lanis/applets/study_groups/definition.dart';
 import 'package:lanis/applets/substitutions/definition.dart';
 import 'package:lanis/applets/timetable/definition.dart';
-import 'package:lanis/models/account_types.dart';
+import 'package:lanis/l10n/account_type_ui.dart';
 
 import '../background_service.dart';
 

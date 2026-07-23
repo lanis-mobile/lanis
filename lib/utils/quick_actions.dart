@@ -15,26 +15,11 @@ bool _requestFailed = false;
 
 /// Maps SPH applet PHP URLs / external shortcut ids to go_router paths.
 String? quickActionPathFor(String shortcutType) {
-  switch (shortcutType) {
-    case 'vertretungsplan.php':
-      return '/home/substitutions';
-    case 'kalender.php':
-      return '/home/calendar';
-    case 'stundenplan.php':
-      return '/home/timetable';
-    case 'nachrichten.php':
-      return '/home/conversations';
-    case 'meinunterricht.php':
-      return '/home/lessons';
-    case 'dateispeicher.php':
-      return '/storage';
-    case 'lerngruppen.php':
-      return '/study-groups';
-    case 'openMoodle':
-      return '/moodle';
-    default:
-      return null;
+  for (final def in AppDefinitions.applets) {
+    if (def.appletPhpUrl == shortcutType) return def.routePath;
   }
+  if (shortcutType == 'openMoodle') return '/moodle';
+  return null;
 }
 
 void _goQuickAction(String path) {

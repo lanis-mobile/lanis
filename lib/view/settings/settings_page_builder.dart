@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lanis/utils/large_appbar.dart';
+import 'package:lanis/widgets/large_appbar.dart';
 
 abstract class SettingsColours extends StatefulWidget {
   const SettingsColours({super.key});
