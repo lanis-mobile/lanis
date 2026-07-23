@@ -62,7 +62,7 @@ class ItemBlock extends StatelessWidget {
               child: Text(AppLocalizations.of(context).clear),
               onPressed: () {
                 updateSettings('lesson-colors', {
-                  ...settings['lesson-colors'],
+                  ...(settings['lesson-colors'] as Map? ?? const {}),
                   lesson.id!.split('-')[0]: null,
                 });
 

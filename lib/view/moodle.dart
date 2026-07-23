@@ -287,9 +287,15 @@ class _MoodleWebViewState extends ConsumerState<MoodleWebView> {
                 return;
               }
 
-              final canGoBack = await webViewController!.canGoBack();
+              final controller = webViewController;
+              if (controller == null) {
+                if (context.mounted) Navigator.pop(context);
+                return;
+              }
+
+              final canGoBack = await controller.canGoBack();
               if (canGoBack) {
-                webViewController!.goBack();
+                controller.goBack();
               } else {
                 setState(() {
                   showWebView = false;

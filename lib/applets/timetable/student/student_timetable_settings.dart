@@ -282,6 +282,20 @@ class _StudentTimetableSettingsState
 
   @override
   Widget build(BuildContext context) {
+    final session = ref.watch(sessionProvider).asData?.value;
+    if (session == null) {
+      return SettingsPage(
+        backgroundColor: backgroundColor,
+        title: Text(AppLocalizations.of(context).timeTable),
+        showBackButton: widget.showBack,
+        children: const [
+          Padding(
+            padding: EdgeInsets.all(24),
+            child: Center(child: CircularProgressIndicator()),
+          ),
+        ],
+      );
+    }
     return SettingsPage(
       backgroundColor: backgroundColor,
       title: Text(AppLocalizations.of(context).timeTable),
@@ -291,8 +305,7 @@ class _StudentTimetableSettingsState
           parser: ref.watch(timetableParserProvider),
           phpUrl: timeTableDefinition.appletPhpUrl,
           settingsDefaults: timeTableDefinition.settingsDefaults,
-          accountType: ref.watch(sessionProvider).asData?.value?.accountType ??
-              AccountType.student,
+          accountType: session.accountType,
           builder: (context, timetable, _, settings, updateSettings, refresh) {
             final ids = settings['hidden-lessons'];
             Map<int, List<TimetableSubject>> lessons = {};

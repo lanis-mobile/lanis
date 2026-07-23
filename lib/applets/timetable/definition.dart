@@ -18,6 +18,10 @@ final timeTableDefinition = AppletDefinition(
   settingsDefaults: {
     'student-selected-type': 'TimeTableType.own',
     'current-timetable-view': 'CalendarView.workWeek',
+    'student-selected-week': false,
+    'hidden-lessons': <dynamic>[],
+    'custom-lessons': <dynamic>[],
+    'lesson-colors': <String, dynamic>{},
   },
   bodyBuilder: (context, accountType, openDrawerCb) {
     if (accountType == AccountType.student) {

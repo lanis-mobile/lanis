@@ -18,6 +18,14 @@ class _SubstitutionsFilterSettingsState
   bool loadingFilter = false;
   @override
   Widget build(BuildContext context) {
+    if (ref.watch(sessionProvider).asData?.value == null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(AppLocalizations.of(context).substitutionsFilter),
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
     final parser = ref.watch(substitutionsParserProvider);
     return Scaffold(
       appBar: AppBar(

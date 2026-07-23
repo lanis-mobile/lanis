@@ -65,13 +65,16 @@ class _CombinedAppletBuilderState<T>
         loaded[entry.key] = entry.value;
         continue;
       }
-      final stored = settings.getJsonMap(_settingKey(entry.key));
+      final storedMap = settings.getJsonMap(_settingKey(entry.key));
+      final storedList = settings.getJsonList(_settingKey(entry.key));
       // Prefer typed reads for primitives in defaults
       final boolVal = settings.getBool(_settingKey(entry.key));
       final intVal = settings.getInt(_settingKey(entry.key));
       final strVal = settings.getString(_settingKey(entry.key));
-      if (stored != null) {
-        loaded[entry.key] = stored;
+      if (storedMap != null) {
+        loaded[entry.key] = storedMap;
+      } else if (storedList != null) {
+        loaded[entry.key] = storedList;
       } else if (boolVal != null) {
         loaded[entry.key] = boolVal;
       } else if (intVal != null) {
