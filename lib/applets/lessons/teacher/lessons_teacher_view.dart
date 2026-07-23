@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lanis/applets/lessons/definition.dart';
 import 'package:lanis/applets/lessons/teacher/widgets/course_folder_card.dart';
+import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/widgets/combined_applet_builder.dart';
 import 'package:lanis/widgets/marquee.dart';
 import 'package:liblanis/liblanis.dart';
@@ -55,7 +56,7 @@ class _LessonsTeacherViewState extends ConsumerState<LessonsTeacherView> {
                       Expanded(
                         child: MarqueeWidget(
                           child: Text(
-                            'Vorschau-Version für Lehrer! Zur Zeit nur teilweise funktionsfähig.',
+                            AppLocalizations.of(context).teacherPreviewBanner,
                           ),
                         ),
                       ),

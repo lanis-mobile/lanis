@@ -126,7 +126,7 @@ class _MoodleWebViewState extends ConsumerState<MoodleWebView> {
         isLoginError = true;
 
         if (e is dio_core.SocketException || e is DioException) {
-          loginError = "Netzwerkfehler - $e";
+          loginError = "${AppLocalizations.of(context).networkError} - $e";
         } else {
           loginError = e.toString();
         }

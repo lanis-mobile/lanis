@@ -359,5 +359,51 @@
   "openIOSSettingsToChangeLanguage": "Wählen Sie auf dem nächsten Bildschirm \"Lanis\" und ändern dann die Sprache im Abschnitt \"Bevorzugte Sprache\".",
   "copy": "Kopieren",
   "openExternalUrl": "Externe URL öffnen",
-  "openExternalUrlDescription": "Möchtest du die folgende URL öffnen?"
+  "openExternalUrlDescription": "Möchtest du die folgende URL öffnen?",
+
+  "delete": "Löschen",
+  "save": "Speichern",
+  "date": "Datum",
+  "topic": "Thema",
+  "contentLabel": "Inhalt",
+  "inAdvance": "Vorab",
+  "teacherPreviewBanner": "Vorschau-Version für Lehrer! Zur Zeit nur teilweise funktionsfähig.",
+  "visibilityChangedSuccess": "Sichtbarkeit erfolgreich geändert",
+  "visibilityChangeError": "Fehler beim Ändern der Sichtbarkeit",
+  "confirmDeleteTitle": "Wirklich löschen?",
+  "confirmDeleteFile": "Möchtest du die Datei wirklich löschen?",
+  "fileDeletedSuccess": "Datei erfolgreich gelöscht",
+  "fileDeleteError": "Fehler beim Löschen der Datei",
+  "openOrShare": "Öffnen oder Teilen",
+  "changeStudentVisibility": "Sichtbarkeit (SuS) ändern",
+  "deleteEntry": "Eintrag löschen",
+  "editEntry": "Eintrag bearbeiten",
+  "confirmDeleteEntry": "Möchtest du diesen Eintrag wirklich löschen?",
+  "entryDeleted": "Eintrag gelöscht",
+  "entryDeleteFailed": "Eintrag konnte nicht gelöscht werden",
+  "newEntry": "Neuer Eintrag",
+  "newEntryTitle": "Neuer Eintrag ({courseName})",
+  "@newEntryTitle": {
+    "placeholders": {
+      "courseName": {}
+    }
+  },
+  "entryCreated": "Eintrag erstellt",
+  "entryCreateFailed": "Eintrag konnte nicht erstellt werden",
+  "entrySaving": "Eintrag wird gespeichert...",
+  "visibleForStudents": "Sichtbar für Schüler",
+  "notVisibleForStudents": "Nicht sichtbar für Schüler",
+  "pleaseEnterTopic": "Bitte ein Thema eingeben",
+  "topicRequiredLabel": "Thema *",
+  "useDocumentSubmission": "Dokumentenabgabe verwenden",
+  "documentSubmission": "Dokumentenabgabe",
+  "visibleForAllLearners": "Sichtbar für alle Lernenden",
+  "lessonHour": "Stunde {hour}",
+  "@lessonHour": {
+    "placeholders": {
+      "hour": {}
+    }
+  },
+  "unknownUploadError": "Unbekannter Fehler beim Hochladen",
+  "addFile": "Datei hinzufügen"
 }

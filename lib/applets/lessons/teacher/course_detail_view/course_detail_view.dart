@@ -119,7 +119,7 @@ class _TeacherCourseDetailViewState
       floatingActionButton: _loading || _error || details == null
           ? null
           : FloatingActionButton.extended(
-              label: Text('Neuer Eintrag'),
+              label: Text(AppLocalizations.of(context).newEntry),
               icon: Icon(Icons.add),
               onPressed: () async {
                 final result = await Navigator.of(context).push<bool?>(
@@ -130,14 +130,18 @@ class _TeacherCourseDetailViewState
                 );
                 if (context.mounted) {
                   if (result == true) {
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text('Eintrag erstellt')));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(AppLocalizations.of(context).entryCreated),
+                      ),
+                    );
                     await loadData();
                   } else if (result == false) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Eintrag konnte nicht erstellt werden'),
+                        content: Text(
+                          AppLocalizations.of(context).entryCreateFailed,
+                        ),
                         backgroundColor: Colors.red,
                       ),
                     );

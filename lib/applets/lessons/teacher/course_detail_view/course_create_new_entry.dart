@@ -45,7 +45,8 @@ class _CourseCreateNewEntryState extends ConsumerState<CourseCreateNewEntry> {
   }
 
   String vis(bool visible) {
-    return visible ? 'Sichtbar für Schüler' : 'Nicht sichtbar für Schüler';
+    final l10n = AppLocalizations.of(context);
+    return visible ? l10n.visibleForStudents : l10n.notVisibleForStudents;
   }
 
   void showLoadingDialog() {
@@ -58,7 +59,7 @@ class _CourseCreateNewEntryState extends ConsumerState<CourseCreateNewEntry> {
           spacing: 16.0,
           children: [
             CircularProgressIndicator(),
-            Text('Eintrag wird gespeichert...'),
+            Text(AppLocalizations.of(context).entrySaving),
           ],
         ),
       ),
@@ -67,9 +68,12 @@ class _CourseCreateNewEntryState extends ConsumerState<CourseCreateNewEntry> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text('Neuer Eintrag (${widget.courseFolderDetails.courseName})'),
+        title: Text(
+          l10n.newEntryTitle(widget.courseFolderDetails.courseName),
+        ),
       ),
       body: Form(
         key: _formKey,
@@ -78,7 +82,7 @@ class _CourseCreateNewEntryState extends ConsumerState<CourseCreateNewEntry> {
           children: [
             ListTile(
               leading: Icon(Icons.edit_calendar),
-              title: Text('Datum'),
+              title: Text(l10n.date),
               trailing: Row(
                 spacing: 8.0,
                 mainAxisSize: MainAxisSize.min,
@@ -141,7 +145,7 @@ class _CourseCreateNewEntryState extends ConsumerState<CourseCreateNewEntry> {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 10),
                     child: Text(
-                      'Von',
+                      l10n.start,
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
                         color: Theme.of(context).colorScheme.primary,
                       ),
@@ -153,7 +157,7 @@ class _CourseCreateNewEntryState extends ConsumerState<CourseCreateNewEntry> {
                           .map(
                             (e) => DropdownMenuItem<String>(
                               value: e,
-                              child: Text('Stunde $e'),
+                              child: Text(l10n.lessonHour(e)),
                             ),
                           )
                           .toList(),
@@ -178,7 +182,7 @@ class _CourseCreateNewEntryState extends ConsumerState<CourseCreateNewEntry> {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 10),
                     child: Text(
-                      'Bis',
+                      l10n.end,
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
                         color: Theme.of(context).colorScheme.primary,
                       ),
@@ -190,7 +194,7 @@ class _CourseCreateNewEntryState extends ConsumerState<CourseCreateNewEntry> {
                           .map(
                             (e) => DropdownMenuItem<String>(
                               value: e,
-                              child: Text('Stunde $e'),
+                              child: Text(l10n.lessonHour(e)),
                             ),
                           )
                           .toList(),
@@ -211,12 +215,12 @@ class _CourseCreateNewEntryState extends ConsumerState<CourseCreateNewEntry> {
               child: TextFormField(
                 controller: _entryTopicController,
                 decoration: InputDecoration(
-                  labelText: 'Thema *',
+                  labelText: l10n.topicRequiredLabel,
                   hintText: vis(constraints.topicVisibleForStudents),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Bitte ein Thema eingeben';
+                    return l10n.pleaseEnterTopic;
                   }
                   return null;
                 },
@@ -227,7 +231,7 @@ class _CourseCreateNewEntryState extends ConsumerState<CourseCreateNewEntry> {
               child: TextFormField(
                 controller: _entryContentController,
                 decoration: InputDecoration(
-                  labelText: 'Inhalt',
+                  labelText: l10n.contentLabel,
                   hintText: vis(constraints.contentVisibleForStudents),
                 ),
                 maxLines: 5,
@@ -238,7 +242,7 @@ class _CourseCreateNewEntryState extends ConsumerState<CourseCreateNewEntry> {
               child: TextFormField(
                 controller: _entryHomeworkController,
                 decoration: InputDecoration(
-                  labelText: 'Hausaufgaben',
+                  labelText: l10n.homework,
                   hintText: vis(constraints.homeworkVisibleForStudents),
                 ),
                 maxLines: 5,
@@ -251,7 +255,7 @@ class _CourseCreateNewEntryState extends ConsumerState<CourseCreateNewEntry> {
                   _useDocumentSubmission = val;
                 });
               },
-              title: Text('Dokumentenabgabe verwenden'),
+              title: Text(l10n.useDocumentSubmission),
             ),
             if (_useDocumentSubmission)
               Padding(
@@ -263,7 +267,7 @@ class _CourseCreateNewEntryState extends ConsumerState<CourseCreateNewEntry> {
                       spacing: 8.0,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Dokumentenabgabe'),
+                        Text(l10n.documentSubmission),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -349,7 +353,7 @@ class _CourseCreateNewEntryState extends ConsumerState<CourseCreateNewEntry> {
                           ],
                         ),
                         SwitchListTile(
-                          title: Text('Sichtbar für alle Lernenden'),
+                          title: Text(l10n.visibleForAllLearners),
                           value: _everySubmissionVisibleForStudents,
                           onChanged: (val) {
                             setState(() {
@@ -365,7 +369,7 @@ class _CourseCreateNewEntryState extends ConsumerState<CourseCreateNewEntry> {
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: ElevatedButton.icon(
-                label: Text('Speichern'),
+                label: Text(l10n.save),
                 icon: Icon(Icons.save),
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {

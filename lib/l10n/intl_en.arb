@@ -403,5 +403,51 @@
   "openIOSSettingsToChangeLanguage": "On the next screen, select \"Lanis\" and then change the language in the \"Preferred Language\" section.",
   "copy": "Copy",
   "openExternalUrl": "Open external URL",
-  "openExternalUrlDescription": "Do you want to open the following URL in your browser?"
+  "openExternalUrlDescription": "Do you want to open the following URL in your browser?",
+
+  "delete": "Delete",
+  "save": "Save",
+  "date": "Date",
+  "topic": "Topic",
+  "contentLabel": "Content",
+  "inAdvance": "In advance",
+  "teacherPreviewBanner": "Preview version for teachers! Currently only partially functional.",
+  "visibilityChangedSuccess": "Visibility updated successfully",
+  "visibilityChangeError": "Failed to change visibility",
+  "confirmDeleteTitle": "Really delete?",
+  "confirmDeleteFile": "Do you really want to delete this file?",
+  "fileDeletedSuccess": "File deleted successfully",
+  "fileDeleteError": "Failed to delete file",
+  "openOrShare": "Open or share",
+  "changeStudentVisibility": "Change visibility (students)",
+  "deleteEntry": "Delete entry",
+  "editEntry": "Edit entry",
+  "confirmDeleteEntry": "Do you really want to delete this entry?",
+  "entryDeleted": "Entry deleted",
+  "entryDeleteFailed": "Could not delete entry",
+  "newEntry": "New entry",
+  "newEntryTitle": "New entry ({courseName})",
+  "@newEntryTitle": {
+    "placeholders": {
+      "courseName": {}
+    }
+  },
+  "entryCreated": "Entry created",
+  "entryCreateFailed": "Could not create entry",
+  "entrySaving": "Saving entry...",
+  "visibleForStudents": "Visible to students",
+  "notVisibleForStudents": "Not visible to students",
+  "pleaseEnterTopic": "Please enter a topic",
+  "topicRequiredLabel": "Topic *",
+  "useDocumentSubmission": "Use document submission",
+  "documentSubmission": "Document submission",
+  "visibleForAllLearners": "Visible to all learners",
+  "lessonHour": "Period {hour}",
+  "@lessonHour": {
+    "placeholders": {
+      "hour": {}
+    }
+  },
+  "unknownUploadError": "Unknown upload error",
+  "addFile": "Add file"
 }

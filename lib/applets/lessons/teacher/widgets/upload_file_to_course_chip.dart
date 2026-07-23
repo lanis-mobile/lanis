@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lanis/generated/l10n.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:lanis/utils/file_picker.dart';
 
@@ -114,7 +115,7 @@ class UploadFileToCourseChip extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Unbekannter Fehler beim Hochladen'),
+            content: Text(AppLocalizations.of(context).unknownUploadError),
             backgroundColor: Colors.red,
           ),
         );
@@ -138,7 +139,7 @@ class UploadFileToCourseChip extends ConsumerWidget {
         children: [
           const Icon(Icons.upload_rounded, size: 16),
           const SizedBox(width: 4.0),
-          const Text('Datei hinzufügen'),
+          Text(AppLocalizations.of(context).addFile),
         ],
       ),
       onPressed: () => uploadFile(context, ref),

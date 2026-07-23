@@ -10,6 +10,8 @@ import 'line_constraint_text.dart';
 
 import 'package:lanis/generated/l10n.dart';
 
+enum _EntryMenuAction { delete, edit }
+
 class CourseFolderHistoryEntryCard extends ConsumerStatefulWidget {
   final CourseFolderHistoryEntry entry;
   final String courseId;
@@ -46,21 +48,22 @@ class _CourseFolderHistoryEntryCardState
     final bool? delete = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
+        final l10n = AppLocalizations.of(context);
         return AlertDialog(
-          title: Text('Eintrag löschen'),
-          content: Text('Möchtest du diesen Eintrag wirklich löschen?'),
+          title: Text(l10n.deleteEntry),
+          content: Text(l10n.confirmDeleteEntry),
           actions: <Widget>[
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(false);
               },
-              child: Text('Abbrechen'),
+              child: Text(l10n.cancel),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(true);
               },
-              child: Text('Löschen'),
+              child: Text(l10n.delete),
             ),
           ],
         );
@@ -74,21 +77,25 @@ class _CourseFolderHistoryEntryCardState
         );
         if (result) {
           if (mounted) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text('Eintrag gelöscht')));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(AppLocalizations.of(context).entryDeleted)),
+            );
           }
           await Future.delayed(Duration(seconds: 1));
           widget.afterDeleted();
         } else if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Eintrag konnte nicht gelöscht werden')),
+            SnackBar(
+              content: Text(AppLocalizations.of(context).entryDeleteFailed),
+            ),
           );
         }
       } catch (_) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Eintrag konnte nicht gelöscht werden')),
+            SnackBar(
+              content: Text(AppLocalizations.of(context).entryDeleteFailed),
+            ),
           );
         }
       }
@@ -136,7 +143,7 @@ class _CourseFolderHistoryEntryCardState
                                     horizontal: 4.0,
                                   ),
                                   child: Text(
-                                    'Heute',
+                                    AppLocalizations.of(context).today,
                                     style: TextStyle(color: Colors.white),
                                   ),
                                 ),
@@ -156,7 +163,7 @@ class _CourseFolderHistoryEntryCardState
                                     spacing: 4,
                                     children: [
                                       Text(
-                                        'Vorab',
+                                        AppLocalizations.of(context).inAdvance,
                                         style: TextStyle(color: Colors.white),
                                       ),
                                       Icon(
@@ -181,36 +188,40 @@ class _CourseFolderHistoryEntryCardState
                     ),
                   ),
                 ),
-                PopupMenuButton<String>(
+                PopupMenuButton<_EntryMenuAction>(
                   iconSize: 20,
-                  onSelected: (String value) {
+                  onSelected: (_EntryMenuAction value) {
                     switch (value) {
-                      case 'Eintrag löschen':
+                      case _EntryMenuAction.delete:
                         deleteEntryButtonPressed();
-                        break;
-                      case 'Eintrag bearbeiten':
+                      case _EntryMenuAction.edit:
                         break;
                     }
                   },
                   itemBuilder: (BuildContext context) {
-                    return {'Eintrag löschen', 'Eintrag bearbeiten'}.map((
-                      String choice,
-                    ) {
-                      return PopupMenuItem<String>(
-                        value: choice,
+                    final l10n = AppLocalizations.of(context);
+                    return [
+                      PopupMenuItem<_EntryMenuAction>(
+                        value: _EntryMenuAction.delete,
                         child: Row(
                           children: [
-                            Icon(
-                              choice == 'Eintrag löschen'
-                                  ? Icons.delete
-                                  : Icons.edit,
-                            ),
+                            Icon(Icons.delete),
                             const SizedBox(width: 4.0),
-                            Text(choice),
+                            Text(l10n.deleteEntry),
                           ],
                         ),
-                      );
-                    }).toList();
+                      ),
+                      PopupMenuItem<_EntryMenuAction>(
+                        value: _EntryMenuAction.edit,
+                        child: Row(
+                          children: [
+                            Icon(Icons.edit),
+                            const SizedBox(width: 4.0),
+                            Text(l10n.editEntry),
+                          ],
+                        ),
+                      ),
+                    ];
                   },
                 ),
               ],

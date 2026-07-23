@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lanis/generated/l10n.dart';
 import 'package:liblanis/liblanis.dart';
 
 import '../../../../utils/file_icons.dart';
@@ -56,7 +57,7 @@ class _CourseFolderHistoryEntryFileChipState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Sichtbarkeit erfolgreich geändert'),
+            content: Text(AppLocalizations.of(context).visibilityChangedSuccess),
             backgroundColor: Colors.green,
           ),
         );
@@ -65,7 +66,7 @@ class _CourseFolderHistoryEntryFileChipState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Fehler beim Ändern der Sichtbarkeit'),
+            content: Text(AppLocalizations.of(context).visibilityChangeError),
             backgroundColor: Colors.red,
           ),
         );
@@ -76,32 +77,35 @@ class _CourseFolderHistoryEntryFileChipState
   void deleteRemoteFile() async {
     final bool? confirmPositive = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        icon: Icon(Icons.warning, color: Colors.red),
-        title: Text('Wirklich löschen?'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          spacing: 8,
-          children: [
-            Text('Möchtest du die Datei wirklich löschen?'),
-            Text(
-              widget.file.name,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              overflow: TextOverflow.visible,
+      builder: (context) {
+        final l10n = AppLocalizations.of(context);
+        return AlertDialog(
+          icon: Icon(Icons.warning, color: Colors.red),
+          title: Text(l10n.confirmDeleteTitle),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            spacing: 8,
+            children: [
+              Text(l10n.confirmDeleteFile),
+              Text(
+                widget.file.name,
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                overflow: TextOverflow.visible,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(l10n.cancel),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(l10n.delete),
             ),
           ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text('Abbrechen'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text('Löschen'),
-          ),
-        ],
-      ),
+        );
+      },
     );
     if (confirmPositive != true) return;
 
@@ -131,7 +135,7 @@ class _CourseFolderHistoryEntryFileChipState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Datei erfolgreich gelöscht'),
+            content: Text(AppLocalizations.of(context).fileDeletedSuccess),
             backgroundColor: Colors.green,
           ),
         );
@@ -140,7 +144,7 @@ class _CourseFolderHistoryEntryFileChipState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Fehler beim Löschen der Datei'),
+            content: Text(AppLocalizations.of(context).fileDeleteError),
             backgroundColor: Colors.red,
           ),
         );
@@ -150,6 +154,7 @@ class _CourseFolderHistoryEntryFileChipState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return ActionChip(
       label: Row(
         mainAxisSize: MainAxisSize.min,
@@ -208,7 +213,7 @@ class _CourseFolderHistoryEntryFileChipState
                 children: [
                   Icon(Icons.open_in_new, size: 16),
                   SizedBox(width: 4),
-                  Text('Öffnen oder Teilen'),
+                  Text(l10n.openOrShare),
                 ],
               ),
             ),
@@ -224,7 +229,7 @@ class _CourseFolderHistoryEntryFileChipState
                     size: 16,
                   ),
                   SizedBox(width: 4),
-                  Text('Sichtbarkeit (SuS) ändern'),
+                  Text(l10n.changeStudentVisibility),
                 ],
               ),
             ),
@@ -235,7 +240,7 @@ class _CourseFolderHistoryEntryFileChipState
                 children: [
                   Icon(Icons.delete, size: 16),
                   SizedBox(width: 4),
-                  Text('Löschen'),
+                  Text(l10n.delete),
                 ],
               ),
             ),
