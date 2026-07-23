@@ -114,7 +114,6 @@ class _StartupScreenState extends ConsumerState<StartupScreen> {
             if (exception is WrongCredentialsException)
               TextButton(
                 onPressed: () {
-                  Navigator.pop(context);
                   context.go('/login');
                 },
                 child: Text(AppLocalizations.of(context).logInTitle),
@@ -129,14 +128,12 @@ class _StartupScreenState extends ConsumerState<StartupScreen> {
             const SizedBox(height: 8),
             FilledButton(
               onPressed: () {
-                Navigator.pop(context);
                 ref.read(authControllerProvider.notifier).retry();
               },
               child: Text(AppLocalizations.of(context).tryAgain),
             ),
             TextButton(
               onPressed: () {
-                Navigator.pop(context);
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const ResetAccountPage()),
                 );
@@ -152,19 +149,6 @@ class _StartupScreenState extends ConsumerState<StartupScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(authControllerProvider);
-
-    ref.listen(authControllerProvider, (prev, next) async {
-      if (next.phase == AuthPhase.error &&
-          next.exception != null &&
-          prev?.phase != AuthPhase.error) {
-        await showModalBottomSheet(
-          context: context,
-          isDismissible: false,
-          enableDrag: false,
-          builder: (context) => errorDialog(context, next.exception),
-        );
-      }
-    });
 
     if (auth.phase == AuthPhase.error && auth.exception != null) {
       return Scaffold(

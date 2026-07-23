@@ -56,8 +56,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
 
       switch (auth.phase) {
         case AuthPhase.authenticating:
-          // Keep /login mounted so add-account can roll back after failure.
-          if (onStartup || loc == '/login') return null;
+          // Keep /login and /accounts mounted so add-account / switch can
+          // surface failures instead of being torn down mid-auth.
+          if (onStartup || loc == '/login' || loc == '/accounts') return null;
           return '/startup';
         case AuthPhase.unauthenticated:
           if (loggingIn || onStartup) {

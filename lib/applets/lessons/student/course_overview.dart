@@ -58,7 +58,12 @@ class _CourseOverviewAnsichtState extends ConsumerState<CourseOverviewAnsicht> {
     } catch (e) {
       if (!secondTry) {
         await _loadData(secondTry: true);
+        return;
       }
+      if (!mounted) return;
+      setState(() {
+        loading = false;
+      });
     }
   }
 
@@ -82,7 +87,7 @@ class _CourseOverviewAnsichtState extends ConsumerState<CourseOverviewAnsicht> {
 
   Widget _buildBody() {
     if (data == null) {
-      noDataScreen(context);
+      return noDataScreen(context);
     }
 
     switch (_currentIndex) {

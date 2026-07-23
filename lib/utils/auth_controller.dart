@@ -62,10 +62,9 @@ class AuthController extends Notifier<AuthState> {
       await ref.read(sessionProvider.notifier).authenticate();
       state = const AuthState.authenticated();
     } on WrongCredentialsException catch (e) {
-      await ref.read(activeAccountProvider.notifier).clear();
+      // Keep the failed account selected so ResetAccountPage can fix credentials.
       state = AuthState.error(e);
     } on CredentialsIncompleteException catch (e) {
-      await ref.read(activeAccountProvider.notifier).clear();
       state = AuthState.error(e);
     } on LanisException catch (e) {
       state = AuthState.error(e);

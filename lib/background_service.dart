@@ -149,7 +149,6 @@ Future<void> callbackDispatcher() async {
         if (account == null) continue;
 
         var authenticated = false;
-        final appletTasks = <Future>[];
 
         for (final applet in AppDefinitions.applets.where(
           (a) => a.notificationTask != null,
@@ -177,23 +176,20 @@ Future<void> callbackDispatcher() async {
             continue;
           }
 
-          appletTasks.add(
-            applet.notificationTask!(
-              container,
-              account.accountType ?? AccountType.student,
-              BackgroundTaskToolkit(
-                accountId: account.localId,
-                username: account.username,
-                schoolName: account.schoolName,
-                settings: settings,
-                appletId: applet.appletPhpUrl,
-                multiAccount: accounts.length > 1,
-              ),
+          // One shared session/Dio — run applet tasks sequentially.
+          await applet.notificationTask!(
+            container,
+            account.accountType ?? AccountType.student,
+            BackgroundTaskToolkit(
+              accountId: account.localId,
+              username: account.username,
+              schoolName: account.schoolName,
+              settings: settings,
+              appletId: applet.appletPhpUrl,
+              multiAccount: accounts.length > 1,
             ),
           );
         }
-
-        await Future.wait(appletTasks);
         if (authenticated) {
           await container.read(sessionProvider.notifier).deAuthenticate();
         }
