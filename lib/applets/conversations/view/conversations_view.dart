@@ -439,11 +439,18 @@ class _ConversationsViewState extends ConsumerState<ConversationsView> {
 
       try {
         canChooseType = await ref.read(conversationsParserProvider).canChooseType();
-      } on NoConnectionException {
+      } catch (_) {
         if (!mounted) return;
         setState(() {
           loadingCreateButton = false;
         });
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(AppLocalizations.of(context).error),
+            ),
+          );
+        }
         return;
       }
 

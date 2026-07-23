@@ -160,13 +160,32 @@ class _ResetAccountPageState extends ConsumerState<ResetAccountPage> {
                       ),
                     );
                     if (newPassword == null) return;
+                    final config = ref.read(sphConfigProvider);
+                    try {
+                      await SessionHandler.getLoginURL(
+                        account.copyWith(password: newPassword),
+                        config,
+                      );
+                    } catch (e) {
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            e is LanisException
+                                ? e.cause
+                                : AppLocalizations.of(context).unknownError,
+                          ),
+                        ),
+                      );
+                      return;
+                    }
                     await ref
                         .read(accountsProvider.notifier)
                         .updatePassword(account.localId, newPassword);
-                    await ref
+                    final ok = await ref
                         .read(authControllerProvider.notifier)
                         .loginWithAccount(account.localId);
-                    if (context.mounted) context.go('/startup');
+                    if (context.mounted && ok) context.go('/startup');
                   },
                   icon: Icon(Icons.password),
                   label: Text(AppLocalizations.of(context).changePassword),

@@ -67,6 +67,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           }
           return '/welcome';
         case AuthPhase.error:
+          // Allow /login so WrongCredentials "Log In" can reach the form.
+          if (loc == '/login') return null;
           return onStartup ? null : '/startup';
         case AuthPhase.authenticated:
           // Allow /login so "add account" works while already signed in.

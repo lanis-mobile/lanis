@@ -103,7 +103,7 @@ class _CourseFolderHistoryEntryFileChipState
         ],
       ),
     );
-    if (!confirmPositive!) return;
+    if (confirmPositive != true) return;
 
     final data = {
       "a": 'deleteFileBook',

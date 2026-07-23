@@ -112,7 +112,8 @@ class AuthController extends Notifier<AuthState> {
       if (e is WrongCredentialsException ||
           e is CredentialsIncompleteException) {
         if (state.phase != AuthPhase.authenticated) {
-          state = const AuthState.unauthenticated();
+          // Keep the selected account so ResetAccount / retry stay usable.
+          state = AuthState.error(e);
         }
         return false;
       }

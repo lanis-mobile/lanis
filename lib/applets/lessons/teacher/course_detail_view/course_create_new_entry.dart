@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:liblanis/liblanis.dart';
+import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/utils/liblanis_ui.dart';
 import 'package:intl/intl.dart';
-
 
 class CourseCreateNewEntry extends ConsumerStatefulWidget {
   final CourseFolderDetails courseFolderDetails;
@@ -370,26 +370,41 @@ class _CourseCreateNewEntryState extends ConsumerState<CourseCreateNewEntry> {
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
                     showLoadingDialog();
-                    final result = await ref.read(lessonsTeacherParserProvider)
-                        .postNewEntry(
-                          book: widget.courseFolderDetails.courseId,
-                          datum: DateFormat('dd.MM.yyyy').format(_selectedDate),
-                          zeigeauchvorheran: _prevouslyVisibleForStudents,
-                          stundenVon: _selectedStartHour,
-                          stundenBis: _selectedEndHour,
-                          subject: _entryTopicController.text,
-                          inhalt: _entryContentController.text,
-                          homework: _entryHomeworkController.text,
-                          abgabe: _useDocumentSubmission,
-                          abgabeBisDate: _selectedDocumentSubmissionDeadline,
-                          abgabeBisTime: _selectedDocumentSubmissionTime.toSph(),
-                          abgabeSichtbar: _everySubmissionVisibleForStudents,
-                        );
-                    if (context.mounted) {
+                    try {
+                      final result = await ref
+                          .read(lessonsTeacherParserProvider)
+                          .postNewEntry(
+                            book: widget.courseFolderDetails.courseId,
+                            datum: DateFormat(
+                              'dd.MM.yyyy',
+                            ).format(_selectedDate),
+                            zeigeauchvorheran: _prevouslyVisibleForStudents,
+                            stundenVon: _selectedStartHour,
+                            stundenBis: _selectedEndHour,
+                            subject: _entryTopicController.text,
+                            inhalt: _entryContentController.text,
+                            homework: _entryHomeworkController.text,
+                            abgabe: _useDocumentSubmission,
+                            abgabeBisDate:
+                                _selectedDocumentSubmissionDeadline,
+                            abgabeBisTime:
+                                _selectedDocumentSubmissionTime.toSph(),
+                            abgabeSichtbar: _everySubmissionVisibleForStudents,
+                          );
+                      if (!context.mounted) return;
                       Navigator.of(context).pop(); // Close loading dialog
-                      Navigator.of(
-                        context,
-                      ).pop(result); // Close this screen and return result
+                      Navigator.of(context).pop(result);
+                    } catch (_) {
+                      if (!context.mounted) return;
+                      Navigator.of(context).pop(); // Close loading dialog
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            AppLocalizations.of(context).error,
+                          ),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
                     }
                   }
                 },
