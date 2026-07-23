@@ -14,8 +14,8 @@ final openLanisDefinition = ExternalDefinition(
     final container = ProviderScope.containerOf(context);
     final account = container.read(activeAccountProvider);
     if (account == null) return;
-    final config = container.read(sphConfigProvider);
-    SessionHandler.getLoginURL(account, config).then((response) {
+    final config = container.read(lanisConfigProvider);
+    LanisSession.getLoginURL(account, config).then((response) {
       launchUrl(Uri.parse(response));
     }).catchError((Object error, StackTrace stackTrace) {
       debugPrint('Failed to open Lanis login URL: $error');

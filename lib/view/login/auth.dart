@@ -50,8 +50,8 @@ class LoginFormState extends ConsumerState<LoginForm> {
         throw AccountAlreadyExistsException();
       }
 
-      final config = ref.read(sphConfigProvider);
-      await SessionHandler.getLoginURL(
+      final config = ref.read(lanisConfigProvider);
+      await LanisSession.getLoginURL(
         ClearTextAccount(
           localId: -1,
           schoolID: schoolId,

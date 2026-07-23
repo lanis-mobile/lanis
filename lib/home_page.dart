@@ -67,7 +67,7 @@ class HomePageState extends ConsumerState<HomePage> {
     });
   }
 
-  SessionHandler? get _session => ref.read(sessionProvider).asData?.value;
+  LanisSession? get _session => ref.read(sessionProvider).asData?.value;
 
   ClearTextAccount? get _account => ref.read(activeAccountProvider);
 
@@ -76,10 +76,10 @@ class HomePageState extends ConsumerState<HomePage> {
 
   Future<void> _openLanisInBrowser() async {
     final account = _account;
-    final config = ref.read(sphConfigProvider);
+    final config = ref.read(lanisConfigProvider);
     if (account == null) return;
     try {
-      final url = await SessionHandler.getLoginURL(account, config);
+      final url = await LanisSession.getLoginURL(account, config);
       await launchUrl(Uri.parse(url));
     } on LanisException catch (ex) {
       if (!mounted) return;

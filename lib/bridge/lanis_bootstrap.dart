@@ -7,8 +7,8 @@ import 'package:riverpod/misc.dart' show Override;
 import '../core/native_adapter_instance.dart';
 import 'flutter_secret_store.dart';
 
-/// Configures [SPHClient] for the Flutter host and returns Riverpod overrides.
-Future<List<Override>> bootstrapSphClient({
+/// Configures [LanisClient] for the Flutter host and returns Riverpod overrides.
+Future<List<Override>> bootstrapLanisClient({
   FlutterSecretStore? secretStore,
 }) async {
   final cacheDir = await getApplicationCacheDirectory();
@@ -16,7 +16,7 @@ Future<List<Override>> bootstrapSphClient({
   final packageInfo = await PackageInfo.fromPlatform();
   final store = secretStore ?? FlutterSecretStore();
 
-  return SPHClient.configure(
+  return LanisClient.configure(
     databasePath: p.join(cacheDir.path, 'lanis.db'),
     secretStore: store,
     documentCacheDirectory: p.join(tempDir.path, 'lanis_documents'),

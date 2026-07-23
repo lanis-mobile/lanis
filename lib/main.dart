@@ -11,7 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:lanis/applets/conversations/view/shared.dart';
 import 'package:lanis/background_service.dart';
-import 'package:lanis/bridge/sph_bootstrap.dart';
+import 'package:lanis/bridge/lanis_bootstrap.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/router.dart';
 import 'package:lanis/themes.dart';
@@ -34,7 +34,7 @@ void main() async {
 
     await applyWorkaroundToOpenSqlite3OnOldAndroidVersions();
 
-    final overrides = await bootstrapSphClient();
+    final overrides = await bootstrapLanisClient();
 
     enableTransparentNavigationBar();
 

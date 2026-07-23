@@ -10,7 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:lanis/applets/definitions.dart';
-import 'package:lanis/bridge/sph_bootstrap.dart';
+import 'package:lanis/bridge/lanis_bootstrap.dart';
 import 'package:lanis/models/account_types.dart';
 import 'package:lanis/utils/logger.dart';
 
@@ -21,7 +21,7 @@ Future<void> setupBackgroundService() async {
     return;
   }
 
-  final overrides = await bootstrapSphClient();
+  final overrides = await bootstrapLanisClient();
   final container = ProviderContainer(overrides: overrides);
   try {
     final accounts = await container.read(accountsProvider.future);
@@ -119,7 +119,7 @@ Future<void> callbackDispatcher() async {
     backgroundLogger.i('Background fetch triggered');
     await initializeNotifications();
 
-    final overrides = await bootstrapSphClient();
+    final overrides = await bootstrapLanisClient();
     final container = ProviderContainer(overrides: overrides);
     try {
       if (!await isTaskWithinConstraints(container)) {

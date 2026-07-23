@@ -160,9 +160,9 @@ class _ResetAccountPageState extends ConsumerState<ResetAccountPage> {
                       ),
                     );
                     if (newPassword == null) return;
-                    final config = ref.read(sphConfigProvider);
+                    final config = ref.read(lanisConfigProvider);
                     try {
-                      await SessionHandler.getLoginURL(
+                      await LanisSession.getLoginURL(
                         account.copyWith(password: newPassword),
                         config,
                       );
