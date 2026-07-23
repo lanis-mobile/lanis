@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:liblanis/liblanis.dart';
 import 'package:lanis/generated/l10n.dart';
+import 'package:lanis/applets/conversations/view/shared.dart';
 import '../../../utils/flutter_tagging.dart';
-import '../../../core/connection_checker.dart';
-import '../../../core/sph/sph.dart';
-import '../../../models/conversations.dart';
 
-class NewConversationConfigurator extends StatefulWidget {
+class NewConversationConfigurator extends ConsumerStatefulWidget {
   const NewConversationConfigurator({super.key});
 
   @override
-  State<NewConversationConfigurator> createState() =>
+  ConsumerState<NewConversationConfigurator> createState() =>
       _NewConversationConfiguratorState();
 }
 
@@ -20,9 +20,9 @@ class TriggerRebuild with ChangeNotifier {
 }
 
 class _NewConversationConfiguratorState
-    extends State<NewConversationConfigurator> {
+    extends ConsumerState<NewConversationConfigurator> {
   final TextEditingController subjectController = TextEditingController();
-  final List<ReceiverEntry> receivers = [];
+  final List<TagReceiverEntry> receivers = [];
   final TriggerRebuild rebuildSearch = TriggerRebuild();
   ChatType selectedChatType = ChatType.values[2];
 
@@ -42,7 +42,7 @@ class _NewConversationConfiguratorState
     if (!isFormValid) return;
 
     final chatData = ChatCreationData(
-      type: sph!.parser.conversationsParser.cachedCanChooseType!
+      type: ref.read(conversationsParserProvider).cachedCanChooseType!
           ? selectedChatType
           : null,
       subject: subjectController.text.trim(),
@@ -140,7 +140,7 @@ class _NewConversationConfiguratorState
                 ListenableBuilder(
                   listenable: rebuildSearch,
                   builder: (context, widget) {
-                    return FlutterTagging<ReceiverEntry>(
+                    return FlutterTagging<TagReceiverEntry>(
                       initialItems: receivers,
                       textFieldConfiguration: TextFieldConfiguration(
                         decoration: InputDecoration(
@@ -180,7 +180,7 @@ class _NewConversationConfiguratorState
                         );
                       },
                       emptyBuilder: (context) {
-                        if (connectionChecker.status ==
+                        if (ref.read(connectionCheckerProvider).status ==
                             ConnectionStatus.disconnected) {
                           return ListTile(
                             leading: const Icon(Icons.wifi_off),
@@ -205,13 +205,12 @@ class _NewConversationConfiguratorState
                       },
                       findSuggestions: (query) async {
                         query = query.trim();
-                        if (query.isEmpty) return <ReceiverEntry>[];
+                        if (query.isEmpty) return <TagReceiverEntry>[];
 
-                        final dynamic result = await sph!
-                            .parser
-                            .conversationsParser
+                        final result = await ref
+                            .read(conversationsParserProvider)
                             .searchTeacher(query);
-                        return result;
+                        return result.map(TagReceiverEntry.from).toList();
                       },
                     );
                   },
@@ -219,7 +218,7 @@ class _NewConversationConfiguratorState
               ],
             ),
           ),
-          if (sph!.parser.conversationsParser.cachedCanChooseType ?? false) ...[
+          if (ref.read(conversationsParserProvider).cachedCanChooseType ?? false) ...[
             const Divider(),
             Card(
               child: Padding(

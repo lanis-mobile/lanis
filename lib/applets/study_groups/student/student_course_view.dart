@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:liblanis/liblanis.dart';
 import 'package:intl/intl.dart';
-import 'package:lanis/models/study_groups.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class StudentCourseView extends StatelessWidget {

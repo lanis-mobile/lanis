@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:liblanis/liblanis.dart';
 import 'package:lanis/applets/conversations/view/conversations_view.dart';
-import 'package:lanis/core/sph/sph.dart';
-import 'package:lanis/models/conversations.dart';
 
-class ConversationTile extends StatelessWidget {
+class ConversationTile extends ConsumerWidget {
   final OverviewEntry entry;
   final bool toggleMode;
   final bool checked;
@@ -24,7 +24,7 @@ class ConversationTile extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
       child: Card(
@@ -94,9 +94,7 @@ class ConversationTile extends StatelessWidget {
                     onLongPress: () async {
                       // Try to let the tile be in same place as in the old list.
                       if (!toggleMode) {
-                        final List<OverviewEntry> oldEntries = sph!
-                            .parser
-                            .conversationsParser
+                        final List<OverviewEntry> oldEntries = ref.read(conversationsParserProvider)
                             .stream
                             .value
                             .content!;
@@ -105,9 +103,7 @@ class ConversationTile extends StatelessWidget {
 
                         CheckTileNotification(id: entry.id).dispatch(context);
 
-                        final List<OverviewEntry> entries = sph!
-                            .parser
-                            .conversationsParser
+                        final List<OverviewEntry> entries = ref.read(conversationsParserProvider)
                             .stream
                             .value
                             .content!;

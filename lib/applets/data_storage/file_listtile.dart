@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:liblanis/liblanis.dart' hide FileInfo;
 
-import '../../core/sph/sph.dart';
-import '../../models/datastorage.dart';
 import '../../utils/file_operations.dart';
 import '../../utils/file_icons.dart';
 import '../../widgets/marquee.dart';
@@ -16,29 +16,35 @@ extension FileExistsExtension on FileExists {
   }[this];
 }
 
-class FileListTile extends StatefulWidget {
+class FileListTile extends ConsumerStatefulWidget {
   final FileNode file;
   final BuildContext context;
 
   const FileListTile({super.key, required this.context, required this.file});
 
   @override
-  State<FileListTile> createState() => _FileListTileState();
+  ConsumerState<FileListTile> createState() => _FileListTileState();
 }
 
-class _FileListTileState extends State<FileListTile> {
+class _FileListTileState extends ConsumerState<FileListTile> {
   var exists = FileExists.loading;
 
   @override
   void initState() {
     super.initState();
-    updateLocalFileStatus();
+    Future.microtask(updateLocalFileStatus);
   }
 
   void updateLocalFileStatus() {
-    sph!.storage.doesFileExist(widget.file.downloadUrl, widget.file.name).then((
+    final storage = ref.read(storageManagerProvider);
+    if (storage == null) {
+      setState(() => exists = FileExists.no);
+      return;
+    }
+    storage.doesFileExist(widget.file.downloadUrl, widget.file.name).then((
       value,
     ) {
+      if (!mounted) return;
       setState(() {
         exists = value ? FileExists.yes : FileExists.no;
       });
@@ -87,7 +93,7 @@ class _FileListTileState extends State<FileListTile> {
   }
 }
 
-class SearchFileListTile extends StatefulWidget {
+class SearchFileListTile extends ConsumerStatefulWidget {
   final String name;
   final String downloadUrl;
   final BuildContext context;
@@ -100,20 +106,26 @@ class SearchFileListTile extends StatefulWidget {
   });
 
   @override
-  State<SearchFileListTile> createState() => _SearchFileListTileState();
+  ConsumerState<SearchFileListTile> createState() => _SearchFileListTileState();
 }
 
-class _SearchFileListTileState extends State<SearchFileListTile> {
+class _SearchFileListTileState extends ConsumerState<SearchFileListTile> {
   var exists = FileExists.loading;
 
   @override
   void initState() {
     super.initState();
-    updateLocalFileStatus();
+    Future.microtask(updateLocalFileStatus);
   }
 
   void updateLocalFileStatus() {
-    sph!.storage.doesFileExist(widget.downloadUrl, widget.name).then((value) {
+    final storage = ref.read(storageManagerProvider);
+    if (storage == null) {
+      setState(() => exists = FileExists.no);
+      return;
+    }
+    storage.doesFileExist(widget.downloadUrl, widget.name).then((value) {
+      if (!mounted) return;
       setState(() {
         exists = value ? FileExists.yes : FileExists.no;
       });

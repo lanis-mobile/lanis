@@ -3,13 +3,14 @@ import 'dart:io';
 import 'package:app_settings/app_settings.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lanis/view/settings/settings_page_builder.dart';
 import 'package:lanis/generated/l10n.dart';
+import 'package:liblanis/liblanis.dart';
 
-import '../../../core/sph/sph.dart';
 import '../../../utils/callout.dart';
 
-class CacheSettings extends SettingsColours {
+class CacheSettings extends ConsumerSettingsColours {
   final bool showBackButton;
   const CacheSettings({super.key, this.showBackButton = true});
 
@@ -32,15 +33,24 @@ class CacheSettings extends SettingsColours {
   }
 
   @override
-  State<CacheSettings> createState() => _CacheSettingsState();
+  ConsumerState<CacheSettings> createState() => _CacheSettingsState();
 }
 
-class _CacheSettingsState extends SettingsColoursState<CacheSettings> {
+class _CacheSettingsState extends ConsumerSettingsColoursState<CacheSettings> {
   Map<String, int> cacheStats = {'fileNum': 0, 'size': 0};
 
+  Directory? _cacheDir() {
+    final storage = ref.read(storageManagerProvider);
+    if (storage == null) return null;
+    return storage.getDocumentCacheDirectory();
+  }
+
   Future<void> clearCache() async {
-    final dir = await sph!.storage.getDocumentCacheDirectory();
-    dir.deleteSync(recursive: true);
+    final dir = _cacheDir();
+    if (dir == null) return;
+    if (dir.existsSync()) {
+      dir.deleteSync(recursive: true);
+    }
 
     setState(() {
       cacheStats = CacheSettings.dirStatSync(dir.path);
@@ -50,8 +60,9 @@ class _CacheSettingsState extends SettingsColoursState<CacheSettings> {
   @override
   void initState() {
     super.initState();
-
-    sph!.storage.getDocumentCacheDirectory().then((dir) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final dir = _cacheDir();
+      if (dir == null || !mounted) return;
       setState(() {
         cacheStats = CacheSettings.dirStatSync(dir.path);
       });

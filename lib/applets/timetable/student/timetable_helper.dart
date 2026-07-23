@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lanis/models/timetable.dart';
+import 'package:liblanis/liblanis.dart';
 import 'package:lanis/utils/random_color.dart';
 
 class TimeTableHelper {

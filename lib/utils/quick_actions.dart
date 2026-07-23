@@ -1,16 +1,50 @@
 import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:liblanis/liblanis.dart';
 import 'package:quick_actions/quick_actions.dart';
 import 'package:lanis/applets/definitions.dart';
-import 'package:lanis/core/database/account_database/account_db.dart';
-import 'package:lanis/core/sph/sph.dart';
-import 'package:lanis/home_page.dart';
+import 'package:lanis/router.dart';
 import 'package:lanis/utils/logger.dart';
 
 late final QuickActions quickActions;
 bool _quickActionsSet = false;
 bool _requestFailed = false;
+
+/// Maps SPH applet PHP URLs / external shortcut ids to go_router paths.
+String? quickActionPathFor(String shortcutType) {
+  switch (shortcutType) {
+    case 'vertretungsplan.php':
+      return '/home/substitutions';
+    case 'kalender.php':
+      return '/home/calendar';
+    case 'stundenplan.php':
+      return '/home/timetable';
+    case 'nachrichten.php':
+      return '/home/conversations';
+    case 'meinunterricht.php':
+      return '/home/lessons';
+    case 'dateispeicher.php':
+      return '/storage';
+    case 'lerngruppen.php':
+      return '/study-groups';
+    case 'openMoodle':
+      return '/moodle';
+    default:
+      return null;
+  }
+}
+
+void _goQuickAction(String path) {
+  final context = rootNavigatorKey.currentContext;
+  if (context == null) {
+    logger.e('Tried to open quick action without navigator context');
+    return;
+  }
+  GoRouter.of(context).go(path);
+}
 
 class QuickActionsStartUp {
   static final Completer<void> _initializationCompleter = Completer<void>();
@@ -20,49 +54,42 @@ class QuickActionsStartUp {
     if (_initialized) return;
     quickActions = QuickActions();
     quickActions.initialize((String shortcutType) {
-      for (final applet in AppDefinitions.applets) {
-        if (applet.appletPhpUrl == shortcutType) {
-          if (!sph!.session.doesSupportFeature(applet)) {
-            logger.e('Applet not supported: ${applet.appletPhpUrl}');
-            return;
-          }
-
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            logger.i('Opening applet: ${applet.appletPhpUrl}');
-            Destination destination = Destination.fromAppletDefinition(applet);
-            if (homeKey.currentContext != null)
-              Navigator.popUntil(
-                homeKey.currentContext!,
-                (route) => route.isFirst,
-              );
-            if (destination.enableBottomNavigation) {
-              int appletIndex = AppDefinitions.getIndexByPhpIdentifier(
-                applet.appletPhpUrl,
-              );
-
-              if (homeKey.currentState != null) {
-                homeKey.currentState?.updateDestination(appletIndex);
-              } else {
-                logger.e('Tried to open applet without homeKey');
-              }
-            } else {
-              if (homeKey.currentContext != null) {
-                destination.action?.call(homeKey.currentContext!);
-                logger.i('Opened applet: ${applet.appletPhpUrl}');
-              } else {
-                logger.e('Tried to open applet without context');
+      final path = quickActionPathFor(shortcutType);
+      if (path != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          // Feature check for applets when a session is available.
+          if (shortcutType.endsWith('.php')) {
+            final context = rootNavigatorKey.currentContext;
+            if (context != null) {
+              final container = ProviderScope.containerOf(context);
+              final session = container.read(sessionProvider).asData?.value;
+              if (session != null) {
+                try {
+                  if (!session.doesSupportFeature(
+                    Applets.byPhpUrl(shortcutType),
+                  )) {
+                    logger.e('Applet not supported: $shortcutType');
+                    return;
+                  }
+                } catch (_) {
+                  logger.e('Applet not supported: $shortcutType');
+                  return;
+                }
               }
             }
-          });
-          break;
-        }
+          }
+          logger.i('Opening quick action: $shortcutType -> $path');
+          _goQuickAction(path);
+        });
+        return;
       }
+
       for (final applet in AppDefinitions.external) {
         if (applet.id == shortcutType) {
-          // Wait until the flutter app is fully initialized
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            applet.action?.call(homeKey.currentContext);
+            applet.action?.call(rootNavigatorKey.currentContext);
           });
+          break;
         }
       }
     });
@@ -96,8 +123,12 @@ class QuickActionsStartUp {
       return;
     }
     if (_quickActionsSet) return;
+    if (!context.mounted) return;
+
+    final container = ProviderScope.containerOf(context);
+    final shared = container.read(sharedOverAccountSettingsProvider);
     List<String> enabledShortcutsList = List<String>.from(
-      (await accountDatabase.kv.get('quick-actions')) ?? [],
+      shared.getJsonList('quick-actions') ?? [],
     );
     if (!context.mounted) return;
 

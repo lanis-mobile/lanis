@@ -1,5 +1,6 @@
 import 'package:dart_date/dart_date.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:flutter_masonry_view/flutter_masonry_view.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
@@ -7,22 +8,21 @@ import 'package:intl/intl.dart';
 import 'package:lanis/applets/substitutions/definition.dart';
 import 'package:lanis/applets/substitutions/substitutions_filter_settings.dart';
 import 'package:lanis/applets/substitutions/substitutions_listtile.dart';
-import 'package:lanis/models/substitution.dart';
 import 'package:lanis/utils/cached_network_image.dart';
+import 'package:liblanis/liblanis.dart';
 
-import '../../core/sph/sph.dart';
 import '../../utils/url_modal.dart';
 import '../../widgets/combined_applet_builder.dart';
 
-class SubstitutionsView extends StatefulWidget {
+class SubstitutionsView extends ConsumerStatefulWidget {
   final Function? openDrawerCb;
   const SubstitutionsView({super.key, this.openDrawerCb});
 
   @override
-  State<SubstitutionsView> createState() => _SubstitutionsViewState();
+  ConsumerState<SubstitutionsView> createState() => _SubstitutionsViewState();
 }
 
-class _SubstitutionsViewState extends State<SubstitutionsView>
+class _SubstitutionsViewState extends ConsumerState<SubstitutionsView>
     with TickerProviderStateMixin {
   static const double padding = 12.0;
 
@@ -231,9 +231,11 @@ class _SubstitutionsViewState extends State<SubstitutionsView>
 
   @override
   Widget build(BuildContext context) {
+    final session = ref.watch(sessionProvider).requireValue!;
+    final parser = ref.watch(substitutionsParserProvider);
     return CombinedAppletBuilder<SubstitutionPlan>(
-      accountType: sph!.session.accountType,
-      parser: sph!.parser.substitutionsParser,
+      accountType: session.accountType,
+      parser: parser,
       phpUrl: substitutionDefinition.appletPhpUrl,
       settingsDefaults: substitutionDefinition.settingsDefaults,
       loadingAppBar: AppBar(

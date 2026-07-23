@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:liblanis/liblanis.dart';
 
-import '../../../../core/sph/sph.dart';
-import '../../../../models/lessons_teacher.dart';
 import '../widgets/course_folder_history_entry_card.dart';
 
 import 'package:lanis/generated/l10n.dart';
 
 import 'course_create_new_entry.dart';
 
-class TeacherCourseDetailView extends StatefulWidget {
+class TeacherCourseDetailView extends ConsumerStatefulWidget {
   final CourseFolderStartPage courseFolder;
   const TeacherCourseDetailView({super.key, required this.courseFolder});
 
   @override
-  State<TeacherCourseDetailView> createState() =>
+  ConsumerState<TeacherCourseDetailView> createState() =>
       _TeacherCourseDetailViewState();
 }
 
-class _TeacherCourseDetailViewState extends State<TeacherCourseDetailView> {
+class _TeacherCourseDetailViewState extends ConsumerState<TeacherCourseDetailView> {
   bool _loading = true;
   late CourseFolderDetails data;
 
@@ -25,7 +25,7 @@ class _TeacherCourseDetailViewState extends State<TeacherCourseDetailView> {
     setState(() {
       _loading = true;
     });
-    data = await sph!.parser.lessonsTeacherParser.getCourseFolderDetails(
+    data = await ref.read(lessonsTeacherParserProvider).getCourseFolderDetails(
       widget.courseFolder.id,
     );
     setState(() {

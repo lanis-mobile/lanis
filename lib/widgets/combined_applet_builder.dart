@@ -1,11 +1,9 @@
 import 'package:dart_date/dart_date.dart';
 import 'package:flutter/material.dart';
-import 'package:lanis/models/account_types.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:liblanis/liblanis.dart';
 
 import 'package:lanis/generated/l10n.dart';
-import 'package:lanis/models/client_status_exceptions.dart';
-import '../core/applet_parser.dart';
-import '../core/sph/sph.dart';
 import 'error_view.dart';
 
 typedef RefreshFunction = Future<void> Function();
@@ -20,7 +18,7 @@ typedef BuilderFunction<T> =
       RefreshFunction? refresh,
     );
 
-class CombinedAppletBuilder<T> extends StatefulWidget {
+class CombinedAppletBuilder<T> extends ConsumerStatefulWidget {
   final AppletParser<T> parser;
   final String phpUrl;
   final Map<String, dynamic> settingsDefaults;
@@ -41,45 +39,84 @@ class CombinedAppletBuilder<T> extends StatefulWidget {
   });
 
   @override
-  State<CombinedAppletBuilder<T>> createState() =>
+  ConsumerState<CombinedAppletBuilder<T>> createState() =>
       _CombinedAppletBuilderState<T>();
 }
 
-class _CombinedAppletBuilderState<T> extends State<CombinedAppletBuilder<T>> {
+class _CombinedAppletBuilderState<T>
+    extends ConsumerState<CombinedAppletBuilder<T>> {
   late Map<String, dynamic> appletSettings;
   bool _loading = true;
 
   Widget _loadingState() {
     return Scaffold(
       appBar: widget.loadingAppBar,
-      body: Center(child: CircularProgressIndicator()),
+      body: const Center(child: CircularProgressIndicator()),
     );
   }
 
-  void initSettings() async {
-    appletSettings = await sph!.prefs.kv.getAllApplet(
-      widget.phpUrl,
-      widget.settingsDefaults,
-    );
-    if (mounted) {
-      setState(() {
-        _loading = false;
-      });
+  String _settingKey(String key) => '${widget.phpUrl}/$key';
+
+  void initSettings() {
+    final settings = ref.read(accountSpecificSettingsProvider);
+    final loaded = <String, dynamic>{};
+    for (final entry in widget.settingsDefaults.entries) {
+      final stored = settings.getJsonMap(_settingKey(entry.key));
+      // Prefer typed reads for primitives in defaults
+      final boolVal = settings.getBool(_settingKey(entry.key));
+      final intVal = settings.getInt(_settingKey(entry.key));
+      final strVal = settings.getString(_settingKey(entry.key));
+      if (stored != null) {
+        loaded[entry.key] = stored;
+      } else if (boolVal != null) {
+        loaded[entry.key] = boolVal;
+      } else if (intVal != null) {
+        loaded[entry.key] = intVal;
+      } else if (strVal != null) {
+        loaded[entry.key] = strVal;
+      } else {
+        loaded[entry.key] = entry.value;
+      }
     }
+    appletSettings = loaded;
+    if (mounted) {
+      setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _updateSetting(String key, dynamic value) async {
+    final settings = ref.read(accountSpecificSettingsProvider);
+    final namespaced = _settingKey(key);
+    if (value is bool) {
+      settings.setBool(namespaced, value);
+    } else if (value is int) {
+      settings.setInt(namespaced, value);
+    } else if (value is String) {
+      settings.setString(namespaced, value);
+    } else if (value is Map<String, dynamic>) {
+      settings.setJsonMap(namespaced, value);
+    } else if (value is List) {
+      settings.setJsonList(namespaced, value);
+    } else if (value == null) {
+      settings.remove(namespaced);
+    } else {
+      settings.setString(namespaced, value.toString());
+    }
+    setState(() => appletSettings[key] = value);
   }
 
   @override
   void initState() {
     widget.parser.fetchData();
     super.initState();
-    initSettings();
+    WidgetsBinding.instance.addPostFrameCallback((_) => initSettings());
   }
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder(
       stream: widget.parser.stream,
-      initialData: widget.parser.stream.value,
+      initialData: widget.parser.latestResponse,
       builder: (context, snapshot) {
         if (snapshot.hasError || snapshot.data?.status == FetcherStatus.error) {
           return Scaffold(
@@ -88,7 +125,11 @@ class _CombinedAppletBuilderState<T> extends State<CombinedAppletBuilder<T>> {
               error: snapshot.data!.contentStatus == ContentStatus.offline
                   ? NoConnectionException()
                   : snapshot.data!.error != null
-                  ? snapshot.data!.error!.exception
+                  ? (snapshot.data!.error!.exception is Exception
+                        ? snapshot.data!.error!.exception as Exception
+                        : UnknownException(
+                            snapshot.data!.error!.exception.toString(),
+                          ))
                   : UnknownException(),
               stack: snapshot.data!.error?.stackTrace,
               retry: snapshot.data!.contentStatus == ContentStatus.online
@@ -121,7 +162,7 @@ class _CombinedAppletBuilderState<T> extends State<CombinedAppletBuilder<T>> {
                             Icons.offline_pin,
                             color: Theme.of(context).colorScheme.primary,
                           ),
-                          SizedBox(width: 4),
+                          const SizedBox(width: 4),
                           Text(
                             '${AppLocalizations.of(context).offline} (${snapshot.data?.fetchedAt.format('E dd.MM HH:mm')})',
                             style: Theme.of(context).textTheme.bodyMedium!
@@ -144,16 +185,7 @@ class _CombinedAppletBuilderState<T> extends State<CombinedAppletBuilder<T>> {
                     snapshot.data!.content as T,
                     widget.accountType,
                     appletSettings,
-                    (String key, dynamic value) async {
-                      await sph!.prefs.kv.setAppletValue(
-                        widget.phpUrl,
-                        key,
-                        value,
-                      );
-                      setState(() {
-                        appletSettings[key] = value;
-                      });
-                    },
+                    _updateSetting,
                     () async {
                       await widget.parser.fetchData(forceRefresh: true);
                     },

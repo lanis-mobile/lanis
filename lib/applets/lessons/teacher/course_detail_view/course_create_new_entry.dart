@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:liblanis/liblanis.dart';
+import 'package:lanis/utils/liblanis_ui.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/sph/sph.dart';
-import '../../../../models/lessons_teacher.dart';
 
-class CourseCreateNewEntry extends StatefulWidget {
+class CourseCreateNewEntry extends ConsumerStatefulWidget {
   final CourseFolderDetails courseFolderDetails;
   const CourseCreateNewEntry({super.key, required this.courseFolderDetails});
 
   @override
-  State<CourseCreateNewEntry> createState() => _CourseCreateNewEntryState();
+  ConsumerState<CourseCreateNewEntry> createState() => _CourseCreateNewEntryState();
 }
 
-class _CourseCreateNewEntryState extends State<CourseCreateNewEntry> {
+class _CourseCreateNewEntryState extends ConsumerState<CourseCreateNewEntry> {
   CourseFolderNewEntryConstraints get constraints =>
       widget.courseFolderDetails.newEntryConstraints;
 
@@ -369,7 +370,7 @@ class _CourseCreateNewEntryState extends State<CourseCreateNewEntry> {
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
                     showLoadingDialog();
-                    final result = await sph!.parser.lessonsTeacherParser
+                    final result = await ref.read(lessonsTeacherParserProvider)
                         .postNewEntry(
                           book: widget.courseFolderDetails.courseId,
                           datum: DateFormat('dd.MM.yyyy').format(_selectedDate),
@@ -381,7 +382,7 @@ class _CourseCreateNewEntryState extends State<CourseCreateNewEntry> {
                           homework: _entryHomeworkController.text,
                           abgabe: _useDocumentSubmission,
                           abgabeBisDate: _selectedDocumentSubmissionDeadline,
-                          abgabeBisTime: _selectedDocumentSubmissionTime,
+                          abgabeBisTime: _selectedDocumentSubmissionTime.toSph(),
                           abgabeSichtbar: _everySubmissionVisibleForStudents,
                         );
                     if (context.mounted) {

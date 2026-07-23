@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:liblanis/liblanis.dart';
 import 'package:intl/intl.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/applets/lessons/student/upload_page.dart';
 
-import '../../../core/sph/sph.dart';
-import '../../../models/lessons.dart';
-import '../../../utils/file_operations.dart';
+import '../../../utils/file_operations.dart' as fo;
 import '../../../widgets/format_text.dart';
 import 'homework_box.dart';
 
-class CourseOverviewAnsicht extends StatefulWidget {
+class CourseOverviewAnsicht extends ConsumerStatefulWidget {
   final String dataFetchURL;
   final String title;
   const CourseOverviewAnsicht({
@@ -19,10 +19,10 @@ class CourseOverviewAnsicht extends StatefulWidget {
   });
 
   @override
-  State<StatefulWidget> createState() => _CourseOverviewAnsichtState();
+  ConsumerState<CourseOverviewAnsicht> createState() => _CourseOverviewAnsichtState();
 }
 
-class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
+class _CourseOverviewAnsichtState extends ConsumerState<CourseOverviewAnsicht> {
   static const double padding = 10.0;
   final dateFormat = DateFormat('dd.MM.yyyy');
 
@@ -42,11 +42,11 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
   Future<void> _loadData({bool secondTry = false, bool force = false}) async {
     try {
       if (secondTry) {
-        await sph!.session.authenticate();
+        await ref.read(sessionProvider).requireValue!.authenticate();
       }
 
       String url = widget.dataFetchURL;
-      data = await sph!.parser.lessonsStudentParser.getDetailedCourseView(
+      data = await ref.read(lessonsStudentParserProvider).getDetailedCourseView(
         url,
         force: force,
       );
@@ -130,20 +130,21 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
 
                   List<GestureDetector> files = [];
                   for (FileInfo file in data!.history[index].files) {
+                    final foFile = fo.FileInfo(
+                      name: file.name,
+                      size: file.size,
+                      url: file.url,
+                    );
                     files.add(
                       GestureDetector(
                         onLongPress: () {
-                          showFileModal(context, file);
+                          fo.showFileModal(context, foFile);
                         },
                         child: ActionChip(
                           label: Text(file.name ?? "..."),
-                          onPressed: () => launchFile(
+                          onPressed: () => fo.launchFile(
                             context,
-                            FileInfo(
-                              name: file.name,
-                              size: file.size,
-                              url: Uri.parse(file.url.toString()),
-                            ),
+                            foFile,
                             () {},
                           ),
                         ),

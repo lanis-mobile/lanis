@@ -3,19 +3,18 @@ import 'dart:async';
 import 'package:dart_date/dart_date.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:liblanis/liblanis.dart' hide FileInfo;
 import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/utils/file_picker.dart';
 import 'package:lanis/widgets/error_view.dart';
 
-import '../../../core/sph/sph.dart';
-import '../../../models/lessons.dart';
-import '../../../models/client_status_exceptions.dart';
 import '../../../utils/file_operations.dart';
 import '../../../utils/logger.dart';
 
-class UploadScreen extends StatefulWidget {
+class UploadScreen extends ConsumerStatefulWidget {
   final String url;
   final String name;
   final String status;
@@ -27,10 +26,10 @@ class UploadScreen extends StatefulWidget {
   });
 
   @override
-  State<UploadScreen> createState() => _UploadScreenState();
+  ConsumerState<UploadScreen> createState() => _UploadScreenState();
 }
 
-class _UploadScreenState extends State<UploadScreen> {
+class _UploadScreenState extends ConsumerState<UploadScreen> {
   late Future _future;
   final ValueNotifier<int> _addedFiles = ValueNotifier(
     0,
@@ -41,13 +40,13 @@ class _UploadScreenState extends State<UploadScreen> {
 
   void forceReloadPage() {
     setState(() {
-      _future = sph!.parser.lessonsStudentParser.getUploadInfo(widget.url);
+      _future = ref.read(lessonsStudentParserProvider).getUploadInfo(widget.url);
     });
   }
 
   @override
   void initState() {
-    _future = sph!.parser.lessonsStudentParser.getUploadInfo(widget.url);
+    _future = ref.read(lessonsStudentParserProvider).getUploadInfo(widget.url);
     super.initState();
   }
 
@@ -181,9 +180,7 @@ class _UploadScreenState extends State<UploadScreen> {
                               List<FileStatus> fileStatus;
 
                               try {
-                                fileStatus = await sph!
-                                    .parser
-                                    .lessonsStudentParser
+                                fileStatus = await ref.read(lessonsStudentParserProvider)
                                     .uploadFile(
                                       course: snapshot.data["course_id"],
                                       entry: snapshot.data["entry_id"],
@@ -568,7 +565,7 @@ class _UploadScreenState extends State<UploadScreen> {
                                     );
                                   },
                                 );
-                                sph!.storage
+                                ref.read(storageManagerProvider)!
                                     .downloadFile(
                                       snapshot.data["public_files"][index].url,
                                       snapshot.data["public_files"][index].name,
@@ -699,9 +696,7 @@ class _UploadScreenState extends State<UploadScreen> {
                                               );
                                               String response;
                                               try {
-                                                response = await sph!
-                                                    .parser
-                                                    .lessonsStudentParser
+                                                response = await ref.read(lessonsStudentParserProvider)
                                                     .deleteUploadedFile(
                                                       course: snapshot
                                                           .data["course_id"],
@@ -712,8 +707,9 @@ class _UploadScreenState extends State<UploadScreen> {
                                                       file: snapshot
                                                           .data["own_files"][index]
                                                           .index,
-                                                      userPasswordEncrypted: sph!
-                                                          .session
+                                                      userPasswordEncrypted: ref
+                                                          .read(sessionProvider)
+                                                          .requireValue!
                                                           .cryptor
                                                           .encryptString(
                                                             passwordController

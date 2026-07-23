@@ -1,21 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:liblanis/liblanis.dart';
 import 'package:lanis/generated/l10n.dart';
-import 'package:lanis/core/database/account_database/account_db.dart';
+import 'package:lanis/utils/auth_controller.dart';
 import 'package:lanis/utils/large_appbar.dart';
 
-import '../core/sph/sph.dart';
-import '../utils/authentication_state.dart';
-
-class ResetAccountPage extends StatefulWidget {
+class ResetAccountPage extends ConsumerStatefulWidget {
   const ResetAccountPage({super.key});
 
   @override
-  State<ResetAccountPage> createState() => _ResetAccountPageState();
+  ConsumerState<ResetAccountPage> createState() => _ResetAccountPageState();
 }
 
-class _ResetAccountPageState extends State<ResetAccountPage> {
+class _ResetAccountPageState extends ConsumerState<ResetAccountPage> {
   @override
   Widget build(BuildContext context) {
+    final account = ref.watch(activeAccountProvider);
+    if (account == null) {
+      return Scaffold(
+        appBar: LargeAppBar(
+          title: Text(AppLocalizations.of(context).resetAccount),
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: LargeAppBar(
         title: Text(AppLocalizations.of(context).resetAccount),
@@ -43,7 +53,7 @@ class _ResetAccountPageState extends State<ResetAccountPage> {
                         color: Theme.of(context).colorScheme.onSecondary,
                       ),
                       Text(
-                        sph!.account.username,
+                        account.username,
                         style: TextStyle(
                           color: Theme.of(context).colorScheme.onSecondary,
                         ),
@@ -59,7 +69,7 @@ class _ResetAccountPageState extends State<ResetAccountPage> {
                         color: Theme.of(context).colorScheme.onSecondary,
                       ),
                       Text(
-                        sph!.account.schoolName,
+                        account.schoolName,
                         style: TextStyle(
                           color: Theme.of(context).colorScheme.onSecondary,
                         ),
@@ -150,23 +160,24 @@ class _ResetAccountPageState extends State<ResetAccountPage> {
                       ),
                     );
                     if (newPassword == null) return;
-                    await accountDatabase.updatePassword(
-                      sph!.account.localId,
-                      newPassword,
-                    );
-                    if (context.mounted) {
-                      authenticationState.reset(context);
-                    }
+                    await ref
+                        .read(accountsProvider.notifier)
+                        .updatePassword(account.localId, newPassword);
+                    await ref
+                        .read(authControllerProvider.notifier)
+                        .loginWithAccount(account.localId);
+                    if (context.mounted) context.go('/startup');
                   },
                   icon: Icon(Icons.password),
                   label: Text(AppLocalizations.of(context).changePassword),
                 ),
                 ElevatedButton.icon(
                   onPressed: () async {
-                    await accountDatabase.deleteAccount(sph!.account.localId);
-                    if (context.mounted) {
-                      authenticationState.reset(context);
-                    }
+                    await ref
+                        .read(accountsProvider.notifier)
+                        .remove(account.localId);
+                    await ref.read(authControllerProvider.notifier).bootstrap();
+                    if (context.mounted) context.go('/startup');
                   },
                   icon: Icon(Icons.no_accounts),
                   label: Text(AppLocalizations.of(context).removeAccount),

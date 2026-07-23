@@ -1,6 +1,9 @@
 import 'package:dart_date/dart_date.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:liblanis/liblanis.dart';
+import 'package:lanis/utils/liblanis_ui.dart';
 import 'package:linkify/linkify.dart';
 import 'package:lanis/applets/calendar/definition.dart';
 import 'package:lanis/globals.dart';
@@ -11,21 +14,18 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'package:lanis/generated/l10n.dart';
 
-import '../../core/sph/sph.dart';
-import '../../models/calendar_event.dart';
-import '../../models/client_status_exceptions.dart';
 import '../../utils/logger.dart';
 import '../../widgets/error_view.dart';
 
-class CalendarView extends StatefulWidget {
+class CalendarView extends ConsumerStatefulWidget {
   final Function? openDrawerCb;
   const CalendarView({super.key, this.openDrawerCb});
 
   @override
-  State<CalendarView> createState() => _CalendarViewState();
+  ConsumerState<CalendarView> createState() => _CalendarViewState();
 }
 
-class _CalendarViewState extends State<CalendarView> {
+class _CalendarViewState extends ConsumerState<CalendarView> {
   late final ValueNotifier<List<CalendarEvent>> _selectedEvents;
 
   CalendarFormat _calendarFormat = CalendarFormat.month;
@@ -87,10 +87,10 @@ class _CalendarViewState extends State<CalendarView> {
   }) async {
     try {
       if (secondTry) {
-        await sph!.session.authenticate(withoutData: true);
+        await ref.read(sessionProvider).requireValue!.authenticate(withoutData: true);
       }
 
-      return await sph!.parser.calendarParser.getEvent(id);
+      return await ref.read(calendarParserProvider).getEvent(id);
     } catch (e) {
       if (!secondTry) {
         fetchEvent(id, secondTry: true);
@@ -410,7 +410,7 @@ class _CalendarViewState extends State<CalendarView> {
                               width: 8,
                               height: 40,
                               decoration: BoxDecoration(
-                                color: value[index].color,
+                                color: colorFromArgb(value[index].colorArgb),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                             ),
@@ -518,9 +518,9 @@ class _CalendarViewState extends State<CalendarView> {
                   width: 6,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: events[index].color,
+                    color: colorFromArgb(events[index].colorArgb),
                     border:
-                        (events[index].color.computeLuminance() -
+                        (colorFromArgb(events[index].colorArgb).computeLuminance() -
                                     Theme.of(
                                       context,
                                     ).colorScheme.surface.computeLuminance())
@@ -620,7 +620,7 @@ class _CalendarViewState extends State<CalendarView> {
                       .map(
                         (event) => ListTile(
                           title: Text(event.title),
-                          iconColor: event.color,
+                          iconColor: colorFromArgb(event.colorArgb),
                           subtitle: Text(
                             '${event.startTime.format("E d MMM y", "de_DE")} - ${event.endTime.format("E d MMM y", "de_DE")}',
                           ),
@@ -654,10 +654,10 @@ class _CalendarViewState extends State<CalendarView> {
           ),
           Expanded(
             child: CombinedAppletBuilder<List<CalendarEvent>>(
-              parser: sph!.parser.calendarParser,
+              parser: ref.read(calendarParserProvider),
               phpUrl: calendarDefinition.appletPhpUrl,
               settingsDefaults: calendarDefinition.settingsDefaults,
-              accountType: sph!.session.accountType,
+              accountType: ref.watch(sessionProvider).requireValue!.accountType,
               builder:
                   (
                     context,

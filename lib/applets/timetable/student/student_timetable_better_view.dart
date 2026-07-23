@@ -2,15 +2,15 @@ import 'dart:async';
 
 import 'package:dart_date/dart_date.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:liblanis/liblanis.dart';
+import 'package:lanis/utils/liblanis_ui.dart';
 import 'package:intl/intl.dart';
 import 'package:lanis/applets/timetable/definition.dart';
 import 'package:lanis/applets/timetable/student/student_timetable_item.dart';
 import 'package:lanis/applets/timetable/student/timetable_helper.dart';
-import 'package:lanis/core/sph/sph.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/models/account_types.dart';
-import 'package:lanis/models/timetable.dart';
-import 'package:lanis/utils/extensions.dart';
 import 'package:lanis/widgets/combined_applet_builder.dart';
 
 final double itemHeight = 46;
@@ -18,17 +18,17 @@ double headerHeight = 40;
 final double hourWidth = 70;
 final double pauseHeight = 18;
 
-class StudentTimetableBetterView extends StatefulWidget {
+class StudentTimetableBetterView extends ConsumerStatefulWidget {
   final Function? openDrawerCb;
   const StudentTimetableBetterView({super.key, this.openDrawerCb});
 
   @override
-  State<StudentTimetableBetterView> createState() =>
+  ConsumerState<StudentTimetableBetterView> createState() =>
       _StudentTimetableBetterViewState();
 }
 
 class _StudentTimetableBetterViewState
-    extends State<StudentTimetableBetterView> {
+    extends ConsumerState<StudentTimetableBetterView> {
   List<TimetableDay> getSelectedPlan(
     TimeTable data,
     TimeTableType selectedType,
@@ -47,7 +47,7 @@ class _StudentTimetableBetterViewState
   @override
   Widget build(BuildContext context) {
     return CombinedAppletBuilder<TimeTable>(
-      parser: sph!.parser.timetableStudentParser,
+      parser: ref.read(timetableParserProvider),
       phpUrl: timeTableDefinition.appletPhpUrl,
       settingsDefaults: timeTableDefinition.settingsDefaults,
       accountType: AccountType.student,
@@ -306,11 +306,11 @@ class TimeTableView extends StatelessWidget {
                             ...(row.type == TimeTableRowType.lesson
                                 ? [
                                     Text(
-                                      row.startTime.format(context),
+                                      row.startTime.toFlutter().format(context),
                                       style: TextStyle(fontSize: 10),
                                     ),
                                     Text(
-                                      row.endTime.format(context),
+                                      row.endTime.toFlutter().format(context),
                                       style: TextStyle(fontSize: 10),
                                     ),
                                   ]
@@ -460,7 +460,7 @@ class TimeTableView extends StatelessWidget {
   }
 }
 
-class TimeMarkerWidget extends StatefulWidget {
+class TimeMarkerWidget extends ConsumerStatefulWidget {
   const TimeMarkerWidget({
     super.key,
     required this.data,
@@ -475,10 +475,10 @@ class TimeMarkerWidget extends StatefulWidget {
   final int? day;
 
   @override
-  State<TimeMarkerWidget> createState() => _TimeMarkerWidgetState();
+  ConsumerState<TimeMarkerWidget> createState() => _TimeMarkerWidgetState();
 }
 
-class _TimeMarkerWidgetState extends State<TimeMarkerWidget> {
+class _TimeMarkerWidgetState extends ConsumerState<TimeMarkerWidget> {
   Timer? _timer;
 
   @override
@@ -503,7 +503,8 @@ class _TimeMarkerWidgetState extends State<TimeMarkerWidget> {
   @override
   Widget build(BuildContext context) {
     double offset = 8;
-    final now = TimeOfDay.fromDateTime(DateTime.now());
+    final now = DateTime.now();
+    final nowTod = SphTimeOfDay(hour: now.hour, minute: now.minute);
 
     // Current day 0 Monday, 6 Sunday
     var currentDay = (DateTime.now().weekday - 1) % 7;
@@ -512,11 +513,11 @@ class _TimeMarkerWidgetState extends State<TimeMarkerWidget> {
       return SizedBox();
     }
 
-    if (now < widget.data.hours.first.startTime) {
+    if (nowTod < widget.data.hours.first.startTime) {
       return SizedBox();
     }
 
-    if (now > widget.data.hours.last.endTime) {
+    if (nowTod > widget.data.hours.last.endTime) {
       return SizedBox();
     }
 
@@ -526,15 +527,15 @@ class _TimeMarkerWidgetState extends State<TimeMarkerWidget> {
       final height = lesson.type == TimeTableRowType.lesson
           ? itemHeight
           : pauseHeight;
-      if (now >= lesson.startTime && now <= lesson.endTime) {
+      if (nowTod >= lesson.startTime && nowTod <= lesson.endTime) {
         final diff =
             height *
-            ((-now.differenceInMinutes(lesson.startTime)) /
+            ((-nowTod.differenceInMinutes(lesson.startTime)) /
                 lesson.startTime.differenceInMinutes(lesson.endTime));
         offset += diff;
 
         break;
-      } else if (now > lesson.endTime) {
+      } else if (nowTod > lesson.endTime) {
         offset += height + 8;
       }
     }

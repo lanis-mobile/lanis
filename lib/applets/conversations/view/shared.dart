@@ -3,10 +3,46 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:liblanis/liblanis.dart';
 
-import '../../../models/conversations.dart';
 import '../../../utils/color_hash.dart';
+import '../../../utils/flutter_tagging.dart';
 import '../../../widgets/format_text.dart';
+
+extension ChatTypeUi on ChatType {
+  IconData get icon => switch (this) {
+    ChatType.noAnswerAllowed => Icons.speaker_notes_off,
+    ChatType.privateAnswerOnly => Icons.mic,
+    ChatType.groupOnly => Icons.forum,
+    ChatType.openChat => Icons.groups,
+  };
+}
+
+extension PersonTypeUi on PersonType {
+  IconData get icon => switch (this) {
+    PersonType.teacher => Icons.school,
+    PersonType.parent => Icons.supervisor_account,
+    PersonType.group => Icons.group,
+    PersonType.other => Icons.person,
+  };
+}
+
+/// UI wrapper so [ReceiverEntry] can be used with [FlutterTagging].
+class TagReceiverEntry extends Taggable {
+  final String id;
+  final String name;
+  final bool isTeacher;
+
+  const TagReceiverEntry(this.id, this.name, this.isTeacher);
+
+  TagReceiverEntry.from(ReceiverEntry entry)
+    : id = entry.id,
+      name = entry.name,
+      isTeacher = entry.isTeacher;
+
+  @override
+  List<Object> get props => [name];
+}
 
 class ConversationSettings {
   final String id; // uniqueId

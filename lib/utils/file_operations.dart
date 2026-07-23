@@ -1,15 +1,22 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lanis/generated/l10n.dart';
+import 'package:liblanis/liblanis.dart' show storageManagerProvider;
 import 'package:open_file/open_file.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
 import 'package:mime/mime.dart';
 
-import '../core/sph/sph.dart';
 import 'file_icons.dart';
+
+Future<String> _downloadRemote(BuildContext context, String url, String filename) async {
+  final storage = ProviderScope.containerOf(context).read(storageManagerProvider);
+  if (storage == null) return '';
+  return storage.downloadFile(url, filename);
+}
 
 class FileInfo {
   String? name;
@@ -163,7 +170,7 @@ void launchFile(BuildContext context, FileInfo file, Function callback) {
     builder: (BuildContext context) => downloadDialog(context, file.size),
   );
 
-  sph!.storage.downloadFile(file.url.toString(), filename).then((
+  _downloadRemote(context, file.url.toString(), filename).then((
     filepath,
   ) async {
     if (context.mounted) Navigator.of(context).pop();
@@ -222,7 +229,7 @@ void saveFile(BuildContext context, FileInfo file, Function callback) {
     builder: (BuildContext context) => downloadDialog(context, file.size),
   );
 
-  sph!.storage.downloadFile(file.url.toString(), filename).then((
+  _downloadRemote(context, file.url.toString(), filename).then((
     filepath,
   ) async {
     if (context.mounted) Navigator.of(context).pop();
@@ -258,7 +265,7 @@ void shareFile(BuildContext context, FileInfo file, Function callback) {
     builder: (BuildContext context) => downloadDialog(context, file.size),
   );
 
-  sph!.storage.downloadFile(file.url.toString(), filename).then((
+  _downloadRemote(context, file.url.toString(), filename).then((
     filepath,
   ) async {
     if (context.mounted) Navigator.of(context).pop();

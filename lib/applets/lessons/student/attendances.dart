@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:liblanis/liblanis.dart';
 import 'package:lanis/generated/l10n.dart';
 
-import '../../../models/lessons.dart';
 
 class AttendancesScreen extends StatelessWidget {
   const AttendancesScreen({super.key, required this.lessons});

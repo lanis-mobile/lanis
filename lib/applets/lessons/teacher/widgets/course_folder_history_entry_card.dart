@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:liblanis/liblanis.dart';
 import 'package:intl/intl.dart';
 import 'package:lanis/applets/lessons/teacher/widgets/right_bottom_card_button.dart';
 import 'package:lanis/applets/lessons/teacher/widgets/upload_file_to_course_chip.dart';
 
-import '../../../../core/sph/sph.dart';
-import '../../../../models/lessons_teacher.dart';
 import 'course_folder_history_entry_file_chip.dart';
 import 'line_constraint_text.dart';
 
 import 'package:lanis/generated/l10n.dart';
 
-class CourseFolderHistoryEntryCard extends StatefulWidget {
+class CourseFolderHistoryEntryCard extends ConsumerStatefulWidget {
   final CourseFolderHistoryEntry entry;
   final String courseId;
   final void Function() afterDeleted;
@@ -22,12 +22,12 @@ class CourseFolderHistoryEntryCard extends StatefulWidget {
   });
 
   @override
-  State<CourseFolderHistoryEntryCard> createState() =>
+  ConsumerState<CourseFolderHistoryEntryCard> createState() =>
       _CourseFolderHistoryEntryCardState();
 }
 
 class _CourseFolderHistoryEntryCardState
-    extends State<CourseFolderHistoryEntryCard> {
+    extends ConsumerState<CourseFolderHistoryEntryCard> {
   bool _showFiles = false;
 
   bool get _isToday {
@@ -67,7 +67,7 @@ class _CourseFolderHistoryEntryCardState
       },
     );
     if (delete == true) {
-      final result = await sph!.parser.lessonsTeacherParser.deleteEntry(
+      final result = await ref.read(lessonsTeacherParserProvider).deleteEntry(
         widget.courseId,
         widget.entry.id,
       );

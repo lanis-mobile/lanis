@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lanis/applets/calendar/definition.dart';
 import 'package:lanis/applets/conversations/definition.dart';
 import 'package:lanis/applets/data_storage/definition.dart';
@@ -10,7 +11,6 @@ import 'package:lanis/applets/timetable/definition.dart';
 import 'package:lanis/models/account_types.dart';
 
 import '../background_service.dart';
-import '../core/sph/sph.dart';
 
 typedef StringBuildContextCallback = String Function(BuildContext context);
 typedef WidgetBuildBody =
@@ -21,7 +21,7 @@ typedef WidgetBuildBody =
     );
 typedef BackgroundTaskFunction =
     Future<void> Function(
-      SPH sph,
+      ProviderContainer container,
       AccountType accountType,
       BackgroundTaskToolkit toolkit,
     );

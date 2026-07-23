@@ -1,13 +1,13 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:liblanis/liblanis.dart';
+import 'package:lanis/utils/liblanis_ui.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:lanis/applets/conversations/view/shared.dart';
 import 'package:lanis/applets/timetable/student/student_timetable_better_view.dart';
 import 'package:lanis/applets/timetable/student/timetable_helper.dart';
 import 'package:lanis/generated/l10n.dart';
-import 'package:lanis/models/timetable.dart';
-import 'package:lanis/utils/extensions.dart';
 
 class ItemBlock extends StatelessWidget {
   final TimetableSubject? subject;
@@ -169,7 +169,7 @@ class ItemBlock extends StatelessWidget {
                 if (subject?.raum != null)
                   modalSheetItem(subject!.raum!, Icons.place),
                 modalSheetItem(
-                  "${subject!.startTime.format(context)} - ${subject!.endTime.format(context)} (${subject!.duration} ${subject!.duration == 1 ? "Stunde" : "Stunden"})",
+                  "${subject!.startTime.toFlutter().format(context)} - ${subject!.endTime.toFlutter().format(context)} (${subject!.duration} ${subject!.duration == 1 ? "Stunde" : "Stunden"})",
                   Icons.access_time,
                 ),
                 if (subject?.lehrer != null)

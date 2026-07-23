@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:liblanis/liblanis.dart';
 import 'package:intl/intl.dart';
 import 'package:lanis/generated/l10n.dart';
 
-import '../../../models/lessons.dart';
 import 'course_overview.dart';
 import 'homework_box.dart';
 

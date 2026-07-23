@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lanis/utils/large_appbar.dart';
 
 abstract class SettingsColours extends StatefulWidget {
@@ -13,7 +14,35 @@ abstract class SettingsColoursState<T extends StatefulWidget> extends State<T> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _applySettingsColours();
+  }
 
+  void _applySettingsColours() {
+    if (Theme.of(context).brightness == Brightness.light) {
+      foregroundColor = Theme.of(context).colorScheme.surfaceContainerLow;
+      backgroundColor = Theme.of(context).colorScheme.surfaceContainerHigh;
+      sliderColor = Theme.of(context).colorScheme.surfaceDim;
+    } else {
+      foregroundColor = Theme.of(context).colorScheme.surfaceContainerHighest;
+      backgroundColor = Theme.of(context).colorScheme.surfaceContainer;
+      sliderColor = Theme.of(context).colorScheme.surfaceBright;
+    }
+  }
+}
+
+abstract class ConsumerSettingsColours extends ConsumerStatefulWidget {
+  const ConsumerSettingsColours({super.key});
+}
+
+abstract class ConsumerSettingsColoursState<T extends ConsumerStatefulWidget>
+    extends ConsumerState<T> {
+  Color foregroundColor = Colors.transparent;
+  Color backgroundColor = Colors.transparent;
+  Color sliderColor = Colors.transparent;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
     if (Theme.of(context).brightness == Brightness.light) {
       foregroundColor = Theme.of(context).colorScheme.surfaceContainerLow;
       backgroundColor = Theme.of(context).colorScheme.surfaceContainerHigh;

@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/applets/lessons/definition.dart';
 import 'package:lanis/widgets/combined_applet_builder.dart';
+import 'package:liblanis/liblanis.dart';
 
-import '../../../core/sph/sph.dart';
-import '../../../models/lessons.dart';
 import 'attendances.dart';
 import 'lesson_list_tile.dart';
 
-class LessonsStudentView extends StatefulWidget {
+class LessonsStudentView extends ConsumerStatefulWidget {
   final Function? openDrawerCb;
   const LessonsStudentView({super.key, this.openDrawerCb});
 
   @override
-  State<StatefulWidget> createState() => _LessonsStudentViewState();
+  ConsumerState<LessonsStudentView> createState() => _LessonsStudentViewState();
 }
 
-class _LessonsStudentViewState extends State<LessonsStudentView>
+class _LessonsStudentViewState extends ConsumerState<LessonsStudentView>
     with TickerProviderStateMixin {
   Widget noDataScreen(context) => Center(
     child: Column(
@@ -83,10 +83,10 @@ class _LessonsStudentViewState extends State<LessonsStudentView>
             )
           : null,
       body: CombinedAppletBuilder<Lessons>(
-        parser: sph!.parser.lessonsStudentParser,
+        parser: ref.watch(lessonsStudentParserProvider),
         phpUrl: lessonsDefinition.appletPhpUrl,
         settingsDefaults: lessonsDefinition.settingsDefaults,
-        accountType: sph!.session.accountType,
+        accountType: ref.watch(sessionProvider).requireValue!.accountType,
         builder:
             (context, lessons, accountType, settings, updateSetting, refresh) {
               Lessons? attendanceLessons;

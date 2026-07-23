@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lanis/applets/lessons/definition.dart';
 import 'package:lanis/applets/lessons/teacher/widgets/course_folder_card.dart';
 import 'package:lanis/widgets/combined_applet_builder.dart';
 import 'package:lanis/widgets/marquee.dart';
+import 'package:liblanis/liblanis.dart';
 
-import '../../../core/sph/sph.dart';
-import '../../../models/lessons_teacher.dart';
 import 'course_detail_view/course_detail_view.dart';
 
-class LessonsTeacherView extends StatefulWidget {
+class LessonsTeacherView extends ConsumerStatefulWidget {
   final Function? openDrawerCb;
   const LessonsTeacherView({super.key, this.openDrawerCb});
 
   @override
-  State<LessonsTeacherView> createState() => _LessonsTeacherViewState();
+  ConsumerState<LessonsTeacherView> createState() => _LessonsTeacherViewState();
 }
 
-class _LessonsTeacherViewState extends State<LessonsTeacherView> {
+class _LessonsTeacherViewState extends ConsumerState<LessonsTeacherView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -52,10 +52,10 @@ class _LessonsTeacherViewState extends State<LessonsTeacherView> {
             )
           : null,
       body: CombinedAppletBuilder<LessonsTeacherHome>(
-        parser: sph!.parser.lessonsTeacherParser,
+        parser: ref.watch(lessonsTeacherParserProvider),
         phpUrl: lessonsDefinition.appletPhpUrl,
         settingsDefaults: lessonsDefinition.settingsDefaults,
-        accountType: sph!.session.accountType,
+        accountType: ref.watch(sessionProvider).requireValue!.accountType,
         builder: (context, data, _, settings, updateSettings, refresh) {
           return RefreshIndicator(
             onRefresh: refresh!,

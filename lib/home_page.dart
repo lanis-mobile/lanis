@@ -1,225 +1,110 @@
 import 'dart:ui';
-import 'package:lanis/core/database/account_database/account_db.dart';
-import 'package:lanis/core/sph/session.dart';
-import 'package:lanis/models/account_types.dart';
-import 'package:lanis/models/client_status_exceptions.dart';
-import 'package:lanis/generated/l10n.dart';
 
 import 'package:flutter/material.dart';
-import 'package:lanis/utils/authentication_state.dart';
-import 'package:lanis/utils/whats_new.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:liblanis/liblanis.dart';
+import 'package:lanis/applets/definitions.dart';
+import 'package:lanis/generated/l10n.dart';
+import 'package:lanis/models/account_types.dart';
+import 'package:lanis/utils/auth_controller.dart';
 import 'package:lanis/utils/cached_network_image.dart';
-import 'package:lanis/view/account_switcher/account_switcher.dart';
-import 'package:lanis/view/moodle.dart';
-import 'package:lanis/view/settings/settings.dart';
+import 'package:lanis/utils/whats_new.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'applets/definitions.dart';
-import 'core/sph/sph.dart';
+/// Nested home applet paths (order matches bottom-nav / shell branches).
+const homeAppletPaths = [
+  '/home/substitutions',
+  '/home/calendar',
+  '/home/timetable',
+  '/home/conversations',
+  '/home/lessons',
+];
 
-const String surveyUrl =
-    'https://ruggmtk.edudocs.de/apps/forms/s/ScZp5xZMKYTksEcQMwgPHfFz';
+const homeAppletPhpUrls = [
+  'vertretungsplan.php',
+  'kalender.php',
+  'stundenplan.php',
+  'nachrichten.php',
+  'meinunterricht.php',
+];
 
-typedef ActionFunction = void Function(BuildContext);
+class HomePage extends ConsumerStatefulWidget {
+  final StatefulNavigationShell navigationShell;
 
-int selectedDestinationDrawer = -1;
-final GlobalKey<HomePageState> homeKey = GlobalKey<HomePageState>();
-
-class Destination {
-  final Icon icon;
-  final Icon selectedIcon;
-  final bool enableBottomNavigation;
-  final bool enableDrawer;
-  final bool addDivider;
-  final String Function(BuildContext) label;
-  final ActionFunction? action;
-  final Widget Function(BuildContext, AccountType, Function openDrawerCb)? body;
-  late final bool isSupported;
-
-  Destination({
-    this.body,
-    this.action,
-    this.addDivider = false,
-    required this.isSupported,
-    required this.enableBottomNavigation,
-    required this.enableDrawer,
-    required this.icon,
-    required this.selectedIcon,
-    required this.label,
-  });
-
-  factory Destination.fromAppletDefinition(AppletDefinition appletDefinition) {
-    return Destination(
-      body: appletDefinition.appletType == AppletType.nested
-          ? appletDefinition.bodyBuilder
-          : null,
-      action: appletDefinition.appletType != AppletType.nested
-          ? (context) => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) {
-                  return appletDefinition.bodyBuilder!(
-                    context,
-                    sph!.session.accountType,
-                    () {},
-                  );
-                },
-              ),
-            )
-          : null,
-      addDivider: appletDefinition.addDivider,
-      isSupported: sph!.session.doesSupportFeature(appletDefinition),
-      enableBottomNavigation: appletDefinition.appletType == AppletType.nested,
-      enableDrawer: true,
-      icon: appletDefinition.icon,
-      selectedIcon: appletDefinition.selectedIcon,
-      label: appletDefinition.label,
-    );
-  }
-}
-
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  const HomePage({super.key, required this.navigationShell});
 
   @override
-  State<HomePage> createState() => HomePageState();
+  ConsumerState<HomePage> createState() => HomePageState();
 }
 
-class HomePageState extends State<HomePage> {
+class HomePageState extends ConsumerState<HomePage> {
   final GlobalKey<ScaffoldState> _drawerKey = GlobalKey();
-
-  bool doesSupportAnyApplet = true;
-  List<Destination> destinations = [];
-
-  void resetState() {
-    doesSupportAnyApplet = true;
-    setState(() {
-      selectedDestinationDrawer = -1;
-      destinations.clear();
-      for (var destination in AppDefinitions.applets) {
-        destinations.add(Destination.fromAppletDefinition(destination));
-      }
-      destinations.addAll(endDestinations);
-      setDefaultDestination();
-    });
-  }
 
   @override
   void initState() {
-    for (var destination in AppDefinitions.applets) {
-      destinations.add(Destination.fromAppletDefinition(destination));
-    }
-    destinations.addAll(endDestinations);
-    setDefaultDestination();
     super.initState();
-    showUpdateInfoIfRequired(context);
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-  }
-
-  void updateDestination(int newIndex) {
-    setState(() {
-      selectedDestinationDrawer = newIndex;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) showUpdateInfoIfRequired(context);
     });
   }
 
-  final List<Destination> endDestinations = [
-    Destination(
-      label: (context) => AppLocalizations.of(context).openMoodle,
-      icon: const Icon(Icons.open_in_new),
-      selectedIcon: const Icon(Icons.open_in_new),
-      isSupported: true,
-      enableBottomNavigation: false,
-      addDivider: true,
-      enableDrawer: true,
-      action: (context) => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const MoodleWebView()),
-      ),
-    ),
-    Destination(
-      label: (context) => AppLocalizations.of(context).openLanisInBrowser,
-      icon: const Icon(Icons.open_in_new),
-      selectedIcon: const Icon(Icons.open_in_new),
-      isSupported: true,
-      enableBottomNavigation: false,
-      enableDrawer: true,
-      action: (context) {
-        SessionHandler.getLoginURL(sph!.account).then((response) {
-          launchUrl(Uri.parse(response));
-        });
-      },
-    ),
-    Destination(
-      label: (context) => AppLocalizations.of(context).settings,
-      icon: const Icon(Icons.settings),
-      selectedIcon: const Icon(Icons.settings),
-      isSupported: true,
-      enableBottomNavigation: false,
-      enableDrawer: true,
-      addDivider: true,
-      action: (context) => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const SettingsScreen()),
-      ),
-    ),
-    Destination(
-      isSupported: true,
-      enableBottomNavigation: false,
-      enableDrawer: true,
-      icon: Icon(Icons.logout),
-      selectedIcon: Icon(Icons.logout_outlined),
-      label: (context) => AppLocalizations.of(context).logout,
-      action: (context) async {
-        await sph!.session.deAuthenticate();
-        await accountDatabase.deleteAccount(sph!.account.localId);
-        if (context.mounted) authenticationState.reset(context);
-      },
-    ),
-  ];
+  SessionHandler? get _session => ref.read(sessionProvider).asData?.value;
 
-  void setDefaultDestination() {
-    for (var destination in destinations) {
-      if (destination.isSupported && destination.enableBottomNavigation) {
-        selectedDestinationDrawer = destinations.indexOf(destination);
-        doesSupportAnyApplet = true;
-        return;
-      }
+  ClearTextAccount? get _account => ref.read(activeAccountProvider);
+
+  bool _supports(String phpUrl) {
+    final session = _session;
+    if (session == null) return false;
+    try {
+      return session.doesSupportFeature(Applets.byPhpUrl(phpUrl));
+    } catch (_) {
+      return false;
     }
-    doesSupportAnyApplet = false;
-    selectedDestinationDrawer = -1;
   }
 
-  void openLanisInBrowser(BuildContext? context) {
-    SessionHandler.getLoginURL(sph!.account)
-        .then((response) {
-          launchUrl(Uri.parse(response));
-        })
-        .catchError((ex) {
-          if (context == null || !context.mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(ex.cause),
-              duration: const Duration(seconds: 1),
-              action: SnackBarAction(label: 'ACTION', onPressed: () {}),
-            ),
-          );
-        }, test: (e) => e is LanisException);
+  Future<void> _openLanisInBrowser() async {
+    final account = _account;
+    final config = ref.read(sphConfigProvider);
+    if (account == null) return;
+    try {
+      final url = await SessionHandler.getLoginURL(account, config);
+      await launchUrl(Uri.parse(url));
+    } on LanisException catch (ex) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ex.cause), duration: const Duration(seconds: 1)),
+      );
+    }
+  }
+
+  Future<void> _logout() async {
+    final account = _account;
+    if (account != null) {
+      await ref.read(sessionProvider.notifier).deAuthenticate();
+      await ref.read(accountsProvider.notifier).remove(account.localId);
+    }
+    await ref.read(authControllerProvider.notifier).logout();
+    if (mounted) context.go('/welcome');
+  }
+
+  void _goBranch(int index) {
+    widget.navigationShell.goBranch(
+      index,
+      initialLocation: index == widget.navigationShell.currentIndex,
+    );
   }
 
   Widget noAppsSupported() {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Lanis-Mobile'),
+        title: const Text('Lanis-Mobile'),
         leading: IconButton(
-          icon: Icon(Icons.menu),
+          icon: const Icon(Icons.menu),
           onPressed: () => _drawerKey.currentState!.openDrawer(),
         ),
       ),
       body: Center(
-        // In case no feature is supported at all just show an open in browser button.
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -229,7 +114,7 @@ class HomePageState extends State<HomePage> {
               child: Text(AppLocalizations.of(context).noSupportOpenInBrowser),
             ),
             ElevatedButton(
-              onPressed: () => openLanisInBrowser(context),
+              onPressed: _openLanisInBrowser,
               child: Text(AppLocalizations.of(context).openLanisInBrowser),
             ),
           ],
@@ -238,35 +123,12 @@ class HomePageState extends State<HomePage> {
     );
   }
 
-  void openDestination(int index, bool fromDrawer) {
-    if (destinations[index].action != null) {
-      destinations[index].action!(context);
-    } else {
-      setState(() {
-        selectedDestinationDrawer = index;
-        if (fromDrawer) Navigator.pop(context);
-      });
-    }
-  }
-
-  NavigationDrawer navDrawer(context) {
-    List<Widget> drawerDestinations = [];
-
-    for (var destination in destinations) {
-      if (destination.enableDrawer) {
-        if (destination.addDivider) {
-          drawerDestinations.add(const Divider());
-        }
-        drawerDestinations.add(
-          NavigationDrawerDestination(
-            label: Text(destination.label(context)),
-            icon: destination.icon,
-            selectedIcon: destination.selectedIcon,
-            enabled: destination.isSupported,
-          ),
-        );
-      }
-    }
+  NavigationDrawer navDrawer(BuildContext context) {
+    final account = _account;
+    final session = _session;
+    final nestedDefs = AppDefinitions.applets
+        .where((a) => a.appletType == AppletType.nested)
+        .toList();
 
     final Color imageColor = Theme.of(
       context,
@@ -275,9 +137,72 @@ class HomePageState extends State<HomePage> {
         ? Colors.white
         : Colors.black;
 
+    final drawerItems = <Widget>[];
+    for (var i = 0; i < nestedDefs.length; i++) {
+      final def = nestedDefs[i];
+      final supported = _supports(def.appletPhpUrl);
+      drawerItems.add(
+        NavigationDrawerDestination(
+          label: Text(def.label(context)),
+          icon: def.icon,
+          selectedIcon: def.selectedIcon,
+          enabled: supported,
+        ),
+      );
+    }
+
+    // Extra drawer actions after nested applets
+    drawerItems.add(const Divider());
+    final extras = <({String label, Icon icon, VoidCallback onTap})>[
+      if (_supports('dateispeicher.php'))
+        (
+          label: AppLocalizations.of(context).storage,
+          icon: const Icon(Icons.folder_copy),
+          onTap: () => context.push('/storage'),
+        ),
+      if (_supports('lerngruppen.php'))
+        (
+          label: AppLocalizations.of(context).studyGroups,
+          icon: const Icon(Icons.groups),
+          onTap: () => context.push('/study-groups'),
+        ),
+      (
+        label: AppLocalizations.of(context).openMoodle,
+        icon: const Icon(Icons.open_in_new),
+        onTap: () => context.push('/moodle'),
+      ),
+      (
+        label: AppLocalizations.of(context).openLanisInBrowser,
+        icon: const Icon(Icons.open_in_new),
+        onTap: _openLanisInBrowser,
+      ),
+      (
+        label: AppLocalizations.of(context).settings,
+        icon: const Icon(Icons.settings),
+        onTap: () => context.push('/settings'),
+      ),
+      (
+        label: AppLocalizations.of(context).logout,
+        icon: const Icon(Icons.logout),
+        onTap: _logout,
+      ),
+    ];
+
+    final nestedCount = nestedDefs.length;
+
     return NavigationDrawer(
-      selectedIndex: selectedDestinationDrawer,
-      onDestinationSelected: (int index) => openDestination(index, true),
+      selectedIndex: widget.navigationShell.currentIndex.clamp(0, nestedCount - 1),
+      onDestinationSelected: (int index) {
+        Navigator.pop(context);
+        if (index < nestedCount) {
+          _goBranch(index);
+        } else {
+          final extraIndex = index - nestedCount;
+          if (extraIndex >= 0 && extraIndex < extras.length) {
+            extras[extraIndex].onTap();
+          }
+        }
+      },
       children: [
         Padding(
           padding: const EdgeInsets.only(bottom: 12.0),
@@ -298,22 +223,18 @@ class HomePageState extends State<HomePage> {
                           aspectRatio: 16 / 8,
                           child: CachedNetworkImage(
                             imageUrl: Uri.parse(
-                              "https://startcache.schulportal.hessen.de/exporteur.php?a=schoolbg&i=${sph!.account.schoolID}&s=xs",
+                              'https://startcache.schulportal.hessen.de/exporteur.php?a=schoolbg&i=${account?.schoolID ?? 0}&s=xs',
                             ),
                             placeholder: const Image(
-                              image: AssetImage("assets/icon.png"),
+                              image: AssetImage('assets/icon.png'),
                               fit: BoxFit.cover,
                             ),
-                            builder:
-                                (
-                                  BuildContext context,
-                                  ImageProvider<Object> imageProvider,
-                                ) {
-                                  return Image(
-                                    fit: BoxFit.cover,
-                                    image: imageProvider,
-                                  );
-                                },
+                            builder: (context, imageProvider) {
+                              return Image(
+                                fit: BoxFit.cover,
+                                image: imageProvider,
+                              );
+                            },
                           ),
                         ),
                       ),
@@ -325,7 +246,7 @@ class HomePageState extends State<HomePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "${sph?.session.userData["nachname"]}, ${sph?.session.userData["vorname"]}",
+                          '${session?.userData['nachname'] ?? ''}, ${session?.userData['vorname'] ?? ''}',
                           style: Theme.of(context).textTheme.headlineSmall
                               ?.copyWith(
                                 fontWeight: FontWeight.bold,
@@ -333,15 +254,14 @@ class HomePageState extends State<HomePage> {
                               ),
                         ),
                         Text(
-                          sph!.account.schoolName,
+                          account?.schoolName ?? '',
                           style: Theme.of(
                             context,
                           ).textTheme.titleMedium?.copyWith(color: textColor),
                         ),
-                        if (sph?.account.accountType != null)
+                        if (account?.accountType != null)
                           Text(
-                            sph?.account.accountType?.readableName(context) ??
-                                "Loading...",
+                            account!.accountType!.readableName(context),
                             style: Theme.of(
                               context,
                             ).textTheme.bodyMedium?.copyWith(color: textColor),
@@ -354,16 +274,10 @@ class HomePageState extends State<HomePage> {
               Align(
                 alignment: Alignment.topRight,
                 child: Padding(
-                  padding: EdgeInsets.only(top: 2, right: 2),
+                  padding: const EdgeInsets.only(top: 2, right: 2),
                   child: IconButton(
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => AccountSwitcher(),
-                        ),
-                      );
-                    },
-                    icon: Icon(Icons.switch_account),
+                    onPressed: () => context.push('/accounts'),
+                    icon: const Icon(Icons.switch_account),
                     color: textColor,
                     iconSize: 32,
                   ),
@@ -372,89 +286,70 @@ class HomePageState extends State<HomePage> {
             ],
           ),
         ),
-        ...drawerDestinations,
+        ...drawerItems,
+        const Divider(),
+        for (final e in extras)
+          NavigationDrawerDestination(
+            label: Text(e.label),
+            icon: e.icon,
+            selectedIcon: e.icon,
+          ),
       ],
     );
   }
 
-  NavigationBar navBar(BuildContext context) {
-    List<NavigationDestination> barDestinations = [];
-
-    for (var destination in destinations) {
-      if (destination.enableBottomNavigation && destination.isSupported) {
+  NavigationBar? navBar(BuildContext context) {
+    final nestedDefs = AppDefinitions.applets
+        .where((a) => a.appletType == AppletType.nested)
+        .toList();
+    final supportedIndexes = <int>[];
+    final barDestinations = <NavigationDestination>[];
+    for (var i = 0; i < nestedDefs.length; i++) {
+      if (_supports(nestedDefs[i].appletPhpUrl)) {
+        supportedIndexes.add(i);
         barDestinations.add(
           NavigationDestination(
-            label: destination.label(context),
-            icon: destination.icon,
-            selectedIcon: destination.selectedIcon,
-            enabled: destination.isSupported,
+            label: nestedDefs[i].label(context),
+            icon: nestedDefs[i].icon,
+            selectedIcon: nestedDefs[i].selectedIcon,
           ),
         );
       }
     }
+    if (barDestinations.isEmpty) return null;
 
-    List<int?> indexNavbarTranslationLayer = [];
-
-    int helpIndex = 0;
-    for (var destination in destinations) {
-      if (destination.enableBottomNavigation && destination.isSupported) {
-        indexNavbarTranslationLayer.add(helpIndex);
-        helpIndex += 1;
-      } else {
-        indexNavbarTranslationLayer.add(null);
-      }
-    }
+    final current = widget.navigationShell.currentIndex;
+    final selectedInBar = supportedIndexes.indexOf(current);
     return NavigationBar(
       destinations: barDestinations,
-      selectedIndex: indexNavbarTranslationLayer[selectedDestinationDrawer]!,
-      onDestinationSelected: (int index) =>
-          openDestination(indexNavbarTranslationLayer.indexOf(index), false),
+      selectedIndex: selectedInBar < 0 ? 0 : selectedInBar,
+      onDestinationSelected: (int index) => _goBranch(supportedIndexes[index]),
       labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(sessionProvider);
+    ref.watch(activeAccountProvider);
+
+    final anySupported = homeAppletPhpUrls.any(_supports);
+    final bar = navBar(context);
+
     return Scaffold(
       key: _drawerKey,
-      body: doesSupportAnyApplet
-          ? destinations[selectedDestinationDrawer].body!(
-              context,
-              sph!.session.accountType,
-              () {
-                _drawerKey.currentState!.openDrawer();
-              },
-            )
+      body: anySupported
+          ? widget.navigationShell
           : noAppsSupported(),
-      bottomNavigationBar: doesSupportAnyApplet ? navBar(context) : null,
+      bottomNavigationBar: anySupported ? bar : null,
       drawer: navDrawer(context),
-      // floatingActionButton: StreamBuilder(
-      //         stream: sph!.prefs.kv.subscribe('poll_survey_1_12_25_clicked'),
-      //         builder: (context, snapshot) {
-      //           return Visibility(
-      //             visible: !snapshot.hasData || !snapshot.data,
-      //             child: Padding(
-      //               padding: const EdgeInsets.only(bottom: kBottomNavigationBarHeight + 24),
-      //               child: ElevatedButton(
-      //                   onPressed: () async {
-      //                     await launchUrl(Uri.parse(surveyUrl));
-      //                     await sph!.prefs.kv.set('poll_survey_1_12_25_clicked', true);
-      //                   },
-      //                   child: Row(
-      //                   mainAxisSize: MainAxisSize.min,
-      //                   spacing: 4,
-      //                   crossAxisAlignment: CrossAxisAlignment.end,
-      //                   children: [
-      //                     Icon(Icons.feedback),
-      //                     Text(AppLocalizations.of(context).feedback)
-      //                   ],
-      //                 ),
-      //               ),
-      //             ),
-      //           );
-      //         }
-      //       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.startDocked,
     );
   }
+}
+
+/// Helper for applet bodies that need an open-drawer callback.
+void Function() openHomeDrawer(BuildContext context) {
+  final scaffold = Scaffold.maybeOf(context);
+  return () => scaffold?.openDrawer();
 }

@@ -3,20 +3,21 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:liblanis/liblanis.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
-import '../../../core/sph/sph.dart';
 import '../../../utils/logger.dart';
 import '../../../utils/mono_text_viewer.dart';
 
-class DebugExport extends StatefulWidget {
+class DebugExport extends ConsumerStatefulWidget {
   const DebugExport({super.key});
 
   @override
-  State<DebugExport> createState() => _DebugExportState();
+  ConsumerState<DebugExport> createState() => _DebugExportState();
 }
 
-class _DebugExportState extends State<DebugExport> {
+class _DebugExportState extends ConsumerState<DebugExport> {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
   final TextEditingController urlController = TextEditingController();
@@ -171,9 +172,13 @@ class _DebugExportState extends State<DebugExport> {
     bool authenticated,
   ) async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
+    final account = ref.read(activeAccountProvider);
+    final session = ref.read(sessionProvider).asData?.value;
     MemoryLogger report = MemoryLogger();
     report.log('START: Debug Export');
-    report.log('SCHOOL: ${sph!.account.schoolID} (${sph!.account.schoolName})');
+    report.log(
+      'SCHOOL: ${account?.schoolID} (${account?.schoolName})',
+    );
     report.log(
       'PLATFORM: ${Platform.operatingSystem} ${Platform.version} ${Platform.operatingSystemVersion}',
     );
@@ -189,7 +194,7 @@ class _DebugExportState extends State<DebugExport> {
     report.log('Query Params:\n$queryJson');
     report.log('Authenticated: $authenticated');
     report.write('------------- END REQUEST DESCRIPTION -------------');
-    final dio = authenticated ? sph!.session.dio : Dio();
+    final dio = authenticated && session != null ? session.dio : Dio();
 
     try {
       final response = await dio.request(

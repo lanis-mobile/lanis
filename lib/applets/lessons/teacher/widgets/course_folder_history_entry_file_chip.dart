@@ -1,13 +1,13 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:liblanis/liblanis.dart' hide FileInfo;
 
-import '../../../../core/sph/sph.dart';
-import '../../../../models/lessons_teacher.dart';
 import '../../../../utils/file_icons.dart';
 import '../../../../utils/file_operations.dart';
 import '../../../../utils/logger.dart';
 
-class CourseFolderHistoryEntryFileChip extends StatefulWidget {
+class CourseFolderHistoryEntryFileChip extends ConsumerStatefulWidget {
   final CourseFolderHistoryEntryFile file;
   final String courseId;
   final void Function(bool visibility) onVisibilityChanged;
@@ -21,12 +21,12 @@ class CourseFolderHistoryEntryFileChip extends StatefulWidget {
   });
 
   @override
-  State<CourseFolderHistoryEntryFileChip> createState() =>
+  ConsumerState<CourseFolderHistoryEntryFileChip> createState() =>
       _CourseFolderHistoryEntryFileChipState();
 }
 
 class _CourseFolderHistoryEntryFileChipState
-    extends State<CourseFolderHistoryEntryFileChip> {
+    extends ConsumerState<CourseFolderHistoryEntryFileChip> {
   void changeRemoteVisibility() async {
     final body = {
       "a": 'uploadFileBookHide',
@@ -36,7 +36,7 @@ class _CourseFolderHistoryEntryFileChipState
       "v": widget.file.isVisibleForStudents ? '0' : '1',
     };
     logger.i(body);
-    final response = await sph!.session.dio.post(
+    final response = await ref.read(sessionProvider).requireValue!.dio.post(
       'https://start.schulportal.hessen.de/meinunterricht.php',
       queryParameters: body,
       data: body,
@@ -109,7 +109,7 @@ class _CourseFolderHistoryEntryFileChipState
       "e": widget.file.entryId,
       "file": Uri.encodeComponent(widget.file.name),
     };
-    final response = await sph!.session.dio.post(
+    final response = await ref.read(sessionProvider).requireValue!.dio.post(
       'https://start.schulportal.hessen.de/meinunterricht.php',
       queryParameters: data,
       data: data,

@@ -1,15 +1,15 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lanis/background_service.dart';
 import 'package:lanis/models/account_types.dart';
-
-import '../../core/sph/sph.dart';
+import 'package:liblanis/liblanis.dart';
 
 Future<void> conversationsBackgroundTask(
-  SPH sph,
+  ProviderContainer container,
   AccountType accountType,
   BackgroundTaskToolkit toolkit,
 ) async {
-  final data = await sph.parser.conversationsParser.getHome();
+  final data = await container.read(conversationsParserProvider).getHome();
   final unreadMessages = data.where((e) => e.unread).toList();
   for (final unreadMessage in unreadMessages) {
     toolkit.sendMessage(

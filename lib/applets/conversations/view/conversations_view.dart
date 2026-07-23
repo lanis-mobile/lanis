@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:liblanis/liblanis.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:lanis/applets/conversations/view/new_conversation_configurator.dart';
 import 'package:lanis/applets/conversations/view/send.dart';
 import 'package:lanis/applets/conversations/view/shared.dart';
-import 'package:lanis/core/connection_checker.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/applets/conversations/definition.dart';
-import 'package:lanis/applets/conversations/parser.dart';
 import 'package:lanis/widgets/combined_applet_builder.dart';
-import '../../../core/sph/sph.dart';
-import '../../../models/client_status_exceptions.dart';
-import '../../../models/conversations.dart';
 import '../../../utils/keyboard_observer.dart';
 import 'chat.dart';
 
@@ -28,15 +25,15 @@ class JumpToNotification extends Notification {
   const JumpToNotification({this.position});
 }
 
-class ConversationsView extends StatefulWidget {
+class ConversationsView extends ConsumerStatefulWidget {
   final Function? openDrawerCb;
   const ConversationsView({super.key, this.openDrawerCb});
 
   @override
-  State<StatefulWidget> createState() => _ConversationsViewState();
+  ConsumerState<ConversationsView> createState() => _ConversationsViewState();
 }
 
-class _ConversationsViewState extends State<ConversationsView> {
+class _ConversationsViewState extends ConsumerState<ConversationsView> {
   final GlobalKey<RefreshIndicatorState> _refreshKey =
       GlobalKey<RefreshIndicatorState>();
 
@@ -57,7 +54,7 @@ class _ConversationsViewState extends State<ConversationsView> {
   static bool advancedSearch = false;
   static bool toggleMode = false;
 
-  OverviewFiltering get filter => sph!.parser.conversationsParser.filter;
+  OverviewFiltering get filter => ref.read(conversationsParserProvider).filter;
 
   final TextEditingController simpleSearchController = TextEditingController();
   final Map<SearchFunction, TextEditingController> advancedSearchControllers = {
@@ -263,13 +260,13 @@ class _ConversationsViewState extends State<ConversationsView> {
                       });
 
                       final oldEntries =
-                          sph!.parser.conversationsParser.stream.value.content;
+                          ref.read(conversationsParserProvider).stream.value.content;
 
                       filter.showHidden = showHidden;
                       filter.pushEntries();
 
                       jumpToTopTile(
-                        sph!.parser.conversationsParser.stream.value.content!,
+                        ref.read(conversationsParserProvider).stream.value.content!,
                         oldEntries!,
                       );
                     },
@@ -284,12 +281,12 @@ class _ConversationsViewState extends State<ConversationsView> {
                     leadingIcon: Icon(Icons.restore_from_trash),
                     onPressed: () {
                       final oldEntries =
-                          sph!.parser.conversationsParser.stream.value.content;
+                          ref.read(conversationsParserProvider).stream.value.content;
 
                       openToggleMode();
 
                       jumpToTopTile(
-                        sph!.parser.conversationsParser.stream.value.content!,
+                        ref.read(conversationsParserProvider).stream.value.content!,
                         oldEntries!,
                       );
                     },
@@ -366,7 +363,7 @@ class _ConversationsViewState extends State<ConversationsView> {
     });
     filter.toggleMode = true;
     filter.pushEntries();
-    sph!.parser.conversationsParser.toggleSuspend();
+    ref.read(conversationsParserProvider).toggleSuspend();
   }
 
   void closeToggleMode() {
@@ -375,15 +372,15 @@ class _ConversationsViewState extends State<ConversationsView> {
       disableToggleButton = false;
     });
 
-    final oldEntries = sph!.parser.conversationsParser.stream.value.content;
+    final oldEntries = ref.read(conversationsParserProvider).stream.value.content;
 
     filter.toggleMode = false;
     filter.pushEntries();
 
-    sph!.parser.conversationsParser.toggleSuspend();
+    ref.read(conversationsParserProvider).toggleSuspend();
 
     jumpToTopTile(
-      sph!.parser.conversationsParser.stream.value.content!,
+      ref.read(conversationsParserProvider).stream.value.content!,
       oldEntries!,
     );
   }
@@ -392,7 +389,7 @@ class _ConversationsViewState extends State<ConversationsView> {
   void initState() {
     super.initState();
 
-    sph!.parser.conversationsParser.fetchData();
+    ref.read(conversationsParserProvider).fetchData();
 
     keyboardObserver.addDefaultCallback();
 
@@ -419,7 +416,7 @@ class _ConversationsViewState extends State<ConversationsView> {
   }
 
   void openCreateConversation() async {
-    bool? canChooseType = sph!.parser.conversationsParser.cachedCanChooseType;
+    bool? canChooseType = ref.read(conversationsParserProvider).cachedCanChooseType;
 
     if (canChooseType == null) {
       setState(() {
@@ -427,7 +424,7 @@ class _ConversationsViewState extends State<ConversationsView> {
       });
 
       try {
-        canChooseType = await sph!.parser.conversationsParser.canChooseType();
+        canChooseType = await ref.read(conversationsParserProvider).canChooseType();
       } on NoConnectionException {
         setState(() {
           loadingCreateButton = false;
@@ -465,7 +462,7 @@ class _ConversationsViewState extends State<ConversationsView> {
     String text,
     ChatCreationData creationData,
   ) async {
-    final bool status = await connectionChecker.connected;
+    final bool status = await ref.read(connectionCheckerProvider).connected;
     if (!status) {
       if (mounted) {
         showDialog(
@@ -498,7 +495,7 @@ class _ConversationsViewState extends State<ConversationsView> {
       status: MessageStatus.sent,
     );
 
-    final CreationResponse response = await sph!.parser.conversationsParser
+    final CreationResponse response = await ref.read(conversationsParserProvider)
         .createConversation(
           creationData.receivers,
           creationData.type?.name,
@@ -507,7 +504,7 @@ class _ConversationsViewState extends State<ConversationsView> {
         );
 
     if (response.success) {
-      sph!.parser.conversationsParser.fetchData(forceRefresh: true);
+      ref.read(conversationsParserProvider).fetchData(forceRefresh: true);
 
       if (mounted) {
         final ConversationsChat chat = ConversationsChat(
@@ -616,10 +613,10 @@ class _ConversationsViewState extends State<ConversationsView> {
               flex: widthParts >= 3 ? 1 : 4,
               child: Scaffold(
                 body: CombinedAppletBuilder<List<OverviewEntry>>(
-                  parser: sph!.parser.conversationsParser,
+                  parser: ref.read(conversationsParserProvider),
                   phpUrl: conversationsDefinition.appletPhpUrl,
                   settingsDefaults: conversationsDefinition.settingsDefaults,
-                  accountType: sph!.session.accountType,
+                  accountType: ref.watch(sessionProvider).requireValue!.accountType,
                   builder:
                       (
                         context,
@@ -710,17 +707,13 @@ class _ConversationsViewState extends State<ConversationsView> {
                                           MaterialPageRoute(
                                             builder: (context) {
                                               if (entry.unread == true) {
-                                                sph!
-                                                    .parser
-                                                    .conversationsParser
+                                                ref.read(conversationsParserProvider)
                                                     .filter
                                                     .toggleEntry(
                                                       entry.id,
                                                       unread: true,
                                                     );
-                                                sph!
-                                                    .parser
-                                                    .conversationsParser
+                                                ref.read(conversationsParserProvider)
                                                     .filter
                                                     .pushEntries();
                                               }
@@ -779,14 +772,10 @@ class _ConversationsViewState extends State<ConversationsView> {
                                     late bool result;
                                     try {
                                       if (isHidden) {
-                                        result = await sph!
-                                            .parser
-                                            .conversationsParser
+                                        result = await ref.read(conversationsParserProvider)
                                             .showConversation(tile.key);
                                       } else {
-                                        result = await sph!
-                                            .parser
-                                            .conversationsParser
+                                        result = await ref.read(conversationsParserProvider)
                                             .hideConversation(tile.key);
                                       }
                                     } on NoConnectionException {
@@ -900,7 +889,7 @@ class _ConversationsViewState extends State<ConversationsView> {
   }
 }
 
-class ConversationTile extends StatelessWidget {
+class ConversationTile extends ConsumerWidget {
   final OverviewEntry entry;
   final bool toggleMode;
   final bool checked;
@@ -921,7 +910,7 @@ class ConversationTile extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
       child: Card(
@@ -991,9 +980,7 @@ class ConversationTile extends StatelessWidget {
                     onLongPress: () async {
                       // Try to let the tile be in same place as in the old list.
                       if (!toggleMode) {
-                        final List<OverviewEntry> oldEntries = sph!
-                            .parser
-                            .conversationsParser
+                        final List<OverviewEntry> oldEntries = ref.read(conversationsParserProvider)
                             .stream
                             .value
                             .content!;
@@ -1002,9 +989,7 @@ class ConversationTile extends StatelessWidget {
 
                         CheckTileNotification(id: entry.id).dispatch(context);
 
-                        final List<OverviewEntry> entries = sph!
-                            .parser
-                            .conversationsParser
+                        final List<OverviewEntry> entries = ref.read(conversationsParserProvider)
                             .stream
                             .value
                             .content!;
@@ -1096,16 +1081,16 @@ class ConversationTile extends StatelessWidget {
   }
 }
 
-class ScrolledDownContainer extends StatefulWidget {
+class ScrolledDownContainer extends ConsumerStatefulWidget {
   final Widget child;
 
   const ScrolledDownContainer({super.key, required this.child});
 
   @override
-  State<ScrolledDownContainer> createState() => _ScrolledDownContainerState();
+  ConsumerState<ScrolledDownContainer> createState() => _ScrolledDownContainerState();
 }
 
-class _ScrolledDownContainerState extends State<ScrolledDownContainer> {
+class _ScrolledDownContainerState extends ConsumerState<ScrolledDownContainer> {
   ScrollNotificationObserverState? scrollNotificationObserver;
   bool scrolledDown = false;
 

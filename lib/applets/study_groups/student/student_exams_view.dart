@@ -1,8 +1,8 @@
 import 'package:dart_date/dart_date.dart';
 import 'package:flutter/material.dart';
+import 'package:liblanis/liblanis.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:intl/intl.dart';
-import 'package:lanis/models/study_groups.dart';
 
 import '../../../utils/focused_menu.dart';
 

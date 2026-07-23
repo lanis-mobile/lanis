@@ -2,12 +2,12 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:liblanis/liblanis.dart';
 import 'package:lanis/utils/file_picker.dart';
 
-import '../../../../core/sph/sph.dart';
-import '../../../../models/lessons_teacher.dart';
 
-class UploadFileToCourseChip extends StatelessWidget {
+class UploadFileToCourseChip extends ConsumerWidget {
   final void Function(List<CourseFolderHistoryEntryFile> newFile)?
   onFileUploaded;
   final String courseId;
@@ -19,7 +19,7 @@ class UploadFileToCourseChip extends StatelessWidget {
     this.onFileUploaded,
   });
 
-  void uploadFile(BuildContext context) async {
+  void uploadFile(BuildContext context, WidgetRef ref) async {
     final pickedFiles = await pickMultipleFiles(context, null);
     if (pickedFiles.isEmpty) return;
 
@@ -77,7 +77,7 @@ class UploadFileToCourseChip extends StatelessWidget {
     try {
       for (final (index, data) in formData.indexed) {
         fileNameNotifier.value = multiPartFiles[index].filename ?? '';
-        final response = await sph!.session.dio.post(
+        final response = await ref.read(sessionProvider).requireValue!.dio.post(
           'https://start.schulportal.hessen.de/meinunterricht.php',
           data: data,
           options: Options(
@@ -129,7 +129,7 @@ class UploadFileToCourseChip extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return ActionChip(
       label: Row(
         mainAxisSize: MainAxisSize.min,
@@ -139,7 +139,7 @@ class UploadFileToCourseChip extends StatelessWidget {
           const Text('Datei hinzufügen'),
         ],
       ),
-      onPressed: () => uploadFile(context),
+      onPressed: () => uploadFile(context, ref),
     );
   }
 }

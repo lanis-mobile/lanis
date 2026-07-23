@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:liblanis/liblanis.dart' show AccountType, AccountTypeX;
 import 'package:lanis/generated/l10n.dart';
 
-enum AccountType { student, teacher, parent }
+export 'package:liblanis/liblanis.dart' show AccountType;
 
 extension AccountTypeExtension on AccountType {
   String readableName(BuildContext context) {
@@ -15,16 +16,5 @@ extension AccountTypeExtension on AccountType {
     }
   }
 
-  static AccountType fromString(String type) {
-    switch (type.toLowerCase()) {
-      case 'student':
-        return AccountType.student;
-      case 'teacher':
-        return AccountType.teacher;
-      case 'parent':
-        return AccountType.parent;
-      default:
-        return AccountType.student; // Default to student if unknown
-    }
-  }
+  static AccountType fromString(String type) => AccountTypeX.fromString(type);
 }

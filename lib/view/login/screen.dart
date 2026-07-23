@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lanis/generated/l10n.dart';
-import 'auth.dart';
 import 'intro_screen_page_view_models.dart';
 
 class WelcomeLoginScreen extends StatefulWidget {
@@ -10,19 +10,9 @@ class WelcomeLoginScreen extends StatefulWidget {
   State<StatefulWidget> createState() => _WelcomeLoginScreenState();
 }
 
-enum PageType { intro, login }
-
 class _WelcomeLoginScreenState extends State<WelcomeLoginScreen> {
-  PageType currentPage = PageType.intro;
-  List<String> schoolList = [];
-
   final PageController _pageController = PageController();
   int _currentPageIndex = 0;
-
-  @override
-  void initState() {
-    super.initState();
-  }
 
   @override
   void dispose() {
@@ -30,12 +20,14 @@ class _WelcomeLoginScreenState extends State<WelcomeLoginScreen> {
     super.dispose();
   }
 
-  Widget buildBody() {
-    Widget currentWidget;
-    if (currentPage == PageType.intro) {
-      final pages = intoScreenPageViewModels(context);
-      currentWidget = Scaffold(
-        key: const ValueKey('intro_page'),
+  void _goToLogin() => context.go('/login');
+
+  @override
+  Widget build(BuildContext context) {
+    final pages = intoScreenPageViewModels(context);
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
         body: SafeArea(
           child: Column(
             children: [
@@ -81,18 +73,14 @@ class _WelcomeLoginScreenState extends State<WelcomeLoginScreen> {
                   duration: const Duration(milliseconds: 300),
                   transitionBuilder:
                       (Widget child, Animation<double> animation) {
-                        return FadeTransition(opacity: animation, child: child);
-                      },
+                    return FadeTransition(opacity: animation, child: child);
+                  },
                   child: _currentPageIndex == pages.length - 1
                       ? SizedBox(
                           key: const ValueKey('continue_btn'),
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: () {
-                              setState(() {
-                                currentPage = PageType.login;
-                              });
-                            },
+                            onPressed: _goToLogin,
                             child: Padding(
                               padding: const EdgeInsets.symmetric(
                                 vertical: 12.0,
@@ -114,11 +102,7 @@ class _WelcomeLoginScreenState extends State<WelcomeLoginScreen> {
                             Align(
                               alignment: Alignment.centerLeft,
                               child: TextButton(
-                                onPressed: () {
-                                  setState(() {
-                                    currentPage = PageType.login;
-                                  });
-                                },
+                                onPressed: _goToLogin,
                                 child: Text(
                                   AppLocalizations.of(context).introSkip,
                                 ),
@@ -171,29 +155,7 @@ class _WelcomeLoginScreenState extends State<WelcomeLoginScreen> {
             ],
           ),
         ),
-      );
-    } else if (currentPage == PageType.login) {
-      currentWidget = Scaffold(
-        key: const ValueKey('login_page'),
-        body: LoginForm(showBackButton: false),
-      );
-    } else {
-      currentWidget = const Center(
-        key: ValueKey('error_page'),
-        child: Text("This should not happen"),
-      );
-    }
-
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 500),
-      switchInCurve: Curves.easeInOut,
-      switchOutCurve: Curves.easeInOut,
-      child: currentWidget,
+      ),
     );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return PopScope(canPop: false, child: buildBody());
   }
 }

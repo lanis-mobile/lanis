@@ -1,6 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:liblanis/liblanis.dart';
+import 'package:lanis/utils/liblanis_ui.dart';
 import 'package:intl/intl.dart';
 import 'package:lanis/applets/conversations/view/shared.dart';
 import 'package:lanis/applets/timetable/definition.dart';
@@ -10,8 +13,6 @@ import 'package:lanis/models/account_types.dart';
 import 'package:lanis/view/settings/settings_page_builder.dart';
 import 'package:lanis/widgets/combined_applet_builder.dart';
 
-import '../../../core/sph/sph.dart';
-import '../../../models/timetable.dart';
 
 class StudentTimetableSettings extends SettingsColours {
   final Function? openDrawerCb;
@@ -287,7 +288,7 @@ class _StudentTimetableSettingsState
       showBackButton: widget.showBack,
       children: [
         CombinedAppletBuilder<TimeTable>(
-          parser: sph!.parser.timetableStudentParser,
+          parser: ProviderScope.containerOf(context).read(timetableParserProvider),
           phpUrl: timeTableDefinition.appletPhpUrl,
           settingsDefaults: timeTableDefinition.settingsDefaults,
           accountType: AccountType.student,
@@ -360,7 +361,7 @@ class _StudentTimetableSettingsState
                                             dense: true,
                                             title: Text(lesson.name ?? ''),
                                             subtitle: Text(
-                                              "${lesson.startTime.format(context)} - ${lesson.endTime.format(context)}",
+                                              "${lesson.startTime.toFlutter().format(context)} - ${lesson.endTime.toFlutter().format(context)}",
                                             ),
                                             trailing: IconButton(
                                               icon: Icon(Icons.delete),
@@ -419,7 +420,7 @@ class _StudentTimetableSettingsState
                                             dense: true,
                                             title: Text(lesson.name ?? ''),
                                             subtitle: Text(
-                                              "${lesson.startTime.format(context)} - ${lesson.endTime.format(context)}",
+                                              "${lesson.startTime.toFlutter().format(context)} - ${lesson.endTime.toFlutter().format(context)}",
                                             ),
                                             trailing: Row(
                                               mainAxisSize: MainAxisSize.min,

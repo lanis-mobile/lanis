@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lanis/generated/l10n.dart';
+import 'package:liblanis/liblanis.dart';
 
-import '../../core/sph/sph.dart';
-import '../../models/datastorage.dart';
-import '../../models/client_status_exceptions.dart';
 import 'file_listtile.dart';
 import 'folder_listtile.dart';
 
-class DataStorageRootView extends StatefulWidget {
+class DataStorageRootView extends ConsumerStatefulWidget {
   const DataStorageRootView({super.key});
 
   @override
-  State<StatefulWidget> createState() => _DataStorageRootViewState();
+  ConsumerState<DataStorageRootView> createState() =>
+      _DataStorageRootViewState();
 }
 
-class _DataStorageRootViewState extends State<DataStorageRootView> {
+class _DataStorageRootViewState extends ConsumerState<DataStorageRootView> {
   var loading = true;
   var error = false;
   late List<FileNode> files;
@@ -24,7 +24,7 @@ class _DataStorageRootViewState extends State<DataStorageRootView> {
   @override
   void initState() {
     super.initState();
-    loadItems();
+    Future.microtask(loadItems);
   }
 
   @override
@@ -35,7 +35,7 @@ class _DataStorageRootViewState extends State<DataStorageRootView> {
 
   void loadItems() async {
     try {
-      var items = await sph!.parser.dataStorageParser.getRoot();
+      var items = await ref.read(dataStorageParserProvider).getRoot();
       var (fileList, folderList) = items;
       files = fileList;
       folders = folderList;
@@ -87,19 +87,20 @@ class _DataStorageRootViewState extends State<DataStorageRootView> {
   }
 }
 
-class AsyncSearchAnchor extends StatefulWidget {
+class AsyncSearchAnchor extends ConsumerStatefulWidget {
   const AsyncSearchAnchor({super.key});
 
   @override
-  State<AsyncSearchAnchor> createState() => _AsyncSearchAnchorState();
+  ConsumerState<AsyncSearchAnchor> createState() => _AsyncSearchAnchorState();
 }
 
-class _AsyncSearchAnchorState extends State<AsyncSearchAnchor> {
+class _AsyncSearchAnchorState extends ConsumerState<AsyncSearchAnchor> {
   String? _searchingWithQuery;
   late Iterable<Widget> _lastOptions = <Widget>[];
 
   @override
   Widget build(BuildContext context) {
+    final parser = ref.watch(dataStorageParserProvider);
     return SearchAnchor(
       builder: (BuildContext context, SearchController controller) {
         return IconButton(
@@ -112,9 +113,7 @@ class _AsyncSearchAnchorState extends State<AsyncSearchAnchor> {
       suggestionsBuilder:
           (BuildContext context, SearchController controller) async {
             _searchingWithQuery = controller.text;
-            var options = await sph!.parser.dataStorageParser.searchFiles(
-              _searchingWithQuery ?? '',
-            );
+            var options = await parser.searchFiles(_searchingWithQuery ?? '');
 
             if (_searchingWithQuery != controller.text) {
               return _lastOptions;

@@ -23,9 +23,15 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  liblanis:
+    path: liblanis
+  flutter_riverpod: ^3.0.3
+  go_router: ^16.0.0
+  sqlite3_flutter_libs: ^0.5.32
   dio_cookie_manager: ^3.3.0
   dart_date: ^1.2.2
   path_provider: ^2.1.1
+  path: ^1.9.1
   url_launcher: ^6.1.14
   cookie_jar: ^4.0.8
   dio: ^5.9.0
@@ -54,10 +60,8 @@ dependencies:
     sdk: flutter
   app_settings: ^7.0.0
   device_info_plus: ^12.4.0
-  flutter_quill: ^11.5.0
+  flutter_quill: ^11.5.1
   flutter_inappwebview: ^6.1.5
-  drift: ^2.21.0
-  drift_flutter: ^0.3.0
   flutter_secure_storage: ^10.0.0
   native_dio_adapter: ^1.5.0
   flutter_widget_from_html_core: ^0.17.0
@@ -75,6 +79,7 @@ dependencies:
   intl: ^0.20.2
   uuid: ^4.5.2
   colored_logger: ^2.1.1
+  riverpod: ^3.0.3
 
 flutter_launcher_icons:
   android: false
@@ -242,7 +247,6 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
-  drift_dev: ^2.21.2
   build_runner: ^2.4.13
   intl_utils: ^2.8.9
 

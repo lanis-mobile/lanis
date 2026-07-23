@@ -1,27 +1,23 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:lanis/core/database/account_database/account_db.dart';
-import 'package:lanis/core/sph/session.dart';
-import 'package:lanis/models/client_status_exceptions.dart';
-import 'package:lanis/utils/authentication_state.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:liblanis/liblanis.dart';
+import 'package:lanis/generated/l10n.dart';
+import 'package:lanis/utils/auth_controller.dart';
 import 'package:lanis/utils/logger.dart';
 import 'package:lanis/view/login/school_selector.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:lanis/generated/l10n.dart';
 
-import '../../core/sph/sph.dart';
-
-class LoginForm extends StatefulWidget {
+class LoginForm extends ConsumerStatefulWidget {
   final bool showBackButton;
   const LoginForm({required this.showBackButton, super.key});
 
   @override
-  LoginFormState createState() {
-    return LoginFormState();
-  }
+  ConsumerState<LoginForm> createState() => LoginFormState();
 }
 
-class LoginFormState extends State<LoginForm> {
+class LoginFormState extends ConsumerState<LoginForm> {
   static const double padding = 10.0;
 
   final _formKey = GlobalKey<FormState>();
@@ -45,32 +41,37 @@ class LoginFormState extends State<LoginForm> {
       ),
     );
     try {
-      if (await accountDatabase.doesAccountExist(
-        int.parse(schoolID),
-        username,
+      final schoolId = int.parse(schoolID);
+      final accounts = await ref.read(accountsProvider.future);
+      if (accounts.any(
+        (a) => a.schoolID == schoolId && a.username == username,
       )) {
         throw AccountAlreadyExistsException();
       }
 
+      final config = ref.read(sphConfigProvider);
       await SessionHandler.getLoginURL(
         ClearTextAccount(
           localId: -1,
-          schoolID: int.parse(schoolID),
+          schoolID: schoolId,
           username: username,
           password: password,
           schoolName: "",
         ),
+        config,
       );
 
-      int newID = await accountDatabase.addAccountToDatabase(
-        schoolID: int.parse(schoolID),
+      final newID = await ref.read(accountsProvider.notifier).add(
+        schoolId: schoolId,
         username: username,
         password: password,
         schoolName: selectedSchoolName,
       );
-      await sph?.session.deAuthenticate();
-      await accountDatabase.setNextLogin(newID);
-      if (mounted) authenticationState.reset(context);
+      await ref.read(authControllerProvider.notifier).loginWithAccount(newID);
+      if (mounted) {
+        Navigator.pop(context); // pop dialog
+        context.go('/home/substitutions');
+      }
     } catch (ex, s) {
       logger.e(ex, stackTrace: s);
 
@@ -83,30 +84,24 @@ class LoginFormState extends State<LoginForm> {
         }
       }
 
-      setState(() {
-        Navigator.pop(context); //pop dialog
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: Text(AppLocalizations.of(context).error),
-            content: Text(cause),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: const Text("OK"),
-              ),
-            ],
-          ),
-        );
-      });
+      if (!mounted) return;
+      Navigator.pop(context); // pop dialog
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(AppLocalizations.of(context).error),
+          content: Text(cause),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text("OK"),
+            ),
+          ],
+        ),
+      );
     }
-  }
-
-  @override
-  void initState() {
-    super.initState();
   }
 
   @override
@@ -125,7 +120,7 @@ class LoginFormState extends State<LoginForm> {
           Padding(
             padding: EdgeInsets.only(right: 32, top: 32),
             child: IconButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => context.pop(),
               icon: Icon(Icons.arrow_back),
             ),
           ),

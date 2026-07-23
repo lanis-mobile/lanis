@@ -6,13 +6,13 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:liblanis/liblanis.dart' hide FileInfo;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'dart:io' as dio_core;
 
-import '../core/connection_checker.dart';
 import '../core/native_adapter_instance.dart';
-import '../core/sph/sph.dart';
 import '../utils/file_operations.dart';
 
 /// Checks if the given URI's host ends with the specified domain suffix.
@@ -27,14 +27,14 @@ bool _isSchulportalDomain(Uri uri) {
   return _isHostMatch(uri, 'schulportal.hessen.de');
 }
 
-class MoodleWebView extends StatefulWidget {
+class MoodleWebView extends ConsumerStatefulWidget {
   const MoodleWebView({super.key});
 
   @override
-  State<MoodleWebView> createState() => _MoodleWebViewState();
+  ConsumerState<MoodleWebView> createState() => _MoodleWebViewState();
 }
 
-class _MoodleWebViewState extends State<MoodleWebView> {
+class _MoodleWebViewState extends ConsumerState<MoodleWebView> {
   static const noInternetError = "net::ERR_INTERNET_DISCONNECTED";
 
   final CookieManager cookieManager = CookieManager.instance();
@@ -75,7 +75,8 @@ class _MoodleWebViewState extends State<MoodleWebView> {
   }
 
   Future<void> getCookies() async {
-    if (!(await connectionChecker.connected)) {
+    final checker = ref.read(connectionCheckerProvider);
+    if (!(await checker.connected)) {
       setState(() {
         isLoginError = true;
         noInternetLogin = true;
@@ -88,6 +89,16 @@ class _MoodleWebViewState extends State<MoodleWebView> {
       isLoginError = false;
       noInternetLogin = false;
     });
+
+    final account = ref.read(activeAccountProvider);
+    final session = ref.read(sessionProvider).asData?.value;
+    if (account == null || session == null) {
+      setState(() {
+        isLoginError = true;
+        loginError = "No active account";
+      });
+      return;
+    }
 
     try {
       final dio = Dio(BaseOptions(validateStatus: (status) => status != null));
@@ -112,7 +123,7 @@ class _MoodleWebViewState extends State<MoodleWebView> {
 
       final lastSchoolCookie = dio_core.Cookie(
         "schulportal_lastschool",
-        sph!.account.schoolID.toString(),
+        account.schoolID.toString(),
       );
       lastSchoolCookie.domain = ".hessen.de";
       lastSchoolCookie.path = "/";
@@ -123,7 +134,7 @@ class _MoodleWebViewState extends State<MoodleWebView> {
       ]);
 
       final response1 = await dio.head(
-        "https://mo${sph!.account.schoolID}.schulportal.hessen.de",
+        "https://mo${account.schoolID}.schulportal.hessen.de",
       );
       final location_1 = response1.headers.value("location")!;
 
@@ -147,9 +158,9 @@ class _MoodleWebViewState extends State<MoodleWebView> {
           headers: {"Content-Type": "application/x-www-form-urlencoded"},
         ),
         data: {
-          "user": "${sph!.account.schoolID}.${sph!.account.username}",
-          "user2": sph!.account.username,
-          "password": sph!.account.password,
+          "user": "${account.schoolID}.${account.username}",
+          "user2": account.username,
+          "password": account.password,
           "url": url,
         },
       );
@@ -183,12 +194,12 @@ class _MoodleWebViewState extends State<MoodleWebView> {
       webViewController!.loadUrl(
         urlRequest: URLRequest(
           url: WebUri(
-            "https://mo${sph!.account.schoolID}.schulportal.hessen.de",
+            "https://mo${account.schoolID}.schulportal.hessen.de",
           ),
         ),
       );
-      sph!.session.jar.saveFromResponse(Uri.parse(location3), [moProd01Cookie]);
-      sph!.session.jar.saveFromResponse(Uri.parse(location4), [
+      session.jar.saveFromResponse(Uri.parse(location3), [moProd01Cookie]);
+      session.jar.saveFromResponse(Uri.parse(location4), [
         moodleId1Cookie,
         moodleSessionCookie,
       ]);
@@ -392,13 +403,16 @@ class _MoodleWebViewState extends State<MoodleWebView> {
                 },
                 onDownloadStartRequest: (controller, request) {
                   double fileSize = request.contentLength / 1000000;
+                  final storage = ref.read(storageManagerProvider);
+                  final fallbackName = storage?.generateUniqueHash(
+                        request.url.rawValue,
+                      ) ??
+                      request.url.rawValue.hashCode.toString();
 
                   showFileModal(
                     context,
                     FileInfo(
-                      name:
-                          request.suggestedFilename ??
-                          sph!.storage.generateUniqueHash(request.url.rawValue),
+                      name: request.suggestedFilename ?? fallbackName,
                       url: request.url,
                       size: "(${fileSize.toStringAsFixed(2)} MB)",
                     ),

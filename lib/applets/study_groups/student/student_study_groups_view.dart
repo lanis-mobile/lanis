@@ -1,26 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lanis/applets/study_groups/definitions.dart';
 import 'package:lanis/applets/study_groups/student/student_course_view.dart';
 import 'package:lanis/applets/study_groups/student/student_exams_view.dart';
-import 'package:lanis/core/sph/sph.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/widgets/combined_applet_builder.dart';
+import 'package:liblanis/liblanis.dart';
 
-class StudentStudyGroupsView extends StatefulWidget {
+class StudentStudyGroupsView extends ConsumerStatefulWidget {
   const StudentStudyGroupsView({super.key});
 
   @override
-  State<StudentStudyGroupsView> createState() => _StudentStudyGroupsViewState();
+  ConsumerState<StudentStudyGroupsView> createState() =>
+      _StudentStudyGroupsViewState();
 }
 
-class _StudentStudyGroupsViewState extends State<StudentStudyGroupsView> {
+class _StudentStudyGroupsViewState
+    extends ConsumerState<StudentStudyGroupsView> {
   @override
   Widget build(BuildContext context) {
+    final session = ref.watch(sessionProvider).requireValue!;
+    final parser = ref.watch(studyGroupsParserProvider);
     return CombinedAppletBuilder(
-      parser: sph!.parser.studyGroupsStudentParser,
+      parser: parser,
       phpUrl: studyGroupsDefinition.appletPhpUrl,
       settingsDefaults: studyGroupsDefinition.settingsDefaults,
-      accountType: sph!.session.accountType,
+      accountType: session.accountType,
       showErrorAppBar: true,
       loadingAppBar: AppBar(),
       builder: (context, data, accountType, settings, updateSetting, refresh) {

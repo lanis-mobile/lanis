@@ -1,5 +1,7 @@
 import 'package:custom_refresh_indicator/custom_refresh_indicator.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:liblanis/liblanis.dart';
 import 'package:dart_date/dart_date.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:html/parser.dart';
@@ -12,15 +14,12 @@ import 'package:lanis/generated/l10n.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
 
-import '../../../core/sph/sph.dart';
-import '../../../models/client_status_exceptions.dart';
-import '../../../models/conversations.dart';
 import '../../../utils/fetch_more_indicator.dart';
 import '../../../utils/logger.dart';
 import '../../../widgets/error_view.dart';
 import 'shared.dart';
 
-class ConversationsChat extends StatefulWidget {
+class ConversationsChat extends ConsumerStatefulWidget {
   final String id;
   final String title;
   final NewConversationSettings? newSettings;
@@ -48,10 +47,10 @@ class ConversationsChat extends StatefulWidget {
        newSettings = null,
        hidden = entry.hidden;
   @override
-  State<ConversationsChat> createState() => _ConversationsChatState();
+  ConsumerState<ConversationsChat> createState() => _ConversationsChatState();
 }
 
-class _ConversationsChatState extends State<ConversationsChat>
+class _ConversationsChatState extends ConsumerState<ConversationsChat>
     with SingleTickerProviderStateMixin {
   late final Future<void> _conversationFuture = initConversation();
   Timer? _refreshTimer;
@@ -120,7 +119,7 @@ class _ConversationsChatState extends State<ConversationsChat>
   Future<void> refreshConversation({bool scrollToEnd = true}) async {
     if (widget.newSettings == null) {
       try {
-        final result = await sph!.parser.conversationsParser
+        final result = await ref.read(conversationsParserProvider)
             .refreshConversation(widget.id, _lastRefresh);
 
         _lastRefresh = result.lastRefresh;
@@ -261,7 +260,7 @@ class _ConversationsChatState extends State<ConversationsChat>
       }
     });
 
-    final result = await sph!.parser.conversationsParser.replyToConversation(
+    final result = await ref.read(conversationsParserProvider).replyToConversation(
       settings.id,
       "all",
       settings.groupChat ? "ja" : "nein",
@@ -356,7 +355,7 @@ class _ConversationsChatState extends State<ConversationsChat>
 
   Future<void> initConversation() async {
     if (widget.newSettings == null) {
-      Conversation result = await sph!.parser.conversationsParser
+      Conversation result = await ref.read(conversationsParserProvider)
           .getSingleConversation(widget.id);
       _lastRefresh = result.msgLastRefresh;
       logger.d("last refresh: $_lastRefresh");

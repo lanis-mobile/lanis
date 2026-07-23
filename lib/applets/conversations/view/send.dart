@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:liblanis/liblanis.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill/quill_delta.dart';
 import 'package:lanis/generated/l10n.dart';
 
-import '../../../models/conversations.dart';
 
 class FullScreenConversationsMessageInput extends StatefulWidget {
   final ChatCreationData? creationData;

@@ -1,49 +1,49 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lanis/applets/definitions.dart';
-import 'package:lanis/core/database/account_database/account_db.dart';
+import 'package:liblanis/liblanis.dart';
 
-import '../core/database/account_preferences_database/account_preferences_db.dart';
-import '../core/sph/sph.dart';
 import '../models/account_types.dart';
 
-class OfflineAvailableAppletsSection extends StatefulWidget {
+class OfflineAvailableAppletsSection extends ConsumerStatefulWidget {
   const OfflineAvailableAppletsSection({super.key});
 
   @override
-  State<OfflineAvailableAppletsSection> createState() =>
+  ConsumerState<OfflineAvailableAppletsSection> createState() =>
       _OfflineAvailableAppletsSectionState();
 }
 
 class _OfflineAvailableAppletsSectionState
-    extends State<OfflineAvailableAppletsSection> {
+    extends ConsumerState<OfflineAvailableAppletsSection> {
   bool _loading = true;
   List<OfflineApplet> possibleOfflineApplets = [];
 
   Future<void> loadPossibleOfflineApplets() async {
-    final accounts = await accountDatabase
-        .select(accountDatabase.accountsTable)
-        .get();
-    for (final account in accounts) {
-      final userDatabase = AccountPreferencesDatabase(localId: account.id);
-      final applets = await userDatabase.select(userDatabase.appletData).get();
-      for (final applet in applets) {
-        if (applet.json != null) {
-          possibleOfflineApplets.add(
-            OfflineApplet(
-              localUserId: account.id,
-              userDisplayName: accounts.length > 1
-                  ? "${account.schoolName} (${account.username})"
-                  : account.schoolName,
-              appletId: applet.appletId,
-            ),
-          );
-        }
-      }
-      userDatabase.close();
+    final db = ref.read(lanisDatabaseProvider);
+    final accounts = await db.listAccounts();
+    final offlineRows = db.listAppletOfflineData();
+    final loaded = <OfflineApplet>[];
+
+    for (final row in offlineRows) {
+      final account = accounts
+          .where((a) => a.localId == row.accountId)
+          .firstOrNull;
+      if (account == null) continue;
+      loaded.add(
+        OfflineApplet(
+          localUserId: account.localId,
+          userDisplayName: accounts.length > 1
+              ? "${account.schoolName} (${account.username})"
+              : account.schoolName,
+          appletId: row.appletId,
+          accountType: account.accountType,
+        ),
+      );
     }
 
+    if (!mounted) return;
     setState(() {
-      possibleOfflineApplets = possibleOfflineApplets;
+      possibleOfflineApplets = loaded;
       _loading = false;
     });
   }
@@ -51,7 +51,7 @@ class _OfflineAvailableAppletsSectionState
   @override
   void initState() {
     super.initState();
-    loadPossibleOfflineApplets();
+    Future.microtask(loadPossibleOfflineApplets);
   }
 
   @override
@@ -71,22 +71,21 @@ class _OfflineAvailableAppletsSectionState
                 subtitle: Text(offlineApplet.userDisplayName),
                 leading: offlineApplet.definition.icon,
                 onTap: () async {
-                  ClearTextAccount acc = await accountDatabase
-                      .getClearTextAccountFromId(offlineApplet.localUserId);
-                  sph = SPH(account: acc);
-                  if (context.mounted) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            offlineApplet.definition.bodyBuilder!(
-                              context,
-                              acc.accountType ?? AccountType.student,
-                              null,
-                            ),
-                      ),
-                    );
-                  }
+                  await ref
+                      .read(activeAccountProvider.notifier)
+                      .select(offlineApplet.localUserId);
+                  if (!context.mounted) return;
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          offlineApplet.definition.bodyBuilder!(
+                            context,
+                            offlineApplet.accountType ?? AccountType.student,
+                            null,
+                          ),
+                    ),
+                  );
                 },
               ),
             )

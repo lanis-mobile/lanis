@@ -1,12 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lanis/view/settings/settings_page_builder.dart';
 import 'package:lanis/view/settings/subsettings/debug_export.dart';
+import 'package:liblanis/liblanis.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:lanis/generated/l10n.dart';
 
-import '../../../core/sph/sph.dart';
 import '../../../utils/logger.dart';
 
 class AvatarTile extends StatelessWidget {
@@ -87,15 +88,15 @@ class AboutLink {
   });
 }
 
-class AboutSettings extends SettingsColours {
+class AboutSettings extends ConsumerSettingsColours {
   final bool showBackButton;
   const AboutSettings({super.key, this.showBackButton = true});
 
   @override
-  State<AboutSettings> createState() => _AboutSettingsState();
+  ConsumerState<AboutSettings> createState() => _AboutSettingsState();
 }
 
-class _AboutSettingsState extends SettingsColoursState<AboutSettings> {
+class _AboutSettingsState extends ConsumerSettingsColoursState<AboutSettings> {
   dynamic contributors;
   bool error = false;
 
@@ -106,7 +107,8 @@ class _AboutSettingsState extends SettingsColoursState<AboutSettings> {
     });
 
     try {
-      final response = await sph!.session.dio.get(
+      final session = ref.read(sessionProvider).requireValue!;
+      final response = await session.dio.get(
         'https://api.github.com/repos/lanis-mobile/lanis/contributors',
       );
       setState(() {

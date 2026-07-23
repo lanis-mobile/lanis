@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:liblanis/liblanis.dart';
 import 'package:lanis/generated/l10n.dart';
 
-import '../../../core/sph/sph.dart';
-import '../../../models/lessons.dart';
 import '../../../widgets/format_text.dart';
 
-class HomeworkBox extends StatefulWidget {
+class HomeworkBox extends ConsumerStatefulWidget {
   final CurrentEntry currentEntry;
   final String courseID;
   const HomeworkBox({
@@ -15,10 +15,10 @@ class HomeworkBox extends StatefulWidget {
   });
 
   @override
-  State<HomeworkBox> createState() => _HomeworkBoxState();
+  ConsumerState<HomeworkBox> createState() => _HomeworkBoxState();
 }
 
-class _HomeworkBoxState extends State<HomeworkBox> with WidgetsBindingObserver {
+class _HomeworkBoxState extends ConsumerState<HomeworkBox> with WidgetsBindingObserver {
   final GlobalKey _columnKey = GlobalKey();
   Size _columnSize = Size.zero;
 
@@ -114,7 +114,7 @@ class _HomeworkBoxState extends State<HomeworkBox> with WidgetsBindingObserver {
                           duration: const Duration(milliseconds: 500),
                         ),
                       );
-                      sph!.parser.lessonsStudentParser
+                      ref.read(lessonsStudentParserProvider)
                           .setHomework(
                             widget.courseID,
                             widget.currentEntry.entryID,

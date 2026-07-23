@@ -1,30 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:lanis/view/settings/settings_page_builder.dart';
 import 'package:lanis/generated/l10n.dart';
+import 'package:liblanis/liblanis.dart';
 
-import '../../../core/sph/sph.dart';
-
-class UserDataSettings extends SettingsColours {
+class UserDataSettings extends ConsumerSettingsColours {
   final bool showBackButton;
   const UserDataSettings({super.key, this.showBackButton = true});
 
   @override
-  State<UserDataSettings> createState() => _UserDataSettingsState();
+  ConsumerState<UserDataSettings> createState() => _UserDataSettingsState();
 }
 
-class _UserDataSettingsState extends SettingsColoursState<UserDataSettings> {
+class _UserDataSettingsState
+    extends ConsumerSettingsColoursState<UserDataSettings> {
   @override
   Widget build(BuildContext context) {
+    final session = ref.watch(sessionProvider).asData?.value;
+    final userData = session?.userData ?? {};
+
     return SettingsPage(
       title: Text(AppLocalizations.of(context).userData),
       backgroundColor: backgroundColor,
       showBackButton: widget.showBackButton,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16.0),
       children: [
-        for (var key in sph!.session.userData.keys)
+        for (var key in userData.keys)
           ListTile(
-            title: Text(sph!.session.userData[key]!),
+            title: Text(userData[key]!),
             subtitle: Text(toBeginningOfSentenceCase(key)!),
             contentPadding: EdgeInsets.zero,
           ),

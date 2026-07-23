@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:liblanis/liblanis.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/models/account_types.dart';
-import '../../core/database/account_database/account_db.dart';
-import '../../core/sph/sph.dart';
-import '../../utils/authentication_state.dart';
-import '../../utils/random_color.dart';
+import 'package:lanis/utils/auth_controller.dart';
+import 'package:lanis/utils/random_color.dart';
 
-class AccountTile extends StatelessWidget {
+class AccountTile extends ConsumerWidget {
   final DateTime lastLogin;
   final Function? onTap;
-  final AccountsTableData account;
+  final AccountSummary account;
 
   const AccountTile({
     super.key,
@@ -23,18 +24,14 @@ class AccountTile extends StatelessWidget {
     return AppLocalizations.of(context).lastSeen(days);
   }
 
-  bool get isLoggedInAccount => sph?.account.localId == account.id;
-
   String accountTypeLabel(BuildContext context) {
-    AccountType type = AccountTypeExtension.fromString(
-      account.accountType?.split('.').last ?? "unknown",
-    );
+    final type = account.accountType ?? AccountType.student;
     return type.readableName(context);
   }
 
   Widget avatar() {
     ColorPair userColor = RandomColor.bySeed(
-      "${account.username}${account.schoolName}${account.id}",
+      "${account.username}${account.schoolName}${account.localId}",
     );
     return Container(
       height: 45,
@@ -57,43 +54,11 @@ class AccountTile extends StatelessWidget {
     );
   }
 
-  Widget logoutButton(BuildContext context) {
-    return IconButton(
-      icon: Icon(Icons.logout),
-      onPressed: () async {
-        bool? result = await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: Text(AppLocalizations.of(context).logout),
-            content: Text(AppLocalizations.of(context).logoutConfirmation),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: Text(AppLocalizations.of(context).cancel),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: Text(AppLocalizations.of(context).logout),
-              ),
-            ],
-          ),
-        );
-        if (result == true) {
-          bool restart = isLoggedInAccount;
-          if (restart) {
-            sph!.session.deAuthenticate();
-          }
-          await accountDatabase.deleteAccount(account.id);
-          if (restart && context.mounted) {
-            authenticationState.reset(context);
-          }
-        }
-      },
-    );
-  }
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final active = ref.watch(activeAccountProvider);
+    final isLoggedInAccount = active?.localId == account.localId;
+
     return Card(
       color: isLoggedInAccount
           ? Theme.of(context).colorScheme.primaryContainer
@@ -102,9 +67,7 @@ class AccountTile extends StatelessWidget {
         onTap: onTap == null
             ? null
             : () {
-                if (onTap != null) {
-                  onTap!();
-                }
+                onTap!();
               },
         leading: avatar(),
         title: Text("${account.username} (${accountTypeLabel(context)})"),
@@ -115,7 +78,36 @@ class AccountTile extends StatelessWidget {
             Text(lastLoginInDays(context), style: TextStyle(fontSize: 12)),
           ],
         ),
-        trailing: logoutButton(context),
+        trailing: IconButton(
+          icon: Icon(Icons.logout),
+          onPressed: () async {
+            bool? result = await showDialog<bool>(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: Text(AppLocalizations.of(context).logout),
+                content: Text(AppLocalizations.of(context).logoutConfirmation),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: Text(AppLocalizations.of(context).cancel),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    child: Text(AppLocalizations.of(context).logout),
+                  ),
+                ],
+              ),
+            );
+            if (result != true) return;
+            final restart = isLoggedInAccount;
+            await ref.read(accountsProvider.notifier).remove(account.localId);
+            if (!context.mounted) return;
+            if (restart) {
+              await ref.read(authControllerProvider.notifier).bootstrap();
+              if (context.mounted) context.go('/startup');
+            }
+          },
+        ),
       ),
     );
   }
