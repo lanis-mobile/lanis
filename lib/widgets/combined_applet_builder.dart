@@ -47,6 +47,7 @@ class _CombinedAppletBuilderState<T>
     extends ConsumerState<CombinedAppletBuilder<T>> {
   late Map<String, dynamic> appletSettings;
   bool _loading = true;
+  bool _fetchStarted = false;
 
   Widget _loadingState() {
     return Scaffold(
@@ -113,11 +114,34 @@ class _CombinedAppletBuilderState<T>
     setState(() => appletSettings[key] = value);
   }
 
+  void _syncVisibility() {
+    // IndexedStack disables [TickerMode] for offstage branches.
+    final active = TickerMode.of(context);
+    if (active) {
+      widget.parser.startAutoRefresh();
+      if (!_fetchStarted) {
+        _fetchStarted = true;
+        widget.parser.fetchData();
+      }
+    } else {
+      widget.parser.stopAutoRefresh();
+    }
+  }
+
   @override
   void initState() {
-    widget.parser.fetchData();
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => initSettings());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      initSettings();
+      _syncVisibility();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncVisibility();
   }
 
   @override
@@ -125,10 +149,20 @@ class _CombinedAppletBuilderState<T>
     super.didUpdateWidget(oldWidget);
     if (oldWidget.parser != widget.parser ||
         oldWidget.phpUrl != widget.phpUrl) {
-      setState(() => _loading = true);
-      widget.parser.fetchData();
+      oldWidget.parser.stopAutoRefresh();
+      setState(() {
+        _loading = true;
+        _fetchStarted = false;
+      });
       initSettings();
+      _syncVisibility();
     }
+  }
+
+  @override
+  void dispose() {
+    widget.parser.stopAutoRefresh();
+    super.dispose();
   }
 
   @override
