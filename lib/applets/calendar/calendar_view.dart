@@ -6,7 +6,7 @@ import 'package:liblanis/liblanis.dart';
 import 'package:lanis/utils/liblanis_ui.dart';
 import 'package:linkify/linkify.dart';
 import 'package:lanis/applets/calendar/definition.dart';
-import 'package:lanis/globals.dart';
+import 'package:html_unescape/html_unescape.dart';
 import 'package:lanis/utils/keyboard_observer.dart';
 import 'package:lanis/widgets/combined_applet_builder.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -27,6 +27,7 @@ class CalendarView extends ConsumerStatefulWidget {
 
 class _CalendarViewState extends ConsumerState<CalendarView> {
   late final ValueNotifier<List<CalendarEvent>> _selectedEvents;
+  final _unescape = HtmlUnescape();
 
   CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _focusedDay = DateTime.now();
@@ -423,13 +424,13 @@ class _CalendarViewState extends ConsumerState<CalendarView> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      unescape.convert(value[index].title),
+                                      _unescape.convert(value[index].title),
                                       style: Theme.of(
                                         context,
                                       ).textTheme.titleMedium,
                                     ),
                                     Text(
-                                      unescape.convert(
+                                      _unescape.convert(
                                         value[index].category?.name ??
                                             value[index].place ??
                                             value[index].description,

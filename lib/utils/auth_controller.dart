@@ -113,7 +113,7 @@ class AuthController extends Notifier<AuthState> {
           e is CredentialsIncompleteException) {
         if (state.phase != AuthPhase.authenticated) {
           // Keep the selected account so ResetAccount / retry stay usable.
-          state = AuthState.error(e);
+          state = AuthState.error(e as LanisException);
         }
         return false;
       }
