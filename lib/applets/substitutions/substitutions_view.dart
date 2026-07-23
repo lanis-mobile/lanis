@@ -247,7 +247,9 @@ class _SubstitutionsViewState extends ConsumerState<SubstitutionsView>
     }
     final parser = ref.watch(substitutionsParserProvider);
     return CombinedAppletBuilder<SubstitutionPlan>(
-      accountType: session.accountType,
+      accountType: session.accountTypeOrNull ??
+          ref.read(activeAccountProvider)?.accountType ??
+          AccountType.student,
       parser: parser,
       phpUrl: substitutionDefinition.appletPhpUrl,
       settingsDefaults: substitutionDefinition.settingsDefaults,

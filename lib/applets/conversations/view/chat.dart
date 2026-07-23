@@ -262,13 +262,24 @@ class _ConversationsChatState extends ConsumerState<ConversationsChat>
       }
     });
 
-    final result = await ref.read(conversationsParserProvider).replyToConversation(
-      settings.id,
-      "all",
-      settings.groupChat ? "ja" : "nein",
-      settings.onlyPrivateAnswers ? "ja" : "nein",
-      text,
-    );
+    late final ReplyToConversationResult result;
+    try {
+      result = await ref.read(conversationsParserProvider).replyToConversation(
+        settings.id,
+        "all",
+        settings.groupChat ? "ja" : "nein",
+        settings.onlyPrivateAnswers ? "ja" : "nein",
+        text,
+      );
+    } catch (_) {
+      widget.refreshSidebar();
+      if (!mounted) return;
+      setState(() {
+        chat.last.status = MessageStatus.error;
+      });
+      showSnackbar(context, AppLocalizations.of(context).errorSendingMessage);
+      return;
+    }
 
     widget.refreshSidebar();
     if (!mounted) return;

@@ -201,6 +201,11 @@ void launchFile(BuildContext context, FileInfo file, Function callback) {
       }
       callback();
     }
+  }).catchError((Object _) {
+    if (context.mounted) {
+      Navigator.of(context).pop();
+      showDialog(context: context, builder: (context) => errorDialog(context));
+    }
   });
 }
 
@@ -244,6 +249,11 @@ void saveFile(BuildContext context, FileInfo file, Function callback) {
       });
       callback();
     }
+  }).catchError((Object _) {
+    if (context.mounted) {
+      Navigator.of(context).pop();
+      showDialog(context: context, builder: (context) => errorDialog(context));
+    }
   });
 }
 
@@ -275,6 +285,11 @@ void shareFile(BuildContext context, FileInfo file, Function callback) {
     } else {
       await Share.shareXFiles([XFile(filepath)]);
       callback();
+    }
+  }).catchError((Object _) {
+    if (context.mounted) {
+      Navigator.of(context).pop();
+      showDialog(context: context, builder: (context) => errorDialog(context));
     }
   });
 }

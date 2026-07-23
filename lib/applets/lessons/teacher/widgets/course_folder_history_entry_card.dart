@@ -67,19 +67,25 @@ class _CourseFolderHistoryEntryCardState
       },
     );
     if (delete == true) {
-      final result = await ref.read(lessonsTeacherParserProvider).deleteEntry(
-        widget.courseId,
-        widget.entry.id,
-      );
-      if (result) {
-        if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Eintrag gelöscht')));
+      try {
+        final result = await ref.read(lessonsTeacherParserProvider).deleteEntry(
+          widget.courseId,
+          widget.entry.id,
+        );
+        if (result) {
+          if (mounted) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text('Eintrag gelöscht')));
+          }
+          await Future.delayed(Duration(seconds: 1));
+          widget.afterDeleted();
+        } else if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Eintrag konnte nicht gelöscht werden')),
+          );
         }
-        await Future.delayed(Duration(seconds: 1));
-        widget.afterDeleted();
-      } else {
+      } catch (_) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Eintrag konnte nicht gelöscht werden')),

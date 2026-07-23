@@ -518,13 +518,38 @@ class _ConversationsViewState extends ConsumerState<ConversationsView> {
       status: MessageStatus.sent,
     );
 
-    final CreationResponse response = await ref.read(conversationsParserProvider)
-        .createConversation(
-          creationData.receivers,
-          creationData.type?.name,
-          creationData.subject,
-          text,
+    final CreationResponse response;
+    try {
+      response = await ref.read(conversationsParserProvider).createConversation(
+        creationData.receivers,
+        creationData.type?.name,
+        creationData.subject,
+        text,
+      );
+    } catch (_) {
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              icon: const Icon(Icons.error),
+              title: Text(
+                AppLocalizations.of(context).errorCreatingConversation,
+              ),
+              actions: [
+                FilledButton(
+                  onPressed: () async {
+                    Navigator.pop(context);
+                  },
+                  child: const Text("Ok"),
+                ),
+              ],
+            );
+          },
         );
+      }
+      return;
+    }
 
     if (response.success) {
       ref.read(conversationsParserProvider).fetchData(forceRefresh: true);
@@ -839,20 +864,31 @@ class _ConversationsViewState extends ConsumerState<ConversationsView> {
                                         result = await ref.read(conversationsParserProvider)
                                             .hideConversation(tile.key);
                                       }
-                                    } on NoConnectionException {
+                                    } catch (e) {
+                                      if (!mounted) return;
                                       setState(() {
                                         disableToggleButton = false;
                                       });
 
                                       if (context.mounted) {
+                                        final isOffline =
+                                            e is NoConnectionException;
                                         showDialog(
                                           context: context,
                                           builder: (context) => AlertDialog(
-                                            icon: const Icon(Icons.wifi_off),
+                                            icon: Icon(
+                                              isOffline
+                                                  ? Icons.wifi_off
+                                                  : Icons.error,
+                                            ),
                                             title: Text(
-                                              AppLocalizations.of(
-                                                context,
-                                              ).noInternetConnection2,
+                                              isOffline
+                                                  ? AppLocalizations.of(
+                                                      context,
+                                                    ).noInternetConnection2
+                                                  : AppLocalizations.of(
+                                                      context,
+                                                    ).error,
                                             ),
                                             actions: [
                                               FilledButton(

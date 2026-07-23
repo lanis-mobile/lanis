@@ -61,7 +61,9 @@ class _StudentTimetableBetterViewState
         body: const Center(child: CircularProgressIndicator()),
       );
     }
-    final accountType = session.accountType;
+    final accountType = session.accountTypeOrNull ??
+        ref.read(activeAccountProvider)?.accountType ??
+        AccountType.student;
     return CombinedAppletBuilder<TimeTable>(
       parser: ref.watch(timetableParserProvider),
       phpUrl: timeTableDefinition.appletPhpUrl,

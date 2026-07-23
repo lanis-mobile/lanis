@@ -305,7 +305,9 @@ class _StudentTimetableSettingsState
           parser: ref.watch(timetableParserProvider),
           phpUrl: timeTableDefinition.appletPhpUrl,
           settingsDefaults: timeTableDefinition.settingsDefaults,
-          accountType: session.accountType,
+          accountType: session.accountTypeOrNull ??
+              ref.read(activeAccountProvider)?.accountType ??
+              AccountType.student,
           builder: (context, timetable, _, settings, updateSettings, refresh) {
             final ids = settings['hidden-lessons'];
             Map<int, List<TimetableSubject>> lessons = {};

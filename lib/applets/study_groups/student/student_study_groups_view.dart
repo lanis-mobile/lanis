@@ -28,7 +28,9 @@ class _StudentStudyGroupsViewState
       parser: parser,
       phpUrl: studyGroupsDefinition.appletPhpUrl,
       settingsDefaults: studyGroupsDefinition.settingsDefaults,
-      accountType: session.accountType,
+      accountType: session.accountTypeOrNull ??
+          ref.read(activeAccountProvider)?.accountType ??
+          AccountType.student,
       showErrorAppBar: true,
       loadingAppBar: AppBar(),
       builder: (context, data, accountType, settings, updateSetting, refresh) {
