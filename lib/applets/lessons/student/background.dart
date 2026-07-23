@@ -18,8 +18,8 @@ Future<void> lessonsStudentBackgroundTask(
     if (lesson.currentEntry?.homework == null) continue;
     if (lesson.currentEntry!.homework!.homeWorkDone) continue;
 
-    toolkit.sendMessage(
-      id: lesson.courseID.hashCode % 10000,
+    await toolkit.sendMessage(
+      id: (lesson.courseID.hashCode & 0x7fffffff) % 10000,
       title: "Neue Hausaufgabe in Kurs ${lesson.name}",
       message:
           "${lesson.currentEntry!.topicTitle != null ? "${lesson.currentEntry!.topicTitle}\n" : ''}${lesson.currentEntry!.homework!.description}",

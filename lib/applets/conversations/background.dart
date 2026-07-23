@@ -12,8 +12,8 @@ Future<void> conversationsBackgroundTask(
   final data = await container.read(conversationsParserProvider).getHome();
   final unreadMessages = data.where((e) => e.unread).toList();
   for (final unreadMessage in unreadMessages) {
-    toolkit.sendMessage(
-      id: unreadMessage.id.hashCode % 10000,
+    await toolkit.sendMessage(
+      id: (unreadMessage.id.hashCode & 0x7fffffff) % 10000,
       title: unreadMessage.fullName,
       message: unreadMessage.title,
       avoidDuplicateSending: true,

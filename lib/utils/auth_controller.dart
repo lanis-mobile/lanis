@@ -48,7 +48,7 @@ class AuthController extends Notifier<AuthState> {
       final db = ref.read(lanisDatabaseProvider);
       final accounts = await db.listAccounts();
       if (accounts.isEmpty) {
-        ref.read(activeAccountProvider.notifier).clear();
+        await ref.read(activeAccountProvider.notifier).clear();
         state = const AuthState.unauthenticated();
         return;
       }
@@ -119,7 +119,9 @@ class AuthController extends Notifier<AuthState> {
 
   Future<void> logout() async {
     await ref.read(sessionProvider.notifier).deAuthenticate();
-    ref.read(activeAccountProvider.notifier).clear();
+    await ref
+        .read(activeAccountProvider.notifier)
+        .clear(skipDeauthenticate: true);
     state = const AuthState.unauthenticated();
   }
 

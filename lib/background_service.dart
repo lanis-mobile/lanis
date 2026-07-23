@@ -226,7 +226,11 @@ class BackgroundTaskToolkit {
     this.multiAccount = false,
   });
 
-  int _seedId(int id) => id + accountId * 10000;
+  /// Platform notification id: account + applet + local slot (0–9999).
+  int _seedId(int id) {
+    final appletSlot = (appletId.hashCode & 0x7fffffff) % 100;
+    return id + appletSlot * 10000 + accountId * 1000000;
+  }
 
   Future<void> sendMessage({
     required String title,
