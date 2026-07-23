@@ -335,15 +335,24 @@ class _SubstitutionsViewState extends ConsumerState<SubstitutionsView>
                     .clamp(0, data.days.length)
               : 0;
 
-          if (_tabController != null) _tabController!.dispose();
-          _tabController = TabController(
-            length: data.days.length,
-            vsync: this,
-            initialIndex: currentIndex,
-          );
-          _tabController!.addListener(() {
-            _selectedDate = data.days[_tabController!.index].parsedDate;
-          });
+          if (_tabController == null ||
+              _tabController!.length != data.days.length) {
+            final old = _tabController;
+            _tabController = TabController(
+              length: data.days.length,
+              vsync: this,
+              initialIndex: currentIndex.clamp(0, data.days.length - 1),
+            );
+            _tabController!.addListener(() {
+              _selectedDate = data.days[_tabController!.index].parsedDate;
+            });
+            if (old != null) {
+              WidgetsBinding.instance.addPostFrameCallback((_) => old.dispose());
+            }
+          } else if (_tabController!.index != currentIndex &&
+              currentIndex < data.days.length) {
+            _tabController!.index = currentIndex;
+          }
 
           return Scaffold(
             appBar: AppBar(

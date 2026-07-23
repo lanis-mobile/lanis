@@ -565,6 +565,20 @@ class _CalendarViewState extends ConsumerState<CalendarView> {
 
   @override
   Widget build(BuildContext context) {
+    if (ref.watch(sessionProvider).asData?.value == null) {
+      return Scaffold(
+        appBar: widget.openDrawerCb != null
+            ? AppBar(
+                title: Text(calendarDefinition.label(context)),
+                leading: IconButton(
+                  icon: const Icon(Icons.menu),
+                  onPressed: () => widget.openDrawerCb!(),
+                ),
+              )
+            : null,
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
     return Scaffold(
       appBar: widget.openDrawerCb != null
           ? AppBar(

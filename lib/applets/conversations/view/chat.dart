@@ -83,15 +83,15 @@ class _ConversationsChatState extends ConsumerState<ConversationsChat>
   void initRefreshTimer() {
     _refreshTimer?.cancel();
     _refreshTimer = Timer.periodic(const Duration(seconds: 20), (_) async {
-      if (mounted) {
-        setState(() {
-          refreshing = true;
-        });
-        await refreshConversation(scrollToEnd: false);
-        setState(() {
-          refreshing = false;
-        });
-      }
+      if (!mounted) return;
+      setState(() {
+        refreshing = true;
+      });
+      await refreshConversation(scrollToEnd: false);
+      if (!mounted) return;
+      setState(() {
+        refreshing = false;
+      });
     });
   }
 
@@ -106,9 +106,9 @@ class _ConversationsChatState extends ConsumerState<ConversationsChat>
 
   @override
   void dispose() {
-    super.dispose();
-    scrollController.dispose();
     _refreshTimer?.cancel();
+    scrollController.dispose();
+    super.dispose();
   }
 
   void toggleScrollToBottomFab() {
@@ -269,6 +269,7 @@ class _ConversationsChatState extends ConsumerState<ConversationsChat>
     );
 
     widget.refreshSidebar();
+    if (!mounted) return;
     setState(() {
       if (result.success) {
         _messagesSendInThisSession.add(result.messageId);

@@ -261,13 +261,18 @@ class _ConversationsViewState extends ConsumerState<ConversationsView> {
 
                       final oldEntries =
                           ref.read(conversationsParserProvider).stream.value.content;
+                      if (oldEntries == null) return;
 
                       filter.showHidden = showHidden;
                       filter.pushEntries();
 
+                      final newEntries =
+                          ref.read(conversationsParserProvider).stream.value.content;
+                      if (newEntries == null) return;
+
                       jumpToTopTile(
-                        ref.read(conversationsParserProvider).stream.value.content!,
-                        oldEntries!,
+                        newEntries,
+                        oldEntries,
                       );
                     },
                     child: Text(
@@ -282,12 +287,17 @@ class _ConversationsViewState extends ConsumerState<ConversationsView> {
                     onPressed: () {
                       final oldEntries =
                           ref.read(conversationsParserProvider).stream.value.content;
+                      if (oldEntries == null) return;
 
                       openToggleMode();
 
+                      final newEntries =
+                          ref.read(conversationsParserProvider).stream.value.content;
+                      if (newEntries == null) return;
+
                       jumpToTopTile(
-                        ref.read(conversationsParserProvider).stream.value.content!,
-                        oldEntries!,
+                        newEntries,
+                        oldEntries,
                       );
                     },
                     child: Text(AppLocalizations.of(context).hideShow),
@@ -373,15 +383,19 @@ class _ConversationsViewState extends ConsumerState<ConversationsView> {
     });
 
     final oldEntries = ref.read(conversationsParserProvider).stream.value.content;
+    if (oldEntries == null) return;
 
     filter.toggleMode = false;
     filter.pushEntries();
 
     ref.read(conversationsParserProvider).toggleSuspend();
 
+    final newEntries = ref.read(conversationsParserProvider).stream.value.content;
+    if (newEntries == null) return;
+
     jumpToTopTile(
-      ref.read(conversationsParserProvider).stream.value.content!,
-      oldEntries!,
+      newEntries,
+      oldEntries,
     );
   }
 
@@ -575,6 +589,20 @@ class _ConversationsViewState extends ConsumerState<ConversationsView> {
 
   @override
   Widget build(BuildContext context) {
+    if (ref.watch(sessionProvider).asData?.value == null) {
+      return Scaffold(
+        appBar: widget.openDrawerCb != null
+            ? AppBar(
+                title: Text(conversationsDefinition.label(context)),
+                leading: IconButton(
+                  icon: const Icon(Icons.menu),
+                  onPressed: () => widget.openDrawerCb!(),
+                ),
+              )
+            : null,
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
     double deviceWidth = MediaQuery.of(context).size.width;
     int widthParts = deviceWidth ~/ 350 == 0 ? 1 : deviceWidth ~/ 350;
 
@@ -982,19 +1010,21 @@ class ConversationTile extends ConsumerWidget {
                     onLongPress: () async {
                       // Try to let the tile be in same place as in the old list.
                       if (!toggleMode) {
-                        final List<OverviewEntry> oldEntries = ref.read(conversationsParserProvider)
+                        final List<OverviewEntry>? oldEntries = ref.read(conversationsParserProvider)
                             .stream
                             .value
-                            .content!;
+                            .content;
+                        if (oldEntries == null) return;
                         final oldPosition =
                             oldEntries.indexOf(entry) * tileSize;
 
                         CheckTileNotification(id: entry.id).dispatch(context);
 
-                        final List<OverviewEntry> entries = ref.read(conversationsParserProvider)
+                        final List<OverviewEntry>? entries = ref.read(conversationsParserProvider)
                             .stream
                             .value
-                            .content!;
+                            .content;
+                        if (entries == null) return;
 
                         final index = entries.indexOf(entry);
                         final position = index * tileSize;

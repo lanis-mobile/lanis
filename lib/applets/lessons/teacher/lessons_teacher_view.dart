@@ -19,6 +19,21 @@ class LessonsTeacherView extends ConsumerStatefulWidget {
 class _LessonsTeacherViewState extends ConsumerState<LessonsTeacherView> {
   @override
   Widget build(BuildContext context) {
+    final session = ref.watch(sessionProvider).asData?.value;
+    if (session == null) {
+      return Scaffold(
+        appBar: widget.openDrawerCb != null
+            ? AppBar(
+                title: Text(lessonsDefinition.label(context)),
+                leading: IconButton(
+                  icon: const Icon(Icons.menu),
+                  onPressed: () => widget.openDrawerCb!(),
+                ),
+              )
+            : null,
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
     return Scaffold(
       appBar: widget.openDrawerCb != null
           ? AppBar(
@@ -55,8 +70,7 @@ class _LessonsTeacherViewState extends ConsumerState<LessonsTeacherView> {
         parser: ref.watch(lessonsTeacherParserProvider),
         phpUrl: lessonsDefinition.appletPhpUrl,
         settingsDefaults: lessonsDefinition.settingsDefaults,
-        accountType: ref.watch(sessionProvider).asData?.value?.accountType ??
-            AccountType.teacher,
+        accountType: session.accountType,
         builder: (context, data, _, settings, updateSettings, refresh) {
           return RefreshIndicator(
             onRefresh: refresh!,

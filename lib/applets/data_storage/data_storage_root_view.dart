@@ -100,6 +100,12 @@ class _AsyncSearchAnchorState extends ConsumerState<AsyncSearchAnchor> {
 
   @override
   Widget build(BuildContext context) {
+    if (ref.watch(sessionProvider).asData?.value == null) {
+      return const IconButton(
+        icon: Icon(Icons.search),
+        onPressed: null,
+      );
+    }
     final parser = ref.watch(dataStorageParserProvider);
     return SearchAnchor(
       builder: (BuildContext context, SearchController controller) {

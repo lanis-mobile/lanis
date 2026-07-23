@@ -565,7 +565,21 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                                     );
                                   },
                                 );
-                                ref.read(storageManagerProvider)!
+                                final storage = ref.read(storageManagerProvider);
+                                if (storage == null) {
+                                  if (context.mounted) {
+                                    Navigator.of(context).pop();
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          AppLocalizations().error,
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                  return;
+                                }
+                                storage
                                     .downloadFile(
                                       snapshot.data["public_files"][index].url,
                                       snapshot.data["public_files"][index].name,

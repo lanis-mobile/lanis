@@ -94,19 +94,21 @@ class ConversationTile extends ConsumerWidget {
                     onLongPress: () async {
                       // Try to let the tile be in same place as in the old list.
                       if (!toggleMode) {
-                        final List<OverviewEntry> oldEntries = ref.read(conversationsParserProvider)
+                        final List<OverviewEntry>? oldEntries = ref.read(conversationsParserProvider)
                             .stream
                             .value
-                            .content!;
+                            .content;
+                        if (oldEntries == null) return;
                         final oldPosition =
                             oldEntries.indexOf(entry) * tileSize;
 
                         CheckTileNotification(id: entry.id).dispatch(context);
 
-                        final List<OverviewEntry> entries = ref.read(conversationsParserProvider)
+                        final List<OverviewEntry>? entries = ref.read(conversationsParserProvider)
                             .stream
                             .value
-                            .content!;
+                            .content;
+                        if (entries == null) return;
 
                         final index = entries.indexOf(entry);
                         final position = index * tileSize;

@@ -35,6 +35,21 @@ class _LessonsStudentViewState extends ConsumerState<LessonsStudentView>
 
   @override
   Widget build(BuildContext context) {
+    final session = ref.watch(sessionProvider).asData?.value;
+    if (session == null) {
+      return Scaffold(
+        appBar: widget.openDrawerCb != null
+            ? AppBar(
+                title: Text(lessonsDefinition.label(context)),
+                leading: IconButton(
+                  icon: const Icon(Icons.menu),
+                  onPressed: () => widget.openDrawerCb!(),
+                ),
+              )
+            : null,
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
     return Scaffold(
       appBar: widget.openDrawerCb != null
           ? AppBar(
@@ -86,9 +101,7 @@ class _LessonsStudentViewState extends ConsumerState<LessonsStudentView>
         parser: ref.watch(lessonsStudentParserProvider),
         phpUrl: lessonsDefinition.appletPhpUrl,
         settingsDefaults: lessonsDefinition.settingsDefaults,
-        accountType: ref.watch(sessionProvider).asData?.value?.accountType ??
-            ref.watch(activeAccountProvider)?.accountType ??
-            AccountType.student,
+        accountType: session.accountType,
         builder:
             (context, lessons, accountType, settings, updateSetting, refresh) {
               Lessons? attendanceLessons;

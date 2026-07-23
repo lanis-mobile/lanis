@@ -144,9 +144,17 @@ class _NotificationSettingsState
         _loadSupportedApplets();
       });
     });
+    ref.listen(accountSpecificSettingsProvider, (prev, next) {
+      if (identical(prev, next)) return;
+      initVars();
+    });
+    ref.listen(activeAccountProvider, (prev, next) {
+      if (prev?.localId == next?.localId) return;
+      initVars();
+    });
 
-    final shared = ref.read(sharedOverAccountSettingsProvider);
-    final accountSettings = ref.read(accountSpecificSettingsProvider);
+    final shared = ref.watch(sharedOverAccountSettingsProvider);
+    final accountSettings = ref.watch(accountSpecificSettingsProvider);
     final resolvedAccountCount =
         widget.accountCount ??
         (ref.watch(accountsProvider).asData?.value.length ?? 1);
