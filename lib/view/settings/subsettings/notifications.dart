@@ -73,7 +73,7 @@ class _NotificationSettingsState
         final key = 'notification-${applet.appletPhpUrl}';
         supportedApplets[key] = applet;
         accountNotificationSettings[key] =
-            ref.read(accountSpecificSettingsProvider).getBool(key) ?? true;
+            ref.read(accountSpecificSettingsProvider)?.getBool(key) ?? true;
       }
     }
   }
@@ -114,7 +114,7 @@ class _NotificationSettingsState
       startTime = TimeOfDay(hour: start[0] as int, minute: start[1] as int);
       endTime = TimeOfDay(hour: end[0] as int, minute: end[1] as int);
       accountNotificationSettings['notifications-allow'] =
-          accountSettings.getBool('notifications-allow') ?? true;
+          accountSettings?.getBool('notifications-allow') ?? true;
       _loadSupportedApplets();
     });
   }
@@ -192,7 +192,7 @@ class _NotificationSettingsState
             onTap: notificationsPermissionAllowed
                 ? () {
                     final value = !notificationsEnabled;
-                    accountSettings.setBool('notifications-allow', value);
+                    accountSettings?.setBool('notifications-allow', value);
                     setState(() {
                       accountNotificationSettings['notifications-allow'] =
                           value;
@@ -224,7 +224,7 @@ class _NotificationSettingsState
                   value: notificationsEnabled,
                   onChanged: notificationsPermissionAllowed
                       ? (value) {
-                          accountSettings.setBool(
+                          accountSettings?.setBool(
                             'notifications-allow',
                             value,
                           );
@@ -262,7 +262,7 @@ class _NotificationSettingsState
               value: (accountNotificationSettings[key] ?? true) == true,
               onChanged: notificationsActive
                   ? (value) async {
-                      accountSettings.setBool(key, value);
+                      accountSettings?.setBool(key, value);
                       setState(() {
                         accountNotificationSettings[key] = value;
                       });

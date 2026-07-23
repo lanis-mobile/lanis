@@ -61,6 +61,10 @@ class _CombinedAppletBuilderState<T>
     final settings = ref.read(accountSpecificSettingsProvider);
     final loaded = <String, dynamic>{};
     for (final entry in widget.settingsDefaults.entries) {
+      if (settings == null) {
+        loaded[entry.key] = entry.value;
+        continue;
+      }
       final stored = settings.getJsonMap(_settingKey(entry.key));
       // Prefer typed reads for primitives in defaults
       final boolVal = settings.getBool(_settingKey(entry.key));
@@ -86,6 +90,7 @@ class _CombinedAppletBuilderState<T>
 
   Future<void> _updateSetting(String key, dynamic value) async {
     final settings = ref.read(accountSpecificSettingsProvider);
+    if (settings == null) return;
     final namespaced = _settingKey(key);
     if (value is bool) {
       settings.setBool(namespaced, value);
