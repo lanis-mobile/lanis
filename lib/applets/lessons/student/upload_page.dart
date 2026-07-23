@@ -244,9 +244,10 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                               for (final status in fileStatus) {
                                 if (status.status == "erfolgreich") {
                                   successfulUploads++;
-                                  if (status.message!.contains(
-                                    "Datei mit gleichem Namen schon vorhanden.",
-                                  )) {
+                                  if (status.message?.contains(
+                                        "Datei mit gleichem Namen schon vorhanden.",
+                                      ) ==
+                                      true) {
                                     renamed = true;
                                   }
                                 }

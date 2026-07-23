@@ -55,7 +55,7 @@ class _StudentTimetableSettingsState
     TimeTableRow startTime = hours[0];
     TimeTableRow endTime = hours[1];
     int selectedWeek = 0;
-    List<String?> allBadges = currentTimetable.planForAll!
+    List<String?> allBadges = (currentTimetable.planForAll ?? const [])
         .expand((day) => day.map((lesson) => lesson.badge))
         .where((badge) => badge != null)
         .toSet()
@@ -72,8 +72,12 @@ class _StudentTimetableSettingsState
       roomController.text = lesson.raum ?? '';
       startTime = hours.firstWhere(
         (hour) => hour.startTime == lesson.startTime,
+        orElse: () => hours.first,
       );
-      endTime = hours.firstWhere((hour) => hour.endTime == lesson.endTime);
+      endTime = hours.firstWhere(
+        (hour) => hour.endTime == lesson.endTime,
+        orElse: () => hours.last,
+      );
       selectedWeek = lesson.badge == null
           ? 0
           : allBadges.indexOf(lesson.badge) + 1;
