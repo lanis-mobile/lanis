@@ -20,18 +20,13 @@ class _QuickActionsState extends ConsumerSettingsColoursState<QuickActions> {
   // Android supports 2 quick actions, iOS 4
   final int maxQuickActions = Platform.isAndroid ? 2 : 4;
 
-  bool _supports(AppletDefinition applet) {
-    final session = ref.read(sessionProvider).asData?.value;
-    if (session == null) return false;
-    try {
-      return session.doesSupportFeature(Applets.byPhpUrl(applet.appletPhpUrl));
-    } catch (_) {
-      return false;
-    }
-  }
+  bool _supports(AppletDefinition applet) => ref
+      .read(supportedAppletPhpUrlsProvider)
+      .contains(applet.appletPhpUrl);
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(supportedAppletPhpUrlsProvider);
     final shared = ref.watch(sharedOverAccountSettingsProvider);
     List<AppletDefinition> applets = [];
     for (final applet in AppDefinitions.applets) {

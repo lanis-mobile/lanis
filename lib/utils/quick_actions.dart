@@ -62,19 +62,11 @@ class QuickActionsStartUp {
             final context = rootNavigatorKey.currentContext;
             if (context != null) {
               final container = ProviderScope.containerOf(context);
-              final session = container.read(sessionProvider).asData?.value;
-              if (session != null) {
-                try {
-                  if (!session.doesSupportFeature(
-                    Applets.byPhpUrl(shortcutType),
-                  )) {
-                    logger.e('Applet not supported: $shortcutType');
-                    return;
-                  }
-                } catch (_) {
-                  logger.e('Applet not supported: $shortcutType');
-                  return;
-                }
+              final supported =
+                  container.read(supportedAppletPhpUrlsProvider);
+              if (!supported.contains(shortcutType)) {
+                logger.e('Applet not supported: $shortcutType');
+                return;
               }
             }
           }

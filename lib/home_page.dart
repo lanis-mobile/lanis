@@ -53,15 +53,8 @@ class HomePageState extends ConsumerState<HomePage> {
 
   ClearTextAccount? get _account => ref.read(activeAccountProvider);
 
-  bool _supports(String phpUrl) {
-    final session = _session;
-    if (session == null) return false;
-    try {
-      return session.doesSupportFeature(Applets.byPhpUrl(phpUrl));
-    } catch (_) {
-      return false;
-    }
-  }
+  bool _supports(String phpUrl) =>
+      ref.read(supportedAppletPhpUrlsProvider).contains(phpUrl);
 
   Future<void> _openLanisInBrowser() async {
     final account = _account;
@@ -330,7 +323,7 @@ class HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(sessionProvider);
+    ref.watch(supportedAppletPhpUrlsProvider);
     ref.watch(activeAccountProvider);
 
     final anySupported = homeAppletPhpUrls.any(_supports);

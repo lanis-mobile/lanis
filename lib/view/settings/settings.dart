@@ -59,11 +59,9 @@ class SettingsScreen extends ConsumerSettingsColours {
 class _SettingsScreenState extends ConsumerSettingsColoursState<SettingsScreen> {
   SettingsTile? selectedTile;
 
-  bool _supports(AppletMeta applet) {
-    final session = ref.read(sessionProvider).asData?.value;
-    if (session == null) return false;
-    return session.doesSupportFeature(applet);
-  }
+  bool _supports(AppletMeta applet) => ref
+      .read(supportedAppletPhpUrlsProvider)
+      .contains(applet.appletPhpUrl);
 
   List<SettingsGroup> _buildSettingsTiles() {
     return [

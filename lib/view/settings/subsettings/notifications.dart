@@ -65,19 +65,16 @@ class _NotificationSettingsState
   Timer? checkTimer;
 
   void _loadSupportedApplets() {
-    final session = ref.read(sessionProvider).asData?.value;
-    if (session == null) return;
+    final supported = ref.read(supportedAppletPhpUrlsProvider);
     for (final applet in AppDefinitions.applets.where(
       (a) => a.notificationTask != null,
     )) {
-      try {
-        if (session.doesSupportFeature(Applets.byPhpUrl(applet.appletPhpUrl))) {
-          final key = 'notification-${applet.appletPhpUrl}';
-          supportedApplets[key] = applet;
-          accountNotificationSettings[key] =
-              ref.read(accountSpecificSettingsProvider).getBool(key) ?? true;
-        }
-      } catch (_) {}
+      if (supported.contains(applet.appletPhpUrl)) {
+        final key = 'notification-${applet.appletPhpUrl}';
+        supportedApplets[key] = applet;
+        accountNotificationSettings[key] =
+            ref.read(accountSpecificSettingsProvider).getBool(key) ?? true;
+      }
     }
   }
 

@@ -171,14 +171,10 @@ Future<void> callbackDispatcher() async {
 
             final session = container.read(sessionProvider).asData?.value;
             if (session == null) continue;
-            try {
-              if (!session.doesSupportFeature(
-                Applets.byPhpUrl(applet.appletPhpUrl),
-                overrideAccountType: account.accountType,
-              )) {
-                continue;
-              }
-            } catch (_) {
+            if (!session.doesSupportFeature(
+              Applets.byPhpUrl(applet.appletPhpUrl),
+              overrideAccountType: account.accountType,
+            )) {
               continue;
             }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lanis/applets/definitions.dart';
+import 'package:lanis/utils/auth_controller.dart';
 import 'package:liblanis/liblanis.dart';
 
 import '../models/account_types.dart';
@@ -71,9 +72,10 @@ class _OfflineAvailableAppletsSectionState
                 subtitle: Text(offlineApplet.userDisplayName),
                 leading: offlineApplet.definition.icon,
                 onTap: () async {
+                  // Full account switch so parsers/settings/feature set reload.
                   await ref
-                      .read(activeAccountProvider.notifier)
-                      .select(offlineApplet.localUserId);
+                      .read(authControllerProvider.notifier)
+                      .loginWithAccount(offlineApplet.localUserId);
                   if (!context.mounted) return;
                   Navigator.push(
                     context,

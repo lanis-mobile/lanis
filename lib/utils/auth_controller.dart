@@ -62,7 +62,8 @@ class AuthController extends Notifier<AuthState> {
   Future<void> loginWithAccount(int accountId) async {
     state = const AuthState.authenticating();
     try {
-      await ref.read(sessionProvider.notifier).deAuthenticate();
+      // [ActiveAccount.select] deauthenticates the previous session and
+      // invalidates account-scoped providers (parsers, settings, feature set).
       await ref.read(activeAccountProvider.notifier).select(accountId);
       await ref.read(sessionProvider.notifier).authenticate();
       state = const AuthState.authenticated();
