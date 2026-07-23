@@ -56,9 +56,9 @@ final goRouterProvider = Provider<GoRouter>((ref) {
 
       switch (auth.phase) {
         case AuthPhase.authenticating:
-          // Unmount home during switch so applets never see a null session.
-          // [StartupScreen.bootstrapIfNeeded] skips if login already drives auth.
-          return onStartup ? null : '/startup';
+          // Keep /login mounted so add-account can roll back after failure.
+          if (onStartup || loc == '/login') return null;
+          return '/startup';
         case AuthPhase.unauthenticated:
           if (loggingIn || onStartup) {
             if (onStartup) return '/welcome';

@@ -68,16 +68,15 @@ class LoginFormState extends ConsumerState<LoginForm> {
         password: password,
         schoolName: selectedSchoolName,
       );
-      final ok =
-          await ref.read(authControllerProvider.notifier).loginWithAccount(newID);
+      final ok = await ref
+          .read(authControllerProvider.notifier)
+          .loginWithAccount(newID, removeAccountOnFailure: true);
       if (!mounted) return;
       Navigator.pop(context); // pop dialog
       if (ok) {
         context.go(firstSupportedHomePath(ref));
         return;
       }
-      // Roll back orphan account and surface the auth failure.
-      await ref.read(accountsProvider.notifier).remove(newID);
       if (!mounted) return;
       final auth = ref.read(authControllerProvider);
       final cause = auth.exception?.cause ??

@@ -61,10 +61,12 @@ class AuthController extends Notifier<AuthState> {
 
       await ref.read(sessionProvider.notifier).authenticate();
       state = const AuthState.authenticated();
-    } on WrongCredentialsException {
-      state = const AuthState.unauthenticated();
-    } on CredentialsIncompleteException {
-      state = const AuthState.unauthenticated();
+    } on WrongCredentialsException catch (e) {
+      await ref.read(activeAccountProvider.notifier).clear();
+      state = AuthState.error(e);
+    } on CredentialsIncompleteException catch (e) {
+      await ref.read(activeAccountProvider.notifier).clear();
+      state = AuthState.error(e);
     } on LanisException catch (e) {
       state = AuthState.error(e);
     } catch (e) {
@@ -73,7 +75,13 @@ class AuthController extends Notifier<AuthState> {
   }
 
   /// Returns whether authentication succeeded.
-  Future<bool> loginWithAccount(int accountId) async {
+  ///
+  /// When [removeAccountOnFailure] is true (new account add), the account is
+  /// deleted if login fails — even if the login UI was unmounted by redirect.
+  Future<bool> loginWithAccount(
+    int accountId, {
+    bool removeAccountOnFailure = false,
+  }) async {
     _authDrivenExternally = true;
     final previousId = ref.read(activeAccountProvider)?.localId;
     state = const AuthState.authenticating();
@@ -85,6 +93,11 @@ class AuthController extends Notifier<AuthState> {
       state = const AuthState.authenticated();
       return true;
     } catch (e) {
+      if (removeAccountOnFailure) {
+        try {
+          await ref.read(accountsProvider.notifier).remove(accountId);
+        } catch (_) {}
+      }
       // Restore the previous account so a failed switch doesn't leave the user
       // logged out of a working session.
       if (previousId != null && previousId != accountId) {

@@ -33,6 +33,8 @@ class _StartupScreenState extends ConsumerState<StartupScreen> {
         if (!mounted) return;
         await showModalBottomSheet(
           context: context,
+          isDismissible: false,
+          enableDrag: false,
           builder: (context) => errorDialog(context, auth.exception),
         );
         return;
@@ -149,17 +151,30 @@ class _StartupScreenState extends ConsumerState<StartupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final auth = ref.watch(authControllerProvider);
+
     ref.listen(authControllerProvider, (prev, next) async {
       if (next.phase == AuthPhase.error &&
           next.exception != null &&
           prev?.phase != AuthPhase.error) {
         await showModalBottomSheet(
           context: context,
+          isDismissible: false,
+          enableDrag: false,
           builder: (context) => errorDialog(context, next.exception),
         );
-        // Retry only via the sheet button — dismissing must not loop.
       }
     });
+
+    if (auth.phase == AuthPhase.error && auth.exception != null) {
+      return Scaffold(
+        body: Center(
+          child: SingleChildScrollView(
+            child: errorDialog(context, auth.exception),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       body: Center(
