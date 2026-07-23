@@ -75,6 +75,7 @@ class AuthController extends Notifier<AuthState> {
   /// Returns whether authentication succeeded.
   Future<bool> loginWithAccount(int accountId) async {
     _authDrivenExternally = true;
+    final previousId = ref.read(activeAccountProvider)?.localId;
     state = const AuthState.authenticating();
     try {
       // [ActiveAccount.select] deauthenticates the previous session and
@@ -83,17 +84,35 @@ class AuthController extends Notifier<AuthState> {
       await ref.read(sessionProvider.notifier).authenticate();
       state = const AuthState.authenticated();
       return true;
-    } on WrongCredentialsException {
-      state = const AuthState.unauthenticated();
-      return false;
-    } on CredentialsIncompleteException {
-      state = const AuthState.unauthenticated();
-      return false;
-    } on LanisException catch (e) {
-      state = AuthState.error(e);
-      return false;
     } catch (e) {
-      state = AuthState.error(UnknownException(e.toString()));
+      // Restore the previous account so a failed switch doesn't leave the user
+      // logged out of a working session.
+      if (previousId != null && previousId != accountId) {
+        try {
+          await ref.read(activeAccountProvider.notifier).select(previousId);
+          await ref.read(sessionProvider.notifier).authenticate();
+          state = const AuthState.authenticated();
+        } catch (_) {
+          // Fall through to surface the original failure below.
+        }
+      }
+
+      if (e is WrongCredentialsException ||
+          e is CredentialsIncompleteException) {
+        if (state.phase != AuthPhase.authenticated) {
+          state = const AuthState.unauthenticated();
+        }
+        return false;
+      }
+      if (e is LanisException) {
+        if (state.phase != AuthPhase.authenticated) {
+          state = AuthState.error(e);
+        }
+        return false;
+      }
+      if (state.phase != AuthPhase.authenticated) {
+        state = AuthState.error(UnknownException(e.toString()));
+      }
       return false;
     }
   }

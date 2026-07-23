@@ -72,7 +72,29 @@ class LoginFormState extends ConsumerState<LoginForm> {
           await ref.read(authControllerProvider.notifier).loginWithAccount(newID);
       if (!mounted) return;
       Navigator.pop(context); // pop dialog
-      if (ok) context.go(firstSupportedHomePath(ref));
+      if (ok) {
+        context.go(firstSupportedHomePath(ref));
+        return;
+      }
+      // Roll back orphan account and surface the auth failure.
+      await ref.read(accountsProvider.notifier).remove(newID);
+      if (!mounted) return;
+      final auth = ref.read(authControllerProvider);
+      final cause = auth.exception?.cause ??
+          AppLocalizations.of(context).unknownError;
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(AppLocalizations.of(context).error),
+          content: Text(cause),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("OK"),
+            ),
+          ],
+        ),
+      );
     } catch (ex, s) {
       logger.e(ex, stackTrace: s);
 

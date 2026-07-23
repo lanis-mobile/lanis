@@ -68,9 +68,21 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         case AuthPhase.error:
           return onStartup ? null : '/startup';
         case AuthPhase.authenticated:
-          if (loggingIn ||
-              onStartup ||
-              (onHome && !_isSupportedHomePath(ref, loc))) {
+          // Allow /login so "add account" works while already signed in.
+          if (loggingIn && loc == '/login') return null;
+          if (loc == '/welcome' || onStartup) {
+            return firstSupportedHomePathFromRef(ref);
+          }
+          if (onHome && !_isSupportedHomePath(ref, loc)) {
+            return firstSupportedHomePathFromRef(ref);
+          }
+          final supported = ref.read(supportedAppletPhpUrlsProvider);
+          if (loc.startsWith('/storage') &&
+              !supported.contains('dateispeicher.php')) {
+            return firstSupportedHomePathFromRef(ref);
+          }
+          if (loc.startsWith('/study-groups') &&
+              !supported.contains('lerngruppen.php')) {
             return firstSupportedHomePathFromRef(ref);
           }
           return null;
