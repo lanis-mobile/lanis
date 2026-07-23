@@ -38,6 +38,7 @@ class _DataStorageNodeViewState extends ConsumerState<DataStorageNodeView> {
       final (fileList, folderList) = await ref
           .read(dataStorageParserProvider)
           .getNode(widget.nodeID);
+      if (!mounted) return;
       files = fileList;
       folders = folderList;
 
@@ -45,6 +46,7 @@ class _DataStorageNodeViewState extends ConsumerState<DataStorageNodeView> {
         loading = false;
       });
     } on LanisException {
+      if (!mounted) return;
       setState(() {
         error = true;
         loading = false;

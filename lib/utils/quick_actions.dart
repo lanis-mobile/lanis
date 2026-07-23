@@ -48,10 +48,10 @@ void _goQuickAction(String path) {
 
 class QuickActionsStartUp {
   static final Completer<void> _initializationCompleter = Completer<void>();
-  bool _initialized = false;
+  static bool _initialized = false;
 
   QuickActionsStartUp() {
-    if (_initialized) return;
+    if (_initialized || _initializationCompleter.isCompleted) return;
     quickActions = QuickActions();
     quickActions.initialize((String shortcutType) {
       final path = quickActionPathFor(shortcutType);
@@ -86,8 +86,10 @@ class QuickActionsStartUp {
       }
     });
     logger.i('Initialized quick actions');
-    _initializationCompleter.complete();
     _initialized = true;
+    if (!_initializationCompleter.isCompleted) {
+      _initializationCompleter.complete();
+    }
   }
 
   static Future<bool> waitForInitialization() async {

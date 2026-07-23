@@ -122,6 +122,8 @@ class _ConversationsChatState extends ConsumerState<ConversationsChat>
         final result = await ref.read(conversationsParserProvider)
             .refreshConversation(widget.id, _lastRefresh);
 
+        if (!mounted) return;
+
         _lastRefresh = result.lastRefresh;
         for (final UnparsedMessage message in result.messages) {
           if (_messagesSendInThisSession.contains(message.id)) {

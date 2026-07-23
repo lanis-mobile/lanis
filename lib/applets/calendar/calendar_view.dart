@@ -95,7 +95,7 @@ class _CalendarViewState extends ConsumerState<CalendarView> {
       return await ref.read(calendarParserProvider).getEvent(id);
     } catch (e) {
       if (!secondTry) {
-        fetchEvent(id, secondTry: true);
+        return await fetchEvent(id, secondTry: true);
       }
     }
     return null;

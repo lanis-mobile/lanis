@@ -36,6 +36,7 @@ class _DataStorageRootViewState extends ConsumerState<DataStorageRootView> {
   void loadItems() async {
     try {
       var items = await ref.read(dataStorageParserProvider).getRoot();
+      if (!mounted) return;
       var (fileList, folderList) = items;
       files = fileList;
       folders = folderList;
@@ -44,6 +45,7 @@ class _DataStorageRootViewState extends ConsumerState<DataStorageRootView> {
         loading = false;
       });
     } on LanisException {
+      if (!mounted) return;
       setState(() {
         error = true;
         loading = false;

@@ -35,6 +35,12 @@ class _LessonsStudentViewState extends ConsumerState<LessonsStudentView>
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(activeAccountIdProvider, (previous, next) {
+      if (previous == next) return;
+      globalSettings = null;
+      globalUpdateSetting = null;
+      homeworkLessons = null;
+    });
     final session = ref.watch(sessionProvider).asData?.value;
     if (session == null) {
       return Scaffold(

@@ -32,6 +32,16 @@ class _SubstitutionsViewState extends ConsumerState<SubstitutionsView>
   TabController? _tabController;
   String? _selectedDate;
 
+  void _ensureGlobalKeys(int dayCount) {
+    final needed = dayCount == 0 ? 1 : dayCount + 1;
+    if (globalKeys.length != needed) {
+      globalKeys = List.generate(
+        needed,
+        (_) => GlobalKey<RefreshIndicatorState>(),
+      );
+    }
+  }
+
   Widget lastWidget({required int entriesLength, required DateTime lastEdit}) {
     return ListTile(
       title: Center(
@@ -250,11 +260,7 @@ class _SubstitutionsViewState extends ConsumerState<SubstitutionsView>
       ),
       builder: (context, data, accountType, settings, updateSetting, refresh) {
         if (data.days.isEmpty) {
-          // GlobalKeys for RefreshIndicator and Refresh-FAB
-          globalKeys += List.generate(
-            data.days.length,
-            (index) => GlobalKey<RefreshIndicatorState>(),
-          );
+          _ensureGlobalKeys(0);
           return Scaffold(
             appBar: AppBar(
               title: Text(substitutionDefinition.label(context)),
@@ -325,10 +331,7 @@ class _SubstitutionsViewState extends ConsumerState<SubstitutionsView>
             ),
           );
         } else {
-          globalKeys += List.generate(
-            data.days.length,
-            (index) => GlobalKey<RefreshIndicatorState>(),
-          );
+          _ensureGlobalKeys(data.days.length);
           int currentIndex = _selectedDate != null
               ? data.days
                     .indexWhere((day) => day.parsedDate == _selectedDate)

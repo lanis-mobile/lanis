@@ -133,7 +133,7 @@ class _HomeworkBoxState extends ConsumerState<HomeworkBox> with WidgetsBindingOb
                                   ),
                                 );
                               }
-                            } else {
+                            } else if (mounted) {
                               setState(() {
                                 widget.currentEntry.homework!.homeWorkDone =
                                     value;

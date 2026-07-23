@@ -43,16 +43,16 @@ class _ConversationsViewState extends ConsumerState<ConversationsView> {
     SearchFunction.schedule: Icon(Icons.calendar_today),
   };
 
-  static bool simpleRemoveButton = false;
-  static Map<SearchFunction, bool> advancedRemoveButtons = {
+  bool simpleRemoveButton = false;
+  Map<SearchFunction, bool> advancedRemoveButtons = {
     SearchFunction.subject: false,
     SearchFunction.name: false,
     SearchFunction.schedule: false,
   };
 
-  static bool showHidden = false;
-  static bool advancedSearch = false;
-  static bool toggleMode = false;
+  bool showHidden = false;
+  bool advancedSearch = false;
+  bool toggleMode = false;
 
   OverviewFiltering get filter => ref.read(conversationsParserProvider).filter;
 
@@ -440,12 +440,14 @@ class _ConversationsViewState extends ConsumerState<ConversationsView> {
       try {
         canChooseType = await ref.read(conversationsParserProvider).canChooseType();
       } on NoConnectionException {
+        if (!mounted) return;
         setState(() {
           loadingCreateButton = false;
         });
         return;
       }
 
+      if (!mounted) return;
       setState(() {
         loadingCreateButton = false;
       });
@@ -589,6 +591,28 @@ class _ConversationsViewState extends ConsumerState<ConversationsView> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(activeAccountIdProvider, (previous, next) {
+      if (previous == next) return;
+      setState(() {
+        showHidden = false;
+        advancedSearch = false;
+        toggleMode = false;
+        simpleRemoveButton = false;
+        advancedRemoveButtons = {
+          SearchFunction.subject: false,
+          SearchFunction.name: false,
+          SearchFunction.schedule: false,
+        };
+        loadedConversation = null;
+        loadedConversationId = null;
+        checkedTiles.clear();
+        noBadgeConversations = [];
+        simpleSearchController.clear();
+        for (final controller in advancedSearchControllers.values) {
+          controller.clear();
+        }
+      });
+    });
     if (ref.watch(sessionProvider).asData?.value == null) {
       return Scaffold(
         appBar: widget.openDrawerCb != null

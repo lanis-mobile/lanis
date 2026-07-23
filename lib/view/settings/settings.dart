@@ -243,6 +243,18 @@ class _SettingsScreenState extends ConsumerSettingsColoursState<SettingsScreen> 
     ];
   }
 
+  SettingsTile? _resolveSelectedTile(List<SettingsGroup> settingsTiles) {
+    final allTiles = [for (final group in settingsTiles) ...group.tiles];
+    if (allTiles.isEmpty) return null;
+    final selectedTitle = selectedTile?.title(context);
+    if (selectedTitle != null) {
+      for (final tile in allTiles) {
+        if (tile.title(context) == selectedTitle) return tile;
+      }
+    }
+    return allTiles.first;
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.watch(supportedAppletPhpUrlsProvider);
@@ -254,13 +266,8 @@ class _SettingsScreenState extends ConsumerSettingsColoursState<SettingsScreen> 
         kToolbarHeight -
         MediaQuery.of(context).padding.top;
 
-    if (mounted &&
-        Responsive.isTablet(context) &&
-        settingsTiles.isNotEmpty &&
-        settingsTiles[0].tiles.isNotEmpty &&
-        selectedTile == null) {
-      selectedTile = settingsTiles[0].tiles[0];
-    }
+    final resolvedSelectedTile =
+        isTablet ? _resolveSelectedTile(settingsTiles) : null;
 
     Widget settingsList = SizedBox(
       height: availableHeight,
@@ -283,7 +290,7 @@ class _SettingsScreenState extends ConsumerSettingsColoursState<SettingsScreen> 
                   index: tileIndex,
                   length: settingsTiles[groupIndex].tiles.length,
                   foregroundColor: foregroundColor,
-                  selected: isTablet && selectedTile == tile,
+                  selected: isTablet && resolvedSelectedTile == tile,
                   onSelect: isTablet
                       ? (tile) {
                           if (tile.title(context) ==
@@ -324,8 +331,9 @@ class _SettingsScreenState extends ConsumerSettingsColoursState<SettingsScreen> 
           ),
           const VerticalDivider(width: 1),
           Expanded(
-            // At this point selectedTile should/can never be null
-            child: _buildSettingDetail(selectedTile!, accounts.length),
+            child: resolvedSelectedTile == null
+                ? const SizedBox.shrink()
+                : _buildSettingDetail(resolvedSelectedTile, accounts.length),
           ),
         ],
       ),

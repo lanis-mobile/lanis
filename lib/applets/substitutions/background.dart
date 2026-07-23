@@ -38,7 +38,7 @@ Future<void> substitutionsBackgroundTask(
     return;
   }
 
-  tools.sendMessage(
+  await tools.sendMessage(
     title: '${allSubstitutions.length} Einträge im Vertretungsplan',
     message: messageBody,
     id: 0,

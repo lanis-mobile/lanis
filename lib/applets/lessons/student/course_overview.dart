@@ -51,12 +51,13 @@ class _CourseOverviewAnsichtState extends ConsumerState<CourseOverviewAnsicht> {
         force: force,
       );
 
+      if (!mounted) return;
       setState(() {
         loading = false;
       });
     } catch (e) {
       if (!secondTry) {
-        _loadData(secondTry: true);
+        await _loadData(secondTry: true);
       }
     }
   }
