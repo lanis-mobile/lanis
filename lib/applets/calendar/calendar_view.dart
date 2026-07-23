@@ -87,7 +87,9 @@ class _CalendarViewState extends ConsumerState<CalendarView> {
   }) async {
     try {
       if (secondTry) {
-        await ref.read(sessionProvider).requireValue!.authenticate(withoutData: true);
+        await ref
+            .read(sessionProvider.notifier)
+            .authenticate(withoutData: true);
       }
 
       return await ref.read(calendarParserProvider).getEvent(id);
@@ -654,7 +656,7 @@ class _CalendarViewState extends ConsumerState<CalendarView> {
           ),
           Expanded(
             child: CombinedAppletBuilder<List<CalendarEvent>>(
-              parser: ref.read(calendarParserProvider),
+              parser: ref.watch(calendarParserProvider),
               phpUrl: calendarDefinition.appletPhpUrl,
               settingsDefaults: calendarDefinition.settingsDefaults,
               accountType: ref.watch(sessionProvider).requireValue!.accountType,

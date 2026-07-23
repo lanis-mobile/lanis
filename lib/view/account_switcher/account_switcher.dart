@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:lanis/generated/l10n.dart';
+import 'package:lanis/home_page.dart';
 import 'package:lanis/utils/auth_controller.dart';
 import 'account_tile.dart';
 
@@ -37,10 +38,13 @@ class _AccountSwitcherState extends ConsumerState<AccountSwitcher> {
                     context.pop();
                     return;
                   }
-                  await ref
+                  final ok = await ref
                       .read(authControllerProvider.notifier)
                       .loginWithAccount(account.localId);
-                  if (context.mounted) context.go('/home/substitutions');
+                  if (!context.mounted) return;
+                  if (ok) {
+                    context.go(firstSupportedHomePath(ref));
+                  }
                 },
               );
             },

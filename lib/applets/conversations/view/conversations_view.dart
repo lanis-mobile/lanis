@@ -613,7 +613,7 @@ class _ConversationsViewState extends ConsumerState<ConversationsView> {
               flex: widthParts >= 3 ? 1 : 4,
               child: Scaffold(
                 body: CombinedAppletBuilder<List<OverviewEntry>>(
-                  parser: ref.read(conversationsParserProvider),
+                  parser: ref.watch(conversationsParserProvider),
                   phpUrl: conversationsDefinition.appletPhpUrl,
                   settingsDefaults: conversationsDefinition.settingsDefaults,
                   accountType: ref.watch(sessionProvider).requireValue!.accountType,

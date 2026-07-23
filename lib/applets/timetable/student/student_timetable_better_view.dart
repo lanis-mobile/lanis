@@ -46,11 +46,16 @@ class _StudentTimetableBetterViewState
 
   @override
   Widget build(BuildContext context) {
+    final session = ref.watch(sessionProvider).asData?.value;
+    final accountType =
+        session?.accountType ??
+        ref.watch(activeAccountProvider)?.accountType ??
+        AccountType.student;
     return CombinedAppletBuilder<TimeTable>(
-      parser: ref.read(timetableParserProvider),
+      parser: ref.watch(timetableParserProvider),
       phpUrl: timeTableDefinition.appletPhpUrl,
       settingsDefaults: timeTableDefinition.settingsDefaults,
-      accountType: AccountType.student,
+      accountType: accountType,
       loadingAppBar: AppBar(
         title: Text(timeTableDefinition.label(context)),
         leading: widget.openDrawerCb != null

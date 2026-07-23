@@ -42,7 +42,7 @@ class _CourseOverviewAnsichtState extends ConsumerState<CourseOverviewAnsicht> {
   Future<void> _loadData({bool secondTry = false, bool force = false}) async {
     try {
       if (secondTry) {
-        await ref.read(sessionProvider).requireValue!.authenticate();
+        await ref.read(sessionProvider.notifier).authenticate();
       }
 
       String url = widget.dataFetchURL;

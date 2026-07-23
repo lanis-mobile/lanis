@@ -26,12 +26,22 @@ class _StartupScreenState extends ConsumerState<StartupScreen> {
   void initState() {
     super.initState();
     requestPermissions();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(authControllerProvider.notifier).bootstrap().then((_) {
-        if (ref.read(authControllerProvider).phase == AuthPhase.authenticated) {
-          QuickActionsStartUp();
-        }
-      });
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final auth = ref.read(authControllerProvider);
+      // In-app login failure may land here already in error (no phase transition).
+      if (auth.phase == AuthPhase.error && auth.exception != null) {
+        if (!mounted) return;
+        await showModalBottomSheet(
+          context: context,
+          builder: (context) => errorDialog(context, auth.exception),
+        );
+        return;
+      }
+      // Skip if loginWithAccount already drives auth — must not selectPreferred.
+      await ref.read(authControllerProvider.notifier).bootstrapIfNeeded();
+      if (ref.read(authControllerProvider).phase == AuthPhase.authenticated) {
+        QuickActionsStartUp();
+      }
     });
   }
 
@@ -140,12 +150,14 @@ class _StartupScreenState extends ConsumerState<StartupScreen> {
   @override
   Widget build(BuildContext context) {
     ref.listen(authControllerProvider, (prev, next) async {
-      if (next.phase == AuthPhase.error && next.exception != null) {
+      if (next.phase == AuthPhase.error &&
+          next.exception != null &&
+          prev?.phase != AuthPhase.error) {
         await showModalBottomSheet(
           context: context,
           builder: (context) => errorDialog(context, next.exception),
         );
-        ref.read(authControllerProvider.notifier).retry();
+        // Retry only via the sheet button — dismissing must not loop.
       }
     });
 

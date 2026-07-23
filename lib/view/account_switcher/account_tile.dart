@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/models/account_types.dart';
+import 'package:lanis/home_page.dart';
 import 'package:lanis/utils/auth_controller.dart';
 import 'package:lanis/utils/random_color.dart';
 
@@ -100,11 +101,19 @@ class AccountTile extends ConsumerWidget {
             );
             if (result != true) return;
             final restart = isLoggedInAccount;
-            await ref.read(accountsProvider.notifier).remove(account.localId);
-            if (!context.mounted) return;
             if (restart) {
-              await ref.read(authControllerProvider.notifier).bootstrap();
-              if (context.mounted) context.go('/startup');
+              await ref
+                  .read(authControllerProvider.notifier)
+                  .removeAccountAndContinue(account.localId);
+              if (!context.mounted) return;
+              final phase = ref.read(authControllerProvider).phase;
+              context.go(
+                phase == AuthPhase.authenticated
+                    ? firstSupportedHomePath(ref)
+                    : '/welcome',
+              );
+            } else {
+              await ref.read(accountsProvider.notifier).remove(account.localId);
             }
           },
         ),

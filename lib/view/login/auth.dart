@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:lanis/generated/l10n.dart';
+import 'package:lanis/home_page.dart';
 import 'package:lanis/utils/auth_controller.dart';
 import 'package:lanis/utils/logger.dart';
 import 'package:lanis/view/login/school_selector.dart';
@@ -67,11 +68,11 @@ class LoginFormState extends ConsumerState<LoginForm> {
         password: password,
         schoolName: selectedSchoolName,
       );
-      await ref.read(authControllerProvider.notifier).loginWithAccount(newID);
-      if (mounted) {
-        Navigator.pop(context); // pop dialog
-        context.go('/home/substitutions');
-      }
+      final ok =
+          await ref.read(authControllerProvider.notifier).loginWithAccount(newID);
+      if (!mounted) return;
+      Navigator.pop(context); // pop dialog
+      if (ok) context.go(firstSupportedHomePath(ref));
     } catch (ex, s) {
       logger.e(ex, stackTrace: s);
 

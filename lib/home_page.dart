@@ -29,6 +29,24 @@ const homeAppletPhpUrls = [
   'meinunterricht.php',
 ];
 
+/// First home tab path supported by the current session's feature set.
+String firstSupportedHomePath(WidgetRef ref) {
+  final supported = ref.read(supportedAppletPhpUrlsProvider);
+  for (var i = 0; i < homeAppletPhpUrls.length; i++) {
+    if (supported.contains(homeAppletPhpUrls[i])) return homeAppletPaths[i];
+  }
+  return homeAppletPaths.first;
+}
+
+/// Same as [firstSupportedHomePath] for non-widget [Ref] (e.g. go_router).
+String firstSupportedHomePathFromRef(Ref ref) {
+  final supported = ref.read(supportedAppletPhpUrlsProvider);
+  for (var i = 0; i < homeAppletPhpUrls.length; i++) {
+    if (supported.contains(homeAppletPhpUrls[i])) return homeAppletPaths[i];
+  }
+  return homeAppletPaths.first;
+}
+
 class HomePage extends ConsumerStatefulWidget {
   final StatefulNavigationShell navigationShell;
 
@@ -73,12 +91,21 @@ class HomePageState extends ConsumerState<HomePage> {
 
   Future<void> _logout() async {
     final account = _account;
-    if (account != null) {
-      await ref.read(sessionProvider.notifier).deAuthenticate();
-      await ref.read(accountsProvider.notifier).remove(account.localId);
+    if (account == null) {
+      await ref.read(authControllerProvider.notifier).logout();
+      if (mounted) context.go('/welcome');
+      return;
     }
-    await ref.read(authControllerProvider.notifier).logout();
-    if (mounted) context.go('/welcome');
+    await ref
+        .read(authControllerProvider.notifier)
+        .removeAccountAndContinue(account.localId);
+    final phase = ref.read(authControllerProvider).phase;
+    if (!mounted) return;
+    if (phase == AuthPhase.authenticated) {
+      context.go(firstSupportedHomePath(ref));
+    } else {
+      context.go('/welcome');
+    }
   }
 
   void _goBranch(int index) {

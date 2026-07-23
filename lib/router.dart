@@ -28,24 +28,39 @@ import 'package:lanis/view/settings/subsettings/quick_actions.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 
+bool _isSupportedHomePath(Ref ref, String loc) {
+  final idx = homeAppletPaths.indexWhere(
+    (p) => loc == p || loc.startsWith('$p/'),
+  );
+  if (idx < 0) return true;
+  return ref
+      .read(supportedAppletPhpUrlsProvider)
+      .contains(homeAppletPhpUrls[idx]);
+}
+
 final goRouterProvider = Provider<GoRouter>((ref) {
-  final auth = ref.watch(authControllerProvider);
+  // Do not watch auth here — recreating GoRouter resets the navigation stack.
+  final listenable = _AuthListenable(ref);
+  ref.onDispose(listenable.dispose);
 
   return GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: '/startup',
-    refreshListenable: _AuthListenable(ref),
+    refreshListenable: listenable,
     redirect: (context, state) {
+      final auth = ref.read(authControllerProvider);
       final loc = state.matchedLocation;
       final loggingIn = loc == '/welcome' || loc == '/login';
       final onStartup = loc == '/startup';
+      final onHome = loc.startsWith('/home');
 
       switch (auth.phase) {
         case AuthPhase.authenticating:
+          // Unmount home during switch so applets never see a null session.
+          // [StartupScreen.bootstrapIfNeeded] skips if login already drives auth.
           return onStartup ? null : '/startup';
         case AuthPhase.unauthenticated:
           if (loggingIn || onStartup) {
-            // Allow startup briefly then send to welcome
             if (onStartup) return '/welcome';
             return null;
           }
@@ -53,7 +68,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         case AuthPhase.error:
           return onStartup ? null : '/startup';
         case AuthPhase.authenticated:
-          if (loggingIn || onStartup) return '/home/substitutions';
+          if (loggingIn ||
+              onStartup ||
+              (onHome && !_isSupportedHomePath(ref, loc))) {
+            return firstSupportedHomePathFromRef(ref);
+          }
           return null;
       }
     },
@@ -129,14 +148,25 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/home/lessons',
                 builder: (context, state) {
-                  final account = ProviderScope.containerOf(context).read(
-                    activeAccountProvider,
+                  return Consumer(
+                    builder: (context, ref, _) {
+                      final accountType = ref.watch(
+                        activeAccountProvider.select((a) => a?.accountType),
+                      );
+                      final openDrawer = () =>
+                          Scaffold.of(context).openDrawer();
+                      if (accountType == AccountType.teacher) {
+                        return LessonsTeacherView(
+                          key: const ValueKey('lessons-teacher'),
+                          openDrawerCb: openDrawer,
+                        );
+                      }
+                      return LessonsStudentView(
+                        key: const ValueKey('lessons-student'),
+                        openDrawerCb: openDrawer,
+                      );
+                    },
                   );
-                  final openDrawer = () => Scaffold.of(context).openDrawer();
-                  if (account?.accountType == AccountType.teacher) {
-                    return LessonsTeacherView(openDrawerCb: openDrawer);
-                  }
-                  return LessonsStudentView(openDrawerCb: openDrawer);
                 },
               ),
             ],

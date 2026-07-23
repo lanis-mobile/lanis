@@ -25,11 +25,24 @@ class AuthState {
 }
 
 class AuthController extends Notifier<AuthState> {
+  /// Prevents [StartupScreen] from calling [bootstrap] while a login/switch
+  /// is already in flight (redirect to `/startup` would otherwise race).
+  bool _authDrivenExternally = false;
+
   @override
   AuthState build() => const AuthState.authenticating();
 
+  /// Cold-start entry from [StartupScreen] only.
+  Future<void> bootstrapIfNeeded() async {
+    if (state.phase == AuthPhase.authenticated) return;
+    if (state.phase == AuthPhase.error) return;
+    if (_authDrivenExternally) return;
+    await bootstrap();
+  }
+
   /// Select preferred account (if any) and authenticate.
   Future<void> bootstrap() async {
+    _authDrivenExternally = true;
     state = const AuthState.authenticating();
     try {
       final db = ref.read(lanisDatabaseProvider);
@@ -59,7 +72,9 @@ class AuthController extends Notifier<AuthState> {
     }
   }
 
-  Future<void> loginWithAccount(int accountId) async {
+  /// Returns whether authentication succeeded.
+  Future<bool> loginWithAccount(int accountId) async {
+    _authDrivenExternally = true;
     state = const AuthState.authenticating();
     try {
       // [ActiveAccount.select] deauthenticates the previous session and
@@ -67,13 +82,19 @@ class AuthController extends Notifier<AuthState> {
       await ref.read(activeAccountProvider.notifier).select(accountId);
       await ref.read(sessionProvider.notifier).authenticate();
       state = const AuthState.authenticated();
+      return true;
+    } on WrongCredentialsException {
+      state = const AuthState.unauthenticated();
+      return false;
+    } on CredentialsIncompleteException {
+      state = const AuthState.unauthenticated();
+      return false;
     } on LanisException catch (e) {
-      if (e is WrongCredentialsException ||
-          e is CredentialsIncompleteException) {
-        state = const AuthState.unauthenticated();
-      } else {
-        state = AuthState.error(e);
-      }
+      state = AuthState.error(e);
+      return false;
+    } catch (e) {
+      state = AuthState.error(UnknownException(e.toString()));
+      return false;
     }
   }
 
@@ -81,6 +102,24 @@ class AuthController extends Notifier<AuthState> {
     await ref.read(sessionProvider.notifier).deAuthenticate();
     ref.read(activeAccountProvider.notifier).clear();
     state = const AuthState.unauthenticated();
+  }
+
+  /// Remove an account; bootstrap another if any remain, else log out.
+  Future<void> removeAccountAndContinue(int accountId) async {
+    final wasActive = ref.read(activeAccountProvider)?.localId == accountId;
+    if (wasActive) {
+      _authDrivenExternally = true;
+      state = const AuthState.authenticating();
+    }
+    await ref.read(accountsProvider.notifier).remove(accountId);
+    if (!wasActive) return;
+
+    final remaining = await ref.read(accountsProvider.future);
+    if (remaining.isEmpty) {
+      state = const AuthState.unauthenticated();
+      return;
+    }
+    await bootstrap();
   }
 
   Future<void> retry() => bootstrap();

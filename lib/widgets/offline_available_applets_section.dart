@@ -73,10 +73,10 @@ class _OfflineAvailableAppletsSectionState
                 leading: offlineApplet.definition.icon,
                 onTap: () async {
                   // Full account switch so parsers/settings/feature set reload.
-                  await ref
+                  final ok = await ref
                       .read(authControllerProvider.notifier)
                       .loginWithAccount(offlineApplet.localUserId);
-                  if (!context.mounted) return;
+                  if (!context.mounted || !ok) return;
                   Navigator.push(
                     context,
                     MaterialPageRoute(

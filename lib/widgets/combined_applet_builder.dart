@@ -113,6 +113,17 @@ class _CombinedAppletBuilderState<T>
   }
 
   @override
+  void didUpdateWidget(covariant CombinedAppletBuilder<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.parser != widget.parser ||
+        oldWidget.phpUrl != widget.phpUrl) {
+      setState(() => _loading = true);
+      widget.parser.fetchData();
+      initSettings();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return StreamBuilder(
       stream: widget.parser.stream,
