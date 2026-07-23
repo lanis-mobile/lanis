@@ -100,31 +100,58 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
       future: _future,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
-          if (snapshot.hasError && snapshot.error is LanisException) {
+          if (snapshot.hasError) {
+            final error = snapshot.error is LanisException
+                ? snapshot.error as LanisException
+                : UnknownException(snapshot.error.toString());
             return Scaffold(
               appBar: AppBar(title: Text(widget.name)),
-              body: AppletErrorView(error: snapshot.error as LanisException),
+              body: AppletErrorView(error: error),
             );
           }
 
-          final DateTime startDate = DateFormat("EEEE d.M.yy H:mm", "de").parse(
-            snapshot.data["start"]
-                .replaceAll(",", "")
-                .replaceAll(" den", "")
-                .replaceAll(" Uhr", ""),
-          );
-          final DateTime endDate = DateFormat("EEEE d.M.yy H:mm", "de").parse(
-            snapshot.data["deadline"]
-                .replaceAll(",", "")
-                .replaceAll(" den", "")
-                .replaceAll(" Uhr", ""),
-          );
+          final data = snapshot.data;
+          final startRaw = data?["start"] as String?;
+          final deadlineRaw = data?["deadline"] as String?;
+          final deletionRaw = data?["automatic_deletion"] as String?;
+          if (startRaw == null ||
+              deadlineRaw == null ||
+              deletionRaw == null) {
+            return Scaffold(
+              appBar: AppBar(title: Text(widget.name)),
+              body: AppletErrorView(
+                error: UnknownException('Missing upload dates'),
+              ),
+            );
+          }
+
+          final DateTime startDate;
+          final DateTime endDate;
+          final DateTime deleteDate;
+          try {
+            startDate = DateFormat("EEEE d.M.yy H:mm", "de").parse(
+              startRaw
+                  .replaceAll(",", "")
+                  .replaceAll(" den", "")
+                  .replaceAll(" Uhr", ""),
+            );
+            endDate = DateFormat("EEEE d.M.yy H:mm", "de").parse(
+              deadlineRaw
+                  .replaceAll(",", "")
+                  .replaceAll(" den", "")
+                  .replaceAll(" Uhr", ""),
+            );
+            deleteDate = DateFormat("d.M.yyyy", "de").parse(deletionRaw);
+          } catch (_) {
+            return Scaffold(
+              appBar: AppBar(title: Text(widget.name)),
+              body: AppletErrorView(
+                error: UnknownException('Invalid upload dates'),
+              ),
+            );
+          }
           final DateTime now = DateTime.now();
 
-          final DateTime deleteDate = DateFormat(
-            "d.M.yyyy",
-            "de",
-          ).parse(snapshot.data["automatic_deletion"]);
           final bool filesDeleted =
               now.isAfter(deleteDate) || now.isAtSameMomentAs(deleteDate);
 

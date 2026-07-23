@@ -55,6 +55,7 @@ class _MoodleWebViewState extends ConsumerState<MoodleWebView> {
   bool isLoggedIn = false;
 
   InAppWebViewController? webViewController;
+  WebUri? _pendingMoodleUrl;
   PullToRefreshController? pullToRefreshController;
 
   void addWebViewCookies(
@@ -191,23 +192,27 @@ class _MoodleWebViewState extends ConsumerState<MoodleWebView> {
         [location3, location4, location4],
       );
 
-      webViewController!.loadUrl(
-        urlRequest: URLRequest(
-          url: WebUri(
-            "https://mo${account.schoolID}.schulportal.hessen.de",
-          ),
-        ),
+      final moodleHome = WebUri(
+        "https://mo${account.schoolID}.schulportal.hessen.de",
       );
+      final controller = webViewController;
+      if (controller != null) {
+        await controller.loadUrl(urlRequest: URLRequest(url: moodleHome));
+      } else {
+        _pendingMoodleUrl = moodleHome;
+      }
       session.jar.saveFromResponse(Uri.parse(location3), [moProd01Cookie]);
       session.jar.saveFromResponse(Uri.parse(location4), [
         moodleId1Cookie,
         moodleSessionCookie,
       ]);
 
+      if (!mounted) return;
       setState(() {
         isLoggedIn = true;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         isLoginError = true;
 
@@ -313,6 +318,13 @@ class _MoodleWebViewState extends ConsumerState<MoodleWebView> {
                 ),
                 onWebViewCreated: (controller) {
                   webViewController = controller;
+                  final pending = _pendingMoodleUrl;
+                  if (pending != null) {
+                    _pendingMoodleUrl = null;
+                    controller.loadUrl(
+                      urlRequest: URLRequest(url: pending),
+                    );
+                  }
                 },
                 shouldOverrideUrlLoading: (controller, navigationAction) async {
                   error = null;

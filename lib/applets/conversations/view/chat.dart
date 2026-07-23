@@ -534,25 +534,26 @@ class _ConversationsChatState extends ConsumerState<ConversationsChat>
             if (snapshot.connectionState != ConnectionState.waiting) {
               // Error content
               if (snapshot.hasError) {
-                if (snapshot.error is LanisException) {
-                  return AppletErrorView(
-                    error: snapshot.error as LanisException,
-                    showAppBar: true,
-                    retry: () {
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
-                          builder: (_) => ConversationsChat(
-                            refreshSidebar: widget.refreshSidebar,
-                            title: widget.title,
-                            id: widget.id,
-                            newSettings: widget.newSettings,
-                            isTablet: widget.isTablet,
-                          ),
+                final error = snapshot.error is LanisException
+                    ? snapshot.error as LanisException
+                    : UnknownException(snapshot.error.toString());
+                return AppletErrorView(
+                  error: error,
+                  showAppBar: true,
+                  retry: () {
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (_) => ConversationsChat(
+                          refreshSidebar: widget.refreshSidebar,
+                          title: widget.title,
+                          id: widget.id,
+                          newSettings: widget.newSettings,
+                          isTablet: widget.isTablet,
                         ),
-                      );
-                    },
-                  );
-                }
+                      ),
+                    );
+                  },
+                );
               }
 
               return Column(

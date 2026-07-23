@@ -153,9 +153,10 @@ Future<void> callbackDispatcher() async {
         for (final applet in AppDefinitions.applets.where(
           (a) => a.notificationTask != null,
         )) {
+          final accountType = account.accountType ?? AccountType.student;
           final enabled =
               settings.getBool('notification-${applet.appletPhpUrl}') ?? true;
-          if (!applet.supportedAccountTypes.contains(account.accountType) ||
+          if (!applet.supportedAccountTypes.contains(accountType) ||
               !enabled) {
             continue;
           }
@@ -171,7 +172,7 @@ Future<void> callbackDispatcher() async {
           if (session == null) continue;
           if (!session.doesSupportFeature(
             Applets.byPhpUrl(applet.appletPhpUrl),
-            overrideAccountType: account.accountType,
+            overrideAccountType: accountType,
           )) {
             continue;
           }
@@ -179,7 +180,7 @@ Future<void> callbackDispatcher() async {
           // One shared session/Dio — run applet tasks sequentially.
           await applet.notificationTask!(
             container,
-            account.accountType ?? AccountType.student,
+            accountType,
             BackgroundTaskToolkit(
               accountId: account.localId,
               username: account.username,

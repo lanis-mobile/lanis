@@ -312,7 +312,7 @@ class _StudentTimetableSettingsState
             final ids = settings['hidden-lessons'];
             Map<int, List<TimetableSubject>> lessons = {};
 
-            for (var (dayIndex, day) in timetable.planForAll!.indexed) {
+            for (var (dayIndex, day) in (timetable.planForAll ?? const []).indexed) {
               lessons[dayIndex] = [];
               if (ids == null) continue;
               for (var lesson in day) {

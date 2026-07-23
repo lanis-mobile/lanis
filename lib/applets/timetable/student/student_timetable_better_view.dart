@@ -39,7 +39,11 @@ class _StudentTimetableBetterViewState
     if (selectedType == TimeTableType.own && data.planForOwn != null) {
       return TimeTableHelper.mergeByIndices(data.planForOwn!, customLessons);
     }
-    return TimeTableHelper.mergeByIndices(data.planForAll!, customLessons);
+    final planForAll = data.planForAll;
+    if (planForAll == null) {
+      return const [];
+    }
+    return TimeTableHelper.mergeByIndices(planForAll, customLessons);
   }
 
   int currentWeekIndex = -1;
