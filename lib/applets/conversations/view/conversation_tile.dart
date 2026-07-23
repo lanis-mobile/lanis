@@ -1,7 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:liblanis/liblanis.dart';
-import 'package:lanis/applets/conversations/view/conversations_view.dart';
+
+const double tileSize = 80.0;
+
+class CheckTileNotification extends Notification {
+  final String? id;
+
+  const CheckTileNotification({this.id});
+}
+
+class JumpToNotification extends Notification {
+  final double? position;
+
+  const JumpToNotification({this.position});
+}
 
 class ConversationTile extends ConsumerWidget {
   final OverviewEntry entry;

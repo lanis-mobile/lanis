@@ -3,13 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:dart_date/dart_date.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:html/parser.dart';
-import 'package:intl/intl.dart';
+import 'package:lanis/applets/conversations/view/chat_app_bar.dart';
+import 'package:lanis/applets/conversations/view/chat_intro_header.dart';
+import 'package:lanis/applets/conversations/view/chat_scroll_to_bottom_fab.dart';
+import 'package:lanis/applets/conversations/view/chat_triangle_pattern.dart';
 import 'package:lanis/applets/conversations/view/components/date_header_widget.dart';
 import 'package:lanis/applets/conversations/view/components/message_widget.dart';
 import 'package:lanis/applets/conversations/view/components/rich_chat_text_editor.dart';
-import 'package:lanis/applets/conversations/view/components/statistic_widget.dart';
+import 'package:lanis/applets/conversations/view/conversation_date.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
@@ -204,30 +206,6 @@ class _ConversationsChatState extends ConsumerState<ConversationsChat>
     );
   }
 
-  static DateTime parseDateString(String date) {
-    if (date.contains("heute")) {
-      DateTime now = DateTime.now();
-      DateTime conversation = DateFormat("H:m").parse(date.substring(6));
-
-      return now.copyWith(
-        hour: conversation.hour,
-        minute: conversation.minute,
-        second: 0,
-      );
-    } else if (date.contains("gestern")) {
-      DateTime yesterday = DateTime.now().subtract(const Duration(days: 1));
-      DateTime conversation = DateFormat("H:m").parse(date.substring(8));
-
-      return yesterday.copyWith(
-        hour: conversation.hour,
-        minute: conversation.minute,
-        second: 0,
-      );
-    } else {
-      return DateFormat("d.M.y H:m").parse(date);
-    }
-  }
-
   void addAuthorTextStyles(final List<String> authors) {
     final ThemeData theme = Theme.of(context);
     for (final String author in authors) {
@@ -302,7 +280,7 @@ class _ConversationsChatState extends ConsumerState<ConversationsChat>
       text: content,
       own: message.own,
       author: message.author,
-      date: parseDateString(message.date),
+      date: parseConversationDate(message.date),
       state: position,
       status: MessageStatus.sent,
     );
@@ -311,7 +289,7 @@ class _ConversationsChatState extends ConsumerState<ConversationsChat>
   List<String> authors = [];
 
   void _renderSingleMessage(UnparsedMessage message) {
-    final DateTime messageDate = parseDateString(message.date);
+    final DateTime messageDate = parseConversationDate(message.date);
     final String messageAuthor = message.author;
     MessageState position = MessageState.first;
 
@@ -346,7 +324,7 @@ class _ConversationsChatState extends ConsumerState<ConversationsChat>
     authors.clear(); // Clear existing authors
 
     // Process parent message
-    final DateTime parentDate = parseDateString(unparsedMessages.parent.date);
+    final DateTime parentDate = parseConversationDate(unparsedMessages.parent.date);
     final String parentAuthor = unparsedMessages.parent.author;
 
     if (unparsedMessages.parent.own != true) {
@@ -421,111 +399,13 @@ class _ConversationsChatState extends ConsumerState<ConversationsChat>
     }
   }
 
-  Widget appBar() {
-    return AppBar(
-      title: Text(widget.title),
-      scrolledUnderElevation: 0.0,
-      backgroundColor: Colors.transparent,
-      actions: [
-        if (refreshing)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2.5,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-            ),
-          ),
-        if (settings.groupChat == false &&
-            settings.onlyPrivateAnswers == false &&
-            settings.noReply == false)
-          IconButton(
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) {
-                  return AlertDialog(
-                    icon: const Icon(Icons.groups),
-                    title: Text(
-                      AppLocalizations.of(
-                        context,
-                      ).conversationTypeName(ChatType.openChat.name),
-                    ),
-                    content: Text(AppLocalizations.of(context).openChatWarning),
-                    actions: [
-                      FilledButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: const Text("Ok"),
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
-            icon: const Icon(Icons.warning),
-          ),
-        if (statistics != null)
-          IconButton(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => StatisticWidget(
-                    statistics: statistics!,
-                    conversationTitle: widget.title,
-                  ),
-                ),
-              );
-            },
-            icon: const Icon(Icons.people),
-          ),
-      ],
-    );
-  }
-
-  Widget triangularPattern({required Color lineColor}) {
-    return SvgPicture.asset(
-      "assets/triangle_pattern.svg",
-      fit: BoxFit.cover,
-      colorFilter: ColorFilter.mode(lineColor, BlendMode.srcIn),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: ValueListenableBuilder(
-        valueListenable: isScrollToBottomVisible,
-        builder: (context, isVisible, _) {
-          return Visibility(
-            visible: isVisible,
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 60),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(15),
-                onTap: () =>
-                    scrollToBottom(initDelay: const Duration(milliseconds: 50)),
-                child: Container(
-                  height: 30,
-                  width: 30,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(15),
-                    border: Border.all(
-                      color: Theme.of(context).colorScheme.secondaryFixedDim,
-                      width: 1.5,
-                    ),
-                    color: Theme.of(context).colorScheme.surfaceDim,
-                  ),
-                  child: const Icon(Icons.keyboard_arrow_down),
-                ),
-              ),
-            ),
-          );
-        },
+      floatingActionButton: ChatScrollToBottomFab(
+        isVisible: isScrollToBottomVisible,
+        onPressed: () =>
+            scrollToBottom(initDelay: const Duration(milliseconds: 50)),
       ),
       body: SafeArea(
         child: FutureBuilder(
@@ -558,7 +438,12 @@ class _ConversationsChatState extends ConsumerState<ConversationsChat>
 
               return Column(
                 children: [
-                  appBar(),
+                  ConversationsChatAppBar(
+                    title: widget.title,
+                    refreshing: refreshing,
+                    settings: settings,
+                    statistics: statistics,
+                  ),
                   Container(
                     width: double.infinity,
                     height: 1,
@@ -576,7 +461,7 @@ class _ConversationsChatState extends ConsumerState<ConversationsChat>
                   Expanded(
                     child: Stack(
                       children: [
-                        triangularPattern(
+                        ChatTrianglePattern(
                           lineColor: Theme.of(context)
                               .colorScheme
                               .onSurfaceVariant
@@ -630,65 +515,9 @@ class _ConversationsChatState extends ConsumerState<ConversationsChat>
                                     },
                                   ),
                                   SliverToBoxAdapter(
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(
-                                        bottom: 12.0,
-                                      ),
-                                      child: Column(
-                                        children: [
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              Flexible(
-                                                child: Padding(
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 12.0,
-                                                      ),
-                                                  child: Text(
-                                                    widget.title,
-                                                    style: Theme.of(
-                                                      context,
-                                                    ).textTheme.headlineMedium,
-                                                    textAlign: TextAlign.center,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          if (settings.onlyPrivateAnswers &&
-                                              !settings.own) ...[
-                                            Container(
-                                              alignment: Alignment.center,
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    vertical: 8.0,
-                                                    horizontal: 12.0,
-                                                  ),
-                                              margin: const EdgeInsets.only(
-                                                top: 16.0,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                color: Theme.of(context)
-                                                    .colorScheme
-                                                    .surfaceContainerHigh,
-                                              ),
-                                              child: Text(
-                                                AppLocalizations.of(
-                                                  context,
-                                                ).privateConversation(
-                                                  settings.author!,
-                                                ),
-                                                style: Theme.of(
-                                                  context,
-                                                ).textTheme.bodyMedium,
-                                                textAlign: TextAlign.center,
-                                              ),
-                                            ),
-                                          ],
-                                        ],
-                                      ),
+                                    child: ChatIntroHeader(
+                                      title: widget.title,
+                                      settings: settings,
                                     ),
                                   ),
                                 ],

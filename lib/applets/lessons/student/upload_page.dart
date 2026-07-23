@@ -5,11 +5,11 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:liblanis/liblanis.dart';
-import 'package:intl/intl.dart';
-import 'package:open_file/open_file.dart';
+import 'package:lanis/applets/lessons/student/upload_dates.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/utils/file_picker.dart';
 import 'package:lanis/widgets/error_view.dart';
+import 'package:open_file/open_file.dart';
 
 import '../../../utils/file_operations.dart';
 import '../../../utils/logger.dart';
@@ -111,38 +111,12 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
           }
 
           final data = snapshot.data;
-          final startRaw = data?["start"] as String?;
-          final deadlineRaw = data?["deadline"] as String?;
-          final deletionRaw = data?["automatic_deletion"] as String?;
-          if (startRaw == null ||
-              deadlineRaw == null ||
-              deletionRaw == null) {
-            return Scaffold(
-              appBar: AppBar(title: Text(widget.name)),
-              body: AppletErrorView(
-                error: UnknownException('Missing upload dates'),
-              ),
-            );
-          }
-
-          final DateTime startDate;
-          final DateTime endDate;
-          final DateTime deleteDate;
-          try {
-            startDate = DateFormat("EEEE d.M.yy H:mm", "de").parse(
-              startRaw
-                  .replaceAll(",", "")
-                  .replaceAll(" den", "")
-                  .replaceAll(" Uhr", ""),
-            );
-            endDate = DateFormat("EEEE d.M.yy H:mm", "de").parse(
-              deadlineRaw
-                  .replaceAll(",", "")
-                  .replaceAll(" den", "")
-                  .replaceAll(" Uhr", ""),
-            );
-            deleteDate = DateFormat("d.M.yyyy", "de").parse(deletionRaw);
-          } catch (_) {
+          final dates = UploadDates.tryParse(
+            startRaw: data?["start"] as String?,
+            deadlineRaw: data?["deadline"] as String?,
+            deletionRaw: data?["automatic_deletion"] as String?,
+          );
+          if (dates == null) {
             return Scaffold(
               appBar: AppBar(title: Text(widget.name)),
               body: AppletErrorView(
@@ -150,6 +124,9 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
               ),
             );
           }
+          final startDate = dates.start;
+          final endDate = dates.deadline;
+          final deleteDate = dates.automaticDeletion;
           final DateTime now = DateTime.now();
 
           final bool filesDeleted =

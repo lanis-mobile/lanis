@@ -1,20 +1,20 @@
 import 'package:dart_date/dart_date.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:lanis/utils/liblanis_ui.dart';
-import 'package:linkify/linkify.dart';
+import 'package:lanis/applets/calendar/calendar_event_card.dart';
+import 'package:lanis/applets/calendar/calendar_event_sheet.dart';
+import 'package:lanis/applets/calendar/calendar_fuzzy_search.dart';
+import 'package:lanis/applets/calendar/calendar_search_result_tile.dart';
 import 'package:lanis/applets/calendar/definition.dart';
 import 'package:html_unescape/html_unescape.dart';
 import 'package:lanis/utils/keyboard_observer.dart';
 import 'package:lanis/widgets/combined_applet_builder.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import 'package:lanis/generated/l10n.dart';
 
-import '../../utils/logger.dart';
 import '../../widgets/error_view.dart';
 
 class CalendarView extends ConsumerStatefulWidget {
@@ -52,34 +52,6 @@ class _CalendarViewState extends ConsumerState<CalendarView> {
     _selectedEvents = ValueNotifier(_getEventsForDay(_selectedDay!));
 
     keyboardObserver.addDefaultCallback();
-  }
-
-  List<CalendarEvent> fuzzySearchEventList(String query) {
-    List<CalendarEvent> searchResultsBeforeToday = [];
-    List<CalendarEvent> searchResultsAfterToday = [];
-
-    for (var event in eventList) {
-      String searchString =
-          '${event.title} ${event.description} ${event.place ?? ''} ${event.startTime.year}'
-              .toLowerCase();
-      if (searchString.contains(query.toLowerCase())) {
-        if (event.endTime.isBefore(DateTime.now())) {
-          searchResultsBeforeToday.add(event);
-        } else {
-          searchResultsAfterToday.add(event);
-        }
-      }
-    }
-
-    // Sort the search results by date
-    searchResultsBeforeToday.sort((a, b) => b.startTime.compareTo(a.startTime));
-    searchResultsAfterToday.sort((a, b) => a.startTime.compareTo(b.startTime));
-
-    List<CalendarEvent> searchResults = [];
-    searchResults.addAll(searchResultsAfterToday);
-    searchResults.addAll(searchResultsBeforeToday);
-
-    return searchResults;
   }
 
   Future<Map<String, dynamic>?> fetchEvent(
@@ -137,204 +109,6 @@ class _CalendarViewState extends ConsumerState<CalendarView> {
     }
   }
 
-  bool doesEntryExist(dynamic entry) => entry != null && entry != "";
-
-  Widget eventBottomSheet(
-    CalendarEvent calendarData,
-    Map<String, dynamic> singleEventData,
-  ) {
-    const double iconSize = 24;
-
-    // German-formatted readable date string
-    String date = "";
-
-    String startTime = calendarData.startTime.format("E d MMM y", "de_DE");
-    String endTime = calendarData.endTime.format("E d MMM y", "de_DE");
-
-    if (calendarData.allDay) {
-      if (startTime == endTime) {
-        date += startTime;
-      } else {
-        date += "$startTime bis $endTime";
-      }
-    } else {
-      if (startTime == endTime) {
-        date +=
-            "${calendarData.startTime.format("E d MMM y H:mm", "de_DE")} bis ${calendarData.endTime.format("H:mm", "de_DE")}";
-      } else {
-        date +=
-            "${calendarData.startTime.format("E d MMM y H:mm", "de_DE")} bis ${calendarData.endTime.format("E MMM d y H:mm", "de_DE")}";
-      }
-    }
-
-    // For which group (Public, Students & Parents, Teachers) it's targeted for.
-    String targetGroup = "";
-
-    if (doesEntryExist(singleEventData["properties"]) &&
-        doesEntryExist(singleEventData["properties"]["zielgruppen"])) {
-      Map<String, dynamic> data = singleEventData["properties"]["zielgruppen"];
-
-      data.forEach((key, value) {
-        if (key == "-sus") {
-          targetGroup += value.replaceAll("amp;", "").toString();
-          return;
-        }
-        targetGroup += "$value, ";
-      });
-    }
-
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20.0),
-      child: ListView(
-        shrinkWrap: true,
-        children: [
-          // Title
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8.0),
-            child: Text(
-              calendarData.title,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-          ),
-          // Responsible (Teacher, Admin, ...)
-          if (doesEntryExist(singleEventData["properties"]) &&
-              doesEntryExist(
-                singleEventData["properties"]["verantwortlich"],
-              )) ...[
-            Padding(
-              padding: const EdgeInsets.only(bottom: 4.0),
-              child: Row(
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.only(right: 8.0),
-                    child: Icon(Icons.person, size: iconSize),
-                  ),
-                  Text(
-                    singleEventData["properties"]["verantwortlich"],
-                    style: Theme.of(context).textTheme.labelLarge,
-                  ),
-                ],
-              ),
-            ),
-          ],
-          // Time
-          Padding(
-            padding: const EdgeInsets.only(bottom: 4.0),
-            child: Row(
-              children: [
-                const Padding(
-                  padding: EdgeInsets.only(right: 8.0),
-                  child: Icon(Icons.access_time_filled, size: iconSize),
-                ),
-                Flexible(
-                  child: Text(
-                    date,
-                    style: Theme.of(context).textTheme.labelLarge,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Place
-          if (doesEntryExist(calendarData.place)) ...[
-            Padding(
-              padding: const EdgeInsets.only(bottom: 4.0),
-              child: Row(
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.only(right: 8.0),
-                    child: Icon(Icons.place, size: iconSize),
-                  ),
-                  Text(
-                    calendarData.place!,
-                    style: Theme.of(context).textTheme.labelLarge,
-                  ),
-                ],
-              ),
-            ),
-          ],
-          // Target group
-          if (doesEntryExist(singleEventData["properties"]) &&
-              doesEntryExist(singleEventData["properties"]["zielgruppen"])) ...[
-            Padding(
-              padding: const EdgeInsets.only(bottom: 4.0),
-              child: Row(
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.only(right: 8.0),
-                    child: Icon(Icons.group, size: iconSize),
-                  ),
-                  Flexible(
-                    child: Text(
-                      targetGroup,
-                      style: Theme.of(context).textTheme.labelLarge,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-          if (doesEntryExist(calendarData.lerngruppe)) ...[
-            Padding(
-              padding: const EdgeInsets.only(bottom: 4.0),
-              child: Row(
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.only(right: 8.0),
-                    child: Icon(Icons.school, size: iconSize),
-                  ),
-                  Flexible(
-                    child: Text(
-                      calendarData.lerngruppe["Name"],
-                      style: Theme.of(context).textTheme.labelLarge,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-          if (doesEntryExist(calendarData.description)) ...[
-            Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: Text.rich(
-                TextSpan(
-                  children:
-                      linkify(
-                        calendarData.description.replaceAll("<br />", "\n"),
-                        options: const LinkifyOptions(humanize: true),
-                        linkifiers: const [EmailLinkifier(), UrlLinkifier()],
-                      ).map((element) {
-                        if (element is LinkableElement) {
-                          return TextSpan(
-                            text: element.text,
-                            style: Theme.of(context).textTheme.bodyMedium!
-                                .copyWith(
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                            recognizer: TapGestureRecognizer()
-                              ..onTap = () async {
-                                try {
-                                  await launchUrl(Uri.parse(element.url));
-                                } catch (e) {
-                                  logger.e(
-                                    "Could not launch url: ${element.url}",
-                                  );
-                                }
-                              },
-                          );
-                        }
-                        return TextSpan(text: element.text);
-                      }).toList(),
-                ),
-              ),
-            ),
-          ],
-          SizedBox(height: 50.0),
-        ],
-      ),
-    );
-  }
-
   Future<void> openEventBottomSheet(CalendarEvent calendarData) async {
     try {
       var singleEvent = await fetchEvent(calendarData.id);
@@ -346,7 +120,10 @@ class _CalendarViewState extends ConsumerState<CalendarView> {
           useSafeArea: true,
           showDragHandle: true,
           builder: (context) {
-            return eventBottomSheet(calendarData, singleEvent);
+            return CalendarEventBottomSheet(
+              calendarData: calendarData,
+              singleEventData: singleEvent,
+            );
           },
         );
       }
@@ -367,7 +144,7 @@ class _CalendarViewState extends ConsumerState<CalendarView> {
     }
   }
 
-  Widget _itemsListView(context) {
+  Widget _itemsListView(BuildContext context) {
     return ValueListenableBuilder<List<CalendarEvent>>(
       valueListenable: _selectedEvents,
       builder: (context, value, _) {
@@ -395,62 +172,12 @@ class _CalendarViewState extends ConsumerState<CalendarView> {
               SliverList.builder(
                 itemCount: value.length,
                 itemBuilder: (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.only(
-                      left: 8,
-                      right: 8,
-                      bottom: 4,
-                    ),
-                    child: Card(
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(12),
-                        onTap: () async {
-                          await openEventBottomSheet(value[index]);
-                        },
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 8,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: colorFromArgb(value[index].colorArgb),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.all(8),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      _unescape.convert(value[index].title),
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.titleMedium,
-                                    ),
-                                    Text(
-                                      _unescape.convert(
-                                        value[index].category?.name ??
-                                            value[index].place ??
-                                            value[index].description,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.bodyMedium,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            Icon(Icons.arrow_right),
-                            SizedBox(width: 8),
-                          ],
-                        ),
-                      ),
-                    ),
+                  return CalendarEventCard(
+                    event: value[index],
+                    unescape: _unescape,
+                    onTap: () async {
+                      await openEventBottomSheet(value[index]);
+                    },
                   );
                 },
               ),
@@ -631,19 +358,15 @@ class _CalendarViewState extends ConsumerState<CalendarView> {
                   FocusManager.instance.primaryFocus?.unfocus();
                 },
                 suggestionsBuilder: (context, searchController) {
-                  final results = fuzzySearchEventList(searchController.text);
+                  final results = fuzzySearchEventList(
+                    eventList,
+                    searchController.text,
+                  );
 
                   return results
                       .map(
-                        (event) => ListTile(
-                          title: Text(event.title),
-                          iconColor: colorFromArgb(event.colorArgb),
-                          subtitle: Text(
-                            '${event.startTime.format("E d MMM y", "de_DE")} - ${event.endTime.format("E d MMM y", "de_DE")}',
-                          ),
-                          leading: event.endTime.isBefore(DateTime.now())
-                              ? const Icon(Icons.done)
-                              : const Icon(Icons.event),
+                        (event) => CalendarSearchResultTile(
+                          event: event,
                           onTap: () async {
                             setState(() {
                               _selectedDay = event.startTime;
