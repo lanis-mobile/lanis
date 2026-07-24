@@ -1,21 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:lanis/utils/responsive.dart';
 
-/// Pushes [route] onto the root navigator so it covers home chrome
-/// (bottom [NavigationBar] / tablet [NavigationRail]).
+bool _useRootNavigator(BuildContext context) => !Responsive.isTablet(context);
+
+/// Pushes [route] for in-applet navigation.
+///
+/// On phone, uses the root navigator so the page covers the bottom bar.
+/// On tablet, uses the current shell branch navigator so the [NavigationRail]
+/// stays visible.
 Future<T?> pushRoot<T extends Object?>(
   BuildContext context,
   Route<T> route,
 ) {
-  return Navigator.of(context, rootNavigator: true).push<T>(route);
+  return Navigator.of(
+    context,
+    rootNavigator: _useRootNavigator(context),
+  ).push<T>(route);
 }
 
-/// Replaces the current root route (e.g. chat → chat).
+/// Replaces the current route (e.g. chat → chat) with the same shell rules as
+/// [pushRoot].
 Future<T?> pushRootReplacement<T extends Object?, TO extends Object?>(
   BuildContext context,
   Route<T> newRoute, {
   TO? result,
 }) {
-  return Navigator.of(context, rootNavigator: true).pushReplacement<T, TO>(
+  return Navigator.of(
+    context,
+    rootNavigator: _useRootNavigator(context),
+  ).pushReplacement<T, TO>(
     newRoute,
     result: result,
   );
