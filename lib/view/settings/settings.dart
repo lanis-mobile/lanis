@@ -18,6 +18,7 @@ import 'package:lanis/view/settings/subsettings/appearance.dart';
 import 'package:lanis/view/settings/subsettings/cache.dart';
 import 'package:lanis/view/settings/subsettings/notifications.dart';
 import 'package:lanis/view/settings/subsettings/quick_actions.dart';
+import 'package:lanis/view/settings/subsettings/navigation_rail_settings.dart';
 import 'package:lanis/view/settings/subsettings/userdata.dart';
 
 import 'package:lanis/widgets/press_tile.dart';
@@ -174,6 +175,14 @@ class _SettingsScreenState extends ConsumerSettingsColoursState<SettingsScreen> 
                 "${AppLocalizations.of(context).applets}, ${AppLocalizations.of(context).external}",
             icon: Icons.extension,
             screen: (context) async => context.push('/settings/quick-actions'),
+          ),
+          SettingsTile(
+            title: (context) => AppLocalizations.of(context).navigationRail,
+            subtitle: (context) async =>
+                AppLocalizations.of(context).navigationRailDescription,
+            icon: Icons.view_sidebar_outlined,
+            screen: (context) async =>
+                context.push('/settings/navigation-rail'),
           ),
         ],
       ),
@@ -369,6 +378,9 @@ class _SettingsScreenState extends ConsumerSettingsColoursState<SettingsScreen> 
         } else if (tile.title(context) ==
             AppLocalizations.of(context).quickActions) {
           return QuickActions(showBackButton: !isTablet);
+        } else if (tile.title(context) ==
+            AppLocalizations.of(context).navigationRail) {
+          return NavigationRailSettingsPage(showBackButton: !isTablet);
         } else if (tile.title(context) ==
             AppLocalizations.of(context).inThisUpdate) {
           return FutureBuilder(

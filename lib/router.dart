@@ -19,6 +19,7 @@ import 'package:lanis/view/settings/subsettings/notifications.dart';
 import 'package:lanis/view/settings/subsettings/about.dart';
 import 'package:lanis/view/settings/subsettings/userdata.dart';
 import 'package:lanis/view/settings/subsettings/quick_actions.dart';
+import 'package:lanis/view/settings/subsettings/navigation_rail_settings.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 
@@ -188,6 +189,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'quick-actions',
             builder: (context, state) => const QuickActions(),
+          ),
+          GoRoute(
+            path: 'navigation-rail',
+            builder: (context, state) => const NavigationRailSettingsPage(),
           ),
           GoRoute(
             path: 'userdata',

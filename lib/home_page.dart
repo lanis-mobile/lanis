@@ -9,6 +9,7 @@ import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/l10n/account_type_ui.dart';
 import 'package:lanis/features/auth/auth_controller.dart';
 import 'package:lanis/utils/cached_network_image.dart';
+import 'package:lanis/utils/nav_rail_settings.dart';
 import 'package:lanis/utils/responsive.dart';
 import 'package:lanis/utils/whats_new.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -178,8 +179,10 @@ class HomePageState extends ConsumerState<HomePage> {
       drawerItems.add(const Divider());
     }
 
+    final railSettings = ref.watch(navRailSettingsProvider);
     final extras = <({String label, Icon icon, VoidCallback onTap})>[
-      if (_supports('dateispeicher.php'))
+      // Storage + Settings live on the tablet rail; keep them in the phone drawer.
+      if (!isTablet && _supports('dateispeicher.php'))
         (
           label: AppLocalizations.of(context).storage,
           icon: const Icon(Icons.folder_copy),
@@ -191,21 +194,24 @@ class HomePageState extends ConsumerState<HomePage> {
           icon: const Icon(Icons.groups),
           onTap: () => context.push('/study-groups'),
         ),
-      (
-        label: AppLocalizations.of(context).openMoodle,
-        icon: const Icon(Icons.open_in_new),
-        onTap: () => context.push('/moodle'),
-      ),
-      (
-        label: AppLocalizations.of(context).openLanisInBrowser,
-        icon: const Icon(Icons.open_in_new),
-        onTap: _openLanisInBrowser,
-      ),
-      (
-        label: AppLocalizations.of(context).settings,
-        icon: const Icon(Icons.settings),
-        onTap: () => context.push('/settings'),
-      ),
+      if (!isTablet || !railSettings.showMoodle)
+        (
+          label: AppLocalizations.of(context).openMoodle,
+          icon: const Icon(Icons.open_in_new),
+          onTap: () => context.push('/moodle'),
+        ),
+      if (!isTablet || !railSettings.showOpenBrowser)
+        (
+          label: AppLocalizations.of(context).openLanisInBrowser,
+          icon: const Icon(Icons.open_in_new),
+          onTap: _openLanisInBrowser,
+        ),
+      if (!isTablet)
+        (
+          label: AppLocalizations.of(context).settings,
+          icon: const Icon(Icons.settings),
+          onTap: () => context.push('/settings'),
+        ),
       (
         label: AppLocalizations.of(context).logout,
         icon: const Icon(Icons.logout),
@@ -349,20 +355,75 @@ class HomePageState extends ConsumerState<HomePage> {
     final dest = _supportedHomeDestinations();
     if (dest.defs.isEmpty) return null;
 
+    final l10n = AppLocalizations.of(context);
+    final railSettings = ref.watch(navRailSettingsProvider);
+
+    final destinations = <NavigationRailDestination>[
+      for (final def in dest.defs)
+        NavigationRailDestination(
+          label: Text(def.label(context)),
+          icon: def.icon,
+          selectedIcon: def.selectedIcon,
+        ),
+    ];
+    final onSelected = <VoidCallback>[
+      for (final branchIndex in dest.indexes) () => _goBranch(branchIndex),
+    ];
+
+    void addExtra({
+      required String label,
+      required Icon icon,
+      required VoidCallback onTap,
+    }) {
+      destinations.add(
+        NavigationRailDestination(
+          label: Text(label),
+          icon: icon,
+          selectedIcon: icon,
+        ),
+      );
+      onSelected.add(onTap);
+    }
+
+    if (_supports('dateispeicher.php')) {
+      addExtra(
+        label: l10n.storage,
+        icon: const Icon(Icons.folder_copy),
+        onTap: () => context.push('/storage'),
+      );
+    }
+    addExtra(
+      label: l10n.settings,
+      icon: const Icon(Icons.settings),
+      onTap: () => context.push('/settings'),
+    );
+    if (railSettings.showMoodle) {
+      addExtra(
+        label: l10n.openMoodle,
+        icon: const Icon(Icons.open_in_new),
+        onTap: () => context.push('/moodle'),
+      );
+    }
+    if (railSettings.showOpenBrowser) {
+      addExtra(
+        label: l10n.openLanisInBrowser,
+        icon: const Icon(Icons.open_in_browser),
+        onTap: _openLanisInBrowser,
+      );
+    }
+
     final current = widget.navigationShell.currentIndex;
     final selectedInRail = dest.indexes.indexOf(current);
+
     return NavigationRail(
       selectedIndex: selectedInRail < 0 ? 0 : selectedInRail,
-      onDestinationSelected: (int index) => _goBranch(dest.indexes[index]),
+      onDestinationSelected: (int index) {
+        if (index >= 0 && index < onSelected.length) {
+          onSelected[index]();
+        }
+      },
       labelType: NavigationRailLabelType.all,
-      destinations: [
-        for (final def in dest.defs)
-          NavigationRailDestination(
-            label: Text(def.label(context)),
-            icon: def.icon,
-            selectedIcon: def.selectedIcon,
-          ),
-      ],
+      destinations: destinations,
     );
   }
 

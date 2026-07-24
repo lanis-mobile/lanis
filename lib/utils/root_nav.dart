@@ -22,6 +22,8 @@ Future<T?> pushRootReplacement<T extends Object?, TO extends Object?>(
 }
 
 /// Shows a modal bottom sheet on the root navigator so it covers home chrome.
+///
+/// Defaults [useSafeArea] to true so content clears the system gesture/nav bar.
 Future<T?> showRootModalBottomSheet<T>({
   required BuildContext context,
   required WidgetBuilder builder,
@@ -33,7 +35,7 @@ Future<T?> showRootModalBottomSheet<T>({
   BoxConstraints? constraints,
   Color? barrierColor,
   bool isScrollControlled = false,
-  bool useSafeArea = false,
+  bool useSafeArea = true,
   bool isDismissible = true,
   bool enableDrag = true,
   bool? showDragHandle,
