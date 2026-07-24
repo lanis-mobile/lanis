@@ -256,10 +256,12 @@ class _SubstitutionsViewState extends ConsumerState<SubstitutionsView>
       settingsDefaults: substitutionDefinition.settingsDefaults,
       loadingAppBar: AppBar(
         title: Text(substitutionDefinition.label(context)),
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () => widget.openDrawerCb!(),
-        ),
+        leading: widget.openDrawerCb != null
+            ? IconButton(
+                icon: const Icon(Icons.menu),
+                onPressed: () => widget.openDrawerCb!(),
+              )
+            : null,
       ),
       builder: (context, data, accountType, settings, updateSetting, refresh) {
         if (data.days.isEmpty) {

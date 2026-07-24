@@ -9,6 +9,7 @@ import 'package:lanis/l10n/account_type_ui.dart';
 import 'package:lanis/shell_navigation.dart';
 import 'package:lanis/startup.dart';
 import 'package:lanis/features/auth/auth_controller.dart';
+import 'package:lanis/utils/responsive.dart';
 import 'package:lanis/view/account_switcher/account_switcher.dart';
 import 'package:lanis/view/login/auth.dart';
 import 'package:lanis/view/login/screen.dart';
@@ -29,7 +30,10 @@ Widget _homeAppletBody(AppletDefinition def) {
       final accountType =
           ref.watch(activeAccountProvider.select((a) => a?.accountType)) ??
           AccountType.student;
-      final openDrawer = () => Scaffold.of(context).openDrawer();
+      // Tablet opens the drawer from the NavigationRail; AppBar burgers are mobile-only.
+      final openDrawer = Responsive.isTablet(context)
+          ? null
+          : () => Scaffold.of(context).openDrawer();
       final builder = def.bodyBuilder;
       if (builder == null) {
         return const SizedBox.shrink();

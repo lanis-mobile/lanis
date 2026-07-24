@@ -457,6 +457,11 @@ class HomePageState extends ConsumerState<HomePage> {
     final selectedInRail = branchIndexes.indexOf(current);
 
     return NavigationRail(
+      leading: IconButton(
+        tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
+        icon: const Icon(Icons.menu),
+        onPressed: () => _drawerKey.currentState?.openDrawer(),
+      ),
       selectedIndex: selectedInRail < 0 ? 0 : selectedInRail,
       onDestinationSelected: (int index) {
         if (index >= 0 && index < onSelected.length) {
@@ -495,7 +500,17 @@ class HomePageState extends ConsumerState<HomePage> {
         body: isTablet && rail != null
             ? Row(
                 children: [
-                  rail,
+                  GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onHorizontalDragEnd: (details) {
+                      final velocity = details.primaryVelocity ?? 0;
+                      // Swipe right on the rail opens the drawer.
+                      if (velocity > 250) {
+                        _drawerKey.currentState?.openDrawer();
+                      }
+                    },
+                    child: rail,
+                  ),
                   const VerticalDivider(width: 1, thickness: 1),
                   Expanded(child: content),
                 ],
