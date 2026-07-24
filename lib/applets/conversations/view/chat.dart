@@ -462,6 +462,7 @@ class _ConversationsChatState extends ConsumerState<ConversationsChat>
                   ),
                   Expanded(
                     child: Stack(
+                      fit: StackFit.expand,
                       children: [
                         ChatTrianglePattern(
                           lineColor: Theme.of(context)
