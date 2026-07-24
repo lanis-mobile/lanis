@@ -9,6 +9,7 @@ import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/l10n/account_type_ui.dart';
 import 'package:lanis/features/auth/auth_controller.dart';
 import 'package:lanis/utils/cached_network_image.dart';
+import 'package:lanis/utils/responsive.dart';
 import 'package:lanis/utils/whats_new.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -133,12 +134,24 @@ class HomePageState extends ConsumerState<HomePage> {
     );
   }
 
-  NavigationDrawer navDrawer(BuildContext context) {
+  /// Supported home-tab destinations shared by bottom bar and rail.
+  ({List<int> indexes, List<AppletDefinition> defs}) _supportedHomeDestinations() {
+    final nestedDefs = AppDefinitions.homeApplets;
+    final indexes = <int>[];
+    final defs = <AppletDefinition>[];
+    for (var i = 0; i < nestedDefs.length; i++) {
+      if (_supports(nestedDefs[i].appletPhpUrl)) {
+        indexes.add(i);
+        defs.add(nestedDefs[i]);
+      }
+    }
+    return (indexes: indexes, defs: defs);
+  }
+
+  NavigationDrawer navDrawer(BuildContext context, {required bool isTablet}) {
     final account = _account;
     final session = _session;
-    final nestedDefs = AppDefinitions.applets
-        .where((a) => a.appletType == AppletType.nested)
-        .toList();
+    final nestedDefs = AppDefinitions.homeApplets;
 
     final Color imageColor = Theme.of(
       context,
@@ -147,22 +160,24 @@ class HomePageState extends ConsumerState<HomePage> {
         ? Colors.white
         : Colors.black;
 
+    // On tablet the rail already lists home tabs — keep the drawer for extras only.
     final drawerItems = <Widget>[];
-    for (var i = 0; i < nestedDefs.length; i++) {
-      final def = nestedDefs[i];
-      final supported = _supports(def.appletPhpUrl);
-      drawerItems.add(
-        NavigationDrawerDestination(
-          label: Text(def.label(context)),
-          icon: def.icon,
-          selectedIcon: def.selectedIcon,
-          enabled: supported,
-        ),
-      );
+    if (!isTablet) {
+      for (var i = 0; i < nestedDefs.length; i++) {
+        final def = nestedDefs[i];
+        final supported = _supports(def.appletPhpUrl);
+        drawerItems.add(
+          NavigationDrawerDestination(
+            label: Text(def.label(context)),
+            icon: def.icon,
+            selectedIcon: def.selectedIcon,
+            enabled: supported,
+          ),
+        );
+      }
+      drawerItems.add(const Divider());
     }
 
-    // Extra drawer actions after nested applets
-    drawerItems.add(const Divider());
     final extras = <({String label, Icon icon, VoidCallback onTap})>[
       if (_supports('dateispeicher.php'))
         (
@@ -198,10 +213,12 @@ class HomePageState extends ConsumerState<HomePage> {
       ),
     ];
 
-    final nestedCount = nestedDefs.length;
+    final nestedCount = isTablet ? 0 : nestedDefs.length;
 
     return NavigationDrawer(
-      selectedIndex: widget.navigationShell.currentIndex.clamp(0, nestedCount - 1),
+      selectedIndex: isTablet
+          ? null
+          : widget.navigationShell.currentIndex.clamp(0, nestedCount - 1),
       onDestinationSelected: (int index) {
         Navigator.pop(context);
         if (index < nestedCount) {
@@ -297,7 +314,6 @@ class HomePageState extends ConsumerState<HomePage> {
           ),
         ),
         ...drawerItems,
-        const Divider(),
         for (final e in extras)
           NavigationDrawerDestination(
             label: Text(e.label),
@@ -309,32 +325,44 @@ class HomePageState extends ConsumerState<HomePage> {
   }
 
   NavigationBar? navBar(BuildContext context) {
-    final nestedDefs = AppDefinitions.applets
-        .where((a) => a.appletType == AppletType.nested)
-        .toList();
-    final supportedIndexes = <int>[];
-    final barDestinations = <NavigationDestination>[];
-    for (var i = 0; i < nestedDefs.length; i++) {
-      if (_supports(nestedDefs[i].appletPhpUrl)) {
-        supportedIndexes.add(i);
-        barDestinations.add(
-          NavigationDestination(
-            label: nestedDefs[i].label(context),
-            icon: nestedDefs[i].icon,
-            selectedIcon: nestedDefs[i].selectedIcon,
-          ),
-        );
-      }
-    }
-    if (barDestinations.isEmpty) return null;
+    final dest = _supportedHomeDestinations();
+    if (dest.defs.isEmpty) return null;
 
     final current = widget.navigationShell.currentIndex;
-    final selectedInBar = supportedIndexes.indexOf(current);
+    final selectedInBar = dest.indexes.indexOf(current);
     return NavigationBar(
-      destinations: barDestinations,
+      destinations: [
+        for (final def in dest.defs)
+          NavigationDestination(
+            label: def.label(context),
+            icon: def.icon,
+            selectedIcon: def.selectedIcon,
+          ),
+      ],
       selectedIndex: selectedInBar < 0 ? 0 : selectedInBar,
-      onDestinationSelected: (int index) => _goBranch(supportedIndexes[index]),
+      onDestinationSelected: (int index) => _goBranch(dest.indexes[index]),
       labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+    );
+  }
+
+  Widget? navRail(BuildContext context) {
+    final dest = _supportedHomeDestinations();
+    if (dest.defs.isEmpty) return null;
+
+    final current = widget.navigationShell.currentIndex;
+    final selectedInRail = dest.indexes.indexOf(current);
+    return NavigationRail(
+      selectedIndex: selectedInRail < 0 ? 0 : selectedInRail,
+      onDestinationSelected: (int index) => _goBranch(dest.indexes[index]),
+      labelType: NavigationRailLabelType.all,
+      destinations: [
+        for (final def in dest.defs)
+          NavigationRailDestination(
+            label: Text(def.label(context)),
+            icon: def.icon,
+            selectedIcon: def.selectedIcon,
+          ),
+      ],
     );
   }
 
@@ -344,15 +372,26 @@ class HomePageState extends ConsumerState<HomePage> {
     ref.watch(activeAccountProvider);
 
     final anySupported = homeAppletPhpUrls.any(_supports);
-    final bar = navBar(context);
+    final isTablet = Responsive.isTablet(context);
+    final bar = isTablet ? null : navBar(context);
+    final rail = isTablet ? navRail(context) : null;
+    final content = anySupported
+        ? widget.navigationShell
+        : noAppsSupported();
 
     return Scaffold(
       key: _drawerKey,
-      body: anySupported
-          ? widget.navigationShell
-          : noAppsSupported(),
+      body: isTablet && rail != null
+          ? Row(
+              children: [
+                rail,
+                const VerticalDivider(width: 1, thickness: 1),
+                Expanded(child: content),
+              ],
+            )
+          : content,
       bottomNavigationBar: anySupported ? bar : null,
-      drawer: navDrawer(context),
+      drawer: navDrawer(context, isTablet: isTablet),
       floatingActionButtonLocation: FloatingActionButtonLocation.startDocked,
     );
   }
