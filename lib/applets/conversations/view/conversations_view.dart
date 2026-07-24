@@ -633,15 +633,15 @@ class _ConversationsViewState extends ConsumerState<ConversationsView> {
     });
     if (ref.watch(sessionProvider).asData?.value == null) {
       return Scaffold(
-        appBar: widget.openDrawerCb != null
-            ? AppBar(
-                title: Text(conversationsDefinition.label(context)),
-                leading: IconButton(
+        appBar: AppBar(
+          title: Text(conversationsDefinition.label(context)),
+          leading: widget.openDrawerCb != null
+              ? IconButton(
                   icon: const Icon(Icons.menu),
                   onPressed: () => widget.openDrawerCb!(),
-                ),
-              )
-            : null,
+                )
+              : null,
+        ),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -649,15 +649,15 @@ class _ConversationsViewState extends ConsumerState<ConversationsView> {
     int widthParts = deviceWidth ~/ 350 == 0 ? 1 : deviceWidth ~/ 350;
 
     return Scaffold(
-      appBar: widget.openDrawerCb != null
-          ? AppBar(
-              title: Text(conversationsDefinition.label(context)),
-              leading: IconButton(
+      appBar: AppBar(
+        title: Text(conversationsDefinition.label(context)),
+        leading: widget.openDrawerCb != null
+            ? IconButton(
                 icon: const Icon(Icons.menu),
                 onPressed: () => widget.openDrawerCb!(),
-              ),
-            )
-          : null,
+              )
+            : null,
+      ),
       body: NotificationListener(
         onNotification: (notification) {
           if (notification is CheckTileNotification) {

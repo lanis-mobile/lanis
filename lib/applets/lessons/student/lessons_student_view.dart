@@ -45,65 +45,65 @@ class _LessonsStudentViewState extends ConsumerState<LessonsStudentView>
     final session = ref.watch(sessionProvider).asData?.value;
     if (session == null) {
       return Scaffold(
-        appBar: widget.openDrawerCb != null
-            ? AppBar(
-                title: Text(lessonsDefinition.label(context)),
-                leading: IconButton(
+        appBar: AppBar(
+          title: Text(lessonsDefinition.label(context)),
+          leading: widget.openDrawerCb != null
+              ? IconButton(
                   icon: const Icon(Icons.menu),
                   onPressed: () => widget.openDrawerCb!(),
-                ),
-              )
-            : null,
+                )
+              : null,
+        ),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
     return Scaffold(
-      appBar: widget.openDrawerCb != null
-          ? AppBar(
-              title: Text(lessonsDefinition.label(context)),
-              leading: IconButton(
+      appBar: AppBar(
+        title: Text(lessonsDefinition.label(context)),
+        leading: widget.openDrawerCb != null
+            ? IconButton(
                 icon: const Icon(Icons.menu),
                 onPressed: () => widget.openDrawerCb!(),
-              ),
-              actions:
-                  globalSettings != null &&
-                      globalUpdateSetting != null &&
-                      homeworkLessons != null &&
-                      homeworkLessons!.isNotEmpty
-                  ? [
-                      globalSettings!['showHomework'] == true
-                          ? Tooltip(
-                              message: AppLocalizations.of(context).lessons,
-                              child: IconButton(
-                                icon: const Icon(Icons.school_outlined),
-                                onPressed: () {
-                                  globalUpdateSetting!('showHomework', false);
-                                  WidgetsBinding.instance.addPostFrameCallback((
-                                    _,
-                                  ) {
-                                    setState(() {});
-                                  });
-                                },
-                              ),
-                            )
-                          : Tooltip(
-                              message: AppLocalizations.of(context).homework,
-                              child: IconButton(
-                                icon: const Icon(Icons.task_outlined),
-                                onPressed: () {
-                                  globalUpdateSetting!('showHomework', true);
-                                  WidgetsBinding.instance.addPostFrameCallback((
-                                    _,
-                                  ) {
-                                    setState(() {});
-                                  });
-                                },
-                              ),
-                            ),
-                    ]
-                  : null,
-            )
-          : null,
+              )
+            : null,
+        actions:
+            globalSettings != null &&
+                globalUpdateSetting != null &&
+                homeworkLessons != null &&
+                homeworkLessons!.isNotEmpty
+            ? [
+                globalSettings!['showHomework'] == true
+                    ? Tooltip(
+                        message: AppLocalizations.of(context).lessons,
+                        child: IconButton(
+                          icon: const Icon(Icons.school_outlined),
+                          onPressed: () {
+                            globalUpdateSetting!('showHomework', false);
+                            WidgetsBinding.instance.addPostFrameCallback((
+                              _,
+                            ) {
+                              setState(() {});
+                            });
+                          },
+                        ),
+                      )
+                    : Tooltip(
+                        message: AppLocalizations.of(context).homework,
+                        child: IconButton(
+                          icon: const Icon(Icons.task_outlined),
+                          onPressed: () {
+                            globalUpdateSetting!('showHomework', true);
+                            WidgetsBinding.instance.addPostFrameCallback((
+                              _,
+                            ) {
+                              setState(() {});
+                            });
+                          },
+                        ),
+                      ),
+              ]
+            : null,
+      ),
       body: CombinedAppletBuilder<Lessons>(
         parser: ref.watch(lessonsStudentParserProvider),
         phpUrl: lessonsDefinition.appletPhpUrl,

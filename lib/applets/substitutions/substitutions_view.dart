@@ -276,14 +276,12 @@ class _SubstitutionsViewState extends ConsumerState<SubstitutionsView>
                     )
                   : null,
             ),
-            floatingActionButton: widget.openDrawerCb != null
-                ? FloatingActionButton(
-                    onPressed: () async {
-                      await context.push('/home/substitutions/filter');
-                    },
-                    child: const Icon(Icons.filter_alt),
-                  )
-                : null,
+            floatingActionButton: FloatingActionButton(
+              onPressed: () async {
+                await context.push('/home/substitutions/filter');
+              },
+              child: const Icon(Icons.filter_alt),
+            ),
             body: RefreshIndicator(
               key: globalKeys[0],
               notificationPredicate: refresh != null
@@ -368,14 +366,12 @@ class _SubstitutionsViewState extends ConsumerState<SubstitutionsView>
                     )
                   : null,
             ),
-            floatingActionButton: widget.openDrawerCb != null
-                ? FloatingActionButton(
-                    onPressed: () async {
-                      await context.push('/home/substitutions/filter');
-                    },
-                    child: const Icon(Icons.filter_alt),
-                  )
-                : null,
+            floatingActionButton: FloatingActionButton(
+              onPressed: () async {
+                await context.push('/home/substitutions/filter');
+              },
+              child: const Icon(Icons.filter_alt),
+            ),
             body: Column(
               children: [
                 TabBar(

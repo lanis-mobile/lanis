@@ -24,50 +24,50 @@ class _LessonsTeacherViewState extends ConsumerState<LessonsTeacherView> {
     final session = ref.watch(sessionProvider).asData?.value;
     if (session == null) {
       return Scaffold(
-        appBar: widget.openDrawerCb != null
-            ? AppBar(
-                title: Text(lessonsDefinition.label(context)),
-                leading: IconButton(
+        appBar: AppBar(
+          title: Text(lessonsDefinition.label(context)),
+          leading: widget.openDrawerCb != null
+              ? IconButton(
                   icon: const Icon(Icons.menu),
                   onPressed: () => widget.openDrawerCb!(),
-                ),
-              )
-            : null,
+                )
+              : null,
+        ),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
     return Scaffold(
-      appBar: widget.openDrawerCb != null
-          ? AppBar(
-              title: Text(lessonsDefinition.label(context)),
-              leading: IconButton(
+      appBar: AppBar(
+        title: Text(lessonsDefinition.label(context)),
+        leading: widget.openDrawerCb != null
+            ? IconButton(
                 icon: const Icon(Icons.menu),
                 onPressed: () => widget.openDrawerCb!(),
-              ),
-              bottom: PreferredSize(
-                preferredSize: const Size.fromHeight(20),
-                child: Container(
-                  color: Colors.redAccent,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    spacing: 8,
-                    children: [
-                      SizedBox(width: 8),
-                      const Icon(Icons.warning),
-                      Expanded(
-                        child: MarqueeWidget(
-                          child: Text(
-                            AppLocalizations.of(context).teacherPreviewBanner,
-                          ),
-                        ),
-                      ),
-                      SizedBox(width: 8),
-                    ],
+              )
+            : null,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(20),
+          child: Container(
+            color: Colors.redAccent,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              spacing: 8,
+              children: [
+                SizedBox(width: 8),
+                const Icon(Icons.warning),
+                Expanded(
+                  child: MarqueeWidget(
+                    child: Text(
+                      AppLocalizations.of(context).teacherPreviewBanner,
+                    ),
                   ),
                 ),
-              ),
-            )
-          : null,
+                SizedBox(width: 8),
+              ],
+            ),
+          ),
+        ),
+      ),
       body: CombinedAppletBuilder<LessonsTeacherHome>(
         parser: ref.watch(lessonsTeacherParserProvider),
         phpUrl: lessonsDefinition.appletPhpUrl,
