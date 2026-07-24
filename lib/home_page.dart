@@ -51,9 +51,16 @@ class HomePage extends ConsumerStatefulWidget {
 class HomePageState extends ConsumerState<HomePage> {
   final GlobalKey<ScaffoldState> _drawerKey = GlobalKey();
 
+  /// Last bottom-nav (home) branch — restored on system back from storage/settings.
+  int _lastHomeBranchIndex = 0;
+
   @override
   void initState() {
     super.initState();
+    final current = widget.navigationShell.currentIndex;
+    if (current < AppDefinitions.homeApplets.length) {
+      _lastHomeBranchIndex = current;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) showUpdateInfoIfRequired(context);
     });
@@ -65,6 +72,9 @@ class HomePageState extends ConsumerState<HomePage> {
 
   bool _supports(String phpUrl) =>
       ref.read(supportedAppletPhpUrlsProvider).contains(phpUrl);
+
+  bool get _onHomeBranch =>
+      widget.navigationShell.currentIndex < AppDefinitions.homeApplets.length;
 
   Future<void> _openLanisInBrowser() async {
     final account = _account;
@@ -101,10 +111,22 @@ class HomePageState extends ConsumerState<HomePage> {
   }
 
   void _goBranch(int index) {
+    if (index < AppDefinitions.homeApplets.length) {
+      _lastHomeBranchIndex = index;
+    }
     widget.navigationShell.goBranch(
       index,
       initialLocation: index == widget.navigationShell.currentIndex,
     );
+  }
+
+  void _returnToLastHomeBranch() {
+    final dest = _supportedHomeDestinations();
+    final fallback = dest.indexes.isEmpty ? 0 : dest.indexes.first;
+    final target = dest.indexes.contains(_lastHomeBranchIndex)
+        ? _lastHomeBranchIndex
+        : fallback;
+    _goBranch(target);
   }
 
   Widget noAppsSupported() {
@@ -149,10 +171,88 @@ class HomePageState extends ConsumerState<HomePage> {
     return (indexes: indexes, defs: defs);
   }
 
-  NavigationDrawer navDrawer(BuildContext context, {required bool isTablet}) {
+  /// Drawer rows that participate in [NavigationDrawer.selectedIndex].
+  List<({
+    String label,
+    Icon icon,
+    Icon selectedIcon,
+    bool enabled,
+    int? branchIndex,
+    VoidCallback onTap,
+  })> _drawerDestinations(BuildContext context) {
+    final items = <({
+      String label,
+      Icon icon,
+      Icon selectedIcon,
+      bool enabled,
+      int? branchIndex,
+      VoidCallback onTap,
+    })>[];
+
+    for (final def in AppDefinitions.homeApplets) {
+      items.add((
+        label: def.label(context),
+        icon: def.icon,
+        selectedIcon: def.selectedIcon,
+        enabled: _supports(def.appletPhpUrl),
+        branchIndex: shellBranchIndexForApplet(def),
+        onTap: () => _goBranch(shellBranchIndexForApplet(def)),
+      ));
+    }
+
+    for (final def in AppDefinitions.navigationApplets) {
+      if (!_supports(def.appletPhpUrl)) continue;
+      items.add((
+        label: def.label(context),
+        icon: def.icon,
+        selectedIcon: def.selectedIcon,
+        enabled: true,
+        branchIndex: shellBranchIndexForApplet(def),
+        onTap: () => _goBranch(shellBranchIndexForApplet(def)),
+      ));
+    }
+
+    items.add((
+      label: AppLocalizations.of(context).openMoodle,
+      icon: const Icon(Icons.open_in_new),
+      selectedIcon: const Icon(Icons.open_in_new),
+      enabled: true,
+      branchIndex: null,
+      onTap: () => context.push('/moodle'),
+    ));
+    items.add((
+      label: AppLocalizations.of(context).openLanisInBrowser,
+      icon: const Icon(Icons.open_in_new),
+      selectedIcon: const Icon(Icons.open_in_new),
+      enabled: true,
+      branchIndex: null,
+      onTap: _openLanisInBrowser,
+    ));
+    items.add((
+      label: AppLocalizations.of(context).settings,
+      icon: const Icon(Icons.settings),
+      selectedIcon: const Icon(Icons.settings),
+      enabled: true,
+      branchIndex: settingsShellBranchIndex,
+      onTap: () => _goBranch(settingsShellBranchIndex),
+    ));
+    items.add((
+      label: AppLocalizations.of(context).logout,
+      icon: const Icon(Icons.logout),
+      selectedIcon: const Icon(Icons.logout),
+      enabled: true,
+      branchIndex: null,
+      onTap: _logout,
+    ));
+
+    return items;
+  }
+
+  NavigationDrawer navDrawer(BuildContext context) {
     final account = _account;
     final session = _session;
-    final nestedDefs = AppDefinitions.homeApplets;
+    final homeCount = AppDefinitions.homeApplets.length;
+    final destinations = _drawerDestinations(context);
 
     final Color imageColor = Theme.of(
       context,
@@ -161,82 +261,17 @@ class HomePageState extends ConsumerState<HomePage> {
         ? Colors.white
         : Colors.black;
 
-    final drawerItems = <Widget>[];
-    if (!isTablet) {
-      for (var i = 0; i < nestedDefs.length; i++) {
-        final def = nestedDefs[i];
-        final supported = _supports(def.appletPhpUrl);
-        drawerItems.add(
-          NavigationDrawerDestination(
-            label: Text(def.label(context)),
-            icon: def.icon,
-            selectedIcon: def.selectedIcon,
-            enabled: supported,
-          ),
-        );
-      }
-      drawerItems.add(const Divider());
-    }
-
-    final railExternals = AppDefinitions.external
-        .where((e) => e.showInNavigationRail)
-        .map((e) => e.id)
-        .toSet();
-
-    final extras = <({String label, Icon icon, VoidCallback onTap})>[
-      // On tablet these live on the rail as shell branches.
-      if (!isTablet && _supports('dateispeicher.php'))
-        (
-          label: AppLocalizations.of(context).storage,
-          icon: const Icon(Icons.folder_copy),
-          onTap: () => context.go('/storage'),
-        ),
-      if (!isTablet && _supports('lerngruppen.php'))
-        (
-          label: AppLocalizations.of(context).studyGroups,
-          icon: const Icon(Icons.groups),
-          onTap: () => context.go('/study-groups'),
-        ),
-      if (!isTablet || !railExternals.contains('openMoodle'))
-        (
-          label: AppLocalizations.of(context).openMoodle,
-          icon: const Icon(Icons.open_in_new),
-          onTap: () => context.push('/moodle'),
-        ),
-      if (!isTablet || !railExternals.contains('openLanis'))
-        (
-          label: AppLocalizations.of(context).openLanisInBrowser,
-          icon: const Icon(Icons.open_in_new),
-          onTap: _openLanisInBrowser,
-        ),
-      if (!isTablet)
-        (
-          label: AppLocalizations.of(context).settings,
-          icon: const Icon(Icons.settings),
-          onTap: () => context.go(settingsShellPath),
-        ),
-      (
-        label: AppLocalizations.of(context).logout,
-        icon: const Icon(Icons.logout),
-        onTap: _logout,
-      ),
-    ];
-
-    final nestedCount = isTablet ? 0 : nestedDefs.length;
+    final currentBranch = widget.navigationShell.currentIndex;
+    final selectedIndex = destinations.indexWhere(
+      (d) => d.branchIndex == currentBranch,
+    );
 
     return NavigationDrawer(
-      selectedIndex: isTablet
-          ? null
-          : widget.navigationShell.currentIndex.clamp(0, nestedCount - 1),
+      selectedIndex: selectedIndex < 0 ? null : selectedIndex,
       onDestinationSelected: (int index) {
         Navigator.pop(context);
-        if (index < nestedCount) {
-          _goBranch(index);
-        } else {
-          final extraIndex = index - nestedCount;
-          if (extraIndex >= 0 && extraIndex < extras.length) {
-            extras[extraIndex].onTap();
-          }
+        if (index >= 0 && index < destinations.length) {
+          destinations[index].onTap();
         }
       },
       children: [
@@ -322,13 +357,15 @@ class HomePageState extends ConsumerState<HomePage> {
             ],
           ),
         ),
-        ...drawerItems,
-        for (final e in extras)
+        for (var i = 0; i < destinations.length; i++) ...[
+          if (i == homeCount) const Divider(),
           NavigationDrawerDestination(
-            label: Text(e.label),
-            icon: e.icon,
-            selectedIcon: e.icon,
+            label: Text(destinations[i].label),
+            icon: destinations[i].icon,
+            selectedIcon: destinations[i].selectedIcon,
+            enabled: destinations[i].enabled,
           ),
+        ],
       ],
     );
   }
@@ -438,28 +475,36 @@ class HomePageState extends ConsumerState<HomePage> {
 
     final anySupported = homeAppletPhpUrls.any(_supports);
     final isTablet = Responsive.isTablet(context);
-    final onHomeBranch =
-        widget.navigationShell.currentIndex < AppDefinitions.homeApplets.length;
+    final onHomeBranch = _onHomeBranch;
     final bar = (!isTablet && onHomeBranch) ? navBar(context) : null;
     final rail = isTablet ? navRail(context) : null;
     final content = anySupported
         ? widget.navigationShell
         : noAppsSupported();
 
-    return Scaffold(
-      key: _drawerKey,
-      body: isTablet && rail != null
-          ? Row(
-              children: [
-                rail,
-                const VerticalDivider(width: 1, thickness: 1),
-                Expanded(child: content),
-              ],
-            )
-          : content,
-      bottomNavigationBar: anySupported ? bar : null,
-      drawer: navDrawer(context, isTablet: isTablet),
-      floatingActionButtonLocation: FloatingActionButtonLocation.startDocked,
+    // On phone, system back from storage/settings returns to the last home tab
+    // instead of leaving the app. Tablet leaves via the rail.
+    return PopScope(
+      canPop: isTablet || onHomeBranch,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop || isTablet || onHomeBranch) return;
+        _returnToLastHomeBranch();
+      },
+      child: Scaffold(
+        key: _drawerKey,
+        body: isTablet && rail != null
+            ? Row(
+                children: [
+                  rail,
+                  const VerticalDivider(width: 1, thickness: 1),
+                  Expanded(child: content),
+                ],
+              )
+            : content,
+        bottomNavigationBar: anySupported ? bar : null,
+        drawer: navDrawer(context),
+        floatingActionButtonLocation: FloatingActionButtonLocation.startDocked,
+      ),
     );
   }
 }
