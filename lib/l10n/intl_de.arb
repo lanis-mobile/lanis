@@ -405,10 +405,5 @@
     }
   },
   "unknownUploadError": "Unbekannter Fehler beim Hochladen",
-  "addFile": "Datei hinzufügen",
-
-  "navigationRail": "Navigationsleiste",
-  "navigationRailDescription": "Wähle optionale Shortcuts für die Tablet-Navigationsleiste. Dateispeicher und Einstellungen werden immer angezeigt.",
-  "navRailShowMoodle": "Moodle anzeigen",
-  "navRailShowOpenBrowser": "„Im Browser öffnen“ anzeigen"
+  "addFile": "Datei hinzufügen"
 }

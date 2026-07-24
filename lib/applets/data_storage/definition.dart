@@ -19,6 +19,7 @@ final dataStorageDefinition = AppletDefinition(
     AccountType.parent,
   ],
   allowOffline: false,
+  showInNavigationRail: true,
   settingsDefaults: {},
   refreshInterval: const Duration(minutes: 5),
   bodyBuilder: (context, accountType, openDrawerCb) {

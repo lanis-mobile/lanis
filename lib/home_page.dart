@@ -9,7 +9,6 @@ import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/l10n/account_type_ui.dart';
 import 'package:lanis/features/auth/auth_controller.dart';
 import 'package:lanis/utils/cached_network_image.dart';
-import 'package:lanis/utils/nav_rail_settings.dart';
 import 'package:lanis/utils/responsive.dart';
 import 'package:lanis/utils/whats_new.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -161,7 +160,6 @@ class HomePageState extends ConsumerState<HomePage> {
         ? Colors.white
         : Colors.black;
 
-    // On tablet the rail already lists home tabs — keep the drawer for extras only.
     final drawerItems = <Widget>[];
     if (!isTablet) {
       for (var i = 0; i < nestedDefs.length; i++) {
@@ -179,10 +177,19 @@ class HomePageState extends ConsumerState<HomePage> {
       drawerItems.add(const Divider());
     }
 
-    final railSettings = ref.watch(navRailSettingsProvider);
+    final railNavigationApplets = AppDefinitions.navigationApplets
+        .where((a) => a.showInNavigationRail)
+        .map((a) => a.appletPhpUrl)
+        .toSet();
+    final railExternals = AppDefinitions.external
+        .where((e) => e.showInNavigationRail)
+        .map((e) => e.id)
+        .toSet();
+
     final extras = <({String label, Icon icon, VoidCallback onTap})>[
-      // Storage + Settings live on the tablet rail; keep them in the phone drawer.
-      if (!isTablet && _supports('dateispeicher.php'))
+      // Skip items already on the tablet rail.
+      if ((!isTablet || !railNavigationApplets.contains('dateispeicher.php')) &&
+          _supports('dateispeicher.php'))
         (
           label: AppLocalizations.of(context).storage,
           icon: const Icon(Icons.folder_copy),
@@ -194,13 +201,13 @@ class HomePageState extends ConsumerState<HomePage> {
           icon: const Icon(Icons.groups),
           onTap: () => context.push('/study-groups'),
         ),
-      if (!isTablet || !railSettings.showMoodle)
+      if (!isTablet || !railExternals.contains('openMoodle'))
         (
           label: AppLocalizations.of(context).openMoodle,
           icon: const Icon(Icons.open_in_new),
           onTap: () => context.push('/moodle'),
         ),
-      if (!isTablet || !railSettings.showOpenBrowser)
+      if (!isTablet || !railExternals.contains('openLanis'))
         (
           label: AppLocalizations.of(context).openLanisInBrowser,
           icon: const Icon(Icons.open_in_new),
@@ -356,7 +363,6 @@ class HomePageState extends ConsumerState<HomePage> {
     if (dest.defs.isEmpty) return null;
 
     final l10n = AppLocalizations.of(context);
-    final railSettings = ref.watch(navRailSettingsProvider);
 
     final destinations = <NavigationRailDestination>[
       for (final def in dest.defs)
@@ -385,30 +391,28 @@ class HomePageState extends ConsumerState<HomePage> {
       onSelected.add(onTap);
     }
 
-    if (_supports('dateispeicher.php')) {
+    for (final def in AppDefinitions.navigationApplets) {
+      if (!def.showInNavigationRail) continue;
+      if (!_supports(def.appletPhpUrl)) continue;
       addExtra(
-        label: l10n.storage,
-        icon: const Icon(Icons.folder_copy),
-        onTap: () => context.push('/storage'),
+        label: def.label(context),
+        icon: def.icon,
+        onTap: () => context.push(def.routePath),
       );
     }
+
     addExtra(
       label: l10n.settings,
       icon: const Icon(Icons.settings),
       onTap: () => context.push('/settings'),
     );
-    if (railSettings.showMoodle) {
+
+    for (final ext in AppDefinitions.external) {
+      if (!ext.showInNavigationRail) continue;
       addExtra(
-        label: l10n.openMoodle,
-        icon: const Icon(Icons.open_in_new),
-        onTap: () => context.push('/moodle'),
-      );
-    }
-    if (railSettings.showOpenBrowser) {
-      addExtra(
-        label: l10n.openLanisInBrowser,
-        icon: const Icon(Icons.open_in_browser),
-        onTap: _openLanisInBrowser,
+        label: ext.label(context),
+        icon: ext.icon,
+        onTap: () => ext.action?.call(context),
       );
     }
 

@@ -9,6 +9,8 @@ import 'package:url_launcher/url_launcher.dart';
 final openLanisDefinition = ExternalDefinition(
   id: 'openLanis',
   label: (context) => AppLocalizations.of(context).openLanisInBrowser,
+  // Flip to true to pin this shortcut on the tablet navigation rail.
+  showInNavigationRail: false,
   action: (context) {
     if (context == null) return;
     final container = ProviderScope.containerOf(context);
@@ -26,6 +28,8 @@ final openLanisDefinition = ExternalDefinition(
 final openMoodleDefinition = ExternalDefinition(
   id: 'openMoodle',
   label: (context) => AppLocalizations.of(context).openMoodle,
+  // Flip to true to pin this shortcut on the tablet navigation rail.
+  showInNavigationRail: false,
   action: (context) {
     if (context == null) {
       return;

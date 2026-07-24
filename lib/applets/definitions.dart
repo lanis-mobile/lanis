@@ -42,6 +42,8 @@ class AppletDefinition {
   final bool allowOffline;
   final Duration refreshInterval;
   final Map<String, dynamic> settingsDefaults;
+  /// When true, this navigation applet is offered on the tablet [NavigationRail].
+  final bool showInNavigationRail;
   WidgetBuildBody? bodyBuilder;
   BackgroundTaskFunction? notificationTask;
 
@@ -61,16 +63,25 @@ class AppletDefinition {
     this.notificationTask,
     this.bodyBuilder,
     this.allowOffline = false,
+    this.showInNavigationRail = false,
   });
 }
 
 class ExternalDefinition {
   final String id;
   final StringBuildContextCallback label;
-  final Icon icon = Icon(Icons.open_in_new);
+  final Icon icon;
   final Function(BuildContext?)? action;
+  /// When true, this external shortcut is offered on the tablet [NavigationRail].
+  final bool showInNavigationRail;
 
-  ExternalDefinition({required this.id, required this.label, this.action});
+  ExternalDefinition({
+    required this.id,
+    required this.label,
+    this.action,
+    this.icon = const Icon(Icons.open_in_new),
+    this.showInNavigationRail = false,
+  });
 }
 
 class AppDefinitions {

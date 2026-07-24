@@ -449,10 +449,5 @@
     }
   },
   "unknownUploadError": "Unknown upload error",
-  "addFile": "Add file",
-
-  "navigationRail": "Navigation rail",
-  "navigationRailDescription": "Choose optional shortcuts on the tablet navigation rail. Storage and Settings are always shown.",
-  "navRailShowMoodle": "Show Moodle",
-  "navRailShowOpenBrowser": "Show Open in Browser"
+  "addFile": "Add file"
 }
