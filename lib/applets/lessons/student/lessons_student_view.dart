@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/applets/lessons/definition.dart';
+import 'package:lanis/utils/root_nav.dart';
 import 'package:lanis/widgets/combined_applet_builder.dart';
 import 'package:liblanis/liblanis.dart';
 
@@ -182,7 +183,7 @@ class _LessonsStudentViewState extends ConsumerState<LessonsStudentView>
                       attendanceLessons != null && attendanceLessons.isNotEmpty,
                   child: FloatingActionButton.extended(
                     onPressed: () {
-                      Navigator.push(
+                      pushRoot(
                         context,
                         MaterialPageRoute(
                           builder: (context) =>

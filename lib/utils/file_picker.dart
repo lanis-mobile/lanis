@@ -11,6 +11,7 @@ import 'package:mime/mime.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:lanis/utils/file_operations.dart';
 import 'package:lanis/utils/random.dart';
+import 'package:lanis/utils/root_nav.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import '../generated/l10n.dart';
@@ -86,7 +87,7 @@ Future<List<PickedFile>> showPickerUI(
 
   List<PickedFile> pickedFiles = [];
   if (context.mounted) {
-    await showModalBottomSheet(
+    await showRootModalBottomSheet(
       context: context,
       showDragHandle: true,
       builder: (context) {
@@ -448,7 +449,7 @@ Future<List<String>?> imageCycler(
   BuildContext context,
   List<String> paths,
 ) async {
-  return await Navigator.push(
+  return await pushRoot(
     context,
     MaterialPageRoute(
       builder: (context) => ImageCyclerScreen(initialPaths: paths),

@@ -7,6 +7,7 @@ import '../widgets/course_folder_history_entry_card.dart';
 import 'package:lanis/generated/l10n.dart';
 
 import 'course_create_new_entry.dart';
+import 'package:lanis/utils/root_nav.dart';
 
 class TeacherCourseDetailView extends ConsumerStatefulWidget {
   final CourseFolderStartPage courseFolder;
@@ -122,7 +123,8 @@ class _TeacherCourseDetailViewState
               label: Text(AppLocalizations.of(context).newEntry),
               icon: Icon(Icons.add),
               onPressed: () async {
-                final result = await Navigator.of(context).push<bool?>(
+                final result = await pushRoot<bool?>(
+                  context,
                   MaterialPageRoute(
                     builder: (context) =>
                         CourseCreateNewEntry(courseFolderDetails: details),

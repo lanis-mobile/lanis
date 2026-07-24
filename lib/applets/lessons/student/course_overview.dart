@@ -4,6 +4,7 @@ import 'package:liblanis/liblanis.dart';
 import 'package:intl/intl.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/applets/lessons/student/upload_page.dart';
+import 'package:lanis/utils/root_nav.dart';
 
 import '../../../utils/file_operations.dart' as fo;
 import '../../../widgets/format_text.dart';
@@ -110,7 +111,7 @@ class _CourseOverviewAnsichtState extends ConsumerState<CourseOverviewAnsicht> {
                         child: ListTile(
                           title: ElevatedButton(
                             onPressed: () {
-                              Navigator.push(
+                              pushRoot(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => CourseOverviewAnsicht(
@@ -173,7 +174,7 @@ class _CourseOverviewAnsichtState extends ConsumerState<CourseOverviewAnsicht> {
                             children: [
                               FilledButton(
                                 onPressed: () async {
-                                  await Navigator.push(
+                                  await pushRoot(
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) => UploadScreen(
@@ -234,7 +235,7 @@ class _CourseOverviewAnsichtState extends ConsumerState<CourseOverviewAnsicht> {
                     } else {
                       uploads.add(
                         OutlinedButton(
-                          onPressed: () => Navigator.push(
+                          onPressed: () => pushRoot(
                             context,
                             MaterialPageRoute(
                               builder: (context) => UploadScreen(
@@ -571,7 +572,7 @@ class _CourseOverviewAnsichtState extends ConsumerState<CourseOverviewAnsicht> {
             IconButton(
               icon: const Icon(Icons.looks_one_outlined),
               onPressed: () {
-                Navigator.push(
+                pushRoot(
                   context,
                   MaterialPageRoute(
                     builder: (context) => CourseOverviewAnsicht(

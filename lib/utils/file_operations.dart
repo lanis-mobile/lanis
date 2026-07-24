@@ -11,6 +11,7 @@ import 'package:flutter/services.dart';
 import 'package:mime/mime.dart';
 
 import 'file_icons.dart';
+import 'root_nav.dart';
 
 Future<String> _downloadRemote(BuildContext context, String url, String filename) async {
   final storage = ProviderScope.containerOf(context).read(storageManagerProvider);
@@ -55,7 +56,7 @@ class DownloadableFile {
 }
 
 void showFileModal(BuildContext context, DownloadableFile file) {
-  showModalBottomSheet(
+  showRootModalBottomSheet(
     context: context,
     showDragHandle: true,
     builder: (context) {

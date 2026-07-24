@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:intl/intl.dart';
 import 'package:lanis/generated/l10n.dart';
+import 'package:lanis/utils/root_nav.dart';
 
 import 'course_overview.dart';
 import 'homework_box.dart';
@@ -109,7 +110,7 @@ class _LessonListTileState extends State<LessonListTile> {
             borderRadius: BorderRadius.circular(12),
           ),
           onTap: () {
-            Navigator.push(
+            pushRoot(
               context,
               MaterialPageRoute(
                 builder: (context) => CourseOverviewAnsicht(

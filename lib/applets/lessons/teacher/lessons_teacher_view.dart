@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lanis/applets/lessons/definition.dart';
 import 'package:lanis/applets/lessons/teacher/widgets/course_folder_card.dart';
 import 'package:lanis/generated/l10n.dart';
+import 'package:lanis/utils/root_nav.dart';
 import 'package:lanis/widgets/combined_applet_builder.dart';
 import 'package:lanis/widgets/marquee.dart';
 import 'package:liblanis/liblanis.dart';
@@ -82,7 +83,8 @@ class _LessonsTeacherViewState extends ConsumerState<LessonsTeacherView> {
               itemBuilder: (context, index) => CourseFolderCard(
                 courseFolder: data.courseFolders[index],
                 onTap: () async {
-                  await Navigator.of(context).push(
+                  await pushRoot(
+                    context,
                     MaterialPageRoute(
                       builder: (context) => TeacherCourseDetailView(
                         courseFolder: data.courseFolders[index],

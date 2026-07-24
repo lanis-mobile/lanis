@@ -1,14 +1,15 @@
 import 'package:dart_date/dart_date.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:flutter_masonry_view/flutter_masonry_view.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 import 'package:intl/intl.dart';
 import 'package:lanis/applets/substitutions/definition.dart';
-import 'package:lanis/applets/substitutions/substitutions_filter_settings.dart';
 import 'package:lanis/applets/substitutions/substitutions_listtile.dart';
 import 'package:lanis/utils/cached_network_image.dart';
+import 'package:lanis/utils/root_nav.dart';
 import 'package:liblanis/liblanis.dart';
 
 import '../../utils/url_modal.dart';
@@ -166,7 +167,7 @@ class _SubstitutionsViewState extends ConsumerState<SubstitutionsView>
     BuildContext context,
     List<SubstitutionInfo> infos,
   ) {
-    showModalBottomSheet(
+    showRootModalBottomSheet(
       context: context,
       useSafeArea: true,
       showDragHandle: true,
@@ -210,7 +211,7 @@ class _SubstitutionsViewState extends ConsumerState<SubstitutionsView>
                         },
                         onTapImage: (imageMetadata) {
                           if (imageMetadata.sources.isNotEmpty) {
-                            Navigator.push(
+                            pushRoot(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => FullScreenImageView(
@@ -276,11 +277,7 @@ class _SubstitutionsViewState extends ConsumerState<SubstitutionsView>
             floatingActionButton: widget.openDrawerCb != null
                 ? FloatingActionButton(
                     onPressed: () async {
-                      await Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => SubstitutionsFilterSettings(),
-                        ),
-                      );
+                      await context.push('/home/substitutions/filter');
                     },
                     child: const Icon(Icons.filter_alt),
                   )
@@ -372,11 +369,7 @@ class _SubstitutionsViewState extends ConsumerState<SubstitutionsView>
             floatingActionButton: widget.openDrawerCb != null
                 ? FloatingActionButton(
                     onPressed: () async {
-                      await Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => SubstitutionsFilterSettings(),
-                        ),
-                      );
+                      await context.push('/home/substitutions/filter');
                     },
                     child: const Icon(Icons.filter_alt),
                   )

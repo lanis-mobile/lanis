@@ -10,6 +10,7 @@ import 'package:lanis/applets/timetable/definition.dart';
 import 'package:lanis/applets/timetable/student/timetable_helper.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/l10n/account_type_ui.dart';
+import 'package:lanis/utils/root_nav.dart';
 import 'package:lanis/view/settings/settings_page_builder.dart';
 import 'package:lanis/widgets/combined_applet_builder.dart';
 
@@ -84,7 +85,7 @@ class _StudentTimetableSettingsState
       duration = lesson.duration;
     }
 
-    showModalBottomSheet(
+    showRootModalBottomSheet(
       showDragHandle: true,
       useSafeArea: true,
       context: context,

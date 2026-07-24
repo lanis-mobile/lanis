@@ -8,6 +8,7 @@ import 'package:liblanis/liblanis.dart';
 import 'package:lanis/applets/lessons/student/upload_dates.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/utils/file_picker.dart';
+import 'package:lanis/utils/root_nav.dart';
 import 'package:lanis/widgets/error_view.dart';
 import 'package:open_file/open_file.dart';
 
@@ -200,7 +201,8 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                                   ScaffoldMessenger.of(
                                     context,
                                   ).hideCurrentSnackBar();
-                                  Navigator.of(context).push(
+                                  pushRoot(
+                                    context,
                                     MaterialPageRoute(
                                       builder: (context) {
                                         return Scaffold(
@@ -748,7 +750,8 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                                                   ScaffoldMessenger.of(
                                                     context,
                                                   ).hideCurrentSnackBar();
-                                                  Navigator.of(context).push(
+                                                  pushRoot(
+                                                    context,
                                                     MaterialPageRoute(
                                                       builder: (context) {
                                                         return Scaffold(

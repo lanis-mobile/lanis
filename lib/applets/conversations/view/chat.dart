@@ -15,6 +15,7 @@ import 'package:lanis/applets/conversations/view/conversation_date.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
+import 'package:lanis/utils/root_nav.dart';
 
 import '../../../utils/fetch_more_indicator.dart';
 import '../../../utils/logger.dart';
@@ -421,7 +422,8 @@ class _ConversationsChatState extends ConsumerState<ConversationsChat>
                   error: error,
                   showAppBar: true,
                   retry: () {
-                    Navigator.of(context).pushReplacement(
+                    pushRootReplacement(
+                      context,
                       MaterialPageRoute(
                         builder: (_) => ConversationsChat(
                           refreshSidebar: widget.refreshSidebar,

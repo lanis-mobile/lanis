@@ -14,6 +14,7 @@ import 'package:lanis/widgets/combined_applet_builder.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import 'package:lanis/generated/l10n.dart';
+import 'package:lanis/utils/root_nav.dart';
 
 import '../../widgets/error_view.dart';
 
@@ -114,7 +115,7 @@ class _CalendarViewState extends ConsumerState<CalendarView> {
       var singleEvent = await fetchEvent(calendarData.id);
       if (singleEvent == null) return;
       if (mounted) {
-        await showModalBottomSheet(
+        await showRootModalBottomSheet(
           context: context,
           isScrollControlled: true,
           useSafeArea: true,
@@ -133,7 +134,7 @@ class _CalendarViewState extends ConsumerState<CalendarView> {
       }
     } on LanisException catch (ex) {
       if (mounted) {
-        await showModalBottomSheet(
+        await showRootModalBottomSheet(
           context: context,
           showDragHandle: true,
           builder: (context) {

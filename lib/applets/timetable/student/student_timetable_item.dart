@@ -8,6 +8,7 @@ import 'package:lanis/applets/conversations/view/shared.dart';
 import 'package:lanis/applets/timetable/student/student_timetable_better_view.dart';
 import 'package:lanis/applets/timetable/student/timetable_helper.dart';
 import 'package:lanis/generated/l10n.dart';
+import 'package:lanis/utils/root_nav.dart';
 
 class ItemBlock extends StatelessWidget {
   final TimetableSubject? subject;
@@ -94,7 +95,7 @@ class ItemBlock extends StatelessWidget {
   }
 
   void showSubject(BuildContext context) {
-    showModalBottomSheet(
+    showRootModalBottomSheet(
       context: context,
       showDragHandle: true,
       builder: (context) {

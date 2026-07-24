@@ -7,6 +7,8 @@ import 'package:lanis/applets/conversations/view/send.dart';
 import 'package:lanis/applets/conversations/view/shared.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/applets/conversations/definition.dart';
+import 'package:lanis/utils/responsive.dart';
+import 'package:lanis/utils/root_nav.dart';
 import 'package:lanis/widgets/combined_applet_builder.dart';
 import '../../../utils/keyboard_observer.dart';
 import 'chat.dart';
@@ -448,14 +450,15 @@ class _ConversationsViewState extends ConsumerState<ConversationsView> {
     }
 
     if (mounted) {
-      ChatCreationData? chatData = await Navigator.of(context)
-          .push<ChatCreationData?>(
-            MaterialPageRoute(
-              builder: (context) => NewConversationConfigurator(),
-            ),
-          );
+      ChatCreationData? chatData = await pushRoot<ChatCreationData?>(
+        context,
+        MaterialPageRoute(
+          builder: (context) => NewConversationConfigurator(),
+        ),
+      );
       if (chatData == null) return;
-      String? text = await Navigator.of(context).push<String>(
+      String? text = await pushRoot<String>(
+        context,
         MaterialPageRoute(
           builder: (context) =>
               FullScreenConversationsMessageInput(creationData: chatData),
@@ -567,7 +570,7 @@ class _ConversationsViewState extends ConsumerState<ConversationsView> {
             loadedConversationId = response.id!;
           });
         } else {
-          Navigator.push(
+          pushRoot(
             context,
             MaterialPageRoute(builder: (context) => chat),
           );
@@ -601,11 +604,7 @@ class _ConversationsViewState extends ConsumerState<ConversationsView> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-
-    final mediaQueryData = MediaQueryData.fromView(
-      WidgetsBinding.instance.platformDispatcher.views.first,
-    );
-    tabletMode ??= !(mediaQueryData.size.shortestSide < 550);
+    tabletMode ??= Responsive.isTablet(context);
   }
 
   @override
@@ -775,7 +774,7 @@ class _ConversationsViewState extends ConsumerState<ConversationsView> {
                                           loadedConversationId = entry.id;
                                         });
                                       } else {
-                                        Navigator.push(
+                                        pushRoot(
                                           context,
                                           MaterialPageRoute(
                                             builder: (context) {
