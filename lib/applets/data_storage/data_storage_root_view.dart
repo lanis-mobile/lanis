@@ -7,7 +7,8 @@ import 'file_listtile.dart';
 import 'folder_listtile.dart';
 
 class DataStorageRootView extends ConsumerStatefulWidget {
-  const DataStorageRootView({super.key});
+  final Function? openDrawerCb;
+  const DataStorageRootView({super.key, this.openDrawerCb});
 
   @override
   ConsumerState<DataStorageRootView> createState() =>
@@ -70,6 +71,12 @@ class _DataStorageRootViewState extends ConsumerState<DataStorageRootView> {
     return Scaffold(
       appBar: AppBar(
         title: Text(AppLocalizations.of(context).storage),
+        leading: widget.openDrawerCb != null
+            ? IconButton(
+                icon: const Icon(Icons.menu),
+                onPressed: () => widget.openDrawerCb!(),
+              )
+            : null,
         actions: const [AsyncSearchAnchor()],
       ),
       body: loading

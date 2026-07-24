@@ -18,6 +18,6 @@ final studyGroupsDefinition = AppletDefinition(
   settingsDefaults: {'showExams': 'true'},
   refreshInterval: const Duration(minutes: 15),
   bodyBuilder: (context, accountType, openDrawerCb) {
-    return StudentStudyGroupsView();
+    return StudentStudyGroupsView(openDrawerCb: openDrawerCb);
   },
 );

@@ -309,19 +309,36 @@ class _SettingsScreenState extends ConsumerSettingsColoursState<SettingsScreen> 
     );
 
     if (!isTablet) {
+      final canPop = Navigator.of(context).canPop();
+      if (!canPop) {
+        return Scaffold(
+          backgroundColor: backgroundColor,
+          appBar: AppBar(
+            backgroundColor: backgroundColor,
+            title: Text(AppLocalizations.of(context).settings),
+            leading: IconButton(
+              icon: const Icon(Icons.menu),
+              onPressed: () => Scaffold.maybeOf(context)?.openDrawer(),
+            ),
+          ),
+          body: settingsList,
+        );
+      }
       return SettingsPage(
         backgroundColor: backgroundColor,
         title: Text(AppLocalizations.of(context).settings),
+        showBackButton: true,
         children: [settingsList],
       );
     }
 
-    // Tablet layout
+    // Tablet layout (beside NavigationRail — leave via rail).
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
         title: Text(AppLocalizations.of(context).settings),
         backgroundColor: backgroundColor,
+        automaticallyImplyLeading: false,
       ),
       body: Row(
         children: [

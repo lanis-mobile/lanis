@@ -8,6 +8,7 @@ import 'package:lanis/applets/definitions.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/l10n/account_type_ui.dart';
 import 'package:lanis/features/auth/auth_controller.dart';
+import 'package:lanis/shell_navigation.dart';
 import 'package:lanis/utils/cached_network_image.dart';
 import 'package:lanis/utils/responsive.dart';
 import 'package:lanis/utils/whats_new.dart';
@@ -177,29 +178,24 @@ class HomePageState extends ConsumerState<HomePage> {
       drawerItems.add(const Divider());
     }
 
-    final railNavigationApplets = AppDefinitions.navigationApplets
-        .where((a) => a.showInNavigationRail)
-        .map((a) => a.appletPhpUrl)
-        .toSet();
     final railExternals = AppDefinitions.external
         .where((e) => e.showInNavigationRail)
         .map((e) => e.id)
         .toSet();
 
     final extras = <({String label, Icon icon, VoidCallback onTap})>[
-      // Skip items already on the tablet rail.
-      if ((!isTablet || !railNavigationApplets.contains('dateispeicher.php')) &&
-          _supports('dateispeicher.php'))
+      // On tablet these live on the rail as shell branches.
+      if (!isTablet && _supports('dateispeicher.php'))
         (
           label: AppLocalizations.of(context).storage,
           icon: const Icon(Icons.folder_copy),
-          onTap: () => context.push('/storage'),
+          onTap: () => context.go('/storage'),
         ),
-      if (_supports('lerngruppen.php'))
+      if (!isTablet && _supports('lerngruppen.php'))
         (
           label: AppLocalizations.of(context).studyGroups,
           icon: const Icon(Icons.groups),
-          onTap: () => context.push('/study-groups'),
+          onTap: () => context.go('/study-groups'),
         ),
       if (!isTablet || !railExternals.contains('openMoodle'))
         (
@@ -217,7 +213,7 @@ class HomePageState extends ConsumerState<HomePage> {
         (
           label: AppLocalizations.of(context).settings,
           icon: const Icon(Icons.settings),
-          onTap: () => context.push('/settings'),
+          onTap: () => context.go(settingsShellPath),
         ),
       (
         label: AppLocalizations.of(context).logout,
@@ -359,65 +355,69 @@ class HomePageState extends ConsumerState<HomePage> {
   }
 
   Widget? navRail(BuildContext context) {
-    final dest = _supportedHomeDestinations();
-    if (dest.defs.isEmpty) return null;
+    final destinations = <NavigationRailDestination>[];
+    final onSelected = <VoidCallback>[];
+    final branchIndexes = <int>[];
 
-    final l10n = AppLocalizations.of(context);
-
-    final destinations = <NavigationRailDestination>[
-      for (final def in dest.defs)
-        NavigationRailDestination(
-          label: Text(def.label(context)),
-          icon: def.icon,
-          selectedIcon: def.selectedIcon,
-        ),
-    ];
-    final onSelected = <VoidCallback>[
-      for (final branchIndex in dest.indexes) () => _goBranch(branchIndex),
-    ];
-
-    void addExtra({
+    void addBranch({
       required String label,
       required Icon icon,
-      required VoidCallback onTap,
+      required Icon selectedIcon,
+      required int branchIndex,
     }) {
       destinations.add(
         NavigationRailDestination(
           label: Text(label),
           icon: icon,
-          selectedIcon: icon,
+          selectedIcon: selectedIcon,
         ),
       );
-      onSelected.add(onTap);
+      branchIndexes.add(branchIndex);
+      onSelected.add(() => _goBranch(branchIndex));
     }
 
-    for (final def in AppDefinitions.navigationApplets) {
-      if (!def.showInNavigationRail) continue;
+    for (final def in AppDefinitions.homeApplets) {
       if (!_supports(def.appletPhpUrl)) continue;
-      addExtra(
+      addBranch(
         label: def.label(context),
         icon: def.icon,
-        onTap: () => context.push(def.routePath),
+        selectedIcon: def.selectedIcon,
+        branchIndex: shellBranchIndexForApplet(def),
       );
     }
-
-    addExtra(
-      label: l10n.settings,
+    for (final def in AppDefinitions.navigationApplets) {
+      if (!_supports(def.appletPhpUrl)) continue;
+      addBranch(
+        label: def.label(context),
+        icon: def.icon,
+        selectedIcon: def.selectedIcon,
+        branchIndex: shellBranchIndexForApplet(def),
+      );
+    }
+    addBranch(
+      label: AppLocalizations.of(context).settings,
       icon: const Icon(Icons.settings),
-      onTap: () => context.push('/settings'),
+      selectedIcon: const Icon(Icons.settings),
+      branchIndex: settingsShellBranchIndex,
     );
 
     for (final ext in AppDefinitions.external) {
       if (!ext.showInNavigationRail) continue;
-      addExtra(
-        label: ext.label(context),
-        icon: ext.icon,
-        onTap: () => ext.action?.call(context),
+      destinations.add(
+        NavigationRailDestination(
+          label: Text(ext.label(context)),
+          icon: ext.icon,
+          selectedIcon: ext.icon,
+        ),
       );
+      branchIndexes.add(-1);
+      onSelected.add(() => ext.action?.call(context));
     }
 
+    if (destinations.isEmpty) return null;
+
     final current = widget.navigationShell.currentIndex;
-    final selectedInRail = dest.indexes.indexOf(current);
+    final selectedInRail = branchIndexes.indexOf(current);
 
     return NavigationRail(
       selectedIndex: selectedInRail < 0 ? 0 : selectedInRail,
@@ -438,7 +438,9 @@ class HomePageState extends ConsumerState<HomePage> {
 
     final anySupported = homeAppletPhpUrls.any(_supports);
     final isTablet = Responsive.isTablet(context);
-    final bar = isTablet ? null : navBar(context);
+    final onHomeBranch =
+        widget.navigationShell.currentIndex < AppDefinitions.homeApplets.length;
+    final bar = (!isTablet && onHomeBranch) ? navBar(context) : null;
     final rail = isTablet ? navRail(context) : null;
     final content = anySupported
         ? widget.navigationShell

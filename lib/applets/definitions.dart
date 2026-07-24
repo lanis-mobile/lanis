@@ -99,7 +99,8 @@ class AppDefinitions {
   static List<AppletDefinition> get homeApplets =>
       applets.where((a) => a.appletType == AppletType.nested).toList();
 
-  /// Full-screen applets outside the home shell (`/storage`, `/study-groups`).
+  /// Full-screen applets hosted as shell branches (`/storage`, `/study-groups`)
+  /// so tablet [NavigationRail] stays visible.
   static List<AppletDefinition> get navigationApplets =>
       applets.where((a) => a.appletType == AppletType.navigation).toList();
 

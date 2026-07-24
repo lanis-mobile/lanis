@@ -8,7 +8,8 @@ import 'package:lanis/widgets/combined_applet_builder.dart';
 import 'package:liblanis/liblanis.dart';
 
 class StudentStudyGroupsView extends ConsumerStatefulWidget {
-  const StudentStudyGroupsView({super.key});
+  final Function? openDrawerCb;
+  const StudentStudyGroupsView({super.key, this.openDrawerCb});
 
   @override
   ConsumerState<StudentStudyGroupsView> createState() =>
@@ -32,13 +33,26 @@ class _StudentStudyGroupsViewState
           ref.read(activeAccountProvider)?.accountType ??
           AccountType.student,
       showErrorAppBar: true,
-      loadingAppBar: AppBar(),
+      loadingAppBar: AppBar(
+        leading: widget.openDrawerCb != null
+            ? IconButton(
+                icon: const Icon(Icons.menu),
+                onPressed: () => widget.openDrawerCb!(),
+              )
+            : null,
+      ),
       builder: (context, data, accountType, settings, updateSetting, refresh) {
         return Scaffold(
           appBar: AppBar(
             title: settings['showExams'] != 'true'
                 ? Text(AppLocalizations.of(context).studyGroups)
                 : Text(AppLocalizations.of(context).exams),
+            leading: widget.openDrawerCb != null
+                ? IconButton(
+                    icon: const Icon(Icons.menu),
+                    onPressed: () => widget.openDrawerCb!(),
+                  )
+                : null,
             actions: [
               settings['showExams'] != 'true'
                   ? Tooltip(

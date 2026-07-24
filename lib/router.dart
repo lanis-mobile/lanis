@@ -6,6 +6,7 @@ import 'package:lanis/applets/definitions.dart';
 import 'package:lanis/applets/substitutions/substitutions_filter_settings.dart';
 import 'package:lanis/home_page.dart';
 import 'package:lanis/l10n/account_type_ui.dart';
+import 'package:lanis/shell_navigation.dart';
 import 'package:lanis/startup.dart';
 import 'package:lanis/features/auth/auth_controller.dart';
 import 'package:lanis/view/account_switcher/account_switcher.dart';
@@ -38,13 +39,16 @@ Widget _homeAppletBody(AppletDefinition def) {
   );
 }
 
-bool _isSupportedHomePath(Ref ref, String loc) {
-  for (final def in AppDefinitions.homeApplets) {
+bool _isSupportedShellPath(Ref ref, String loc) {
+  for (final def in AppDefinitions.applets) {
     if (loc == def.routePath || loc.startsWith('${def.routePath}/')) {
       return ref
           .read(supportedAppletPhpUrlsProvider)
           .contains(def.appletPhpUrl);
     }
+  }
+  if (loc == settingsShellPath || loc.startsWith('$settingsShellPath/')) {
+    return true;
   }
   return true;
 }
@@ -54,7 +58,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
   final listenable = _AuthListenable(ref);
   ref.onDispose(listenable.dispose);
 
-  final homeBranches = [
+  final shellBranches = <StatefulShellBranch>[
     for (final def in AppDefinitions.homeApplets)
       StatefulShellBranch(
         routes: [
@@ -73,6 +77,49 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           ),
         ],
       ),
+    for (final def in AppDefinitions.navigationApplets)
+      StatefulShellBranch(
+        routes: [
+          GoRoute(
+            path: def.routePath,
+            builder: (context, state) => _homeAppletBody(def),
+          ),
+        ],
+      ),
+    StatefulShellBranch(
+      routes: [
+        GoRoute(
+          path: settingsShellPath,
+          builder: (context, state) => const SettingsScreen(),
+          routes: [
+            GoRoute(
+              path: 'appearance',
+              builder: (context, state) => const AppearanceSettings(),
+            ),
+            GoRoute(
+              path: 'notifications',
+              builder: (context, state) => const NotificationSettings(),
+            ),
+            GoRoute(
+              path: 'cache',
+              builder: (context, state) => const CacheSettings(),
+            ),
+            GoRoute(
+              path: 'quick-actions',
+              builder: (context, state) => const QuickActions(),
+            ),
+            GoRoute(
+              path: 'userdata',
+              builder: (context, state) => const UserDataSettings(),
+            ),
+            GoRoute(
+              path: 'about',
+              builder: (context, state) => const AboutSettings(),
+            ),
+          ],
+        ),
+      ],
+    ),
   ];
 
   return GoRouter(
@@ -84,7 +131,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final loc = state.matchedLocation;
       final loggingIn = loc == '/welcome' || loc == '/login';
       final onStartup = loc == '/startup';
-      final onHome = loc.startsWith('/home');
+      final onShell = AppDefinitions.applets.any(
+            (d) => loc == d.routePath || loc.startsWith('${d.routePath}/'),
+          ) ||
+          loc == settingsShellPath ||
+          loc.startsWith('$settingsShellPath/');
 
       switch (auth.phase) {
         case AuthPhase.authenticating:
@@ -108,16 +159,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           if (loc == '/welcome' || onStartup) {
             return firstSupportedHomePathFromRef(ref);
           }
-          if (onHome && !_isSupportedHomePath(ref, loc)) {
+          if (onShell && !_isSupportedShellPath(ref, loc)) {
             return firstSupportedHomePathFromRef(ref);
-          }
-          final supported = ref.read(supportedAppletPhpUrlsProvider);
-          for (final def in AppDefinitions.navigationApplets) {
-            if (loc == def.routePath || loc.startsWith('${def.routePath}/')) {
-              if (!supported.contains(def.appletPhpUrl)) {
-                return firstSupportedHomePathFromRef(ref);
-              }
-            }
           }
           return null;
       }
@@ -140,24 +183,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state, navigationShell) {
           return HomePage(navigationShell: navigationShell);
         },
-        branches: homeBranches,
+        branches: shellBranches,
       ),
-      for (final def in AppDefinitions.navigationApplets)
-        GoRoute(
-          path: def.routePath,
-          parentNavigatorKey: rootNavigatorKey,
-          builder: (context, state) => Consumer(
-            builder: (context, ref, _) {
-              final accountType = ref.watch(
-                    activeAccountProvider.select((a) => a?.accountType),
-                  ) ??
-                  AccountType.student;
-              final builder = def.bodyBuilder;
-              if (builder == null) return const SizedBox.shrink();
-              return builder(context, accountType, null);
-            },
-          ),
-        ),
       GoRoute(
         path: '/moodle',
         parentNavigatorKey: rootNavigatorKey,
@@ -167,37 +194,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/accounts',
         parentNavigatorKey: rootNavigatorKey,
         builder: (context, state) => const AccountSwitcher(),
-      ),
-      GoRoute(
-        path: '/settings',
-        parentNavigatorKey: rootNavigatorKey,
-        builder: (context, state) => const SettingsScreen(),
-        routes: [
-          GoRoute(
-            path: 'appearance',
-            builder: (context, state) => const AppearanceSettings(),
-          ),
-          GoRoute(
-            path: 'notifications',
-            builder: (context, state) => const NotificationSettings(),
-          ),
-          GoRoute(
-            path: 'cache',
-            builder: (context, state) => const CacheSettings(),
-          ),
-          GoRoute(
-            path: 'quick-actions',
-            builder: (context, state) => const QuickActions(),
-          ),
-          GoRoute(
-            path: 'userdata',
-            builder: (context, state) => const UserDataSettings(),
-          ),
-          GoRoute(
-            path: 'about',
-            builder: (context, state) => const AboutSettings(),
-          ),
-        ],
       ),
     ],
   );
