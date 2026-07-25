@@ -82,12 +82,20 @@ class _PhoneAppletBottomNav extends ConsumerWidget {
     final current = chrome.navigationShell.currentIndex;
     final selectedInBar = indexes.indexOf(current);
 
-    // Mimic Scaffold.bottomNavigationBar: strip top MediaQuery padding so
-    // NavigationBar's internal SafeArea does not add a status-bar gap above
-    // the icons. Bottom padding stays for the system nav.
+    // Mimic Scaffold.bottomNavigationBar MediaQuery contract:
+    // - Body/FAB: bottom padding removed so FABs are not lifted by a second
+    //   system-nav inset (the bar below already consumes that space).
+    // - NavigationBar: top padding removed so its SafeArea does not insert a
+    //   status-bar gap; bottom padding kept for the system nav.
     return Column(
       children: [
-        Expanded(child: child),
+        Expanded(
+          child: MediaQuery.removePadding(
+            context: context,
+            removeBottom: true,
+            child: child,
+          ),
+        ),
         MediaQuery.removePadding(
           context: context,
           removeTop: true,
