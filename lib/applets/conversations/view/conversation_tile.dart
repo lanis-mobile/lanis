@@ -91,9 +91,12 @@ class ConversationTile extends ConsumerWidget {
                   ),
                 ],
                 Badge(
+                  // Hide when open, or while optimistically clearing via
+                  // [noBadgeConversations] after the user opens the chat.
                   smallSize:
-                      (entry.unread && entry.id != loadedConversationId ||
-                          noBadgeConversations.contains(entry.id))
+                      entry.unread &&
+                          entry.id != loadedConversationId &&
+                          !noBadgeConversations.contains(entry.id)
                       ? 9
                       : 0,
                   child: InkWell(
