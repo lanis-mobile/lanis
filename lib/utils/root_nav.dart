@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lanis/utils/responsive.dart';
-
-bool _useRootNavigator(BuildContext context) => !Responsive.isTablet(context);
 
 /// Pops a dialog/modal that was shown with [useRootNavigator] (the default
 /// for [showDialog]). Using the nearest navigator would pop a shell route.
@@ -10,35 +7,27 @@ void popRootDialog(BuildContext context) {
   if (nav.canPop()) nav.pop();
 }
 
-/// Pushes [route] for in-applet navigation.
+/// Pushes an in-applet page onto the nearest (shell branch) navigator.
 ///
-/// On phone, uses the root navigator so the page covers the bottom bar.
-/// On tablet, uses the current shell branch navigator so the [NavigationRail]
-/// stays visible.
-Future<T?> pushRoot<T extends Object?>(
+/// The phone bottom bar only wraps applet `…/home` routes, so branch pushes
+/// cover it. Never uses the root navigator — avoids orphan stacks after a
+/// phone ↔ tablet resize.
+Future<T?> pushInShell<T extends Object?>(
   BuildContext context,
   Route<T> route,
 ) {
-  return Navigator.of(
-    context,
-    rootNavigator: _useRootNavigator(context),
-  ).push<T>(route);
+  return Navigator.of(context).push<T>(route);
 }
 
-/// Replaces the current route (e.g. chat → chat) with the same shell rules as
-/// [pushRoot].
-Future<T?> pushRootReplacement<T extends Object?, TO extends Object?>(
+/// Pushes an immersive overlay onto the root navigator (covers rail + bar).
+///
+/// Use for file pickers, fullscreen image viewers, and similar content that
+/// is not part of shell navigation.
+Future<T?> pushOverlay<T extends Object?>(
   BuildContext context,
-  Route<T> newRoute, {
-  TO? result,
-}) {
-  return Navigator.of(
-    context,
-    rootNavigator: _useRootNavigator(context),
-  ).pushReplacement<T, TO>(
-    newRoute,
-    result: result,
-  );
+  Route<T> route,
+) {
+  return Navigator.of(context, rootNavigator: true).push<T>(route);
 }
 
 /// Shows a modal bottom sheet on the root navigator so it covers home chrome.

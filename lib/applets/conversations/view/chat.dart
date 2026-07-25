@@ -15,8 +15,6 @@ import 'package:lanis/applets/conversations/view/conversation_date.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
-import 'package:lanis/utils/root_nav.dart';
-
 import '../../../utils/fetch_more_indicator.dart';
 import '../../../utils/logger.dart';
 import '../../../widgets/error_view.dart';
@@ -27,35 +25,33 @@ class ConversationsChat extends ConsumerStatefulWidget {
   final String title;
   final NewConversationSettings? newSettings;
   final bool hidden;
-  final bool isTablet;
-  final Function refreshSidebar;
+  final VoidCallback? onSidebarChanged;
 
   const ConversationsChat({
     super.key,
     required this.title,
     required this.id,
     this.newSettings,
-    required this.isTablet,
-    required this.refreshSidebar,
+    this.onSidebarChanged,
     this.hidden = false,
   });
 
   ConversationsChat.fromEntry(
-    OverviewEntry entry,
-    this.isTablet, {
+    OverviewEntry entry, {
     super.key,
-    required this.refreshSidebar,
+    this.onSidebarChanged,
   }) : id = entry.id,
        title = entry.title,
        newSettings = null,
        hidden = entry.hidden;
+
   @override
   ConsumerState<ConversationsChat> createState() => _ConversationsChatState();
 }
 
 class _ConversationsChatState extends ConsumerState<ConversationsChat>
     with SingleTickerProviderStateMixin {
-  late final Future<void> _conversationFuture = initConversation();
+  late Future<void> _conversationFuture = initConversation();
   Timer? _refreshTimer;
   int _lastRefresh = 0;
   final List<String> _messagesSendInThisSession = [];
@@ -119,6 +115,16 @@ class _ConversationsChatState extends ConsumerState<ConversationsChat>
     isScrollToBottomVisible.value = currentScrollPosition > 100;
   }
 
+  void _notifySidebar() {
+    if (widget.onSidebarChanged != null) {
+      widget.onSidebarChanged!();
+      return;
+    }
+    unawaited(
+      ref.read(conversationsParserProvider).fetchData(forceRefresh: true),
+    );
+  }
+
   Future<void> refreshConversation({bool scrollToEnd = true}) async {
     if (widget.newSettings == null) {
       try {
@@ -137,7 +143,7 @@ class _ConversationsChatState extends ConsumerState<ConversationsChat>
           });
         }
         if (result.messages.isNotEmpty) {
-          widget.refreshSidebar();
+          _notifySidebar();
         }
 
         // Update send button visibility
@@ -251,7 +257,7 @@ class _ConversationsChatState extends ConsumerState<ConversationsChat>
         text,
       );
     } catch (_) {
-      widget.refreshSidebar();
+      _notifySidebar();
       if (!mounted) return;
       setState(() {
         chat.last.status = MessageStatus.error;
@@ -260,7 +266,7 @@ class _ConversationsChatState extends ConsumerState<ConversationsChat>
       return;
     }
 
-    widget.refreshSidebar();
+    _notifySidebar();
     if (!mounted) return;
     setState(() {
       if (result.success) {
@@ -422,18 +428,9 @@ class _ConversationsChatState extends ConsumerState<ConversationsChat>
                   error: error,
                   showAppBar: true,
                   retry: () {
-                    pushRootReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ConversationsChat(
-                          refreshSidebar: widget.refreshSidebar,
-                          title: widget.title,
-                          id: widget.id,
-                          newSettings: widget.newSettings,
-                          isTablet: widget.isTablet,
-                        ),
-                      ),
-                    );
+                    setState(() {
+                      _conversationFuture = initConversation();
+                    });
                   },
                 );
               }

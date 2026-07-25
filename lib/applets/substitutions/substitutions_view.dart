@@ -211,7 +211,7 @@ class _SubstitutionsViewState extends ConsumerState<SubstitutionsView>
                         },
                         onTapImage: (imageMetadata) {
                           if (imageMetadata.sources.isNotEmpty) {
-                            pushRoot(
+                            pushOverlay(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => FullScreenImageView(

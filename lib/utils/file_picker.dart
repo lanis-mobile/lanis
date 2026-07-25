@@ -449,7 +449,7 @@ Future<List<String>?> imageCycler(
   BuildContext context,
   List<String> paths,
 ) async {
-  return await pushRoot(
+  return await pushOverlay(
     context,
     MaterialPageRoute(
       builder: (context) => ImageCyclerScreen(initialPaths: paths),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class LargeAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Color? backgroundColor;
@@ -6,17 +7,38 @@ class LargeAppBar extends StatelessWidget implements PreferredSizeWidget {
   final void Function()? back;
   final bool showBackButton;
 
+  /// Used when the local navigator cannot pop (e.g. detail opened via
+  /// [GoRouter.go] on tablet, then resized to phone).
+  final String? fallbackLocation;
+
   const LargeAppBar({
     super.key,
     required this.title,
     this.backgroundColor,
     this.back,
     this.showBackButton = true,
+    this.fallbackLocation,
   });
 
   @override
   Size get preferredSize =>
       Size.fromHeight(kToolbarHeight + (showBackButton ? 88 : 0));
+
+  void _handleBack(BuildContext context) {
+    if (back != null) {
+      back!();
+      return;
+    }
+    final nav = Navigator.of(context);
+    if (nav.canPop()) {
+      nav.pop();
+      return;
+    }
+    final fallback = fallbackLocation;
+    if (fallback != null) {
+      context.go(fallback);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,15 +47,15 @@ class LargeAppBar extends StatelessWidget implements PreferredSizeWidget {
           backgroundColor ?? Theme.of(context).colorScheme.surfaceContainerHigh,
       leading: showBackButton
           ? IconButton(
-              icon: Icon(Icons.arrow_back),
-              onPressed: back ?? () => Navigator.of(context).pop(),
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => _handleBack(context),
             )
           : null,
       title: !showBackButton ? title : null,
-      automaticallyImplyLeading: showBackButton,
+      automaticallyImplyLeading: false,
       bottom: showBackButton
           ? PreferredSize(
-              preferredSize: Size.fromHeight(88),
+              preferredSize: const Size.fromHeight(88),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [

@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lanis/applets/lessons/definition.dart';
 import 'package:lanis/applets/lessons/teacher/widgets/course_folder_card.dart';
 import 'package:lanis/generated/l10n.dart';
-import 'package:lanis/utils/root_nav.dart';
 import 'package:lanis/widgets/combined_applet_builder.dart';
 import 'package:lanis/widgets/marquee.dart';
 import 'package:liblanis/liblanis.dart';
-
-import 'course_detail_view/course_detail_view.dart';
 
 class LessonsTeacherView extends ConsumerStatefulWidget {
   final Function? openDrawerCb;
@@ -83,13 +81,13 @@ class _LessonsTeacherViewState extends ConsumerState<LessonsTeacherView> {
               itemBuilder: (context, index) => CourseFolderCard(
                 courseFolder: data.courseFolders[index],
                 onTap: () async {
-                  await pushRoot(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => TeacherCourseDetailView(
-                        courseFolder: data.courseFolders[index],
-                      ),
-                    ),
+                  final folder = data.courseFolders[index];
+                  final title = Uri.encodeComponent(folder.name);
+                  final topic = Uri.encodeComponent(folder.topic);
+                  await context.push(
+                    '/teacher/lessons/course/${folder.id}'
+                    '?title=$title&topic=$topic',
+                    extra: folder,
                   );
                   refresh();
                 },

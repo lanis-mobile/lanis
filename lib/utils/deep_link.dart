@@ -111,8 +111,12 @@ class DeepLinkPopScope extends StatelessWidget {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
-        if (context.canPop()) {
-          context.pop(result);
+        // Use the local [Navigator] — go_router's [canPop] can be true for
+        // shell chrome even when this detail was opened with [GoRouter.go]
+        // and has no page underneath.
+        final nav = Navigator.of(context);
+        if (nav.canPop()) {
+          nav.pop(result);
         } else {
           context.go(fallbackPath);
         }

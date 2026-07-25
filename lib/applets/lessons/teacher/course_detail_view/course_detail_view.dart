@@ -123,7 +123,7 @@ class _TeacherCourseDetailViewState
               label: Text(AppLocalizations.of(context).newEntry),
               icon: Icon(Icons.add),
               onPressed: () async {
-                final result = await pushRoot<bool?>(
+                final result = await pushInShell<bool?>(
                   context,
                   MaterialPageRoute(
                     builder: (context) =>

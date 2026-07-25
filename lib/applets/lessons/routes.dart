@@ -6,7 +6,7 @@ import 'package:lanis/applets/lessons/definition.dart';
 import 'package:lanis/applets/lessons/student/attendances.dart';
 import 'package:lanis/applets/lessons/student/course_overview.dart';
 import 'package:lanis/applets/lessons/student/upload_page.dart';
-import 'package:lanis/l10n/account_type_ui.dart';
+import 'package:lanis/applets/lessons/teacher/course_detail_view/course_detail_view.dart';
 import 'package:lanis/utils/deep_link.dart';
 import 'package:lanis/widgets/applet_home_shell.dart';
 import 'package:lanis/widgets/combined_applet_builder.dart';
@@ -34,11 +34,6 @@ List<RouteBase> _lessonsRoutesFor(AccountType type, AppletRouteContext ctx) {
       path: base,
       redirect: (context, state) {
         if (state.uri.path == base) return home;
-        if (!studentLike &&
-            state.uri.path != home &&
-            state.uri.path.startsWith('$base/')) {
-          return SettingsDeepLinks.deepLinkError;
-        }
         return null;
       },
       routes: [
@@ -95,6 +90,25 @@ List<RouteBase> _lessonsRoutesFor(AccountType type, AppletRouteContext ctx) {
             },
           ),
         ],
+        if (type == AccountType.teacher)
+          GoRoute(
+            path: 'course/:courseId',
+            builder: (context, state) {
+              final courseId = state.pathParameters['courseId']!;
+              final extra = state.extra;
+              final folder = extra is CourseFolderStartPage
+                  ? extra
+                  : CourseFolderStartPage(
+                      id: courseId,
+                      name: state.uri.queryParameters['title'] ?? courseId,
+                      topic: state.uri.queryParameters['topic'] ?? '',
+                    );
+              return DeepLinkPopScope(
+                fallbackPath: home,
+                child: TeacherCourseDetailView(courseFolder: folder),
+              );
+            },
+          ),
       ],
     ),
   ];

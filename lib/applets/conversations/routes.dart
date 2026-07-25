@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lanis/applets/conversations/conversations_nav.dart';
 import 'package:lanis/applets/conversations/view/chat.dart';
 import 'package:lanis/applets/conversations/view/components/statistic_widget.dart';
+import 'package:lanis/applets/conversations/view/conversations_view.dart';
 import 'package:lanis/applets/conversations/view/new_conversation_configurator.dart';
 import 'package:lanis/applets/conversations/view/send.dart';
 import 'package:lanis/applets/conversations/view/shared.dart';
@@ -24,45 +27,64 @@ List<RouteBase> buildConversationsRoutes(AppletRouteContext ctx) {
         return null;
       },
       routes: [
-        appletHomeShell(
-          homeBuilder: (context, state) =>
-              ctx.homeBody(conversationsDefinition),
-        ),
-        GoRoute(
-          path: 'compose',
-          builder: (context, state) => DeepLinkPopScope(
-            fallbackPath: home,
-            child: ConversationComposePage(
-              subject: state.uri.queryParameters['subject'],
-              typeName: state.uri.queryParameters['type'],
-              receivers: state.uri.queryParameters['receivers']
-                  ?.split(',')
-                  .where((e) => e.isNotEmpty)
-                  .toList(),
-            ),
-          ),
-        ),
-        GoRoute(
-          path: 'chat/:id',
-          builder: (context, state) {
-            final id = state.pathParameters['id']!;
-            final title = state.uri.queryParameters['title'] ?? '';
-            return DeepLinkPopScope(
-              fallbackPath: home,
-              child: ConversationChatPage(id: id, title: title),
-            );
+        ShellRoute(
+          builder: (context, state, child) {
+            if (Responsive.isTablet(context)) {
+              return ConversationsTabletShell(child: child);
+            }
+            return child;
           },
           routes: [
+            appletHomeShell(
+              homeBuilder: (context, state) {
+                if (Responsive.isTablet(context)) {
+                  return const SizedBox.shrink();
+                }
+                return ctx.homeBody(conversationsDefinition);
+              },
+            ),
             GoRoute(
-              path: 'stats',
+              path: 'compose',
+              builder: (context, state) => DeepLinkPopScope(
+                fallbackPath: home,
+                child: ConversationComposePage(
+                  subject: state.uri.queryParameters['subject'],
+                  typeName: state.uri.queryParameters['type'],
+                  receivers: state.uri.queryParameters['receivers']
+                      ?.split(',')
+                      .where((e) => e.isNotEmpty)
+                      .toList(),
+                ),
+              ),
+            ),
+            GoRoute(
+              path: 'chat/:id',
               builder: (context, state) {
                 final id = state.pathParameters['id']!;
                 final title = state.uri.queryParameters['title'] ?? '';
+                final extra = state.extra;
                 return DeepLinkPopScope(
-                  fallbackPath: '/common/conversations/chat/$id',
-                  child: ConversationStatsPage(id: id, title: title),
+                  fallbackPath: home,
+                  child: ConversationChatPage(
+                    id: id,
+                    title: title,
+                    newSettings: extra is NewConversationSettings ? extra : null,
+                  ),
                 );
               },
+              routes: [
+                GoRoute(
+                  path: 'stats',
+                  builder: (context, state) {
+                    final id = state.pathParameters['id']!;
+                    final title = state.uri.queryParameters['title'] ?? '';
+                    return DeepLinkPopScope(
+                      fallbackPath: '/common/conversations/chat/$id',
+                      child: ConversationStatsPage(id: id, title: title),
+                    );
+                  },
+                ),
+              ],
             ),
           ],
         ),
@@ -71,23 +93,82 @@ List<RouteBase> buildConversationsRoutes(AppletRouteContext ctx) {
   ];
 }
 
+/// Tablet master–detail: conversation list beside the matched child route.
+class ConversationsTabletShell extends StatelessWidget {
+  final Widget child;
+
+  const ConversationsTabletShell({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final loc = GoRouterState.of(context).uri.path;
+    final onHome = loc == conversationsHomePath || loc == '/common/conversations';
+    final deviceWidth = MediaQuery.sizeOf(context).width;
+    final widthParts = deviceWidth ~/ 350 == 0 ? 1 : deviceWidth ~/ 350;
+
+    return Scaffold(
+      body: Row(
+        children: [
+          Expanded(
+            flex: widthParts >= 3 ? 1 : 4,
+            child: const ConversationsView(embeddedInTabletShell: true),
+          ),
+          VerticalDivider(
+            width: 1,
+            thickness: 1,
+            color: Theme.of(context).colorScheme.outline,
+          ),
+          Expanded(
+            flex: widthParts >= 3 ? 2 : 6,
+            child: onHome ? const ConversationsEmptyDetail() : child,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ConversationsEmptyDetail extends StatelessWidget {
+  const ConversationsEmptyDetail({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    const assets = [
+      'assets/undraw/chat/undraw_work-chat_hc3y.svg',
+      'assets/undraw/chat/undraw_quick-chat_3gj8.svg',
+      'assets/undraw/chat/undraw_online-message_k64b.svg',
+      'assets/undraw/chat/undraw_chatting_5u5z.svg',
+      'assets/undraw/chat/undraw_chat_qmyo.svg',
+    ];
+    final asset =
+        assets[(DateTime.now().millisecondsSinceEpoch / 1000).toInt() %
+            assets.length];
+    return Center(child: SvgPicture.asset(asset, height: 175));
+  }
+}
+
 class ConversationChatPage extends ConsumerWidget {
   final String id;
   final String title;
+  final NewConversationSettings? newSettings;
 
   const ConversationChatPage({
     super.key,
     required this.id,
     required this.title,
+    this.newSettings,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ConversationsChat(
+      key: ValueKey(id),
       id: id,
       title: title,
-      isTablet: Responsive.isTablet(context),
-      refreshSidebar: () {},
+      newSettings: newSettings,
+      onSidebarChanged: () {
+        ref.read(conversationsParserProvider).fetchData(forceRefresh: true);
+      },
     );
   }
 }
@@ -149,8 +230,6 @@ class _ConversationComposePageState
       subject: data.subject,
       receivers: data.receivers,
     ));
-    // Caller (ConversationsView) handles creation when using push; for deep
-    // links we create here.
   }
 
   @override

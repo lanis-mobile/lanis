@@ -201,7 +201,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                                   ScaffoldMessenger.of(
                                     context,
                                   ).hideCurrentSnackBar();
-                                  pushRoot(
+                                  pushInShell(
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) {
@@ -750,7 +750,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                                                   ScaffoldMessenger.of(
                                                     context,
                                                   ).hideCurrentSnackBar();
-                                                  pushRoot(
+                                                  pushInShell(
                                                     context,
                                                     MaterialPageRoute(
                                                       builder: (context) {

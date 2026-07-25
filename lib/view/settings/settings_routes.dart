@@ -13,6 +13,13 @@ import 'package:lanis/view/settings/subsettings/notifications.dart';
 import 'package:lanis/view/settings/subsettings/userdata.dart';
 import 'package:liblanis/liblanis.dart';
 
+Widget _settingsDetail({
+  required String fallbackPath,
+  required Widget child,
+}) {
+  return DeepLinkPopScope(fallbackPath: fallbackPath, child: child);
+}
+
 /// Settings shell routes under `/common/settings`.
 List<RouteBase> buildSettingsRoutes() {
   return [
@@ -27,7 +34,16 @@ List<RouteBase> buildSettingsRoutes() {
         GoRoute(
           path: SettingsDeepLinks.base,
           redirect: (context, state) {
-            if (state.uri.path == SettingsDeepLinks.base) {
+            final path = state.uri.path;
+            // Tablet master–detail: land on the first setting so the detail
+            // pane is never an empty white panel.
+            if (path == SettingsDeepLinks.base ||
+                path == SettingsDeepLinks.home) {
+              if (Responsive.isTablet(context)) {
+                return SettingsDeepLinks.appearance;
+              }
+            }
+            if (path == SettingsDeepLinks.base) {
               return SettingsDeepLinks.home;
             }
             return null;
@@ -44,63 +60,66 @@ List<RouteBase> buildSettingsRoutes() {
             ),
             GoRoute(
               path: 'appearance',
-              builder: (context, state) => AppearanceSettings(
-                showBackButton: !Responsive.isTablet(context),
+              builder: (context, state) => _settingsDetail(
+                fallbackPath: SettingsDeepLinks.home,
+                child: const AppearanceSettings(),
               ),
             ),
             GoRoute(
               path: 'notifications',
-              builder: (context, state) => Consumer(
-                builder: (context, ref, _) {
-                  final count =
-                      ref.watch(accountsProvider).asData?.value.length ?? 0;
-                  return NotificationSettings(
-                    accountCount: count,
-                    showBackButton: !Responsive.isTablet(context),
-                  );
-                },
+              builder: (context, state) => _settingsDetail(
+                fallbackPath: SettingsDeepLinks.home,
+                child: Consumer(
+                  builder: (context, ref, _) {
+                    final count =
+                        ref.watch(accountsProvider).asData?.value.length ?? 0;
+                    return NotificationSettings(accountCount: count);
+                  },
+                ),
               ),
             ),
             GoRoute(
               path: 'cache',
-              builder: (context, state) => CacheSettings(
-                showBackButton: !Responsive.isTablet(context),
+              builder: (context, state) => _settingsDetail(
+                fallbackPath: SettingsDeepLinks.home,
+                child: const CacheSettings(),
               ),
             ),
             GoRoute(
               path: 'userdata',
-              builder: (context, state) => UserDataSettings(
-                showBackButton: !Responsive.isTablet(context),
+              builder: (context, state) => _settingsDetail(
+                fallbackPath: SettingsDeepLinks.home,
+                child: const UserDataSettings(),
               ),
             ),
             GoRoute(
               path: 'about',
-              builder: (context, state) =>
-                  AboutSettings(showBackButton: !Responsive.isTablet(context)),
+              builder: (context, state) => _settingsDetail(
+                fallbackPath: SettingsDeepLinks.home,
+                child: const AboutSettings(),
+              ),
             ),
             GoRoute(
               path: 'calendar-export',
-              builder: (context, state) => CalendarExport(
-                showBackButton: !Responsive.isTablet(context),
+              builder: (context, state) => _settingsDetail(
+                fallbackPath: SettingsDeepLinks.home,
+                child: const CalendarExport(),
               ),
               routes: [
                 GoRoute(
                   path: ':kind',
-                  builder: (context, state) {
-                    return DeepLinkPopScope(
-                      fallbackPath: SettingsDeepLinks.calendarExport,
-                      child: CalendarExport(
-                        showBackButton: !Responsive.isTablet(context),
-                      ),
-                    );
-                  },
+                  builder: (context, state) => _settingsDetail(
+                    fallbackPath: SettingsDeepLinks.calendarExport,
+                    child: const CalendarExport(),
+                  ),
                 ),
               ],
             ),
             GoRoute(
               path: 'timetable',
-              builder: (context, state) => StudentTimetableSettings(
-                showBack: !Responsive.isTablet(context),
+              builder: (context, state) => _settingsDetail(
+                fallbackPath: SettingsDeepLinks.home,
+                child: const StudentTimetableSettings(),
               ),
             ),
           ],
@@ -120,6 +139,25 @@ class SettingsTabletShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final loc = GoRouterState.of(context).uri.path;
     final onHome = loc == SettingsDeepLinks.home || loc == SettingsDeepLinks.base;
+
+    // Resize phone→tablet while on /home does not re-run go_router redirects.
+    if (onHome) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!context.mounted) return;
+        final path = GoRouterState.of(context).uri.path;
+        if (path == SettingsDeepLinks.home || path == SettingsDeepLinks.base) {
+          // Defer past any navigator lock from the resize layout pass.
+          Future<void>(() {
+            if (!context.mounted) return;
+            final latest = GoRouterState.of(context).uri.path;
+            if (latest == SettingsDeepLinks.home ||
+                latest == SettingsDeepLinks.base) {
+              context.go(SettingsDeepLinks.appearance);
+            }
+          });
+        }
+      });
+    }
 
     return Scaffold(
       body: Row(

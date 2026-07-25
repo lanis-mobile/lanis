@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lanis/utils/deep_link.dart';
+import 'package:lanis/utils/responsive.dart';
 import 'package:lanis/widgets/large_appbar.dart';
 
 abstract class SettingsColours extends StatefulWidget {
@@ -55,6 +57,11 @@ abstract class ConsumerSettingsColoursState<T extends ConsumerStatefulWidget>
   }
 }
 
+bool _effectiveShowBack(BuildContext context, bool showBackButton) {
+  // Live width check so tablet→phone resize shows a back control.
+  return showBackButton && !Responsive.isTablet(context);
+}
+
 class SettingsPage extends StatelessWidget {
   final Color backgroundColor;
   final Text title;
@@ -63,6 +70,7 @@ class SettingsPage extends StatelessWidget {
   final void Function()? back;
   final Widget? floatingActionButton;
   final bool showBackButton;
+  final String? fallbackLocation;
 
   const SettingsPage({
     super.key,
@@ -73,17 +81,20 @@ class SettingsPage extends StatelessWidget {
     required this.children,
     this.floatingActionButton,
     this.showBackButton = true,
+    this.fallbackLocation = SettingsDeepLinks.home,
   });
 
   @override
   Widget build(BuildContext context) {
+    final showBack = _effectiveShowBack(context, showBackButton);
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: LargeAppBar(
         title: title,
         backgroundColor: backgroundColor,
         back: back,
-        showBackButton: showBackButton,
+        showBackButton: showBack,
+        fallbackLocation: fallbackLocation,
       ),
       body: Padding(
         padding: contentPadding,
@@ -104,6 +115,7 @@ class SettingsPageWithRefreshIndicator extends StatelessWidget {
   final Future<void> Function() onRefresh;
   final void Function()? back;
   final bool showBackButton;
+  final String? fallbackLocation;
 
   const SettingsPageWithRefreshIndicator({
     super.key,
@@ -114,17 +126,20 @@ class SettingsPageWithRefreshIndicator extends StatelessWidget {
     required this.onRefresh,
     required this.children,
     this.showBackButton = true,
+    this.fallbackLocation = SettingsDeepLinks.home,
   });
 
   @override
   Widget build(BuildContext context) {
+    final showBack = _effectiveShowBack(context, showBackButton);
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: LargeAppBar(
         title: title,
         backgroundColor: backgroundColor,
         back: back,
-        showBackButton: showBackButton,
+        showBackButton: showBack,
+        fallbackLocation: fallbackLocation,
       ),
       body: Padding(
         padding: contentPadding,
@@ -151,6 +166,7 @@ class SettingsPageWithStreamBuilder extends StatelessWidget {
   final void Function()? back;
   final Stream<Map<String, dynamic>> subscription;
   final bool showBackButton;
+  final String? fallbackLocation;
 
   const SettingsPageWithStreamBuilder({
     super.key,
@@ -161,17 +177,20 @@ class SettingsPageWithStreamBuilder extends StatelessWidget {
     required this.subscription,
     required this.builder,
     this.showBackButton = true,
+    this.fallbackLocation = SettingsDeepLinks.home,
   });
 
   @override
   Widget build(BuildContext context) {
+    final showBack = _effectiveShowBack(context, showBackButton);
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: LargeAppBar(
         title: title,
         backgroundColor: backgroundColor,
         back: back,
-        showBackButton: showBackButton,
+        showBackButton: showBack,
+        fallbackLocation: fallbackLocation,
       ),
       body: Padding(
         padding: contentPadding,
