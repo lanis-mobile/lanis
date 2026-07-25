@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -10,13 +11,17 @@ import 'package:lanis/l10n/account_type_ui.dart';
 import 'package:lanis/features/auth/auth_controller.dart';
 import 'package:lanis/shell_navigation.dart';
 import 'package:lanis/utils/cached_network_image.dart';
+import 'package:lanis/utils/deep_link.dart';
 import 'package:lanis/utils/responsive.dart';
 import 'package:lanis/utils/whats_new.dart';
+import 'package:lanis/widgets/applet_home_shell.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// Nested home applet paths (order matches bottom-nav / shell branches).
-List<String> get homeAppletPaths =>
-    AppDefinitions.homeApplets.map((a) => a.routePath).toList();
+List<String> homeAppletPathsFor(AccountType accountType) => AppDefinitions
+    .homeApplets
+    .map((a) => appletHomePath(a, accountType))
+    .toList();
 
 List<String> get homeAppletPhpUrls =>
     AppDefinitions.homeApplets.map((a) => a.appletPhpUrl).toList();
@@ -24,19 +29,29 @@ List<String> get homeAppletPhpUrls =>
 /// First home tab path supported by the current session's feature set.
 String firstSupportedHomePath(WidgetRef ref) {
   final supported = ref.read(supportedAppletPhpUrlsProvider);
+  final accountType =
+      ref.read(activeAccountProvider)?.accountType ?? AccountType.student;
   for (final def in AppDefinitions.homeApplets) {
-    if (supported.contains(def.appletPhpUrl)) return def.routePath;
+    if (supported.contains(def.appletPhpUrl) &&
+        def.supportedAccountTypes.contains(accountType)) {
+      return appletHomePath(def, accountType);
+    }
   }
-  return AppDefinitions.homeApplets.first.routePath;
+  return appletHomePath(AppDefinitions.homeApplets.first, accountType);
 }
 
 /// Same as [firstSupportedHomePath] for non-widget [Ref] (e.g. go_router).
 String firstSupportedHomePathFromRef(Ref ref) {
   final supported = ref.read(supportedAppletPhpUrlsProvider);
+  final accountType =
+      ref.read(activeAccountProvider)?.accountType ?? AccountType.student;
   for (final def in AppDefinitions.homeApplets) {
-    if (supported.contains(def.appletPhpUrl)) return def.routePath;
+    if (supported.contains(def.appletPhpUrl) &&
+        def.supportedAccountTypes.contains(accountType)) {
+      return appletHomePath(def, accountType);
+    }
   }
-  return AppDefinitions.homeApplets.first.routePath;
+  return appletHomePath(AppDefinitions.homeApplets.first, accountType);
 }
 
 class HomePage extends ConsumerStatefulWidget {
@@ -218,7 +233,7 @@ class HomePageState extends ConsumerState<HomePage> {
       selectedIcon: const Icon(Icons.open_in_new),
       enabled: true,
       branchIndex: null,
-      onTap: () => context.push('/moodle'),
+      onTap: () => context.push(SettingsDeepLinks.moodle),
     ));
     items.add((
       label: AppLocalizations.of(context).openLanisInBrowser,
@@ -370,27 +385,6 @@ class HomePageState extends ConsumerState<HomePage> {
     );
   }
 
-  NavigationBar? navBar(BuildContext context) {
-    final dest = _supportedHomeDestinations();
-    if (dest.defs.isEmpty) return null;
-
-    final current = widget.navigationShell.currentIndex;
-    final selectedInBar = dest.indexes.indexOf(current);
-    return NavigationBar(
-      destinations: [
-        for (final def in dest.defs)
-          NavigationDestination(
-            label: def.label(context),
-            icon: def.icon,
-            selectedIcon: def.selectedIcon,
-          ),
-      ],
-      selectedIndex: selectedInBar < 0 ? 0 : selectedInBar,
-      onDestinationSelected: (int index) => _goBranch(dest.indexes[index]),
-      labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
-    );
-  }
-
   Widget? navRail(BuildContext context) {
     final destinations = <NavigationRailDestination>[];
     final onSelected = <VoidCallback>[];
@@ -456,20 +450,37 @@ class HomePageState extends ConsumerState<HomePage> {
     final current = widget.navigationShell.currentIndex;
     final selectedInRail = branchIndexes.indexOf(current);
 
-    return NavigationRail(
-      leading: IconButton(
-        tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
-        icon: const Icon(Icons.menu),
-        onPressed: () => _drawerKey.currentState?.openDrawer(),
-      ),
-      selectedIndex: selectedInRail < 0 ? 0 : selectedInRail,
-      onDestinationSelected: (int index) {
-        if (index >= 0 && index < onSelected.length) {
-          onSelected[index]();
-        }
+    // NavigationRail sizes to max height and clips destinations; give it an
+    // explicit tall-enough height and scroll when the viewport is shorter.
+    const leadingHeight = 72.0;
+    const destinationHeight = 72.0;
+    final contentHeight =
+        leadingHeight + destinations.length * destinationHeight;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final height = math.max(constraints.maxHeight, contentHeight);
+        return SingleChildScrollView(
+          child: SizedBox(
+            height: height,
+            child: NavigationRail(
+              leading: IconButton(
+                tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
+                icon: const Icon(Icons.menu),
+                onPressed: () => _drawerKey.currentState?.openDrawer(),
+              ),
+              selectedIndex: selectedInRail < 0 ? 0 : selectedInRail,
+              onDestinationSelected: (int index) {
+                if (index >= 0 && index < onSelected.length) {
+                  onSelected[index]();
+                }
+              },
+              labelType: NavigationRailLabelType.all,
+              destinations: destinations,
+            ),
+          ),
+        );
       },
-      labelType: NavigationRailLabelType.all,
-      destinations: destinations,
     );
   }
 
@@ -481,44 +492,46 @@ class HomePageState extends ConsumerState<HomePage> {
     final anySupported = homeAppletPhpUrls.any(_supports);
     final isTablet = Responsive.isTablet(context);
     final onHomeBranch = _onHomeBranch;
-    final bar = (!isTablet && onHomeBranch) ? navBar(context) : null;
     final rail = isTablet ? navRail(context) : null;
     final content = anySupported
         ? widget.navigationShell
         : noAppsSupported();
 
-    // On phone, system back from storage/settings returns to the last home tab
-    // instead of leaving the app. Tablet leaves via the rail.
-    return PopScope(
-      canPop: isTablet || onHomeBranch,
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop || isTablet || onHomeBranch) return;
-        _returnToLastHomeBranch();
-      },
-      child: Scaffold(
-        key: _drawerKey,
-        body: isTablet && rail != null
-            ? Row(
-                children: [
-                  GestureDetector(
-                    behavior: HitTestBehavior.translucent,
-                    onHorizontalDragEnd: (details) {
-                      final velocity = details.primaryVelocity ?? 0;
-                      // Swipe right on the rail opens the drawer.
-                      if (velocity > 250) {
-                        _drawerKey.currentState?.openDrawer();
-                      }
-                    },
-                    child: rail,
-                  ),
-                  const VerticalDivider(width: 1, thickness: 1),
-                  Expanded(child: content),
-                ],
-              )
-            : content,
-        bottomNavigationBar: anySupported ? bar : null,
-        drawer: navDrawer(context),
-        floatingActionButtonLocation: FloatingActionButtonLocation.startDocked,
+    // Outer chrome: tablet rail + drawer only. Phone bottom bar is nested in
+    // [appletHomeShell] under each applet home route.
+    return HomeChrome(
+      navigationShell: widget.navigationShell,
+      goBranch: _goBranch,
+      openDrawer: () => _drawerKey.currentState?.openDrawer(),
+      child: PopScope(
+        canPop: isTablet || onHomeBranch,
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop || isTablet || onHomeBranch) return;
+          _returnToLastHomeBranch();
+        },
+        child: Scaffold(
+          key: _drawerKey,
+          body: isTablet && rail != null
+              ? Row(
+                  children: [
+                    GestureDetector(
+                      behavior: HitTestBehavior.translucent,
+                      onHorizontalDragEnd: (details) {
+                        final velocity = details.primaryVelocity ?? 0;
+                        // Swipe right on the rail opens the drawer.
+                        if (velocity > 250) {
+                          _drawerKey.currentState?.openDrawer();
+                        }
+                      },
+                      child: rail,
+                    ),
+                    const VerticalDivider(width: 1, thickness: 1),
+                    Expanded(child: content),
+                  ],
+                )
+              : content,
+          drawer: navDrawer(context),
+        ),
       ),
     );
   }

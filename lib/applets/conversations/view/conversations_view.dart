@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:lanis/applets/conversations/view/new_conversation_configurator.dart';
 import 'package:lanis/applets/conversations/view/send.dart';
 import 'package:lanis/applets/conversations/view/shared.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/applets/conversations/definition.dart';
 import 'package:lanis/utils/responsive.dart';
-import 'package:lanis/utils/root_nav.dart';
 import 'package:lanis/widgets/combined_applet_builder.dart';
 import '../../../utils/keyboard_observer.dart';
 import 'chat.dart';
@@ -450,15 +449,11 @@ class _ConversationsViewState extends ConsumerState<ConversationsView> {
     }
 
     if (mounted) {
-      ChatCreationData? chatData = await pushRoot<ChatCreationData?>(
-        context,
-        MaterialPageRoute(
-          builder: (context) => NewConversationConfigurator(),
-        ),
+      final chatData = await context.push<ChatCreationData>(
+        '/common/conversations/compose',
       );
       if (chatData == null) return;
-      String? text = await pushRoot<String>(
-        context,
+      final text = await Navigator.of(context).push<String>(
         MaterialPageRoute(
           builder: (context) =>
               FullScreenConversationsMessageInput(creationData: chatData),
@@ -570,9 +565,9 @@ class _ConversationsViewState extends ConsumerState<ConversationsView> {
             loadedConversationId = response.id!;
           });
         } else {
-          pushRoot(
-            context,
-            MaterialPageRoute(builder: (context) => chat),
+          final title = Uri.encodeComponent(creationData.subject);
+          context.push(
+            '/common/conversations/chat/${response.id!}?title=$title',
           );
         }
       }
@@ -774,28 +769,23 @@ class _ConversationsViewState extends ConsumerState<ConversationsView> {
                                           loadedConversationId = entry.id;
                                         });
                                       } else {
-                                        pushRoot(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) {
-                                              if (entry.unread == true) {
-                                                ref.read(conversationsParserProvider)
-                                                    .filter
-                                                    .toggleEntry(
-                                                      entry.id,
-                                                      unread: true,
-                                                    );
-                                                ref.read(conversationsParserProvider)
-                                                    .filter
-                                                    .pushEntries();
-                                              }
-                                              return ConversationsChat.fromEntry(
-                                                refreshSidebar: refresh,
-                                                entry,
-                                                tabletMode!,
+                                        if (entry.unread == true) {
+                                          ref
+                                              .read(conversationsParserProvider)
+                                              .filter
+                                              .toggleEntry(
+                                                entry.id,
+                                                unread: true,
                                               );
-                                            },
-                                          ),
+                                          ref
+                                              .read(conversationsParserProvider)
+                                              .filter
+                                              .pushEntries();
+                                        }
+                                        final title =
+                                            Uri.encodeComponent(entry.title);
+                                        context.push(
+                                          '/common/conversations/chat/${entry.id}?title=$title',
                                         );
                                       }
                                     },

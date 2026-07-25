@@ -339,12 +339,9 @@
   "undo": "Rückgängig",
   "start": "Start",
   "end": "Ende",
-  "quickActions": "Shortcuts",
   "applets": "Applets",
   "external": "Extern",
   "restartRequired": "Nach einer Änderung ist ein Neustart der App erforderlich, um die Änderungen anzuwenden.",
-  "quickActionsDisclaimer": "Du kannst bis zu {num} Shortcuts hinzufügen. Diese Shortcuts sind auf dem Startbildschirm verfügbar.",
-  "quickActionsAndroid": "Shortcuts, die zum Startbildschirm hinzugefügt wurden, funktionieren auch nach der Deaktivierung aus der App, werden jedoch nicht aktualisiert. Daher ist es auch möglich mehr als 2 Shortcuts auf dem Startbildschirm zu benutzen.",
 
   "ignoreBatteryOptimizationPart1": "Wenn Sie keine Benachrichtigungen erhalten, kann dies an herstellerspezifischen Akku-Optimierungen liegen. Sie können diese hier deaktivieren, um sicherzustellen, dass die App im Hintergrund ordnungsgemäß funktioniert. ",
   "ignoreBatteryOptimizationSettings": "Batterie Einstellungen",

@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/applets/lessons/definition.dart';
-import 'package:lanis/utils/root_nav.dart';
 import 'package:lanis/widgets/combined_applet_builder.dart';
 import 'package:liblanis/liblanis.dart';
 
-import 'attendances.dart';
 import 'lesson_list_tile.dart';
 
 class LessonsStudentView extends ConsumerStatefulWidget {
@@ -169,7 +168,10 @@ class _LessonsStudentViewState extends ConsumerState<LessonsStudentView>
                                   left: 8,
                                   right: 8,
                                 ),
-                                child: LessonListTile(lesson: lessons[index]),
+                                child: LessonListTile(
+                                  lesson: lessons[index],
+                                  accountType: accountType,
+                                ),
                               ),
                         )
                       : Column(
@@ -183,13 +185,7 @@ class _LessonsStudentViewState extends ConsumerState<LessonsStudentView>
                       attendanceLessons != null && attendanceLessons.isNotEmpty,
                   child: FloatingActionButton.extended(
                     onPressed: () {
-                      pushRoot(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              AttendancesScreen(lessons: attendanceLessons!),
-                        ),
-                      );
+                      context.push('/${accountType.name}/lessons/attendances');
                     },
                     label: Text(AppLocalizations.of(context).attendances),
                     icon: const Icon(Icons.access_alarm),

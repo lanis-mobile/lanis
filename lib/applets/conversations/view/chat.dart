@@ -445,6 +445,7 @@ class _ConversationsChatState extends ConsumerState<ConversationsChat>
                     refreshing: refreshing,
                     settings: settings,
                     statistics: statistics,
+                    conversationId: widget.id,
                   ),
                   Container(
                     width: double.infinity,

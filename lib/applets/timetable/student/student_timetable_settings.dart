@@ -248,11 +248,11 @@ class _StudentTimetableSettingsState
                                   .toList();
                             }
 
-                            List<List<TimetableSubject>>? days =
-                                TimeTableHelper.getCustomLessons(settings);
-
-                            if (days == null) {
-                              throw Exception('days is null');
+                            List<List<TimetableSubject>> days =
+                                TimeTableHelper.getCustomLessons(settings) ??
+                                List.generate(7, (_) => <TimetableSubject>[]);
+                            while (days.length <= currentDay) {
+                              days.add(<TimetableSubject>[]);
                             }
 
                             if (lesson != null) {
@@ -329,10 +329,22 @@ class _StudentTimetableSettingsState
             List<List<TimetableSubject>>? customLessons =
                 TimeTableHelper.getCustomLessons(settings);
 
-            List<String> weekDays = DateFormat.EEEE(
+            // Prefer locale weekday names; fall back if symbols are empty
+            // (some Platform.localeName values yield an empty WEEKDAYS list).
+            final symbols = DateFormat.EEEE(
               Platform.localeName,
             ).dateSymbols.WEEKDAYS;
-            weekDays = weekDays.sublist(1)..add(weekDays[0]);
+            final List<String> weekDays = symbols.length >= 7
+                ? (symbols.sublist(1)..add(symbols.first))
+                : const [
+                    'Monday',
+                    'Tuesday',
+                    'Wednesday',
+                    'Thursday',
+                    'Friday',
+                    'Saturday',
+                    'Sunday',
+                  ];
 
             return DefaultTabController(
               length: weekDays.length,
@@ -349,11 +361,14 @@ class _StudentTimetableSettingsState
                   Expanded(
                     child: TabBarView(
                       children: weekDays.map((dayName) {
-                        final dayLessons =
-                            lessons[weekDays.indexOf(dayName)] ?? [];
-                        final List<TimetableSubject>? customDayLessons =
-                            customLessons?[weekDays.indexOf(dayName)];
                         final currentDay = weekDays.indexOf(dayName);
+                        final dayLessons = lessons[currentDay] ?? [];
+                        final List<TimetableSubject>? customDayLessons =
+                            (customLessons != null &&
+                                currentDay >= 0 &&
+                                currentDay < customLessons.length)
+                            ? customLessons[currentDay]
+                            : null;
                         return SingleChildScrollView(
                           child: Padding(
                             padding: const EdgeInsets.all(16.0),

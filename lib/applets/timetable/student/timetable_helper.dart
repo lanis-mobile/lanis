@@ -42,17 +42,19 @@ class TimeTableHelper {
   static List<List<TimetableSubject>>? getCustomLessons(
     Map<String, dynamic> settings,
   ) {
-    return settings['custom-lessons'] == null
-        ? null
-        : (settings['custom-lessons'] as List)
-              .map(
-                (e) => (e as List).map((item) {
-                  if (item.runtimeType == TimetableSubject) {
-                    return item as TimetableSubject;
-                  }
-                  return TimetableSubject.fromJson(item);
-                }).toList(),
-              )
-              .toList();
+    final raw = settings['custom-lessons'];
+    // Defaults use an empty list; treat that like "unset" so callers can use
+    // `customLessons?[day]` without indexing an empty list.
+    if (raw == null || raw is! List || raw.isEmpty) return null;
+    return raw
+        .map(
+          (e) => (e as List).map((item) {
+            if (item.runtimeType == TimetableSubject) {
+              return item as TimetableSubject;
+            }
+            return TimetableSubject.fromJson(item);
+          }).toList(),
+        )
+        .toList();
   }
 }

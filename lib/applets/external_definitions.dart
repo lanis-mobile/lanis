@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lanis/applets/definitions.dart';
 import 'package:lanis/generated/l10n.dart';
-import 'package:lanis/view/moodle.dart';
+import 'package:lanis/utils/deep_link.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -34,9 +35,6 @@ final openMoodleDefinition = ExternalDefinition(
     if (context == null) {
       return;
     }
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const MoodleWebView()),
-    );
+    context.push(SettingsDeepLinks.moodle);
   },
 );

@@ -7,21 +7,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:liblanis/liblanis.dart';
-import 'package:lanis/applets/calendar/calendar_export.dart';
-import 'package:lanis/applets/timetable/student/student_timetable_settings.dart';
 import 'package:lanis/generated/l10n.dart';
-import 'package:lanis/widgets/large_appbar.dart';
+import 'package:lanis/utils/deep_link.dart';
 import 'package:lanis/utils/responsive.dart';
+import 'package:lanis/utils/whats_new.dart';
 import 'package:lanis/view/settings/settings_page_builder.dart';
-import 'package:lanis/view/settings/subsettings/about.dart';
-import 'package:lanis/view/settings/subsettings/appearance.dart';
 import 'package:lanis/view/settings/subsettings/cache.dart';
-import 'package:lanis/view/settings/subsettings/notifications.dart';
-import 'package:lanis/view/settings/subsettings/quick_actions.dart';
-import 'package:lanis/view/settings/subsettings/userdata.dart';
-
 import 'package:lanis/widgets/press_tile.dart';
-import '../../utils/whats_new.dart';
 
 class SettingsGroup {
   final List<SettingsTile> tiles;
@@ -35,6 +27,7 @@ class SettingsTile {
   final IconData icon;
   final Future<void> Function(BuildContext context) screen;
   final Future<bool> Function() show;
+  final String? routePath;
 
   static Future<bool> alwaysShow() async {
     return true;
@@ -46,22 +39,23 @@ class SettingsTile {
     required this.icon,
     required this.screen,
     this.show = alwaysShow,
+    this.routePath,
   });
 }
 
 class SettingsScreen extends ConsumerSettingsColours {
-  const SettingsScreen({super.key});
+  /// When true, used as the master list inside [SettingsTabletShell].
+  final bool embeddedInTabletShell;
+
+  const SettingsScreen({super.key, this.embeddedInTabletShell = false});
 
   @override
   ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
 }
 
 class _SettingsScreenState extends ConsumerSettingsColoursState<SettingsScreen> {
-  SettingsTile? selectedTile;
-
-  bool _supports(AppletMeta applet) => ref
-      .read(supportedAppletPhpUrlsProvider)
-      .contains(applet.appletPhpUrl);
+  bool _supports(AppletMeta applet) =>
+      ref.read(supportedAppletPhpUrlsProvider).contains(applet.appletPhpUrl);
 
   List<SettingsGroup> _buildSettingsTiles() {
     return [
@@ -73,7 +67,9 @@ class _SettingsScreenState extends ConsumerSettingsColoursState<SettingsScreen> 
               return AppLocalizations.of(context).darkModeColoursList;
             },
             icon: Icons.palette_rounded,
-            screen: (context) async => context.push('/settings/appearance'),
+            routePath: SettingsDeepLinks.appearance,
+            screen: (context) async =>
+                context.push(SettingsDeepLinks.appearance),
           ),
           SettingsTile(
             title: (context) => AppLocalizations.of(context).language,
@@ -146,9 +142,10 @@ class _SettingsScreenState extends ConsumerSettingsColoursState<SettingsScreen> 
               return AppLocalizations.of(context).intervalAppletsList;
             },
             icon: Icons.notifications_rounded,
+            routePath: SettingsDeepLinks.notifications,
             screen: (context) async {
               if (context.mounted) {
-                context.push('/settings/notifications');
+                context.push(SettingsDeepLinks.notifications);
               }
             },
           ),
@@ -166,14 +163,8 @@ class _SettingsScreenState extends ConsumerSettingsColoursState<SettingsScreen> 
               return "${cacheStats['fileNum']} ${cacheStats['fileNum'] == 1 ? (context.mounted ? AppLocalizations.of(context).file : 'Datei') : (context.mounted ? AppLocalizations.of(context).files : 'Dateien')} (${cacheStats['size']! ~/ 1024} KB)";
             },
             icon: Icons.storage_rounded,
-            screen: (context) async => context.push('/settings/cache'),
-          ),
-          SettingsTile(
-            title: (context) => AppLocalizations.of(context).quickActions,
-            subtitle: (context) async =>
-                "${AppLocalizations.of(context).applets}, ${AppLocalizations.of(context).external}",
-            icon: Icons.extension,
-            screen: (context) async => context.push('/settings/quick-actions'),
+            routePath: SettingsDeepLinks.cache,
+            screen: (context) async => context.push(SettingsDeepLinks.cache),
           ),
         ],
       ),
@@ -185,12 +176,9 @@ class _SettingsScreenState extends ConsumerSettingsColoursState<SettingsScreen> 
                 title: (context) => AppLocalizations.of(context).calendarExport,
                 subtitle: (context) async => 'PDF, iCal, ICS, CSV',
                 icon: Icons.download_rounded,
-                screen: (context) => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const CalendarExport(),
-                  ),
-                ),
+                routePath: SettingsDeepLinks.calendarExport,
+                screen: (context) async =>
+                    context.push(SettingsDeepLinks.calendarExport),
               ),
             if (_supports(Applets.timetable))
               SettingsTile(
@@ -199,12 +187,9 @@ class _SettingsScreenState extends ConsumerSettingsColoursState<SettingsScreen> 
                 subtitle: (context) async =>
                     AppLocalizations.of(context).customizeTimetableDescription,
                 icon: Icons.timelapse,
-                screen: (context) => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const StudentTimetableSettings(),
-                  ),
-                ),
+                routePath: SettingsDeepLinks.timetable,
+                screen: (context) async =>
+                    context.push(SettingsDeepLinks.timetable),
               ),
           ],
         ),
@@ -216,7 +201,9 @@ class _SettingsScreenState extends ConsumerSettingsColoursState<SettingsScreen> 
               return AppLocalizations.of(context).ageNameClassList;
             },
             icon: Icons.account_circle_rounded,
-            screen: (context) async => context.push('/settings/userdata'),
+            routePath: SettingsDeepLinks.userdata,
+            screen: (context) async =>
+                context.push(SettingsDeepLinks.userdata),
           ),
         ],
       ),
@@ -228,7 +215,8 @@ class _SettingsScreenState extends ConsumerSettingsColoursState<SettingsScreen> 
               return AppLocalizations.of(context).contributorsLinksLicensesList;
             },
             icon: Icons.school_rounded,
-            screen: (context) async => context.push('/settings/about'),
+            routePath: SettingsDeepLinks.about,
+            screen: (context) async => context.push(SettingsDeepLinks.about),
           ),
           SettingsTile(
             icon: Icons.question_mark,
@@ -243,31 +231,17 @@ class _SettingsScreenState extends ConsumerSettingsColoursState<SettingsScreen> 
     ];
   }
 
-  SettingsTile? _resolveSelectedTile(List<SettingsGroup> settingsTiles) {
-    final allTiles = [for (final group in settingsTiles) ...group.tiles];
-    if (allTiles.isEmpty) return null;
-    final selectedTitle = selectedTile?.title(context);
-    if (selectedTitle != null) {
-      for (final tile in allTiles) {
-        if (tile.title(context) == selectedTitle) return tile;
-      }
-    }
-    return allTiles.first;
-  }
-
   @override
   Widget build(BuildContext context) {
     ref.watch(supportedAppletPhpUrlsProvider);
     final settingsTiles = _buildSettingsTiles();
-    final accounts = ref.watch(accountsProvider).asData?.value ?? [];
-    final isTablet = Responsive.isTablet(context);
+    final isTablet = Responsive.isTablet(context) || widget.embeddedInTabletShell;
+    final currentPath = GoRouterState.of(context).uri.path;
+
     final double availableHeight =
         MediaQuery.of(context).size.height -
         kToolbarHeight -
         MediaQuery.of(context).padding.top;
-
-    final resolvedSelectedTile =
-        isTablet ? _resolveSelectedTile(settingsTiles) : null;
 
     Widget settingsList = SizedBox(
       height: availableHeight,
@@ -285,19 +259,22 @@ class _SettingsScreenState extends ConsumerSettingsColoursState<SettingsScreen> 
                 tileIndex,
               ) {
                 final tile = settingsTiles[groupIndex].tiles[tileIndex];
+                final selected =
+                    isTablet &&
+                    tile.routePath != null &&
+                    currentPath == tile.routePath;
                 return SettingsTileWidget(
                   tile: tile,
                   index: tileIndex,
                   length: settingsTiles[groupIndex].tiles.length,
                   foregroundColor: foregroundColor,
-                  selected: isTablet && resolvedSelectedTile == tile,
+                  selected: selected,
                   onSelect: isTablet
                       ? (tile) {
-                          if (tile.title(context) ==
-                              AppLocalizations.of(context).language) {
+                          if (tile.routePath == null) {
                             return tile.screen(context);
                           }
-                          setState(() => selectedTile = tile);
+                          context.go(tile.routePath!);
                         }
                       : null,
                 );
@@ -307,6 +284,23 @@ class _SettingsScreenState extends ConsumerSettingsColoursState<SettingsScreen> 
         },
       ),
     );
+
+    if (widget.embeddedInTabletShell) {
+      return ColoredBox(
+        color: backgroundColor,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AppBar(
+              title: Text(AppLocalizations.of(context).settings),
+              backgroundColor: backgroundColor,
+              automaticallyImplyLeading: false,
+            ),
+            Expanded(child: settingsList),
+          ],
+        ),
+      );
+    }
 
     if (!isTablet) {
       final canPop = Navigator.of(context).canPop();
@@ -332,7 +326,7 @@ class _SettingsScreenState extends ConsumerSettingsColoursState<SettingsScreen> 
       );
     }
 
-    // Tablet layout (beside NavigationRail — leave via rail).
+    // Phone-sized but somehow tablet flag: list only (detail via routes).
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
@@ -340,73 +334,7 @@ class _SettingsScreenState extends ConsumerSettingsColoursState<SettingsScreen> 
         backgroundColor: backgroundColor,
         automaticallyImplyLeading: false,
       ),
-      body: Row(
-        children: [
-          SizedBox(
-            width: 300, // Fixed width for settings list
-            child: settingsList,
-          ),
-          const VerticalDivider(width: 1),
-          Expanded(
-            child: resolvedSelectedTile == null
-                ? const SizedBox.shrink()
-                : _buildSettingDetail(resolvedSelectedTile, accounts.length),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSettingDetail(SettingsTile tile, int accountCount) {
-    return Builder(
-      builder: (context) {
-        final isTablet = Responsive.isTablet(context);
-        if (tile.title(context) == AppLocalizations.of(context).appearance) {
-          return AppearanceSettings(showBackButton: !isTablet);
-        } else if (tile.title(context) ==
-            AppLocalizations.of(context).notifications) {
-          return NotificationSettings(
-            accountCount: accountCount,
-            showBackButton: !isTablet,
-          );
-        } else if (tile.title(context) ==
-            AppLocalizations.of(context).clearCache) {
-          return CacheSettings(showBackButton: !isTablet);
-        } else if (tile.title(context) ==
-            AppLocalizations.of(context).userData) {
-          return UserDataSettings(showBackButton: !isTablet);
-        } else if (tile.title(context) == AppLocalizations.of(context).about) {
-          return AboutSettings(showBackButton: !isTablet);
-        } else if (tile.title(context) ==
-            AppLocalizations.of(context).calendarExport) {
-          return CalendarExport(showBackButton: !isTablet);
-        } else if (tile.title(context) ==
-            AppLocalizations.of(context).customizeTimetable) {
-          return StudentTimetableSettings(showBack: !isTablet);
-        } else if (tile.title(context) ==
-            AppLocalizations.of(context).quickActions) {
-          return QuickActions(showBackButton: !isTablet);
-        } else if (tile.title(context) ==
-            AppLocalizations.of(context).inThisUpdate) {
-          return FutureBuilder(
-            future: showLocalUpdateInfo(context, dialog: false),
-            builder: (context, snapshot) {
-              if (snapshot.hasData && snapshot.data != null) {
-                return Scaffold(
-                  appBar: LargeAppBar(
-                    showBackButton: false,
-                    backgroundColor: backgroundColor,
-                    title: Text(AppLocalizations.of(context).inThisUpdate),
-                  ),
-                  body: snapshot.data as Widget,
-                );
-              }
-              return const Center(child: CircularProgressIndicator());
-            },
-          );
-        }
-        return Center(child: Text(AppLocalizations.of(context).noResults));
-      },
+      body: settingsList,
     );
   }
 }

@@ -278,7 +278,7 @@ class _SubstitutionsViewState extends ConsumerState<SubstitutionsView>
             ),
             floatingActionButton: FloatingActionButton(
               onPressed: () async {
-                await context.push('/home/substitutions/filter');
+                await context.push('/common/substitutions/filter');
               },
               child: const Icon(Icons.filter_alt),
             ),
@@ -368,7 +368,7 @@ class _SubstitutionsViewState extends ConsumerState<SubstitutionsView>
             ),
             floatingActionButton: FloatingActionButton(
               onPressed: () async {
-                await context.push('/home/substitutions/filter');
+                await context.push('/common/substitutions/filter');
               },
               child: const Icon(Icons.filter_alt),
             ),

@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:lanis/applets/definitions.dart';
+import 'package:lanis/applets/timetable/routes.dart';
 import 'package:lanis/applets/timetable/student/student_timetable_better_view.dart';
 import 'package:lanis/generated/l10n.dart';
-
 import 'package:lanis/l10n/account_type_ui.dart';
+import 'package:lanis/utils/deep_link.dart';
 
 final timeTableDefinition = AppletDefinition(
   appletPhpUrl: 'stundenplan.php',
-  routePath: '/home/timetable',
+  pathSegment: 'timetable',
+  deepLinkScope: DeepLinkScope.accountTyped,
+  buildRoutes: buildTimetableRoutes,
   icon: Icon(Icons.timelapse),
   selectedIcon: Icon(Icons.timelapse_outlined),
   appletType: AppletType.nested,

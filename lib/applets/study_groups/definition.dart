@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/applets/definitions.dart';
-import 'package:lanis/applets/study_groups/student/student_study_groups_view.dart';
-
+import 'package:lanis/applets/study_groups/routes.dart';
+import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/l10n/account_type_ui.dart';
+import 'package:lanis/utils/deep_link.dart';
 
 final studyGroupsDefinition = AppletDefinition(
   appletPhpUrl: 'lerngruppen.php',
-  routePath: '/study-groups',
+  pathSegment: 'study-groups',
+  deepLinkScope: DeepLinkScope.accountTyped,
+  buildRoutes: buildStudyGroupsRoutes,
   addDivider: false,
   appletType: AppletType.navigation,
   icon: const Icon(Icons.groups),
@@ -18,6 +20,7 @@ final studyGroupsDefinition = AppletDefinition(
   settingsDefaults: {'showExams': 'true'},
   refreshInterval: const Duration(minutes: 15),
   bodyBuilder: (context, accountType, openDrawerCb) {
-    return StudentStudyGroupsView(openDrawerCb: openDrawerCb);
+    // Home route uses [StudyGroupsModePage] from routes.dart.
+    return const StudyGroupsModePage(showExams: false);
   },
 );

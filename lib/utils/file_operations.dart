@@ -152,7 +152,7 @@ void launchFile(BuildContext context, DownloadableFile file, Function callback) 
               FilledButton(
                 child: const Text('Ok'),
                 onPressed: () {
-                  Navigator.of(context).pop();
+                  popRootDialog(context);
                 },
               ),
             ],
@@ -174,7 +174,7 @@ void launchFile(BuildContext context, DownloadableFile file, Function callback) 
   _downloadRemote(context, file.url.toString(), filename).then((
     filepath,
   ) async {
-    if (context.mounted) Navigator.of(context).pop();
+    if (context.mounted) popRootDialog(context);
 
     if (filepath == "" && context.mounted) {
       showDialog(context: context, builder: (context) => errorDialog(context));
@@ -193,7 +193,7 @@ void launchFile(BuildContext context, DownloadableFile file, Function callback) 
               FilledButton(
                 child: const Text('Ok'),
                 onPressed: () {
-                  Navigator.of(context).pop();
+                  popRootDialog(context);
                 },
               ),
             ],
@@ -204,7 +204,7 @@ void launchFile(BuildContext context, DownloadableFile file, Function callback) 
     }
   }).catchError((Object _) {
     if (context.mounted) {
-      Navigator.of(context).pop();
+      popRootDialog(context);
       showDialog(context: context, builder: (context) => errorDialog(context));
     }
   });
@@ -238,7 +238,7 @@ void saveFile(BuildContext context, DownloadableFile file, Function callback) {
   _downloadRemote(context, file.url.toString(), filename).then((
     filepath,
   ) async {
-    if (context.mounted) Navigator.of(context).pop();
+    if (context.mounted) popRootDialog(context);
 
     if (filepath == "" && context.mounted) {
       showDialog(context: context, builder: (context) => errorDialog(context));
@@ -252,7 +252,7 @@ void saveFile(BuildContext context, DownloadableFile file, Function callback) {
     }
   }).catchError((Object _) {
     if (context.mounted) {
-      Navigator.of(context).pop();
+      popRootDialog(context);
       showDialog(context: context, builder: (context) => errorDialog(context));
     }
   });
@@ -279,7 +279,7 @@ void shareFile(BuildContext context, DownloadableFile file, Function callback) {
   _downloadRemote(context, file.url.toString(), filename).then((
     filepath,
   ) async {
-    if (context.mounted) Navigator.of(context).pop();
+    if (context.mounted) popRootDialog(context);
 
     if (filepath == "" && context.mounted) {
       showDialog(context: context, builder: (context) => errorDialog(context));
@@ -289,7 +289,7 @@ void shareFile(BuildContext context, DownloadableFile file, Function callback) {
     }
   }).catchError((Object _) {
     if (context.mounted) {
-      Navigator.of(context).pop();
+      popRootDialog(context);
       showDialog(context: context, builder: (context) => errorDialog(context));
     }
   });
@@ -311,7 +311,7 @@ AlertDialog errorDialog(BuildContext context) => AlertDialog(
     FilledButton(
       child: const Text('Ok'),
       onPressed: () {
-        Navigator.of(context).pop();
+        popRootDialog(context);
       },
     ),
   ],

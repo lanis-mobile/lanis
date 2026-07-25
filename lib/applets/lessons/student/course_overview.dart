@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:intl/intl.dart';
 import 'package:lanis/generated/l10n.dart';
-import 'package:lanis/applets/lessons/student/upload_page.dart';
-import 'package:lanis/utils/root_nav.dart';
 
 import '../../../utils/file_operations.dart' as fo;
 import '../../../widgets/format_text.dart';
@@ -13,10 +12,12 @@ import 'homework_box.dart';
 class CourseOverviewAnsicht extends ConsumerStatefulWidget {
   final String dataFetchURL;
   final String title;
+  final int? initialTab;
   const CourseOverviewAnsicht({
     super.key,
     required this.dataFetchURL,
     required this.title,
+    this.initialTab,
   });
 
   @override
@@ -29,7 +30,7 @@ class _CourseOverviewAnsichtState extends ConsumerState<CourseOverviewAnsicht> {
 
   bool checked = false;
 
-  int _currentIndex = 0;
+  late int _currentIndex = widget.initialTab ?? 0;
   bool loading = true;
   DetailedLesson? data;
   final _refreshIndicatorKey = GlobalKey<RefreshIndicatorState>();
@@ -38,6 +39,24 @@ class _CourseOverviewAnsichtState extends ConsumerState<CourseOverviewAnsicht> {
   void initState() {
     super.initState();
     _loadData();
+  }
+
+  String get _accountPrefix =>
+      ref.read(activeAccountProvider)?.accountType?.name ?? 'student';
+
+  Future<void> _openUpload(String url, String name, String status) async {
+    final encoded = Uri.encodeComponent(url);
+    final encodedName = Uri.encodeComponent(name);
+    await context.push(
+      '/$_accountPrefix/lessons/upload?url=$encoded&name=$encodedName&status=$status',
+    );
+  }
+
+  void _openSemester1() {
+    final title = Uri.encodeComponent(widget.title);
+    context.push(
+      '/$_accountPrefix/lessons/course/${data!.courseID}?title=$title&semester=1',
+    );
   }
 
   Future<void> _loadData({bool secondTry = false, bool force = false}) async {
@@ -110,17 +129,7 @@ class _CourseOverviewAnsichtState extends ConsumerState<CourseOverviewAnsicht> {
                       child: Card(
                         child: ListTile(
                           title: ElevatedButton(
-                            onPressed: () {
-                              pushRoot(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => CourseOverviewAnsicht(
-                                    dataFetchURL: data!.semester1URL.toString(),
-                                    title: widget.title,
-                                  ),
-                                ),
-                              );
-                            },
+                            onPressed: _openSemester1,
                             child: Text(
                               AppLocalizations.of(context).toSemesterOne,
                               textAlign: TextAlign.center,
@@ -174,15 +183,10 @@ class _CourseOverviewAnsichtState extends ConsumerState<CourseOverviewAnsicht> {
                             children: [
                               FilledButton(
                                 onPressed: () async {
-                                  await pushRoot(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => UploadScreen(
-                                        url: upload.url.toString(),
-                                        name: upload.name,
-                                        status: "open",
-                                      ),
-                                    ),
+                                  await _openUpload(
+                                    upload.url.toString(),
+                                    upload.name,
+                                    'open',
                                   );
                                   setState(() {
                                     _loadData();
@@ -235,15 +239,10 @@ class _CourseOverviewAnsichtState extends ConsumerState<CourseOverviewAnsicht> {
                     } else {
                       uploads.add(
                         OutlinedButton(
-                          onPressed: () => pushRoot(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => UploadScreen(
-                                url: upload.url.toString(),
-                                name: upload.name,
-                                status: "closed",
-                              ),
-                            ),
+                          onPressed: () => _openUpload(
+                            upload.url.toString(),
+                            upload.name,
+                            'closed',
                           ),
                           child: Wrap(
                             crossAxisAlignment: WrapCrossAlignment.center,
@@ -571,17 +570,7 @@ class _CourseOverviewAnsichtState extends ConsumerState<CourseOverviewAnsicht> {
           if (data!.semester1URL != null)
             IconButton(
               icon: const Icon(Icons.looks_one_outlined),
-              onPressed: () {
-                pushRoot(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => CourseOverviewAnsicht(
-                      dataFetchURL: data!.semester1URL.toString(),
-                      title: widget.title,
-                    ),
-                  ),
-                );
-              },
+              onPressed: _openSemester1,
             ),
         ],
       ),

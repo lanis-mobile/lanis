@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:lanis/utils/logger.dart';
+import 'package:lanis/utils/root_nav.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:lanis/generated/l10n.dart';
 
@@ -51,7 +52,8 @@ Future<ReleaseNotesScreen?> showLocalUpdateInfo(
   ).read(sharedOverAccountSettingsProvider);
   shared.setString('last-app-version', deviceReleaseTag);
   final deviceReleaseInfo = await getReleaseInfo(deviceReleaseTag);
-  if (context.mounted && dialog) Navigator.of(context).pop();
+  // Loading dialog uses the root navigator; do not pop the settings route.
+  if (context.mounted && dialog) popRootDialog(context);
   if (deviceReleaseInfo == null) return null;
   if (context.mounted) {
     if (dialog) {
@@ -241,7 +243,7 @@ class ReleaseNotesScreen extends StatelessWidget {
       ),
       floatingActionButton: showBack
           ? FloatingActionButton.extended(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => popRootDialog(context),
               icon: const Icon(Icons.done),
               label: Text(AppLocalizations.of(context).done),
             )

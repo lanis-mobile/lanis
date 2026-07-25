@@ -3,24 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:lanis/applets/definitions.dart';
-import 'package:lanis/applets/substitutions/substitutions_filter_settings.dart';
 import 'package:lanis/home_page.dart';
-import 'package:lanis/l10n/account_type_ui.dart';
-import 'package:lanis/shell_navigation.dart';
 import 'package:lanis/startup.dart';
 import 'package:lanis/features/auth/auth_controller.dart';
+import 'package:lanis/utils/deep_link.dart';
 import 'package:lanis/utils/responsive.dart';
 import 'package:lanis/view/account_switcher/account_switcher.dart';
 import 'package:lanis/view/login/auth.dart';
 import 'package:lanis/view/login/screen.dart';
 import 'package:lanis/view/moodle.dart';
-import 'package:lanis/view/settings/settings.dart';
-import 'package:lanis/view/settings/subsettings/appearance.dart';
-import 'package:lanis/view/settings/subsettings/cache.dart';
-import 'package:lanis/view/settings/subsettings/notifications.dart';
-import 'package:lanis/view/settings/subsettings/about.dart';
-import 'package:lanis/view/settings/subsettings/userdata.dart';
-import 'package:lanis/view/settings/subsettings/quick_actions.dart';
+import 'package:lanis/view/settings/settings_routes.dart';
+import 'package:lanis/widgets/applet_home_shell.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 
@@ -30,10 +23,10 @@ Widget _homeAppletBody(AppletDefinition def) {
       final accountType =
           ref.watch(activeAccountProvider.select((a) => a?.accountType)) ??
           AccountType.student;
-      // Tablet opens the drawer from the NavigationRail; AppBar burgers are mobile-only.
+      final chrome = HomeChrome.maybeOf(context);
       final openDrawer = Responsive.isTablet(context)
           ? null
-          : () => Scaffold.of(context).openDrawer();
+          : () => chrome?.openDrawer();
       final builder = def.bodyBuilder;
       if (builder == null) {
         return const SizedBox.shrink();
@@ -43,86 +36,108 @@ Widget _homeAppletBody(AppletDefinition def) {
   );
 }
 
+AppletRouteContext _routeContext() => AppletRouteContext(
+  rootNavigatorKey: rootNavigatorKey,
+  homeBody: _homeAppletBody,
+);
+
+bool _isSettingsPath(String loc) =>
+    loc == SettingsDeepLinks.base ||
+    loc.startsWith('${SettingsDeepLinks.base}/');
+
+bool _isMoodlePath(String loc) => loc == SettingsDeepLinks.moodle;
+
 bool _isSupportedShellPath(Ref ref, String loc) {
-  for (final def in AppDefinitions.applets) {
-    if (loc == def.routePath || loc.startsWith('${def.routePath}/')) {
-      return ref
-          .read(supportedAppletPhpUrlsProvider)
-          .contains(def.appletPhpUrl);
-    }
+  final def = AppDefinitions.findMatchingLocation(loc);
+  if (def != null) {
+    return ref
+        .read(supportedAppletPhpUrlsProvider)
+        .contains(def.appletPhpUrl);
   }
-  if (loc == settingsShellPath || loc.startsWith('$settingsShellPath/')) {
-    return true;
-  }
+  if (_isSettingsPath(loc) || _isMoodlePath(loc)) return true;
   return true;
 }
 
+String? _deepLinkAuthRedirect(Ref ref, String loc) {
+  final account =
+      ref.read(activeAccountProvider)?.accountType ?? AccountType.student;
+
+  if (loc == SettingsDeepLinks.deepLinkError) return null;
+
+  // Moodle / settings: require common prefix.
+  if (_isMoodlePath(loc) || _isSettingsPath(loc)) {
+    if (!deepLinkPrefixAllowed(loc, account)) {
+      return SettingsDeepLinks.deepLinkError;
+    }
+    return null;
+  }
+
+  final def = AppDefinitions.findMatchingLocation(loc);
+  if (def == null) {
+    // Unknown deep path under a known prefix → error
+    if (deepLinkPrefixOf(loc) != null &&
+        loc != '/startup' &&
+        loc != '/welcome' &&
+        loc != '/login' &&
+        loc != '/accounts') {
+      return SettingsDeepLinks.deepLinkError;
+    }
+    return null;
+  }
+
+  if (!deepLinkPrefixAllowed(loc, account)) {
+    return SettingsDeepLinks.deepLinkError;
+  }
+
+  if (!ref.read(supportedAppletPhpUrlsProvider).contains(def.appletPhpUrl)) {
+    return SettingsDeepLinks.deepLinkError;
+  }
+
+  if (!def.supportedAccountTypes.contains(account)) {
+    return SettingsDeepLinks.deepLinkError;
+  }
+
+  // Teacher lessons: only /home allowed.
+  if (def.pathSegment == 'lessons' &&
+      account == AccountType.teacher &&
+      !loc.endsWith('/home') &&
+      loc != def.basePath(account)) {
+    return SettingsDeepLinks.deepLinkError;
+  }
+
+  return null;
+}
+
 final goRouterProvider = Provider<GoRouter>((ref) {
-  // Do not watch auth here — recreating GoRouter resets the navigation stack.
   final listenable = _AuthListenable(ref);
   ref.onDispose(listenable.dispose);
+
+  final routeCtx = _routeContext();
 
   final shellBranches = <StatefulShellBranch>[
     for (final def in AppDefinitions.homeApplets)
       StatefulShellBranch(
-        routes: [
-          GoRoute(
-            path: def.routePath,
-            builder: (context, state) => _homeAppletBody(def),
-            routes: [
-              if (def.appletPhpUrl == 'vertretungsplan.php')
-                GoRoute(
-                  path: 'filter',
-                  parentNavigatorKey: rootNavigatorKey,
-                  builder: (context, state) =>
-                      const SubstitutionsFilterSettings(),
-                ),
-            ],
-          ),
-        ],
+        initialLocation: def.homePath(
+          def.deepLinkScope == DeepLinkScope.common
+              ? null
+              : (ref.read(activeAccountProvider)?.accountType ??
+                    def.supportedAccountTypes.first),
+        ),
+        routes: def.buildRoutes(routeCtx),
       ),
     for (final def in AppDefinitions.navigationApplets)
       StatefulShellBranch(
-        routes: [
-          GoRoute(
-            path: def.routePath,
-            builder: (context, state) => _homeAppletBody(def),
-          ),
-        ],
+        initialLocation: def.homePath(
+          def.deepLinkScope == DeepLinkScope.common
+              ? null
+              : (ref.read(activeAccountProvider)?.accountType ??
+                    def.supportedAccountTypes.first),
+        ),
+        routes: def.buildRoutes(routeCtx),
       ),
     StatefulShellBranch(
-      routes: [
-        GoRoute(
-          path: settingsShellPath,
-          builder: (context, state) => const SettingsScreen(),
-          routes: [
-            GoRoute(
-              path: 'appearance',
-              builder: (context, state) => const AppearanceSettings(),
-            ),
-            GoRoute(
-              path: 'notifications',
-              builder: (context, state) => const NotificationSettings(),
-            ),
-            GoRoute(
-              path: 'cache',
-              builder: (context, state) => const CacheSettings(),
-            ),
-            GoRoute(
-              path: 'quick-actions',
-              builder: (context, state) => const QuickActions(),
-            ),
-            GoRoute(
-              path: 'userdata',
-              builder: (context, state) => const UserDataSettings(),
-            ),
-            GoRoute(
-              path: 'about',
-              builder: (context, state) => const AboutSettings(),
-            ),
-          ],
-        ),
-      ],
+      initialLocation: SettingsDeepLinks.home,
+      routes: buildSettingsRoutes(),
     ),
   ];
 
@@ -131,40 +146,43 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     initialLocation: '/startup',
     refreshListenable: listenable,
     redirect: (context, state) {
+      // Normalize lanis://host/path → /host/path for go_router matching.
+      if (state.uri.scheme == 'lanis') {
+        final normalized = deepLinkLocationFromUri(state.uri);
+        if (normalized != null) return normalized;
+      }
+
       final auth = ref.read(authControllerProvider);
       final loc = state.matchedLocation;
       final loggingIn = loc == '/welcome' || loc == '/login';
       final onStartup = loc == '/startup';
-      final onShell = AppDefinitions.applets.any(
-            (d) => loc == d.routePath || loc.startsWith('${d.routePath}/'),
-          ) ||
-          loc == settingsShellPath ||
-          loc.startsWith('$settingsShellPath/');
+      final onShell =
+          AppDefinitions.findMatchingLocation(loc) != null ||
+          _isSettingsPath(loc);
 
       switch (auth.phase) {
         case AuthPhase.authenticating:
-          // Keep /login and /accounts mounted so add-account / switch can
-          // surface failures instead of being torn down mid-auth.
           if (onStartup || loc == '/login' || loc == '/accounts') return null;
           return '/startup';
         case AuthPhase.unauthenticated:
+          // Drop deep links while logged out → welcome/login.
           if (loggingIn || onStartup) {
             if (onStartup) return '/welcome';
             return null;
           }
           return '/welcome';
         case AuthPhase.error:
-          // Allow /login so WrongCredentials "Log In" can reach the form.
           if (loc == '/login') return null;
           return onStartup ? null : '/startup';
         case AuthPhase.authenticated:
-          // Allow /login so "add account" works while already signed in.
           if (loggingIn && loc == '/login') return null;
           if (loc == '/welcome' || onStartup) {
             return firstSupportedHomePathFromRef(ref);
           }
+          final deepErr = _deepLinkAuthRedirect(ref, loc);
+          if (deepErr != null) return deepErr;
           if (onShell && !_isSupportedShellPath(ref, loc)) {
-            return firstSupportedHomePathFromRef(ref);
+            return SettingsDeepLinks.deepLinkError;
           }
           return null;
       }
@@ -183,6 +201,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) =>
             const Scaffold(body: LoginForm(showBackButton: true)),
       ),
+      GoRoute(
+        path: SettingsDeepLinks.deepLinkError,
+        parentNavigatorKey: rootNavigatorKey,
+        builder: (context, state) => DeepLinkErrorPage(
+          error: DeepLinkException(
+            state.uri.queryParameters['message'] ??
+                'This link is not available for your account.',
+          ),
+        ),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return HomePage(navigationShell: navigationShell);
@@ -190,9 +218,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         branches: shellBranches,
       ),
       GoRoute(
-        path: '/moodle',
+        path: SettingsDeepLinks.moodle,
         parentNavigatorKey: rootNavigatorKey,
         builder: (context, state) => const MoodleWebView(),
+      ),
+      // Legacy alias
+      GoRoute(
+        path: '/moodle',
+        redirect: (context, state) => SettingsDeepLinks.moodle,
       ),
       GoRoute(
         path: '/accounts',

@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:lanis/applets/conversations/routes.dart';
 import 'package:lanis/applets/conversations/view/conversations_view.dart';
 import 'package:lanis/applets/definitions.dart';
 import 'package:lanis/generated/l10n.dart';
-
 import 'package:lanis/l10n/account_type_ui.dart';
+import 'package:lanis/utils/deep_link.dart';
 import 'background.dart';
 
 final conversationsDefinition = AppletDefinition(
   appletPhpUrl: 'nachrichten.php',
-  routePath: '/home/conversations',
+  pathSegment: 'conversations',
+  deepLinkScope: DeepLinkScope.common,
+  buildRoutes: buildConversationsRoutes,
   addDivider: false,
   appletType: AppletType.nested,
   icon: const Icon(Icons.forum),

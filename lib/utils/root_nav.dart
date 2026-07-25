@@ -3,6 +3,13 @@ import 'package:lanis/utils/responsive.dart';
 
 bool _useRootNavigator(BuildContext context) => !Responsive.isTablet(context);
 
+/// Pops a dialog/modal that was shown with [useRootNavigator] (the default
+/// for [showDialog]). Using the nearest navigator would pop a shell route.
+void popRootDialog(BuildContext context) {
+  final nav = Navigator.of(context, rootNavigator: true);
+  if (nav.canPop()) nav.pop();
+}
+
 /// Pushes [route] for in-applet navigation.
 ///
 /// On phone, uses the root navigator so the page covers the bottom bar.

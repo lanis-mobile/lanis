@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:lanis/applets/conversations/view/components/statistic_widget.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lanis/applets/conversations/view/shared.dart';
 import 'package:lanis/generated/l10n.dart';
-import 'package:lanis/utils/root_nav.dart';
 import 'package:liblanis/liblanis.dart';
 
 /// App bar for an open conversation, including refresh/status actions.
@@ -11,6 +10,7 @@ class ConversationsChatAppBar extends StatelessWidget {
   final bool refreshing;
   final ConversationSettings settings;
   final ParticipationStatistics? statistics;
+  final String conversationId;
 
   const ConversationsChatAppBar({
     super.key,
@@ -18,6 +18,7 @@ class ConversationsChatAppBar extends StatelessWidget {
     required this.refreshing,
     required this.settings,
     required this.statistics,
+    required this.conversationId,
   });
 
   @override
@@ -72,14 +73,9 @@ class ConversationsChatAppBar extends StatelessWidget {
         if (statistics != null)
           IconButton(
             onPressed: () {
-              pushRoot(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => StatisticWidget(
-                    statistics: statistics!,
-                    conversationTitle: title,
-                  ),
-                ),
+              final encoded = Uri.encodeComponent(title);
+              context.push(
+                '/common/conversations/chat/$conversationId/stats?title=$encoded',
               );
             },
             icon: const Icon(Icons.people),
