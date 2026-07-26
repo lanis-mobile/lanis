@@ -7,6 +7,7 @@ import 'package:liblanis/liblanis.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:lanis/generated/l10n.dart';
+import 'package:lanis/utils/privacy_policy.dart';
 
 import '../../../utils/logger.dart';
 
@@ -157,8 +158,7 @@ class _AboutSettingsState extends ConsumerSettingsColoursState<AboutSettings> {
     AboutLink(
       title: (context) => AppLocalizations.of(context).privacyPolicy,
       iconData: Icons.security_outlined,
-      onTap: (context) =>
-          launchUrl(Uri.parse("https://lanis-mobile.alessioc42.dev/policy/")),
+      onTap: (context) => launchUrl(Uri.parse(privacyPolicyUrl)),
     ),
     AboutLink(
       title: (context) => AppLocalizations.of(context).openSourceLicenses,

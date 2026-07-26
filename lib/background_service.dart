@@ -13,6 +13,7 @@ import 'package:lanis/applets/definitions.dart';
 import 'package:lanis/bridge/lanis_bootstrap.dart';
 import 'package:lanis/l10n/account_type_ui.dart';
 import 'package:lanis/utils/logger.dart';
+import 'package:lanis/utils/privacy_policy.dart';
 
 Future<void> setupBackgroundService() async {
   if ((await Permission.notification.isDenied)) {
@@ -129,6 +130,14 @@ Future<void> callbackDispatcher() async {
 
       if (!await container.read(connectionCheckerProvider).connected) {
         backgroundLogger.w('No network connection, aborting background fetch');
+        return;
+      }
+
+      final sharedPolicy = container.read(sharedOverAccountSettingsProvider);
+      if (!isPrivacyPolicyAccepted(sharedPolicy)) {
+        backgroundLogger.w(
+          'Privacy policy not accepted, aborting background fetch',
+        );
         return;
       }
 

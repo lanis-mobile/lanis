@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:liblanis/liblanis.dart';
+import 'package:lanis/utils/privacy_policy.dart';
 
 enum AuthPhase { unauthenticated, authenticating, authenticated, error }
 
@@ -42,6 +43,12 @@ class AuthController extends Notifier<AuthState> {
 
   /// Select preferred account (if any) and authenticate.
   Future<void> bootstrap() async {
+    final shared = ref.read(sharedOverAccountSettingsProvider);
+    if (!isPrivacyPolicyAccepted(shared)) {
+      state = const AuthState.unauthenticated();
+      return;
+    }
+
     _authDrivenExternally = true;
     state = const AuthState.authenticating();
     try {
@@ -81,6 +88,12 @@ class AuthController extends Notifier<AuthState> {
     int accountId, {
     bool removeAccountOnFailure = false,
   }) async {
+    final shared = ref.read(sharedOverAccountSettingsProvider);
+    if (!isPrivacyPolicyAccepted(shared)) {
+      state = const AuthState.unauthenticated();
+      return false;
+    }
+
     _authDrivenExternally = true;
     final previousId = ref.read(activeAccountProvider)?.localId;
     state = const AuthState.authenticating();

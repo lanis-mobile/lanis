@@ -9,9 +9,11 @@ import 'package:lanis/features/auth/auth_controller.dart';
 import 'package:lanis/utils/deep_link.dart';
 import 'package:lanis/utils/responsive.dart';
 import 'package:lanis/view/account_switcher/account_switcher.dart';
+import 'package:lanis/utils/privacy_policy.dart';
 import 'package:lanis/view/login/auth.dart';
 import 'package:lanis/view/login/screen.dart';
 import 'package:lanis/view/moodle.dart';
+import 'package:lanis/view/privacy_policy/privacy_policy_screen.dart';
 import 'package:lanis/view/settings/settings_routes.dart';
 import 'package:lanis/widgets/applet_home_shell.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
@@ -159,15 +161,27 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       final loc = state.matchedLocation;
       final loggingIn = loc == '/welcome' || loc == '/login';
       final onStartup = loc == '/startup';
+      final onPrivacyPolicy = loc == '/privacy-policy';
       final onShell =
           AppDefinitions.findMatchingLocation(loc) != null ||
           _isSettingsPath(loc);
 
+      final shared = ref.read(sharedOverAccountSettingsProvider);
+      if (!isPrivacyPolicyAccepted(shared) && !onPrivacyPolicy) {
+        return '/privacy-policy';
+      }
+
       switch (auth.phase) {
         case AuthPhase.authenticating:
-          if (onStartup || loc == '/login' || loc == '/accounts') return null;
+          if (onStartup ||
+              onPrivacyPolicy ||
+              loc == '/login' ||
+              loc == '/accounts') {
+            return null;
+          }
           return '/startup';
         case AuthPhase.unauthenticated:
+          if (onPrivacyPolicy) return null;
           // Drop deep links while logged out → welcome/login.
           if (loggingIn || onStartup) {
             if (onStartup) return '/welcome';
@@ -175,9 +189,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           }
           return '/welcome';
         case AuthPhase.error:
-          if (loc == '/login') return null;
+          if (onPrivacyPolicy || loc == '/login') return null;
           return onStartup ? null : '/startup';
         case AuthPhase.authenticated:
+          if (onPrivacyPolicy) {
+            return firstSupportedHomePathFromRef(ref);
+          }
           if (loggingIn && loc == '/login') return null;
           if (loc == '/welcome' || onStartup) {
             return firstSupportedHomePathFromRef(ref);
@@ -194,6 +211,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/startup',
         builder: (context, state) => const StartupScreen(),
+      ),
+      GoRoute(
+        path: '/privacy-policy',
+        builder: (context, state) => const PrivacyPolicyScreen(),
       ),
       GoRoute(
         path: '/welcome',

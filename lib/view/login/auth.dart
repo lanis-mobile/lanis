@@ -7,6 +7,7 @@ import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/home_page.dart';
 import 'package:lanis/features/auth/auth_controller.dart';
 import 'package:lanis/utils/logger.dart';
+import 'package:lanis/utils/privacy_policy.dart';
 import 'package:lanis/view/login/school_selector.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -246,9 +247,7 @@ class LoginFormState extends ConsumerState<LoginForm> {
                                         ),
                                         recognizer: TapGestureRecognizer()
                                           ..onTap = () => launchUrl(
-                                            Uri.parse(
-                                              "https://lanis-mobile.github.io/policy/",
-                                            ),
+                                            Uri.parse(privacyPolicyUrl),
                                           ),
                                       ),
                                       TextSpan(

@@ -8,6 +8,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/features/auth/auth_controller.dart';
+import 'package:lanis/utils/privacy_policy.dart';
 import 'package:lanis/widgets/offline_available_applets_section.dart';
 import 'package:lanis/widgets/reset_account_page.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -36,6 +37,12 @@ class _StartupScreenState extends ConsumerState<StartupScreen> {
           enableDrag: false,
           builder: (context) => errorDialog(context, auth.exception),
         );
+        return;
+      }
+      final shared = ref.read(sharedOverAccountSettingsProvider);
+      if (!isPrivacyPolicyAccepted(shared)) {
+        if (!mounted) return;
+        context.go('/privacy-policy');
         return;
       }
       // Skip if loginWithAccount already drives auth — must not selectPreferred.
