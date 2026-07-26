@@ -14,6 +14,7 @@ import 'package:lanis/view/login/screen.dart';
 import 'package:lanis/view/moodle.dart';
 import 'package:lanis/view/settings/settings_routes.dart';
 import 'package:lanis/widgets/applet_home_shell.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 
@@ -145,6 +146,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     navigatorKey: rootNavigatorKey,
     initialLocation: '/startup',
     refreshListenable: listenable,
+    // Breadcrumbs for error context only (traces are disabled in GlitchTip config).
+    observers: [SentryNavigatorObserver()],
     redirect: (context, state) {
       // Normalize lanis://host/path → /host/path for go_router matching.
       if (state.uri.scheme == 'lanis') {

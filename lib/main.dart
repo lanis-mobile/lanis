@@ -15,14 +15,20 @@ import 'package:lanis/bridge/lanis_bootstrap.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/router.dart';
 import 'package:lanis/themes.dart';
+import 'package:lanis/utils/glitchtip.dart';
 import 'package:lanis/utils/logger.dart';
 import 'package:lanis/utils/mono_text_viewer.dart';
 import 'package:lanis/utils/phoenix.dart';
 import 'package:lanis/utils/theme_settings.dart';
 import 'package:lanis/view/startup_error_view.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:sqlite3_flutter_libs/sqlite3_flutter_libs.dart';
 
-void main() async {
+Future<void> main() async {
+  await initGlitchTip(_startApp);
+}
+
+Future<void> _startApp() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
 
@@ -44,6 +50,7 @@ void main() async {
     } catch (e, stack) {
       logger.e('Failed to initialize background service and notifications');
       logger.e(e, stackTrace: stack);
+      await Sentry.captureException(e, stackTrace: stack);
     }
 
     await initializeDateFormatting();
@@ -51,11 +58,14 @@ void main() async {
     runApp(
       ProviderScope(
         overrides: overrides,
-        child: Phoenix(child: const App()),
+        child: Phoenix(
+          child: SentryWidget(child: const App()),
+        ),
       ),
     );
   } catch (e, st) {
     logger.e(e, stackTrace: st);
+    await Sentry.captureException(e, stackTrace: st);
 
     runApp(
       MaterialApp(
