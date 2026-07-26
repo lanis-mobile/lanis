@@ -9,11 +9,12 @@ const glitchtipDsn =
 
 /// Configure [SentryFlutter] for our self-hosted GlitchTip instance.
 ///
-/// Error reporting only — no traces, metrics, profiles, logs, or session
-/// replay. [sendDefaultPii] is enabled for richer self-hosted debug context.
+/// Error reporting only — no session envelopes, traces, metrics, profiles,
+/// logs, or session replay. [sendDefaultPii] stays off to avoid IP, device
+/// name, and UI text labels on events.
 void configureGlitchTip(SentryFlutterOptions options) {
   options.dsn = glitchtipDsn;
-  options.sendDefaultPii = true;
+  options.sendDefaultPii = false;
   options.environment = kReleaseMode
       ? 'release'
       : kProfileMode
@@ -21,6 +22,7 @@ void configureGlitchTip(SentryFlutterOptions options) {
       : 'debug';
 
   // Error events only.
+  options.enableAutoSessionTracking = false;
   options.tracesSampleRate = 0;
   options.enableAutoPerformanceTracing = false;
   options.enableUserInteractionTracing = false;
