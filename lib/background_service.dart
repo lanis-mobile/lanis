@@ -134,7 +134,7 @@ Future<void> callbackDispatcher() async {
       }
 
       final sharedPolicy = container.read(sharedOverAccountSettingsProvider);
-      if (!isPrivacyPolicyAccepted(sharedPolicy)) {
+      if (!shouldRunBackgroundFetch(sharedPolicy)) {
         backgroundLogger.w(
           'Privacy policy not accepted, aborting background fetch',
         );

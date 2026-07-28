@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:lanis/utils/privacy_policy.dart';
@@ -30,8 +31,46 @@ class AuthController extends Notifier<AuthState> {
   /// is already in flight (redirect to `/startup` would otherwise race).
   bool _authDrivenExternally = false;
 
+  /// Test-only: when set, replaces [sessionProvider.notifier.authenticate].
+  @visibleForTesting
+  static Future<void> Function(Ref ref)? debugAuthenticate;
+
+  /// Test-only: when set, replaces [sessionProvider.notifier.deAuthenticate].
+  @visibleForTesting
+  static Future<void> Function(Ref ref)? debugDeauthenticate;
+
+  /// Whether the last [bootstrap]/[loginWithAccount] used the network/fake auth.
+  @visibleForTesting
+  static int authenticateCallCount = 0;
+
+  @visibleForTesting
+  static void resetDebugAuth() {
+    debugAuthenticate = null;
+    debugDeauthenticate = null;
+    authenticateCallCount = 0;
+  }
+
   @override
   AuthState build() => const AuthState.authenticating();
+
+  Future<void> _authenticate() async {
+    authenticateCallCount++;
+    final override = debugAuthenticate;
+    if (override != null) {
+      await override(ref);
+      return;
+    }
+    await ref.read(sessionProvider.notifier).authenticate();
+  }
+
+  Future<void> _deauthenticate() async {
+    final override = debugDeauthenticate;
+    if (override != null) {
+      await override(ref);
+      return;
+    }
+    await ref.read(sessionProvider.notifier).deAuthenticate();
+  }
 
   /// Cold-start entry from [StartupScreen] only.
   Future<void> bootstrapIfNeeded() async {
@@ -66,7 +105,7 @@ class AuthController extends Notifier<AuthState> {
         return;
       }
 
-      await ref.read(sessionProvider.notifier).authenticate();
+      await _authenticate();
       state = const AuthState.authenticated();
     } on WrongCredentialsException catch (e) {
       // Keep the failed account selected so ResetAccountPage can fix credentials.
@@ -101,7 +140,7 @@ class AuthController extends Notifier<AuthState> {
       // [ActiveAccount.select] deauthenticates the previous session and
       // invalidates account-scoped providers (parsers, settings, feature set).
       await ref.read(activeAccountProvider.notifier).select(accountId);
-      await ref.read(sessionProvider.notifier).authenticate();
+      await _authenticate();
       state = const AuthState.authenticated();
       return true;
     } catch (e) {
@@ -115,7 +154,7 @@ class AuthController extends Notifier<AuthState> {
       if (previousId != null && previousId != accountId) {
         try {
           await ref.read(activeAccountProvider.notifier).select(previousId);
-          await ref.read(sessionProvider.notifier).authenticate();
+          await _authenticate();
           state = const AuthState.authenticated();
         } catch (_) {
           // Fall through to surface the original failure below.
@@ -144,7 +183,7 @@ class AuthController extends Notifier<AuthState> {
   }
 
   Future<void> logout() async {
-    await ref.read(sessionProvider.notifier).deAuthenticate();
+    await _deauthenticate();
     await ref
         .read(activeAccountProvider.notifier)
         .clear(skipDeauthenticate: true);

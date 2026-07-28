@@ -6,6 +6,7 @@ import 'package:lanis/applets/definitions.dart';
 import 'package:lanis/home_page.dart';
 import 'package:lanis/startup.dart';
 import 'package:lanis/features/auth/auth_controller.dart';
+import 'package:lanis/utils/auth_redirect.dart';
 import 'package:lanis/utils/deep_link.dart';
 import 'package:lanis/utils/responsive.dart';
 import 'package:lanis/view/account_switcher/account_switcher.dart';
@@ -159,53 +160,24 @@ final goRouterProvider = Provider<GoRouter>((ref) {
 
       final auth = ref.read(authControllerProvider);
       final loc = state.matchedLocation;
-      final loggingIn = loc == '/welcome' || loc == '/login';
-      final onStartup = loc == '/startup';
-      final onPrivacyPolicy = loc == '/privacy-policy';
       final onShell =
           AppDefinitions.findMatchingLocation(loc) != null ||
           _isSettingsPath(loc);
 
       final shared = ref.read(sharedOverAccountSettingsProvider);
-      if (!isPrivacyPolicyAccepted(shared) && !onPrivacyPolicy) {
-        return '/privacy-policy';
-      }
+      final deepErr = auth.phase == AuthPhase.authenticated
+          ? _deepLinkAuthRedirect(ref, loc)
+          : null;
 
-      switch (auth.phase) {
-        case AuthPhase.authenticating:
-          if (onStartup ||
-              onPrivacyPolicy ||
-              loc == '/login' ||
-              loc == '/accounts') {
-            return null;
-          }
-          return '/startup';
-        case AuthPhase.unauthenticated:
-          if (onPrivacyPolicy) return null;
-          // Drop deep links while logged out → welcome/login.
-          if (loggingIn || onStartup) {
-            if (onStartup) return '/welcome';
-            return null;
-          }
-          return '/welcome';
-        case AuthPhase.error:
-          if (onPrivacyPolicy || loc == '/login') return null;
-          return onStartup ? null : '/startup';
-        case AuthPhase.authenticated:
-          if (onPrivacyPolicy) {
-            return firstSupportedHomePathFromRef(ref);
-          }
-          if (loggingIn && loc == '/login') return null;
-          if (loc == '/welcome' || onStartup) {
-            return firstSupportedHomePathFromRef(ref);
-          }
-          final deepErr = _deepLinkAuthRedirect(ref, loc);
-          if (deepErr != null) return deepErr;
-          if (onShell && !_isSupportedShellPath(ref, loc)) {
-            return SettingsDeepLinks.deepLinkError;
-          }
-          return null;
-      }
+      return resolveAuthRedirect(
+        phase: auth.phase,
+        loc: loc,
+        privacyAccepted: isPrivacyPolicyAccepted(shared),
+        isShellPath: onShell,
+        shellSupported: onShell ? _isSupportedShellPath(ref, loc) : true,
+        deepLinkErrorPath: deepErr,
+        homePath: () => firstSupportedHomePathFromRef(ref),
+      );
     },
     routes: [
       GoRoute(

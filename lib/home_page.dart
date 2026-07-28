@@ -26,11 +26,11 @@ List<String> homeAppletPathsFor(AccountType accountType) => AppDefinitions
 List<String> get homeAppletPhpUrls =>
     AppDefinitions.homeApplets.map((a) => a.appletPhpUrl).toList();
 
-/// First home tab path supported by the current session's feature set.
-String firstSupportedHomePath(WidgetRef ref) {
-  final supported = ref.read(supportedAppletPhpUrlsProvider);
-  final accountType =
-      ref.read(activeAccountProvider)?.accountType ?? AccountType.student;
+/// First home tab path for [accountType] given supported PHP applet URLs.
+String firstSupportedHomePathFor({
+  required Set<String> supported,
+  required AccountType accountType,
+}) {
   for (final def in AppDefinitions.homeApplets) {
     if (supported.contains(def.appletPhpUrl) &&
         def.supportedAccountTypes.contains(accountType)) {
@@ -40,18 +40,22 @@ String firstSupportedHomePath(WidgetRef ref) {
   return appletHomePath(AppDefinitions.homeApplets.first, accountType);
 }
 
+/// First home tab path supported by the current session's feature set.
+String firstSupportedHomePath(WidgetRef ref) {
+  return firstSupportedHomePathFor(
+    supported: ref.read(supportedAppletPhpUrlsProvider),
+    accountType:
+        ref.read(activeAccountProvider)?.accountType ?? AccountType.student,
+  );
+}
+
 /// Same as [firstSupportedHomePath] for non-widget [Ref] (e.g. go_router).
 String firstSupportedHomePathFromRef(Ref ref) {
-  final supported = ref.read(supportedAppletPhpUrlsProvider);
-  final accountType =
-      ref.read(activeAccountProvider)?.accountType ?? AccountType.student;
-  for (final def in AppDefinitions.homeApplets) {
-    if (supported.contains(def.appletPhpUrl) &&
-        def.supportedAccountTypes.contains(accountType)) {
-      return appletHomePath(def, accountType);
-    }
-  }
-  return appletHomePath(AppDefinitions.homeApplets.first, accountType);
+  return firstSupportedHomePathFor(
+    supported: ref.read(supportedAppletPhpUrlsProvider),
+    accountType:
+        ref.read(activeAccountProvider)?.accountType ?? AccountType.student,
+  );
 }
 
 class HomePage extends ConsumerStatefulWidget {

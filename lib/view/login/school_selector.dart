@@ -20,6 +20,10 @@ class SchoolSelector extends StatefulWidget {
   final BuildContext outContext;
   final Function onSchoolSelected;
 
+  /// When true, [loadSchoolList] is a no-op (widget tests without network).
+  @visibleForTesting
+  static bool skipNetworkLoad = false;
+
   @override
   State<SchoolSelector> createState() => _SchoolSelectorState();
 
@@ -34,6 +38,7 @@ class _SchoolSelectorState extends State<SchoolSelector> {
   TextEditingController searchController = TextEditingController();
 
   Future<void> loadSchoolList() async {
+    if (SchoolSelector.skipNetworkLoad) return;
     try {
       final packageInfo = await PackageInfo.fromPlatform();
       final dio = Dio();

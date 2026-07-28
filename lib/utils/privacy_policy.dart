@@ -22,3 +22,8 @@ void acceptPrivacyPolicy(TypedSettings shared) {
     privacyPolicyPublishedAt,
   );
 }
+
+/// Whether background fetch may authenticate (same gate as cold-start auth).
+bool shouldRunBackgroundFetch(TypedSettings shared) {
+  return isPrivacyPolicyAccepted(shared);
+}

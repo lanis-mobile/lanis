@@ -62,3 +62,7 @@ artifacts
 artifacts/*
 
 generated/
+
+# Local SPH credentials for fixture recording only (never used by tests/CI)
+.credentials.env
+*.credentials.env

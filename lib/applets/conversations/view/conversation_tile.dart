@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:liblanis/liblanis.dart';
+import 'package:lanis/applets/conversations/conversation_badge.dart';
 
 const double tileSize = 80.0;
 
@@ -94,9 +95,12 @@ class ConversationTile extends ConsumerWidget {
                   // Hide when open, or while optimistically clearing via
                   // [noBadgeConversations] after the user opens the chat.
                   smallSize:
-                      entry.unread &&
-                          entry.id != loadedConversationId &&
-                          !noBadgeConversations.contains(entry.id)
+                      conversationShowsUnreadBadge(
+                        unread: entry.unread,
+                        entryId: entry.id,
+                        loadedConversationId: loadedConversationId,
+                        noBadgeConversations: noBadgeConversations,
+                      )
                       ? 9
                       : 0,
                   child: InkWell(
