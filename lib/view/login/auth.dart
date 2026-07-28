@@ -7,6 +7,7 @@ import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/home_page.dart';
 import 'package:lanis/features/auth/auth_controller.dart';
 import 'package:lanis/utils/logger.dart';
+import 'package:lanis/utils/glitchtip.dart';
 import 'package:lanis/utils/privacy_policy.dart';
 import 'package:lanis/view/login/school_selector.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -28,7 +29,21 @@ class LoginFormState extends ConsumerState<LoginForm> {
   TextEditingController usernameController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   bool dseAgree = false;
+  bool errorReportingAgree = false;
   String selectedSchoolName = "";
+
+  @override
+  void initState() {
+    super.initState();
+    // Mirror the device-wide GlitchTip choice when adding another account.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final shared = ref.read(sharedOverAccountSettingsProvider);
+      setState(() {
+        errorReportingAgree = isGlitchTipEnabled(shared);
+      });
+    });
+  }
 
   void login(String username, String password, String schoolID) async {
     showDialog(
@@ -52,7 +67,9 @@ class LoginFormState extends ConsumerState<LoginForm> {
       }
 
       // Login checkbox is the first-time privacy acceptance for new accounts.
-      acceptPrivacyPolicy(ref.read(sharedOverAccountSettingsProvider));
+      final shared = ref.read(sharedOverAccountSettingsProvider);
+      acceptPrivacyPolicy(shared);
+      setGlitchTipEnabled(shared, errorReportingAgree);
 
       final config = ref.read(lanisConfigProvider);
       await LanisSession.getLoginURL(
@@ -264,6 +281,25 @@ class LoginFormState extends ConsumerState<LoginForm> {
                                 onChanged: (val) {
                                   setState(() {
                                     dseAgree = val!;
+                                  });
+                                },
+                              ),
+                            ),
+                          ),
+                          Visibility(
+                            child: ExcludeSemantics(
+                              child: CheckboxListTile(
+                                enabled: schoolIDController.text.isNotEmpty,
+                                value: errorReportingAgree,
+                                title: Text(
+                                  AppLocalizations.of(
+                                    context,
+                                  ).authErrorReportingOptional,
+                                  style: DefaultTextStyle.of(context).style,
+                                ),
+                                onChanged: (val) {
+                                  setState(() {
+                                    errorReportingAgree = val!;
                                   });
                                 },
                               ),

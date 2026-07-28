@@ -41,6 +41,7 @@ Future<void> _startApp() async {
     await applyWorkaroundToOpenSqlite3OnOldAndroidVersions();
 
     final overrides = await bootstrapLanisClient();
+    syncGlitchTipReportingFromConfig();
 
     enableTransparentNavigationBar();
 
@@ -50,7 +51,7 @@ Future<void> _startApp() async {
     } catch (e, stack) {
       logger.e('Failed to initialize background service and notifications');
       logger.e(e, stackTrace: stack);
-      await Sentry.captureException(e, stackTrace: stack);
+      await captureGlitchTipException(e, stackTrace: stack);
     }
 
     await initializeDateFormatting();
@@ -65,7 +66,7 @@ Future<void> _startApp() async {
     );
   } catch (e, st) {
     logger.e(e, stackTrace: st);
-    await Sentry.captureException(e, stackTrace: st);
+    await captureGlitchTipException(e, stackTrace: st);
 
     runApp(
       MaterialApp(

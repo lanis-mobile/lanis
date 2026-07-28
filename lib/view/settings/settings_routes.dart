@@ -9,6 +9,7 @@ import 'package:lanis/view/settings/settings.dart';
 import 'package:lanis/view/settings/subsettings/about.dart';
 import 'package:lanis/view/settings/subsettings/appearance.dart';
 import 'package:lanis/view/settings/subsettings/cache.dart';
+import 'package:lanis/view/settings/subsettings/error_reporting.dart';
 import 'package:lanis/view/settings/subsettings/notifications.dart';
 import 'package:lanis/view/settings/subsettings/userdata.dart';
 import 'package:liblanis/liblanis.dart';
@@ -90,6 +91,13 @@ List<RouteBase> buildSettingsRoutes() {
               builder: (context, state) => _settingsDetail(
                 fallbackPath: SettingsDeepLinks.home,
                 child: const UserDataSettings(),
+              ),
+            ),
+            GoRoute(
+              path: 'error-reporting',
+              builder: (context, state) => _settingsDetail(
+                fallbackPath: SettingsDeepLinks.home,
+                child: const ErrorReportingSettings(),
               ),
             ),
             GoRoute(

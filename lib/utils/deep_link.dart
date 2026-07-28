@@ -135,6 +135,7 @@ abstract final class SettingsDeepLinks {
   static const cache = '$base/cache';
   static const userdata = '$base/userdata';
   static const about = '$base/about';
+  static const errorReporting = '$base/error-reporting';
   static const calendarExport = '$base/calendar-export';
   static const timetable = '$base/timetable';
   static const moodle = '/common/moodle';

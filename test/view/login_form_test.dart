@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:lanis/generated/l10n.dart';
+import 'package:lanis/utils/glitchtip.dart';
 import 'package:lanis/view/login/auth.dart';
 import 'package:lanis/view/login/school_selector.dart';
 
 import '../helpers/test_app.dart';
 
 void main() {
-  tearDown(LanisClient.reset);
+  tearDown(() {
+    LanisClient.reset();
+    setGlitchTipReportingEnabled(false);
+  });
 
   setUp(() {
     SchoolSelector.skipNetworkLoad = true;
@@ -48,5 +53,54 @@ void main() {
     for (final field in fields) {
       expect(field.enabled, isFalse);
     }
+  });
+
+  testWidgets('error reporting checkbox mirrors shared device setting', (
+    tester,
+  ) async {
+    final overrides = LanisClient.configure();
+    var seeded = false;
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: overrides,
+        child: Builder(
+          builder: (context) {
+            if (!seeded) {
+              seeded = true;
+              setGlitchTipEnabled(
+                ProviderScope.containerOf(context)
+                    .read(sharedOverAccountSettingsProvider),
+                true,
+              );
+            }
+            return MaterialApp(
+              locale: const Locale('en'),
+              localizationsDelegates: testLocalizationsDelegates,
+              supportedLocales: AppLocalizations.delegate.supportedLocales,
+              home: const Scaffold(
+                body: LoginForm(showBackButton: false),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    final l10n = AppLocalizations.of(
+      tester.element(find.byType(LoginForm)),
+    );
+    final tiles = tester.widgetList<CheckboxListTile>(
+      find.byType(CheckboxListTile),
+    );
+    expect(tiles.length, greaterThanOrEqualTo(2));
+    final errorTile = tiles.firstWhere(
+      (t) =>
+          t.title is Text &&
+          (t.title as Text).data == l10n.authErrorReportingOptional,
+    );
+    expect(errorTile.value, isTrue);
   });
 }
