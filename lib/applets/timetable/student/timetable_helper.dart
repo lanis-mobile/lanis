@@ -4,16 +4,13 @@ import 'package:lanis/utils/random_color.dart';
 
 class TimeTableHelper {
   static Color getColorForLesson(dynamic settings, lesson) {
-    if (settings['lesson-colors'] == null) {
+    final colors = settings is Map ? settings['lesson-colors'] : null;
+    if (colors is! Map) {
       return RandomColor.bySeed(lesson.name!).primary;
     }
-    if (settings['lesson-colors'][lesson.id.split('-')[0]] != null) {
-      return Color(
-        int.parse(
-          settings['lesson-colors'][lesson.id.split('-')[0]],
-          radix: 16,
-        ),
-      );
+    final stored = colors[lesson.id.split('-')[0]];
+    if (stored is String && stored.isNotEmpty) {
+      return Color(int.parse(stored, radix: 16));
     }
     return RandomColor.bySeed(lesson.name!).primary;
   }

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:liblanis/liblanis.dart';
 
 import 'package:lanis/generated/l10n.dart';
+import 'package:lanis/utils/applet_settings.dart';
 import 'error_view.dart';
 
 typedef RefreshFunction = Future<void> Function();
@@ -66,25 +67,11 @@ class _CombinedAppletBuilderState<T>
         loaded[entry.key] = entry.value;
         continue;
       }
-      final storedMap = settings.getJsonMap(_settingKey(entry.key));
-      final storedList = settings.getJsonList(_settingKey(entry.key));
-      // Prefer typed reads for primitives in defaults
-      final boolVal = settings.getBool(_settingKey(entry.key));
-      final intVal = settings.getInt(_settingKey(entry.key));
-      final strVal = settings.getString(_settingKey(entry.key));
-      if (storedMap != null) {
-        loaded[entry.key] = storedMap;
-      } else if (storedList != null) {
-        loaded[entry.key] = storedList;
-      } else if (boolVal != null) {
-        loaded[entry.key] = boolVal;
-      } else if (intVal != null) {
-        loaded[entry.key] = intVal;
-      } else if (strVal != null) {
-        loaded[entry.key] = strVal;
-      } else {
-        loaded[entry.key] = entry.value;
-      }
+      loaded[entry.key] = resolveStoredAppletSetting(
+        settings,
+        _settingKey(entry.key),
+        entry.value,
+      );
     }
     appletSettings = loaded;
     if (mounted) {
@@ -96,22 +83,14 @@ class _CombinedAppletBuilderState<T>
     final settings = ref.read(accountSpecificSettingsProvider);
     if (settings == null) return;
     final namespaced = _settingKey(key);
-    if (value is bool) {
-      settings.setBool(namespaced, value);
-    } else if (value is int) {
-      settings.setInt(namespaced, value);
-    } else if (value is String) {
-      settings.setString(namespaced, value);
-    } else if (value is Map<String, dynamic>) {
-      settings.setJsonMap(namespaced, value);
-    } else if (value is List) {
-      settings.setJsonList(namespaced, value);
-    } else if (value == null) {
-      settings.remove(namespaced);
-    } else {
-      settings.setString(namespaced, value.toString());
-    }
-    setState(() => appletSettings[key] = value);
+    persistAppletSetting(settings, namespaced, value);
+    setState(() {
+      if (value is Map) {
+        appletSettings[key] = Map<String, dynamic>.from(value);
+      } else {
+        appletSettings[key] = value;
+      }
+    });
   }
 
   void _syncVisibility() {

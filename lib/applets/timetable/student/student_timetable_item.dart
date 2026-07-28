@@ -62,10 +62,13 @@ class ItemBlock extends StatelessWidget {
             ElevatedButton(
               child: Text(AppLocalizations.of(context).clear),
               onPressed: () {
-                updateSettings('lesson-colors', {
-                  ...(settings['lesson-colors'] as Map? ?? const {}),
-                  lesson.id!.split('-')[0]: null,
-                });
+                final colors = Map<String, dynamic>.from(
+                  settings['lesson-colors'] is Map
+                      ? settings['lesson-colors'] as Map
+                      : const {},
+                );
+                colors.remove(lesson.id!.split('-')[0]);
+                updateSettings('lesson-colors', colors);
 
                 Navigator.of(context).pop();
                 Navigator.of(context).pop();
@@ -77,15 +80,15 @@ class ItemBlock extends StatelessWidget {
                 Navigator.of(context).pop();
                 Navigator.of(context).pop();
 
-                if (settings['lesson-colors'] == null) {
-                  settings['lesson-colors'] = {};
-                }
-                updateSettings('lesson-colors', {
-                  ...settings['lesson-colors'],
-                  lesson.id!.split('-')[0]: selectedColor.toHexString(
-                    enableAlpha: false,
-                  ),
-                });
+                final colors = Map<String, dynamic>.from(
+                  settings['lesson-colors'] is Map
+                      ? settings['lesson-colors'] as Map
+                      : const {},
+                );
+                colors[lesson.id!.split('-')[0]] = selectedColor.toHexString(
+                  enableAlpha: false,
+                );
+                updateSettings('lesson-colors', colors);
               },
             ),
           ],
