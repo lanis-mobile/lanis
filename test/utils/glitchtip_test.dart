@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:lanis/utils/glitchtip.dart';
+import 'package:lanis/utils/glitchtip_navigation.dart';
 
 void main() {
   test('configureGlitchTip disables PII session traces and replay', () {
@@ -17,5 +18,10 @@ void main() {
     expect(options.enableLogs, isFalse);
     expect(options.replay.sessionSampleRate, 0);
     expect(options.replay.onErrorSampleRate, 0);
+  });
+
+  test('glitchTipNavigatorObserver stays breadcrumb-only', () {
+    final observer = glitchTipNavigatorObserver();
+    expect(observer, isA<SentryNavigatorObserver>());
   });
 }
