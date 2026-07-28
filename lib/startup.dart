@@ -22,6 +22,8 @@ class StartupScreen extends ConsumerStatefulWidget {
 }
 
 class _StartupScreenState extends ConsumerState<StartupScreen> {
+  bool _errorSheetOpen = false;
+
   @override
   void initState() {
     super.initState();
@@ -30,13 +32,7 @@ class _StartupScreenState extends ConsumerState<StartupScreen> {
       final auth = ref.read(authControllerProvider);
       // In-app login failure may land here already in error (no phase transition).
       if (auth.phase == AuthPhase.error && auth.exception != null) {
-        if (!mounted) return;
-        await showModalBottomSheet(
-          context: context,
-          isDismissible: false,
-          enableDrag: false,
-          builder: (context) => errorDialog(context, auth.exception),
-        );
+        await _showErrorSheet(auth.exception!);
         return;
       }
       final shared = ref.read(sharedOverAccountSettingsProvider);
@@ -50,6 +46,25 @@ class _StartupScreenState extends ConsumerState<StartupScreen> {
     });
   }
 
+  Future<void> _showErrorSheet(LanisException exception) async {
+    if (_errorSheetOpen || !mounted) return;
+    _errorSheetOpen = true;
+    await showModalBottomSheet<void>(
+      context: context,
+      isDismissible: false,
+      enableDrag: false,
+      isScrollControlled: true,
+      builder: (sheetContext) => StartupAuthErrorContent(
+        exception: exception,
+        onRetry: () {
+          Navigator.of(sheetContext).pop();
+          ref.read(authControllerProvider.notifier).retry();
+        },
+      ),
+    );
+    if (mounted) _errorSheetOpen = false;
+  }
+
   void requestPermissions() async {
     final status = await Permission.notification.request();
     if (status.isGranted) return;
@@ -60,7 +75,8 @@ class _StartupScreenState extends ConsumerState<StartupScreen> {
           icon: const Icon(Icons.notifications_outlined),
           title: Text(AppLocalizations.of(context).notifications),
           content: Text(
-            AppLocalizations.of(context).systemPermissionForNotificationsExplained,
+            AppLocalizations.of(context)
+                .systemPermissionForNotificationsExplained,
           ),
           actions: [
             TextButton(
@@ -80,107 +96,154 @@ class _StartupScreenState extends ConsumerState<StartupScreen> {
     }
   }
 
-  Widget errorDialog(BuildContext context, LanisException? exception) {
-    final isDown = exception is LanisDownException;
-    final isOffline = exception is NoConnectionException;
-
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              isOffline ? Icons.wifi_off : Icons.error_outline,
-              size: 48,
-              color: Theme.of(context).colorScheme.error,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              isDown
-                  ? AppLocalizations.of(context).lanisDown
-                  : isOffline
-                  ? AppLocalizations.of(context).noInternetConnection2
-                  : AppLocalizations.of(context).error,
-              style: Theme.of(context).textTheme.titleLarge,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              exception?.cause ?? AppLocalizations.of(context).unknownError,
-              textAlign: TextAlign.center,
-            ),
-            if (isOffline) ...[
-              const SizedBox(height: 16),
-              const OfflineAvailableAppletsSection(),
-            ],
-            if (exception is WrongCredentialsException)
-              TextButton(
-                onPressed: () {
-                  context.go('/login');
-                },
-                child: Text(AppLocalizations.of(context).logInTitle),
-              ),
-            if (isDown)
-              TextButton(
-                onPressed: () => launchUrl(
-                  Uri.parse('https://start.schulportal.hessen.de/'),
-                ),
-                child: Text(AppLocalizations.of(context).openLanisInBrowser),
-              ),
-            const SizedBox(height: 8),
-            FilledButton(
-              onPressed: () {
-                ref.read(authControllerProvider.notifier).retry();
-              },
-              child: Text(AppLocalizations.of(context).tryAgain),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const ResetAccountPage()),
-                );
-              },
-              child: Text(AppLocalizations.of(context).resetAccount),
-            ),
-          ],
-        ),
+  Widget _splashBody() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SvgPicture.asset('assets/startup.svg', height: 96, width: 96),
+          const SizedBox(height: 24),
+          const CircularProgressIndicator(),
+          const SizedBox(height: 16),
+          FutureBuilder(
+            future: PackageInfo.fromPlatform(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) return const SizedBox.shrink();
+              return Text(
+                'v${snapshot.data!.version}+${snapshot.data!.buildNumber}',
+                style: Theme.of(context).textTheme.bodySmall,
+              );
+            },
+          ),
+        ],
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final auth = ref.watch(authControllerProvider);
+    ref.listen<AuthState>(authControllerProvider, (previous, next) {
+      if (next.phase == AuthPhase.error && next.exception != null) {
+        if (previous?.phase == AuthPhase.error &&
+            previous?.exception == next.exception) {
+          return;
+        }
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _showErrorSheet(next.exception!);
+        });
+      }
+    });
 
-    if (auth.phase == AuthPhase.error && auth.exception != null) {
-      return Scaffold(
-        body: Center(
-          child: SingleChildScrollView(
-            child: errorDialog(context, auth.exception),
-          ),
+    return Scaffold(body: _splashBody());
+  }
+}
+
+/// Main-parity auth error chrome for the startup bottom sheet.
+class StartupAuthErrorContent extends StatelessWidget {
+  final LanisException exception;
+  final VoidCallback onRetry;
+
+  const StartupAuthErrorContent({
+    super.key,
+    required this.exception,
+    required this.onRetry,
+  });
+
+  static const _statusUrl =
+      'https://info.schulportal.hessen.de/status-des-schulportal-hessen/';
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final isDown = exception is LanisDownException;
+    final isOffline = exception is NoConnectionException;
+
+    final title = isDown
+        ? l10n.lanisDownError
+        : isOffline
+        ? l10n.noInternetConnection2
+        : l10n.startupError;
+
+    return SafeArea(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * 0.75,
         ),
-      );
-    }
-
-    return Scaffold(
-      body: Center(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            SvgPicture.asset('assets/startup.svg', height: 96, width: 96),
             const SizedBox(height: 24),
-            const CircularProgressIndicator(),
-            const SizedBox(height: 16),
-            FutureBuilder(
-              future: PackageInfo.fromPlatform(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) return const SizedBox.shrink();
-                return Text(
-                  'v${snapshot.data!.version}+${snapshot.data!.buildNumber}',
-                  style: Theme.of(context).textTheme.bodySmall,
-                );
-              },
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.wifi_find_outlined),
+                  onPressed: () => launchUrl(Uri.parse(_statusUrl)),
+                  tooltip: l10n.checkStatus,
+                ),
+                Icon(
+                  isOffline ? Icons.wifi_off : Icons.error,
+                  size: 48,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.refresh),
+                  onPressed: onRetry,
+                  tooltip: l10n.tryAgain,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Center(child: Text(title)),
+            if (!isOffline && !isDown)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                child: Text.rich(
+                  TextSpan(
+                    text: l10n.startupErrorMessage,
+                    children: [
+                      TextSpan(
+                        text:
+                            '\n\n${exception.runtimeType}: ${exception.cause}',
+                        style: Theme.of(context).textTheme.labelLarge,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            if (exception is WrongCredentialsException)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 8.0,
+                ),
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.lock_reset),
+                  label: Text(l10n.resetAccount),
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const ResetAccountPage(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            if (isDown)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                child: Text(
+                  l10n.lanisDownErrorMessage,
+                  style: Theme.of(context).textTheme.labelLarge,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.sizeOf(context).height * 0.45,
+              ),
+              child: const SingleChildScrollView(
+                child: OfflineAvailableAppletsSection(),
+              ),
             ),
           ],
         ),
