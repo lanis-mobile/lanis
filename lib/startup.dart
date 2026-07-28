@@ -36,8 +36,10 @@ class _StartupScreenState extends ConsumerState<StartupScreen> {
         return;
       }
       final shared = ref.read(sharedOverAccountSettingsProvider);
-      if (!isPrivacyPolicyAccepted(shared)) {
-        if (!mounted) return;
+      final accounts = await ref.read(accountsProvider.future);
+      if (!mounted) return;
+      // First-time installs accept privacy on the login form instead.
+      if (accounts.isNotEmpty && !isPrivacyPolicyAccepted(shared)) {
         context.go('/privacy-policy');
         return;
       }

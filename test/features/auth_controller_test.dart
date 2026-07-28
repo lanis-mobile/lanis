@@ -20,6 +20,16 @@ void main() {
     expect(AuthController.authenticateCallCount, before);
   });
 
+  test('bootstrap without privacy and empty accounts is unauthenticated', () async {
+    installFakeSessionAuth();
+    final container = createAuthTestContainer();
+    addTearDown(container.dispose);
+
+    await container.read(authControllerProvider.notifier).bootstrap();
+    expect(container.read(authControllerProvider).phase, AuthPhase.unauthenticated);
+    expect(AuthController.authenticateCallCount, 0);
+  });
+
   test('bootstrap with privacy and empty accounts is unauthenticated', () async {
     installFakeSessionAuth();
     final container = createAuthTestContainer();

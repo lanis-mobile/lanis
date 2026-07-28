@@ -4,10 +4,14 @@ import 'package:lanis/utils/deep_link.dart';
 /// Pure auth/privacy redirect used by [goRouterProvider].
 ///
 /// Returns a location to redirect to, or `null` to stay on [loc].
+///
+/// The blocking privacy-policy update screen is only for installs that already
+/// have an account. First-time users accept the policy on the login form.
 String? resolveAuthRedirect({
   required AuthPhase phase,
   required String loc,
   required bool privacyAccepted,
+  required bool hasAccounts,
   required bool isShellPath,
   required bool shellSupported,
   required String? deepLinkErrorPath,
@@ -17,7 +21,7 @@ String? resolveAuthRedirect({
   final onStartup = loc == '/startup';
   final onPrivacyPolicy = loc == '/privacy-policy';
 
-  if (!privacyAccepted && !onPrivacyPolicy) {
+  if (!privacyAccepted && !onPrivacyPolicy && hasAccounts) {
     return '/privacy-policy';
   }
 
@@ -31,7 +35,10 @@ String? resolveAuthRedirect({
       }
       return '/startup';
     case AuthPhase.unauthenticated:
-      if (onPrivacyPolicy) return null;
+      if (onPrivacyPolicy) {
+        // Empty installs should not stay on the update gate.
+        return hasAccounts ? null : '/welcome';
+      }
       if (loggingIn || onStartup) {
         if (onStartup) return '/welcome';
         return null;

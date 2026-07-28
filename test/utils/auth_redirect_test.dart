@@ -10,6 +10,7 @@ void main() {
     required AuthPhase phase,
     required String loc,
     bool privacyAccepted = true,
+    bool hasAccounts = true,
     bool isShellPath = false,
     bool shellSupported = true,
     String? deepLinkErrorPath,
@@ -18,6 +19,7 @@ void main() {
       phase: phase,
       loc: loc,
       privacyAccepted: privacyAccepted,
+      hasAccounts: hasAccounts,
       isShellPath: isShellPath,
       shellSupported: shellSupported,
       deepLinkErrorPath: deepLinkErrorPath,
@@ -26,12 +28,13 @@ void main() {
   }
 
   group('privacy gate', () {
-    test('forces privacy-policy when not accepted', () {
+    test('forces privacy-policy only when accounts already exist', () {
       expect(
         resolve(
           phase: AuthPhase.authenticating,
           loc: '/startup',
           privacyAccepted: false,
+          hasAccounts: true,
         ),
         '/privacy-policy',
       );
@@ -40,17 +43,58 @@ void main() {
           phase: AuthPhase.unauthenticated,
           loc: '/welcome',
           privacyAccepted: false,
+          hasAccounts: true,
         ),
         '/privacy-policy',
       );
     });
 
-    test('allows staying on privacy-policy', () {
+    test('skips privacy-policy gate for empty first-time installs', () {
+      expect(
+        resolve(
+          phase: AuthPhase.authenticating,
+          loc: '/startup',
+          privacyAccepted: false,
+          hasAccounts: false,
+        ),
+        isNull,
+      );
+      expect(
+        resolve(
+          phase: AuthPhase.unauthenticated,
+          loc: '/startup',
+          privacyAccepted: false,
+          hasAccounts: false,
+        ),
+        '/welcome',
+      );
+      expect(
+        resolve(
+          phase: AuthPhase.unauthenticated,
+          loc: '/welcome',
+          privacyAccepted: false,
+          hasAccounts: false,
+        ),
+        isNull,
+      );
       expect(
         resolve(
           phase: AuthPhase.unauthenticated,
           loc: '/privacy-policy',
           privacyAccepted: false,
+          hasAccounts: false,
+        ),
+        '/welcome',
+      );
+    });
+
+    test('allows staying on privacy-policy when accounts exist', () {
+      expect(
+        resolve(
+          phase: AuthPhase.unauthenticated,
+          loc: '/privacy-policy',
+          privacyAccepted: false,
+          hasAccounts: true,
         ),
         isNull,
       );

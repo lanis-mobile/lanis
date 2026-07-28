@@ -169,6 +169,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           _isSettingsPath(loc);
 
       final shared = ref.read(sharedOverAccountSettingsProvider);
+      final accounts = ref.read(accountsProvider).asData?.value;
       final deepErr = auth.phase == AuthPhase.authenticated
           ? _deepLinkAuthRedirect(ref, loc)
           : null;
@@ -177,6 +178,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         phase: auth.phase,
         loc: loc,
         privacyAccepted: isPrivacyPolicyAccepted(shared),
+        hasAccounts: accounts?.isNotEmpty ?? false,
         isShellPath: onShell,
         shellSupported: onShell ? _isSupportedShellPath(ref, loc) : true,
         deepLinkErrorPath: deepErr,
@@ -240,10 +242,11 @@ final goRouterProvider = Provider<GoRouter>((ref) {
   return router;
 });
 
-/// Notifies [GoRouter] when auth phase changes.
+/// Notifies [GoRouter] when auth phase or account list changes.
 class _AuthListenable extends ChangeNotifier {
   _AuthListenable(this.ref) {
-    ref.listen(authControllerProvider, (_, __) => notifyListeners());
+    ref.listen(authControllerProvider, (_, _) => notifyListeners());
+    ref.listen(accountsProvider, (_, _) => notifyListeners());
   }
 
   final Ref ref;

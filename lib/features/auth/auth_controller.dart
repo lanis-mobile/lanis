@@ -82,12 +82,6 @@ class AuthController extends Notifier<AuthState> {
 
   /// Select preferred account (if any) and authenticate.
   Future<void> bootstrap() async {
-    final shared = ref.read(sharedOverAccountSettingsProvider);
-    if (!isPrivacyPolicyAccepted(shared)) {
-      state = const AuthState.unauthenticated();
-      return;
-    }
-
     _authDrivenExternally = true;
     state = const AuthState.authenticating();
     try {
@@ -95,6 +89,13 @@ class AuthController extends Notifier<AuthState> {
       final accounts = await db.listAccounts();
       if (accounts.isEmpty) {
         await ref.read(activeAccountProvider.notifier).clear();
+        state = const AuthState.unauthenticated();
+        return;
+      }
+
+      final shared = ref.read(sharedOverAccountSettingsProvider);
+      if (!isPrivacyPolicyAccepted(shared)) {
+        // Returning users must accept the update gate before auth continues.
         state = const AuthState.unauthenticated();
         return;
       }

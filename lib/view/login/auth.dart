@@ -51,6 +51,9 @@ class LoginFormState extends ConsumerState<LoginForm> {
         throw AccountAlreadyExistsException();
       }
 
+      // Login checkbox is the first-time privacy acceptance for new accounts.
+      acceptPrivacyPolicy(ref.read(sharedOverAccountSettingsProvider));
+
       final config = ref.read(lanisConfigProvider);
       await LanisSession.getLoginURL(
         ClearTextAccount(
