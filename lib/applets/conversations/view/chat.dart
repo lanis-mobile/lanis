@@ -414,7 +414,12 @@ class _ConversationsChatState extends ConsumerState<ConversationsChat>
         onPressed: () =>
             scrollToBottom(initDelay: const Duration(milliseconds: 50)),
       ),
+      // Horizontal SafeArea insets leave a blank scaffold strip on devices with
+      // landscape cutouts (e.g. Pixel 6). Keep only vertical insets so the
+      // tablet detail pane / full-width chat can paint to the side edges.
       body: SafeArea(
+        left: false,
+        right: false,
         child: FutureBuilder(
           future: _conversationFuture,
           builder: (context, snapshot) {

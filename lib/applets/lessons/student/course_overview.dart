@@ -120,24 +120,21 @@ class _CourseOverviewAnsichtState extends ConsumerState<CourseOverviewAnsicht> {
                 itemBuilder: (context, index) {
                   //last item in list
                   if (index == data!.history.length) {
+                    // Match history Card outer inset: list padding + Card margin (4).
                     return Padding(
                       padding: const EdgeInsets.only(
-                        left: padding,
-                        right: padding,
+                        left: padding + 4,
+                        right: padding + 4,
                         bottom: padding,
                       ),
-                      child: Card(
-                        child: ListTile(
-                          title: ElevatedButton(
-                            onPressed: _openSemester1,
-                            child: Text(
-                              AppLocalizations.of(context).toSemesterOne,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                              ),
-                            ),
+                      child: ElevatedButton(
+                        onPressed: _openSemester1,
+                        child: Text(
+                          AppLocalizations.of(context).toSemesterOne,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
                           ),
                         ),
                       ),

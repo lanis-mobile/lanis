@@ -120,7 +120,9 @@ class ConversationsTabletShell extends StatelessWidget {
           ),
           Expanded(
             flex: widthParts >= 3 ? 2 : 6,
-            child: onHome ? const ConversationsEmptyDetail() : child,
+            child: onHome
+                ? const ConversationsEmptyDetail()
+                : SizedBox.expand(child: child),
           ),
         ],
       ),

@@ -125,56 +125,101 @@ class _StudentTimetableBetterViewState
                 ? 40
                 : 26;
 
-            return Scaffold(
-              appBar: AppBar(
-                title: Text(timeTableDefinition.label(context)),
-                leading: widget.openDrawerCb != null
-                    ? IconButton(
-                        icon: const Icon(Icons.menu),
-                        onPressed: () => widget.openDrawerCb!(),
-                      )
-                    : null,
-                actions: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: Row(
-                      children: [
-                        if (uniqueBadges.isNotEmpty &&
-                            timetable.weekBadge != null)
-                          TextButton(
-                            onPressed: () {
-                              currentWeekIndex =
-                                  (currentWeekIndex + 1) %
-                                  (uniqueBadges.length + 1);
-                              updateSettings(
-                                'student-selected-week',
-                                currentWeekIndex == 0,
-                              );
-                            },
-                            child: Text(
-                              (currentWeekIndex < 1)
-                                  ? AppLocalizations.of(
-                                      context,
-                                    ).timetableAllWeeks
-                                  : AppLocalizations.of(context).timetableWeek(
-                                      uniqueBadges[currentWeekIndex - 1],
-                                    ),
+            final appBar = AppBar(
+              title: Text(timeTableDefinition.label(context)),
+              leading: widget.openDrawerCb != null
+                  ? IconButton(
+                      icon: const Icon(Icons.menu),
+                      onPressed: () => widget.openDrawerCb!(),
+                    )
+                  : null,
+              actions: data.hours.isEmpty
+                  ? null
+                  : [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Row(
+                          children: [
+                            if (uniqueBadges.isNotEmpty &&
+                                timetable.weekBadge != null)
+                              TextButton(
+                                onPressed: () {
+                                  currentWeekIndex =
+                                      (currentWeekIndex + 1) %
+                                      (uniqueBadges.length + 1);
+                                  updateSettings(
+                                    'student-selected-week',
+                                    currentWeekIndex == 0,
+                                  );
+                                },
+                                child: Text(
+                                  (currentWeekIndex < 1)
+                                      ? AppLocalizations.of(
+                                          context,
+                                        ).timetableAllWeeks
+                                      : AppLocalizations.of(
+                                          context,
+                                        ).timetableWeek(
+                                          uniqueBadges[currentWeekIndex - 1],
+                                        ),
+                                ),
+                              ),
+                            IconButton(
+                              onPressed: () => updateSettings(
+                                'single-day',
+                                !(settings['single-day'] ?? false),
+                              ),
+                              icon: (settings['single-day'] ?? false)
+                                  ? Icon(Icons.calendar_today)
+                                  : Icon(Icons.calendar_today_outlined),
                             ),
-                          ),
-                        IconButton(
-                          onPressed: () => updateSettings(
-                            'single-day',
-                            !(settings['single-day'] ?? false),
-                          ),
-                          icon: (settings['single-day'] ?? false)
-                              ? Icon(Icons.calendar_today)
-                              : Icon(Icons.calendar_today_outlined),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
+            );
+
+            if (data.hours.isEmpty) {
+              return Scaffold(
+                appBar: appBar,
+                body: RefreshIndicator(
+                  notificationPredicate: refresh != null
+                      ? (_) => true
+                      : (_) => false,
+                  onRefresh: refresh ?? () async {},
+                  child: CustomScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    slivers: [
+                      SliverFillRemaining(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.max,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            const Spacer(),
+                            const Icon(Icons.sentiment_dissatisfied, size: 60),
+                            Padding(
+                              padding: const EdgeInsets.all(32),
+                              child: Text(
+                                AppLocalizations.of(context).noEntries,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            const Spacer(),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              );
+            }
+
+            return Scaffold(
+              appBar: appBar,
               body: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4.0),
                 child: TimeTableView(
