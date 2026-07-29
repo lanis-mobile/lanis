@@ -155,14 +155,8 @@
 
   "camera": "Camera",
   "cameraPermissionToast": "Please grant camera permission",
-  "documentScanner": "Document scanner",
   "gallery": "Gallery",
   "fileManager": "Files",
-  "morePages": "More pages?",
-  "scanAnotherPageQuestion": "Do you want to scan another page?",
-  "previousImage": "Previous image",
-  "nextImage": "Next image",
-  "deleteImage": "Delete image",
   "filename": "Filename",
 
   "yes": "Yes",

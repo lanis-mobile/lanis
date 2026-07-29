@@ -124,14 +124,8 @@
 
   "camera": "Kamera",
   "cameraPermissionToast": "Bitte erlaube den Kamera zugriff",
-  "documentScanner": "Dokumentenscanner",
   "gallery": "Gallerie",
   "fileManager": "Dateien",
-  "morePages": "Mehr Seiten?",
-  "scanAnotherPageQuestion": "Möchtest du noch eine Seite scannen?",
-  "previousImage": "Vorheriges Bild",
-  "nextImage": "Nächstes Bild",
-  "deleteImage": "Bild löschen",
   "filename": "Dateiname",
 
   "yes": "Ja",
