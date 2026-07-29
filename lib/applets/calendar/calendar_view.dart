@@ -292,32 +292,46 @@ class _CalendarViewState extends ConsumerState<CalendarView> {
     );
   }
 
+  AppBar _calendarAppBar(BuildContext context) {
+    return AppBar(
+      title: Text(calendarDefinition.label(context)),
+      leading: widget.openDrawerCb != null
+          ? IconButton(
+              icon: const Icon(Icons.menu),
+              onPressed: () => widget.openDrawerCb!(),
+            )
+          : null,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (ref.watch(sessionProvider).asData?.value == null) {
+    final sessionAsync = ref.watch(sessionProvider);
+
+    if (sessionAsync case AsyncError(:final error, :final stackTrace)) {
+      final exception = error is Exception
+          ? error
+          : UnknownException(error.toString());
       return Scaffold(
-        appBar: AppBar(
-          title: Text(calendarDefinition.label(context)),
-          leading: widget.openDrawerCb != null
-              ? IconButton(
-                  icon: const Icon(Icons.menu),
-                  onPressed: () => widget.openDrawerCb!(),
-                )
-              : null,
+        appBar: _calendarAppBar(context),
+        body: AppletErrorView(
+          error: exception,
+          stack: stackTrace,
+          retry: () => ref.invalidate(sessionProvider),
         ),
+      );
+    }
+
+    final session = sessionAsync.asData?.value;
+    if (session == null) {
+      return Scaffold(
+        appBar: _calendarAppBar(context),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text(calendarDefinition.label(context)),
-        leading: widget.openDrawerCb != null
-            ? IconButton(
-                icon: const Icon(Icons.menu),
-                onPressed: () => widget.openDrawerCb!(),
-              )
-            : null,
-      ),
+      appBar: _calendarAppBar(context),
       body: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -398,7 +412,7 @@ class _CalendarViewState extends ConsumerState<CalendarView> {
               parser: ref.watch(calendarParserProvider),
               phpUrl: calendarDefinition.appletPhpUrl,
               settingsDefaults: calendarDefinition.settingsDefaults,
-              accountType: ref.watch(sessionProvider).asData?.value?.accountType ??
+              accountType: session.accountTypeOrNull ??
                   ref.watch(activeAccountProvider)?.accountType ??
                   AccountType.student,
               builder:
