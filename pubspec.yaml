@@ -27,7 +27,6 @@ dependencies:
     path: liblanis
   flutter_riverpod: ^3.0.3
   go_router: ^16.0.0
-  sqlite3_flutter_libs: ^0.5.32
   dio_cookie_manager: ^3.3.0
   dart_date: ^1.2.2
   path_provider: ^2.1.1
@@ -61,7 +60,7 @@ dependencies:
   app_settings: ^7.0.0
   device_info_plus: ^12.4.0
   flutter_quill: ^11.5.1
-  flutter_inappwebview: ^6.1.5
+  zikzak_inappwebview: ^4.7.0
   flutter_secure_storage: ^10.0.0
   native_dio_adapter: ^1.5.0
   flutter_widget_from_html_core: ^0.17.0
@@ -255,6 +254,9 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+  config:
+    # background_fetch's SPM dep on transistor-background-fetch fails resolution on Flutter 3.44+.
+    enable-swift-package-manager: false
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

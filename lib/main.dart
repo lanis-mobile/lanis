@@ -22,7 +22,6 @@ import 'package:lanis/utils/phoenix.dart';
 import 'package:lanis/utils/theme_settings.dart';
 import 'package:lanis/view/startup_error_view.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
-import 'package:sqlite3_flutter_libs/sqlite3_flutter_libs.dart';
 
 Future<void> main() async {
   await initGlitchTip(_startApp);
@@ -37,8 +36,6 @@ Future<void> _startApp() async {
         return errorWidget(details);
       };
     }
-
-    await applyWorkaroundToOpenSqlite3OnOldAndroidVersions();
 
     final overrides = await bootstrapLanisClient();
     syncGlitchTipReportingFromConfig();
