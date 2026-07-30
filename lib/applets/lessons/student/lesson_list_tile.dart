@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lanis/generated/l10n.dart';
+import 'package:liblanis/liblanis.dart';
 
-import '../../../models/lessons.dart';
-import 'course_overview.dart';
 import 'homework_box.dart';
 
 class LessonListTile extends StatefulWidget {
   final Lesson lesson;
+  final AccountType accountType;
 
-  const LessonListTile({super.key, required this.lesson});
+  const LessonListTile({
+    super.key,
+    required this.lesson,
+    this.accountType = AccountType.student,
+  });
 
   @override
   State<LessonListTile> createState() => _LessonListTileState();
@@ -109,14 +114,11 @@ class _LessonListTileState extends State<LessonListTile> {
             borderRadius: BorderRadius.circular(12),
           ),
           onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => CourseOverviewAnsicht(
-                  dataFetchURL: widget.lesson.courseURL.toString(),
-                  title: widget.lesson.name,
-                ),
-              ),
+            final prefix = widget.accountType.name;
+            final id = widget.lesson.courseID;
+            final title = Uri.encodeComponent(widget.lesson.name);
+            context.push(
+              '/$prefix/lessons/course/$id?title=$title',
             );
           },
         ),

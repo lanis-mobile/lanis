@@ -1,17 +1,25 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lanis/generated/l10n.dart';
+import 'package:liblanis/liblanis.dart' show storageManagerProvider;
 import 'package:open_file/open_file.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
 import 'package:mime/mime.dart';
 
-import '../core/sph/sph.dart';
 import 'file_icons.dart';
+import 'root_nav.dart';
 
-class FileInfo {
+Future<String> _downloadRemote(BuildContext context, String url, String filename) async {
+  final storage = ProviderScope.containerOf(context).read(storageManagerProvider);
+  if (storage == null) return '';
+  return storage.downloadFile(url, filename);
+}
+
+class DownloadableFile {
   String? name;
 
   /// The size + the unit. Often enclosed with parentheses.
@@ -34,10 +42,10 @@ class FileInfo {
   }
 
   /// Create a file info for a remote file
-  FileInfo({this.name, this.size, this.url}) : localPath = null;
+  DownloadableFile({this.name, this.size, this.url}) : localPath = null;
 
   /// Create a file info for a local file
-  FileInfo.local({String? name, String? size, required String filePath})
+  DownloadableFile.local({String? name, String? size, required String filePath})
     : this.name = name ?? filePath.split('/').last,
       this.size = size,
       this.localPath = filePath,
@@ -47,8 +55,8 @@ class FileInfo {
   bool get isLocal => localPath != null;
 }
 
-void showFileModal(BuildContext context, FileInfo file) {
-  showModalBottomSheet(
+void showFileModal(BuildContext context, DownloadableFile file) {
+  showRootModalBottomSheet(
     context: context,
     showDragHandle: true,
     builder: (context) {
@@ -125,7 +133,7 @@ void showFileModal(BuildContext context, FileInfo file) {
   );
 }
 
-void launchFile(BuildContext context, FileInfo file, Function callback) {
+void launchFile(BuildContext context, DownloadableFile file, Function callback) {
   final String filename = file.name ?? AppLocalizations.of(context).unknownFile;
 
   if (file.isLocal) {
@@ -144,7 +152,7 @@ void launchFile(BuildContext context, FileInfo file, Function callback) {
               FilledButton(
                 child: const Text('Ok'),
                 onPressed: () {
-                  Navigator.of(context).pop();
+                  popRootDialog(context);
                 },
               ),
             ],
@@ -163,10 +171,10 @@ void launchFile(BuildContext context, FileInfo file, Function callback) {
     builder: (BuildContext context) => downloadDialog(context, file.size),
   );
 
-  sph!.storage.downloadFile(file.url.toString(), filename).then((
+  _downloadRemote(context, file.url.toString(), filename).then((
     filepath,
   ) async {
-    if (context.mounted) Navigator.of(context).pop();
+    if (context.mounted) popRootDialog(context);
 
     if (filepath == "" && context.mounted) {
       showDialog(context: context, builder: (context) => errorDialog(context));
@@ -185,7 +193,7 @@ void launchFile(BuildContext context, FileInfo file, Function callback) {
               FilledButton(
                 child: const Text('Ok'),
                 onPressed: () {
-                  Navigator.of(context).pop();
+                  popRootDialog(context);
                 },
               ),
             ],
@@ -194,10 +202,15 @@ void launchFile(BuildContext context, FileInfo file, Function callback) {
       }
       callback();
     }
+  }).catchError((Object _) {
+    if (context.mounted) {
+      popRootDialog(context);
+      showDialog(context: context, builder: (context) => errorDialog(context));
+    }
   });
 }
 
-void saveFile(BuildContext context, FileInfo file, Function callback) {
+void saveFile(BuildContext context, DownloadableFile file, Function callback) {
   const platform = MethodChannel('io.github.lanis-mobile/storage');
   final String filename = file.name ?? AppLocalizations.of(context).unknownFile;
 
@@ -222,10 +235,10 @@ void saveFile(BuildContext context, FileInfo file, Function callback) {
     builder: (BuildContext context) => downloadDialog(context, file.size),
   );
 
-  sph!.storage.downloadFile(file.url.toString(), filename).then((
+  _downloadRemote(context, file.url.toString(), filename).then((
     filepath,
   ) async {
-    if (context.mounted) Navigator.of(context).pop();
+    if (context.mounted) popRootDialog(context);
 
     if (filepath == "" && context.mounted) {
       showDialog(context: context, builder: (context) => errorDialog(context));
@@ -237,10 +250,15 @@ void saveFile(BuildContext context, FileInfo file, Function callback) {
       });
       callback();
     }
+  }).catchError((Object _) {
+    if (context.mounted) {
+      popRootDialog(context);
+      showDialog(context: context, builder: (context) => errorDialog(context));
+    }
   });
 }
 
-void shareFile(BuildContext context, FileInfo file, Function callback) {
+void shareFile(BuildContext context, DownloadableFile file, Function callback) {
   final String filename = file.name ?? AppLocalizations.of(context).unknownFile;
 
   if (file.isLocal) {
@@ -258,16 +276,21 @@ void shareFile(BuildContext context, FileInfo file, Function callback) {
     builder: (BuildContext context) => downloadDialog(context, file.size),
   );
 
-  sph!.storage.downloadFile(file.url.toString(), filename).then((
+  _downloadRemote(context, file.url.toString(), filename).then((
     filepath,
   ) async {
-    if (context.mounted) Navigator.of(context).pop();
+    if (context.mounted) popRootDialog(context);
 
     if (filepath == "" && context.mounted) {
       showDialog(context: context, builder: (context) => errorDialog(context));
     } else {
       await Share.shareXFiles([XFile(filepath)]);
       callback();
+    }
+  }).catchError((Object _) {
+    if (context.mounted) {
+      popRootDialog(context);
+      showDialog(context: context, builder: (context) => errorDialog(context));
     }
   });
 }
@@ -288,7 +311,7 @@ AlertDialog errorDialog(BuildContext context) => AlertDialog(
     FilledButton(
       child: const Text('Ok'),
       onPressed: () {
-        Navigator.of(context).pop();
+        popRootDialog(context);
       },
     ),
   ],

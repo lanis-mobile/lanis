@@ -2,12 +2,13 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lanis/generated/l10n.dart';
+import 'package:liblanis/liblanis.dart';
 import 'package:lanis/utils/file_picker.dart';
 
-import '../../../../core/sph/sph.dart';
-import '../../../../models/lessons_teacher.dart';
 
-class UploadFileToCourseChip extends StatelessWidget {
+class UploadFileToCourseChip extends ConsumerWidget {
   final void Function(List<CourseFolderHistoryEntryFile> newFile)?
   onFileUploaded;
   final String courseId;
@@ -19,7 +20,7 @@ class UploadFileToCourseChip extends StatelessWidget {
     this.onFileUploaded,
   });
 
-  void uploadFile(BuildContext context) async {
+  void uploadFile(BuildContext context, WidgetRef ref) async {
     final pickedFiles = await pickMultipleFiles(context, null);
     if (pickedFiles.isEmpty) return;
 
@@ -77,7 +78,9 @@ class UploadFileToCourseChip extends StatelessWidget {
     try {
       for (final (index, data) in formData.indexed) {
         fileNameNotifier.value = multiPartFiles[index].filename ?? '';
-        final response = await sph!.session.dio.post(
+        final session = ref.read(sessionProvider).asData?.value;
+        if (session == null) return;
+        final response = await session.dio.post(
           'https://start.schulportal.hessen.de/meinunterricht.php',
           data: data,
           options: Options(
@@ -112,7 +115,7 @@ class UploadFileToCourseChip extends StatelessWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Unbekannter Fehler beim Hochladen'),
+            content: Text(AppLocalizations.of(context).unknownUploadError),
             backgroundColor: Colors.red,
           ),
         );
@@ -129,17 +132,17 @@ class UploadFileToCourseChip extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return ActionChip(
       label: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           const Icon(Icons.upload_rounded, size: 16),
           const SizedBox(width: 4.0),
-          const Text('Datei hinzufügen'),
+          Text(AppLocalizations.of(context).addFile),
         ],
       ),
-      onPressed: () => uploadFile(context),
+      onPressed: () => uploadFile(context, ref),
     );
   }
 }

@@ -1,45 +1,50 @@
 import 'package:flutter/material.dart';
-import 'package:lanis/core/database/account_database/account_db.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:liblanis/liblanis.dart';
 import 'package:lanis/generated/l10n.dart';
-import 'package:lanis/view/login/auth.dart';
-
-import '../../core/sph/sph.dart';
-import '../../utils/authentication_state.dart';
+import 'package:lanis/home_page.dart';
+import 'package:lanis/features/auth/auth_controller.dart';
 import 'account_tile.dart';
 
-class AccountSwitcher extends StatefulWidget {
+class AccountSwitcher extends ConsumerStatefulWidget {
   const AccountSwitcher({super.key});
 
   @override
-  State<AccountSwitcher> createState() => _AccountSwitcherState();
+  ConsumerState<AccountSwitcher> createState() => _AccountSwitcherState();
 }
 
-class _AccountSwitcherState extends State<AccountSwitcher> {
+class _AccountSwitcherState extends ConsumerState<AccountSwitcher> {
   @override
   Widget build(BuildContext context) {
+    final accountsAsync = ref.watch(accountsProvider);
+    final active = ref.watch(activeAccountProvider);
+
     return Scaffold(
       appBar: AppBar(title: Text(AppLocalizations.of(context).switchAccount)),
-      body: StreamBuilder(
-        stream: accountDatabase.select(accountDatabase.accountsTable).watch(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: accountsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text(e.toString())),
+        data: (accounts) {
           return ListView.builder(
-            itemCount: snapshot.data!.length,
+            itemCount: accounts.length,
             itemBuilder: (context, index) {
-              final account = snapshot.data![index];
+              final account = accounts[index];
               return AccountTile(
                 account: account,
                 lastLogin: account.lastLogin ?? DateTime.now(),
                 onTap: () async {
-                  if (sph!.account.localId == account.id) {
-                    Navigator.of(context).pop();
+                  if (active?.localId == account.localId) {
+                    context.pop();
                     return;
                   }
-                  await sph!.session.deAuthenticate();
-                  await accountDatabase.setNextLogin(account.id);
-                  if (context.mounted) authenticationState.reset(context);
+                  final ok = await ref
+                      .read(authControllerProvider.notifier)
+                      .loginWithAccount(account.localId);
+                  if (!context.mounted) return;
+                  if (ok) {
+                    context.go(firstSupportedHomePath(ref));
+                  }
                 },
               );
             },
@@ -47,12 +52,7 @@ class _AccountSwitcherState extends State<AccountSwitcher> {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) =>
-                Scaffold(body: LoginForm(showBackButton: true)),
-          ),
-        ),
+        onPressed: () => context.push('/login'),
         label: Text(AppLocalizations.of(context).addAccount),
         icon: Icon(Icons.person_add),
       ),

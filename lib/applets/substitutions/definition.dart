@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/applets/definitions.dart';
+import 'package:lanis/applets/substitutions/routes.dart';
 import 'package:lanis/applets/substitutions/substitutions_view.dart';
-
-import '../../models/account_types.dart';
+import 'package:lanis/l10n/account_type_ui.dart';
+import 'package:lanis/utils/deep_link.dart';
 import 'background.dart';
 
 final substitutionDefinition = AppletDefinition(
   appletPhpUrl: 'vertretungsplan.php',
+  pathSegment: 'substitutions',
+  deepLinkScope: DeepLinkScope.common,
+  buildRoutes: buildSubstitutionRoutes,
   icon: Icon(Icons.people),
   selectedIcon: Icon(Icons.people_outline),
   appletType: AppletType.nested,

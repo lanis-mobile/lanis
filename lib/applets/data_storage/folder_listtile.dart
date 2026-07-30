@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-
-import '../../models/datastorage.dart';
-import 'node_view.dart';
+import 'package:go_router/go_router.dart';
+import 'package:liblanis/liblanis.dart';
 
 class FolderListTile extends ListTile {
   final FolderNode folder;
@@ -22,13 +21,8 @@ class FolderListTile extends ListTile {
           : null,
       leading: const Icon(Icons.folder_outlined),
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                DataStorageNodeView(nodeID: folder.id, title: folder.name),
-          ),
-        );
+        final title = Uri.encodeComponent(folder.name);
+        context.push('/common/storage/folder/${folder.id}?title=$title');
       },
     );
   }

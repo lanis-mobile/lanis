@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:liblanis/liblanis.dart';
+import 'package:lanis/generated/l10n.dart';
+import 'package:lanis/utils/liblanis_ui.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../core/sph/sph.dart';
-import '../../../../models/lessons_teacher.dart';
-
-class CourseCreateNewEntry extends StatefulWidget {
+class CourseCreateNewEntry extends ConsumerStatefulWidget {
   final CourseFolderDetails courseFolderDetails;
   const CourseCreateNewEntry({super.key, required this.courseFolderDetails});
 
   @override
-  State<CourseCreateNewEntry> createState() => _CourseCreateNewEntryState();
+  ConsumerState<CourseCreateNewEntry> createState() => _CourseCreateNewEntryState();
 }
 
-class _CourseCreateNewEntryState extends State<CourseCreateNewEntry> {
+class _CourseCreateNewEntryState extends ConsumerState<CourseCreateNewEntry> {
   CourseFolderNewEntryConstraints get constraints =>
       widget.courseFolderDetails.newEntryConstraints;
 
@@ -44,7 +45,8 @@ class _CourseCreateNewEntryState extends State<CourseCreateNewEntry> {
   }
 
   String vis(bool visible) {
-    return visible ? 'Sichtbar für Schüler' : 'Nicht sichtbar für Schüler';
+    final l10n = AppLocalizations.of(context);
+    return visible ? l10n.visibleForStudents : l10n.notVisibleForStudents;
   }
 
   void showLoadingDialog() {
@@ -57,7 +59,7 @@ class _CourseCreateNewEntryState extends State<CourseCreateNewEntry> {
           spacing: 16.0,
           children: [
             CircularProgressIndicator(),
-            Text('Eintrag wird gespeichert...'),
+            Text(AppLocalizations.of(context).entrySaving),
           ],
         ),
       ),
@@ -66,9 +68,12 @@ class _CourseCreateNewEntryState extends State<CourseCreateNewEntry> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text('Neuer Eintrag (${widget.courseFolderDetails.courseName})'),
+        title: Text(
+          l10n.newEntryTitle(widget.courseFolderDetails.courseName),
+        ),
       ),
       body: Form(
         key: _formKey,
@@ -77,7 +82,7 @@ class _CourseCreateNewEntryState extends State<CourseCreateNewEntry> {
           children: [
             ListTile(
               leading: Icon(Icons.edit_calendar),
-              title: Text('Datum'),
+              title: Text(l10n.date),
               trailing: Row(
                 spacing: 8.0,
                 mainAxisSize: MainAxisSize.min,
@@ -140,7 +145,7 @@ class _CourseCreateNewEntryState extends State<CourseCreateNewEntry> {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 10),
                     child: Text(
-                      'Von',
+                      l10n.start,
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
                         color: Theme.of(context).colorScheme.primary,
                       ),
@@ -152,7 +157,7 @@ class _CourseCreateNewEntryState extends State<CourseCreateNewEntry> {
                           .map(
                             (e) => DropdownMenuItem<String>(
                               value: e,
-                              child: Text('Stunde $e'),
+                              child: Text(l10n.lessonHour(e)),
                             ),
                           )
                           .toList(),
@@ -177,7 +182,7 @@ class _CourseCreateNewEntryState extends State<CourseCreateNewEntry> {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 10),
                     child: Text(
-                      'Bis',
+                      l10n.end,
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
                         color: Theme.of(context).colorScheme.primary,
                       ),
@@ -189,7 +194,7 @@ class _CourseCreateNewEntryState extends State<CourseCreateNewEntry> {
                           .map(
                             (e) => DropdownMenuItem<String>(
                               value: e,
-                              child: Text('Stunde $e'),
+                              child: Text(l10n.lessonHour(e)),
                             ),
                           )
                           .toList(),
@@ -210,12 +215,12 @@ class _CourseCreateNewEntryState extends State<CourseCreateNewEntry> {
               child: TextFormField(
                 controller: _entryTopicController,
                 decoration: InputDecoration(
-                  labelText: 'Thema *',
+                  labelText: l10n.topicRequiredLabel,
                   hintText: vis(constraints.topicVisibleForStudents),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Bitte ein Thema eingeben';
+                    return l10n.pleaseEnterTopic;
                   }
                   return null;
                 },
@@ -226,7 +231,7 @@ class _CourseCreateNewEntryState extends State<CourseCreateNewEntry> {
               child: TextFormField(
                 controller: _entryContentController,
                 decoration: InputDecoration(
-                  labelText: 'Inhalt',
+                  labelText: l10n.contentLabel,
                   hintText: vis(constraints.contentVisibleForStudents),
                 ),
                 maxLines: 5,
@@ -237,7 +242,7 @@ class _CourseCreateNewEntryState extends State<CourseCreateNewEntry> {
               child: TextFormField(
                 controller: _entryHomeworkController,
                 decoration: InputDecoration(
-                  labelText: 'Hausaufgaben',
+                  labelText: l10n.homework,
                   hintText: vis(constraints.homeworkVisibleForStudents),
                 ),
                 maxLines: 5,
@@ -250,7 +255,7 @@ class _CourseCreateNewEntryState extends State<CourseCreateNewEntry> {
                   _useDocumentSubmission = val;
                 });
               },
-              title: Text('Dokumentenabgabe verwenden'),
+              title: Text(l10n.useDocumentSubmission),
             ),
             if (_useDocumentSubmission)
               Padding(
@@ -262,7 +267,7 @@ class _CourseCreateNewEntryState extends State<CourseCreateNewEntry> {
                       spacing: 8.0,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Dokumentenabgabe'),
+                        Text(l10n.documentSubmission),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -348,7 +353,7 @@ class _CourseCreateNewEntryState extends State<CourseCreateNewEntry> {
                           ],
                         ),
                         SwitchListTile(
-                          title: Text('Sichtbar für alle Lernenden'),
+                          title: Text(l10n.visibleForAllLearners),
                           value: _everySubmissionVisibleForStudents,
                           onChanged: (val) {
                             setState(() {
@@ -364,31 +369,46 @@ class _CourseCreateNewEntryState extends State<CourseCreateNewEntry> {
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: ElevatedButton.icon(
-                label: Text('Speichern'),
+                label: Text(l10n.save),
                 icon: Icon(Icons.save),
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
                     showLoadingDialog();
-                    final result = await sph!.parser.lessonsTeacherParser
-                        .postNewEntry(
-                          book: widget.courseFolderDetails.courseId,
-                          datum: DateFormat('dd.MM.yyyy').format(_selectedDate),
-                          zeigeauchvorheran: _prevouslyVisibleForStudents,
-                          stundenVon: _selectedStartHour,
-                          stundenBis: _selectedEndHour,
-                          subject: _entryTopicController.text,
-                          inhalt: _entryContentController.text,
-                          homework: _entryHomeworkController.text,
-                          abgabe: _useDocumentSubmission,
-                          abgabeBisDate: _selectedDocumentSubmissionDeadline,
-                          abgabeBisTime: _selectedDocumentSubmissionTime,
-                          abgabeSichtbar: _everySubmissionVisibleForStudents,
-                        );
-                    if (context.mounted) {
+                    try {
+                      final result = await ref
+                          .read(lessonsTeacherParserProvider)
+                          .postNewEntry(
+                            book: widget.courseFolderDetails.courseId,
+                            datum: DateFormat(
+                              'dd.MM.yyyy',
+                            ).format(_selectedDate),
+                            zeigeauchvorheran: _prevouslyVisibleForStudents,
+                            stundenVon: _selectedStartHour,
+                            stundenBis: _selectedEndHour,
+                            subject: _entryTopicController.text,
+                            inhalt: _entryContentController.text,
+                            homework: _entryHomeworkController.text,
+                            abgabe: _useDocumentSubmission,
+                            abgabeBisDate:
+                                _selectedDocumentSubmissionDeadline,
+                            abgabeBisTime:
+                                _selectedDocumentSubmissionTime.toSph(),
+                            abgabeSichtbar: _everySubmissionVisibleForStudents,
+                          );
+                      if (!context.mounted) return;
                       Navigator.of(context).pop(); // Close loading dialog
-                      Navigator.of(
-                        context,
-                      ).pop(result); // Close this screen and return result
+                      Navigator.of(context).pop(result);
+                    } catch (_) {
+                      if (!context.mounted) return;
+                      Navigator.of(context).pop(); // Close loading dialog
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            AppLocalizations.of(context).error,
+                          ),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
                     }
                   }
                 },

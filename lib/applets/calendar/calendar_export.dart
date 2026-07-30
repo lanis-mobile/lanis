@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:liblanis/liblanis.dart';
 import 'package:flutter/services.dart';
 import 'package:lanis/utils/file_operations.dart';
 import 'package:lanis/view/settings/settings.dart';
 import 'package:lanis/view/settings/settings_page_builder.dart';
 import 'package:lanis/generated/l10n.dart';
 
-import '../../core/sph/sph.dart';
 
 class CalendarExport extends SettingsColours {
   final bool showBackButton;
@@ -24,7 +25,7 @@ class _CalendarExportState extends SettingsColoursState<CalendarExport> {
       showBackButton: widget.showBackButton,
       children: [
         FutureBuilder(
-          future: sph!.parser.calendarParser.getExports(),
+          future: ProviderScope.containerOf(context).read(calendarParserProvider).getExports(),
           builder: (context, snapshot) {
             if (snapshot.connectionState != ConnectionState.done) {
               return LinearProgressIndicator();
@@ -404,7 +405,7 @@ class _CalendarExportFileState
             ? () async {
                 showFileModal(
                   context,
-                  FileInfo(
+                  DownloadableFile(
                     name:
                         "${DateTime.now().day}${DateTime.now().month}${DateTime.now().year}-${selected!.type}-${AppLocalizations.of(context).calendar.toLowerCase()}.${widget.fileType}",
                     url: Uri.parse(selected!.link),

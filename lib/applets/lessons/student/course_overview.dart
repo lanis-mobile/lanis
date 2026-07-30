@@ -1,34 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:liblanis/liblanis.dart';
 import 'package:intl/intl.dart';
 import 'package:lanis/generated/l10n.dart';
-import 'package:lanis/applets/lessons/student/upload_page.dart';
 
-import '../../../core/sph/sph.dart';
-import '../../../models/lessons.dart';
-import '../../../utils/file_operations.dart';
+import '../../../utils/file_operations.dart' as fo;
 import '../../../widgets/format_text.dart';
 import 'homework_box.dart';
 
-class CourseOverviewAnsicht extends StatefulWidget {
+class CourseOverviewAnsicht extends ConsumerStatefulWidget {
   final String dataFetchURL;
   final String title;
+  final int? initialTab;
   const CourseOverviewAnsicht({
     super.key,
     required this.dataFetchURL,
     required this.title,
+    this.initialTab,
   });
 
   @override
-  State<StatefulWidget> createState() => _CourseOverviewAnsichtState();
+  ConsumerState<CourseOverviewAnsicht> createState() => _CourseOverviewAnsichtState();
 }
 
-class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
+class _CourseOverviewAnsichtState extends ConsumerState<CourseOverviewAnsicht> {
   static const double padding = 10.0;
   final dateFormat = DateFormat('dd.MM.yyyy');
 
   bool checked = false;
 
-  int _currentIndex = 0;
+  late int _currentIndex = widget.initialTab ?? 0;
   bool loading = true;
   DetailedLesson? data;
   final _refreshIndicatorKey = GlobalKey<RefreshIndicatorState>();
@@ -39,25 +41,49 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
     _loadData();
   }
 
+  String get _accountPrefix =>
+      ref.read(activeAccountProvider)?.accountType?.name ?? 'student';
+
+  Future<void> _openUpload(String url, String name, String status) async {
+    final encoded = Uri.encodeComponent(url);
+    final encodedName = Uri.encodeComponent(name);
+    await context.push(
+      '/$_accountPrefix/lessons/upload?url=$encoded&name=$encodedName&status=$status',
+    );
+  }
+
+  void _openSemester1() {
+    final title = Uri.encodeComponent(widget.title);
+    context.push(
+      '/$_accountPrefix/lessons/course/${data!.courseID}?title=$title&semester=1',
+    );
+  }
+
   Future<void> _loadData({bool secondTry = false, bool force = false}) async {
     try {
       if (secondTry) {
-        await sph!.session.authenticate();
+        await ref.read(sessionProvider.notifier).authenticate();
       }
 
       String url = widget.dataFetchURL;
-      data = await sph!.parser.lessonsStudentParser.getDetailedCourseView(
+      data = await ref.read(lessonsStudentParserProvider).getDetailedCourseView(
         url,
         force: force,
       );
 
+      if (!mounted) return;
       setState(() {
         loading = false;
       });
     } catch (e) {
       if (!secondTry) {
-        _loadData(secondTry: true);
+        await _loadData(secondTry: true);
+        return;
       }
+      if (!mounted) return;
+      setState(() {
+        loading = false;
+      });
     }
   }
 
@@ -81,7 +107,7 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
 
   Widget _buildBody() {
     if (data == null) {
-      noDataScreen(context);
+      return noDataScreen(context);
     }
 
     switch (_currentIndex) {
@@ -94,34 +120,21 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
                 itemBuilder: (context, index) {
                   //last item in list
                   if (index == data!.history.length) {
+                    // Match history Card outer inset: list padding + Card margin (4).
                     return Padding(
                       padding: const EdgeInsets.only(
-                        left: padding,
-                        right: padding,
+                        left: padding + 4,
+                        right: padding + 4,
                         bottom: padding,
                       ),
-                      child: Card(
-                        child: ListTile(
-                          title: ElevatedButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => CourseOverviewAnsicht(
-                                    dataFetchURL: data!.semester1URL.toString(),
-                                    title: widget.title,
-                                  ),
-                                ),
-                              );
-                            },
-                            child: Text(
-                              AppLocalizations.of(context).toSemesterOne,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                              ),
-                            ),
+                      child: ElevatedButton(
+                        onPressed: _openSemester1,
+                        child: Text(
+                          AppLocalizations.of(context).toSemesterOne,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
                           ),
                         ),
                       ),
@@ -130,20 +143,21 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
 
                   List<GestureDetector> files = [];
                   for (FileInfo file in data!.history[index].files) {
+                    final foFile = fo.DownloadableFile(
+                      name: file.name,
+                      size: file.size,
+                      url: file.url,
+                    );
                     files.add(
                       GestureDetector(
                         onLongPress: () {
-                          showFileModal(context, file);
+                          fo.showFileModal(context, foFile);
                         },
                         child: ActionChip(
                           label: Text(file.name ?? "..."),
-                          onPressed: () => launchFile(
+                          onPressed: () => fo.launchFile(
                             context,
-                            FileInfo(
-                              name: file.name,
-                              size: file.size,
-                              url: Uri.parse(file.url.toString()),
-                            ),
+                            foFile,
                             () {},
                           ),
                         ),
@@ -166,15 +180,10 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
                             children: [
                               FilledButton(
                                 onPressed: () async {
-                                  await Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => UploadScreen(
-                                        url: upload.url.toString(),
-                                        name: upload.name,
-                                        status: "open",
-                                      ),
-                                    ),
+                                  await _openUpload(
+                                    upload.url.toString(),
+                                    upload.name,
+                                    'open',
                                   );
                                   setState(() {
                                     _loadData();
@@ -227,15 +236,10 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
                     } else {
                       uploads.add(
                         OutlinedButton(
-                          onPressed: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => UploadScreen(
-                                url: upload.url.toString(),
-                                name: upload.name,
-                                status: "closed",
-                              ),
-                            ),
+                          onPressed: () => _openUpload(
+                            upload.url.toString(),
+                            upload.name,
+                            'closed',
                           ),
                           child: Wrap(
                             crossAxisAlignment: WrapCrossAlignment.center,
@@ -563,17 +567,7 @@ class _CourseOverviewAnsichtState extends State<CourseOverviewAnsicht> {
           if (data!.semester1URL != null)
             IconButton(
               icon: const Icon(Icons.looks_one_outlined),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => CourseOverviewAnsicht(
-                      dataFetchURL: data!.semester1URL.toString(),
-                      title: widget.title,
-                    ),
-                  ),
-                );
-              },
+              onPressed: _openSemester1,
             ),
         ],
       ),

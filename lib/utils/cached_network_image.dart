@@ -3,15 +3,15 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-
-import '../core/sph/sph.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:liblanis/liblanis.dart';
 
 typedef ImageBuilder =
     Widget Function(BuildContext context, ImageProvider imageProvider);
 
 enum ImageType { png, jpg }
 
-class CachedNetworkImage extends StatefulWidget {
+class CachedNetworkImage extends ConsumerStatefulWidget {
   final Widget placeholder;
   final Uri imageUrl;
   final ImageBuilder builder;
@@ -26,30 +26,37 @@ class CachedNetworkImage extends StatefulWidget {
   });
 
   @override
-  State<CachedNetworkImage> createState() => _CachedNetworkImageState();
+  ConsumerState<CachedNetworkImage> createState() => _CachedNetworkImageState();
 }
 
-class _CachedNetworkImageState extends State<CachedNetworkImage> {
+class _CachedNetworkImageState extends ConsumerState<CachedNetworkImage> {
   bool loading = true;
   late ImageProvider imageProvider;
 
   Future<void> loadData() async {
-    String? imagePath = await sph?.storage.downloadFile(
-      widget.imageUrl.toString(),
-      'image.${widget.imageType.toString().split('.').last}',
-      followRedirects: true,
-    );
-    if (imagePath == null) {
+    final storage = ref.read(storageManagerProvider);
+    if (storage == null) {
       setState(() {
         loading = true;
       });
       return;
     }
-    File imageFile = File(imagePath);
-    imageProvider = FileImage(imageFile);
-    setState(() {
-      loading = false;
-    });
+    try {
+      final imagePath = await storage.downloadFile(
+        widget.imageUrl.toString(),
+        'image.${widget.imageType.toString().split('.').last}',
+        followRedirects: true,
+      );
+      File imageFile = File(imagePath);
+      imageProvider = FileImage(imageFile);
+      setState(() {
+        loading = false;
+      });
+    } catch (_) {
+      setState(() {
+        loading = true;
+      });
+    }
   }
 
   void _loadBase64Data() {
@@ -80,7 +87,7 @@ class _CachedNetworkImageState extends State<CachedNetworkImage> {
     if (widget.imageUrl.scheme == 'data') {
       _loadBase64Data();
     } else {
-      loadData();
+      WidgetsBinding.instance.addPostFrameCallback((_) => loadData());
     }
   }
 

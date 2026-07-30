@@ -4,25 +4,16 @@ import 'package:app_settings/app_settings.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:lanis/applets/calendar/definition.dart';
-import 'package:lanis/applets/timetable/definition.dart';
-import 'package:lanis/applets/timetable/student/student_timetable_settings.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:liblanis/liblanis.dart';
 import 'package:lanis/generated/l10n.dart';
-import 'package:lanis/utils/large_appbar.dart';
+import 'package:lanis/utils/deep_link.dart';
 import 'package:lanis/utils/responsive.dart';
+import 'package:lanis/utils/whats_new.dart';
 import 'package:lanis/view/settings/settings_page_builder.dart';
-import 'package:lanis/view/settings/subsettings/about.dart';
-import 'package:lanis/view/settings/subsettings/appearance.dart';
 import 'package:lanis/view/settings/subsettings/cache.dart';
-import 'package:lanis/view/settings/subsettings/notifications.dart';
-import 'package:lanis/view/settings/subsettings/quick_actions.dart';
-import 'package:lanis/view/settings/subsettings/userdata.dart';
-
-import '../../applets/calendar/calendar_export.dart';
-import '../../core/database/account_database/account_db.dart';
-import '../../core/sph/sph.dart';
-import '../../utils/press_tile.dart';
-import '../../utils/whats_new.dart';
+import 'package:lanis/widgets/press_tile.dart';
 
 class SettingsGroup {
   final List<SettingsTile> tiles;
@@ -36,6 +27,7 @@ class SettingsTile {
   final IconData icon;
   final Future<void> Function(BuildContext context) screen;
   final Future<bool> Function() show;
+  final String? routePath;
 
   static Future<bool> alwaysShow() async {
     return true;
@@ -47,237 +39,220 @@ class SettingsTile {
     required this.icon,
     required this.screen,
     this.show = alwaysShow,
+    this.routePath,
   });
 }
 
-class SettingsScreen extends SettingsColours {
-  const SettingsScreen({super.key});
+class SettingsScreen extends ConsumerSettingsColours {
+  /// When true, used as the master list inside [SettingsTabletShell].
+  final bool embeddedInTabletShell;
+
+  const SettingsScreen({super.key, this.embeddedInTabletShell = false});
 
   @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends SettingsColoursState<SettingsScreen> {
-  final List<SettingsGroup> settingsTiles = [
-    SettingsGroup(
-      tiles: [
-        SettingsTile(
-          title: (context) => AppLocalizations.of(context).appearance,
-          subtitle: (context) async {
-            return AppLocalizations.of(context).darkModeColoursList;
-          },
-          icon: Icons.palette_rounded,
-          screen: (context) => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => AppearanceSettings()),
-          ),
-        ),
-        SettingsTile(
-          title: (context) => AppLocalizations.of(context).language,
-          subtitle: (context) async {
-            String code = Localizations.localeOf(context).languageCode;
+class _SettingsScreenState extends ConsumerSettingsColoursState<SettingsScreen> {
+  bool _supports(AppletMeta applet) =>
+      ref.read(supportedAppletPhpUrlsProvider).contains(applet.appletPhpUrl);
 
-            if (code.contains("de")) {
-              return "Deutsch";
-            } else if (code.contains("en")) {
-              return "English";
-            } else {
-              return "Unknown";
-            }
-          },
-          icon: Icons.language_rounded,
-          screen: (context) async {
-            if (Platform.isAndroid) {
-              AppSettings.openAppSettings(type: AppSettingsType.appLocale);
-            }
-            if (Platform.isIOS) {
-              await showCupertinoDialog(
-                context: context,
-                builder: (context) {
-                  return CupertinoAlertDialog(
-                    title: Text(
-                      AppLocalizations.of(context).openSystemSettings,
-                    ),
-                    content: Text(
-                      AppLocalizations.of(
-                        context,
-                      ).openIOSSettingsToChangeLanguage,
-                    ),
-                    actions: [
-                      CupertinoDialogAction(
-                        onPressed: () => Navigator.pop(context),
-                        child: Text(AppLocalizations.of(context).cancel),
-                      ),
-                      CupertinoDialogAction(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          AppSettings.openAppSettings(
-                            type: AppSettingsType.appLocale,
-                          );
-                        },
-                        child: Text(AppLocalizations.of(context).ok),
-                      ),
-                    ],
-                  );
-                },
-              );
-            }
-          },
-          show: () async {
-            DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
-            if (Platform.isAndroid) {
-              final androidInfo = await deviceInfo.androidInfo;
-              return androidInfo.version.sdkInt >= 33;
-            } else if (Platform.isIOS) {
-              final iosInfo = await deviceInfo.iosInfo;
-              final versionParts = iosInfo.systemVersion.split('.');
-              final majorVersion = int.tryParse(versionParts[0]) ?? 0;
-              return majorVersion >= 13;
-            }
-            return false;
-          },
-        ),
-        SettingsTile(
-          title: (context) => AppLocalizations.of(context).notifications,
-          subtitle: (context) async {
-            return AppLocalizations.of(context).intervalAppletsList;
-          },
-          icon: Icons.notifications_rounded,
-          screen: (context) async {
-            int accountCount = await accountDatabase
-                .select(accountDatabase.accountsTable)
-                .get()
-                .then((value) => value.length);
-
-            if (context.mounted) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      NotificationSettings(accountCount: accountCount),
-                ),
-              );
-            }
-          },
-        ),
-        SettingsTile(
-          title: (context) => AppLocalizations.of(context).clearCache,
-          subtitle: (context) async {
-            Map<String, int> cacheStats = {'fileNum': 0, 'size': 0};
-
-            final dir = await sph!.storage.getDocumentCacheDirectory();
-
-            cacheStats = CacheSettings.dirStatSync(dir.path);
-
-            return "${cacheStats['fileNum']} ${cacheStats['fileNum'] == 1 ? (context.mounted ? AppLocalizations.of(context).file : 'Datei') : (context.mounted ? AppLocalizations.of(context).files : 'Dateien')} (${cacheStats['size']! ~/ 1024} KB)";
-          },
-          icon: Icons.storage_rounded,
-          screen: (context) => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => CacheSettings()),
-          ),
-        ),
-        SettingsTile(
-          title: (context) => AppLocalizations.of(context).quickActions,
-          subtitle: (context) async =>
-              "${AppLocalizations.of(context).applets}, ${AppLocalizations.of(context).external}",
-          icon: Icons.extension,
-          screen: (context) => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => QuickActions(showBackButton: true),
-            ),
-          ),
-        ),
-      ],
-    ),
-    if (sph!.session.doesSupportFeature(calendarDefinition) ||
-        sph!.session.doesSupportFeature(timeTableDefinition))
+  List<SettingsGroup> _buildSettingsTiles() {
+    return [
       SettingsGroup(
         tiles: [
-          if (sph!.session.doesSupportFeature(calendarDefinition))
-            SettingsTile(
-              title: (context) => AppLocalizations.of(context).calendarExport,
-              subtitle: (context) async => 'PDF, iCal, ICS, CSV',
-              icon: Icons.download_rounded,
-              screen: (context) => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const CalendarExport()),
-              ),
-            ),
-          if (sph!.session.doesSupportFeature(timeTableDefinition))
-            SettingsTile(
-              title: (context) =>
-                  AppLocalizations.of(context).customizeTimetable,
-              subtitle: (context) async =>
-                  AppLocalizations.of(context).customizeTimetableDescription,
-              icon: Icons.timelapse,
-              screen: (context) => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const StudentTimetableSettings(),
-                ),
-              ),
-            ),
+          SettingsTile(
+            title: (context) => AppLocalizations.of(context).appearance,
+            subtitle: (context) async {
+              return AppLocalizations.of(context).darkModeColoursList;
+            },
+            icon: Icons.palette_rounded,
+            routePath: SettingsDeepLinks.appearance,
+            screen: (context) async =>
+                context.push(SettingsDeepLinks.appearance),
+          ),
+          SettingsTile(
+            title: (context) => AppLocalizations.of(context).language,
+            subtitle: (context) async {
+              String code = Localizations.localeOf(context).languageCode;
+
+              if (code.contains("de")) {
+                return "Deutsch";
+              } else if (code.contains("en")) {
+                return "English";
+              } else {
+                return "Unknown";
+              }
+            },
+            icon: Icons.language_rounded,
+            screen: (context) async {
+              if (Platform.isAndroid) {
+                AppSettings.openAppSettings(type: AppSettingsType.appLocale);
+              }
+              if (Platform.isIOS) {
+                await showCupertinoDialog(
+                  context: context,
+                  builder: (context) {
+                    return CupertinoAlertDialog(
+                      title: Text(
+                        AppLocalizations.of(context).openSystemSettings,
+                      ),
+                      content: Text(
+                        AppLocalizations.of(
+                          context,
+                        ).openIOSSettingsToChangeLanguage,
+                      ),
+                      actions: [
+                        CupertinoDialogAction(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text(AppLocalizations.of(context).cancel),
+                        ),
+                        CupertinoDialogAction(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            AppSettings.openAppSettings(
+                              type: AppSettingsType.appLocale,
+                            );
+                          },
+                          child: Text(AppLocalizations.of(context).ok),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              }
+            },
+            show: () async {
+              DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+              if (Platform.isAndroid) {
+                final androidInfo = await deviceInfo.androidInfo;
+                return androidInfo.version.sdkInt >= 33;
+              } else if (Platform.isIOS) {
+                final iosInfo = await deviceInfo.iosInfo;
+                final versionParts = iosInfo.systemVersion.split('.');
+                final majorVersion = int.tryParse(versionParts[0]) ?? 0;
+                return majorVersion >= 13;
+              }
+              return false;
+            },
+          ),
+          SettingsTile(
+            title: (context) => AppLocalizations.of(context).notifications,
+            subtitle: (context) async {
+              return AppLocalizations.of(context).intervalAppletsList;
+            },
+            icon: Icons.notifications_rounded,
+            routePath: SettingsDeepLinks.notifications,
+            screen: (context) async {
+              if (context.mounted) {
+                context.push(SettingsDeepLinks.notifications);
+              }
+            },
+          ),
+          SettingsTile(
+            title: (context) => AppLocalizations.of(context).clearCache,
+            subtitle: (context) async {
+              Map<String, int> cacheStats = {'fileNum': 0, 'size': 0};
+
+              final storage = ref.read(storageManagerProvider);
+              if (storage != null) {
+                final dir = storage.getDocumentCacheDirectory();
+                cacheStats = CacheSettings.dirStatSync(dir.path);
+              }
+
+              return "${cacheStats['fileNum']} ${cacheStats['fileNum'] == 1 ? (context.mounted ? AppLocalizations.of(context).file : 'Datei') : (context.mounted ? AppLocalizations.of(context).files : 'Dateien')} (${cacheStats['size']! ~/ 1024} KB)";
+            },
+            icon: Icons.storage_rounded,
+            routePath: SettingsDeepLinks.cache,
+            screen: (context) async => context.push(SettingsDeepLinks.cache),
+          ),
         ],
       ),
-    SettingsGroup(
-      tiles: [
-        SettingsTile(
-          title: (context) => AppLocalizations.of(context).userData,
-          subtitle: (context) async {
-            return AppLocalizations.of(context).ageNameClassList;
-          },
-          icon: Icons.account_circle_rounded,
-          screen: (context) => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => UserDataSettings()),
+      if (_supports(Applets.calendar) || _supports(Applets.timetable))
+        SettingsGroup(
+          tiles: [
+            if (_supports(Applets.calendar))
+              SettingsTile(
+                title: (context) => AppLocalizations.of(context).calendarExport,
+                subtitle: (context) async => 'PDF, iCal, ICS, CSV',
+                icon: Icons.download_rounded,
+                routePath: SettingsDeepLinks.calendarExport,
+                screen: (context) async =>
+                    context.push(SettingsDeepLinks.calendarExport),
+              ),
+            if (_supports(Applets.timetable))
+              SettingsTile(
+                title: (context) =>
+                    AppLocalizations.of(context).customizeTimetable,
+                subtitle: (context) async =>
+                    AppLocalizations.of(context).customizeTimetableDescription,
+                icon: Icons.timelapse,
+                routePath: SettingsDeepLinks.timetable,
+                screen: (context) async =>
+                    context.push(SettingsDeepLinks.timetable),
+              ),
+          ],
+        ),
+      SettingsGroup(
+        tiles: [
+          SettingsTile(
+            title: (context) => AppLocalizations.of(context).userData,
+            subtitle: (context) async {
+              return AppLocalizations.of(context).ageNameClassList;
+            },
+            icon: Icons.account_circle_rounded,
+            routePath: SettingsDeepLinks.userdata,
+            screen: (context) async =>
+                context.push(SettingsDeepLinks.userdata),
           ),
-        ),
-      ],
-    ),
-    SettingsGroup(
-      tiles: [
-        SettingsTile(
-          title: (context) => AppLocalizations.of(context).about,
-          subtitle: (context) async {
-            return AppLocalizations.of(context).contributorsLinksLicensesList;
-          },
-          icon: Icons.school_rounded,
-          screen: (context) => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => AboutSettings()),
+        ],
+      ),
+      SettingsGroup(
+        tiles: [
+          SettingsTile(
+            title: (context) => AppLocalizations.of(context).errorReporting,
+            subtitle: (context) async {
+              return AppLocalizations.of(context).errorReportingSubtitle;
+            },
+            icon: Icons.bug_report_outlined,
+            routePath: SettingsDeepLinks.errorReporting,
+            screen: (context) async =>
+                context.push(SettingsDeepLinks.errorReporting),
           ),
-        ),
-        SettingsTile(
-          icon: Icons.question_mark,
-          show: () async => true,
-          title: (context) => AppLocalizations.of(context).inThisUpdate,
-          subtitle: (context) async =>
-              AppLocalizations.of(context).showReleaseNotesForThisVersion,
-          screen: (context) async => showLocalUpdateInfo(context),
-        ),
-      ],
-    ),
-  ];
-
-  SettingsTile? selectedTile;
+          SettingsTile(
+            title: (context) => AppLocalizations.of(context).about,
+            subtitle: (context) async {
+              return AppLocalizations.of(context).contributorsLinksLicensesList;
+            },
+            icon: Icons.school_rounded,
+            routePath: SettingsDeepLinks.about,
+            screen: (context) async => context.push(SettingsDeepLinks.about),
+          ),
+          SettingsTile(
+            icon: Icons.question_mark,
+            show: () async => true,
+            title: (context) => AppLocalizations.of(context).inThisUpdate,
+            subtitle: (context) async =>
+                AppLocalizations.of(context).showReleaseNotesForThisVersion,
+            screen: (context) async => showLocalUpdateInfo(context),
+          ),
+        ],
+      ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
-    final isTablet = Responsive.isTablet(context);
+    ref.watch(supportedAppletPhpUrlsProvider);
+    final settingsTiles = _buildSettingsTiles();
+    final isTablet =
+        Responsive.isSplitView(context) || widget.embeddedInTabletShell;
+    final currentPath = GoRouterState.of(context).uri.path;
+
     final double availableHeight =
         MediaQuery.of(context).size.height -
         kToolbarHeight -
         MediaQuery.of(context).padding.top;
-
-    if (mounted &&
-        Responsive.isTablet(context) &&
-        settingsTiles.isNotEmpty &&
-        settingsTiles[0].tiles.isNotEmpty &&
-        selectedTile == null) {
-      selectedTile = settingsTiles[0].tiles[0];
-    }
 
     Widget settingsList = SizedBox(
       height: availableHeight,
@@ -295,19 +270,22 @@ class _SettingsScreenState extends SettingsColoursState<SettingsScreen> {
                 tileIndex,
               ) {
                 final tile = settingsTiles[groupIndex].tiles[tileIndex];
+                final selected =
+                    isTablet &&
+                    tile.routePath != null &&
+                    currentPath == tile.routePath;
                 return SettingsTileWidget(
                   tile: tile,
                   index: tileIndex,
                   length: settingsTiles[groupIndex].tiles.length,
                   foregroundColor: foregroundColor,
-                  selected: isTablet && selectedTile == tile,
+                  selected: selected,
                   onSelect: isTablet
                       ? (tile) {
-                          if (tile.title(context) ==
-                              AppLocalizations.of(context).language) {
+                          if (tile.routePath == null) {
                             return tile.screen(context);
                           }
-                          setState(() => selectedTile = tile);
+                          context.go(tile.routePath!);
                         }
                       : null,
                 );
@@ -318,87 +296,56 @@ class _SettingsScreenState extends SettingsColoursState<SettingsScreen> {
       ),
     );
 
+    if (widget.embeddedInTabletShell) {
+      return ColoredBox(
+        color: backgroundColor,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AppBar(
+              title: Text(AppLocalizations.of(context).settings),
+              backgroundColor: backgroundColor,
+              automaticallyImplyLeading: false,
+            ),
+            Expanded(child: settingsList),
+          ],
+        ),
+      );
+    }
+
     if (!isTablet) {
+      final canPop = Navigator.of(context).canPop();
+      if (!canPop) {
+        return Scaffold(
+          backgroundColor: backgroundColor,
+          appBar: AppBar(
+            backgroundColor: backgroundColor,
+            title: Text(AppLocalizations.of(context).settings),
+            leading: IconButton(
+              icon: const Icon(Icons.menu),
+              onPressed: () => Scaffold.maybeOf(context)?.openDrawer(),
+            ),
+          ),
+          body: settingsList,
+        );
+      }
       return SettingsPage(
         backgroundColor: backgroundColor,
         title: Text(AppLocalizations.of(context).settings),
+        showBackButton: true,
         children: [settingsList],
       );
     }
 
-    // Tablet layout
+    // Phone-sized but somehow tablet flag: list only (detail via routes).
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
         title: Text(AppLocalizations.of(context).settings),
         backgroundColor: backgroundColor,
+        automaticallyImplyLeading: false,
       ),
-      body: Row(
-        children: [
-          SizedBox(
-            width: 300, // Fixed width for settings list
-            child: settingsList,
-          ),
-          const VerticalDivider(width: 1),
-          Expanded(
-            // At this point selectedTile should/can never be null
-            child: _buildSettingDetail(selectedTile!),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSettingDetail(SettingsTile tile) {
-    return Builder(
-      builder: (context) {
-        final isTablet = Responsive.isTablet(context);
-        if (tile.title(context) == AppLocalizations.of(context).appearance) {
-          return AppearanceSettings(showBackButton: !isTablet);
-        } else if (tile.title(context) ==
-            AppLocalizations.of(context).notifications) {
-          return NotificationSettings(
-            accountCount: 1,
-            showBackButton: !isTablet,
-          );
-        } else if (tile.title(context) ==
-            AppLocalizations.of(context).clearCache) {
-          return CacheSettings(showBackButton: !isTablet);
-        } else if (tile.title(context) ==
-            AppLocalizations.of(context).userData) {
-          return UserDataSettings(showBackButton: !isTablet);
-        } else if (tile.title(context) == AppLocalizations.of(context).about) {
-          return AboutSettings(showBackButton: !isTablet);
-        } else if (tile.title(context) ==
-            AppLocalizations.of(context).calendarExport) {
-          return CalendarExport(showBackButton: !isTablet);
-        } else if (tile.title(context) ==
-            AppLocalizations.of(context).customizeTimetable) {
-          return StudentTimetableSettings(showBack: !isTablet);
-        } else if (tile.title(context) ==
-            AppLocalizations.of(context).quickActions) {
-          return QuickActions(showBackButton: !isTablet);
-        } else if (tile.title(context) ==
-            AppLocalizations.of(context).inThisUpdate) {
-          return FutureBuilder(
-            future: showLocalUpdateInfo(context, dialog: false),
-            builder: (context, snapshot) {
-              if (snapshot.hasData && snapshot.data != null) {
-                return Scaffold(
-                  appBar: LargeAppBar(
-                    showBackButton: false,
-                    backgroundColor: backgroundColor,
-                    title: Text(AppLocalizations.of(context).inThisUpdate),
-                  ),
-                  body: snapshot.data as Widget,
-                );
-              }
-              return const Center(child: CircularProgressIndicator());
-            },
-          );
-        }
-        return Center(child: Text(AppLocalizations.of(context).noResults));
-      },
+      body: settingsList,
     );
   }
 }

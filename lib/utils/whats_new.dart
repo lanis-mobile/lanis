@@ -1,14 +1,16 @@
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:liblanis/liblanis.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:lanis/utils/logger.dart';
+import 'package:lanis/utils/root_nav.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:lanis/generated/l10n.dart';
-
-import '../core/sph/sph.dart';
 
 int compareVersions(String version1, String version2) {
   List<int> v1 = version1
@@ -44,9 +46,14 @@ Future<ReleaseNotesScreen?> showLocalUpdateInfo(
     );
   }
   final deviceReleaseTag = await getDeviceReleaseTag();
-  await sph!.prefs.kv.set('last-app-version', deviceReleaseTag);
+  if (!context.mounted) return null;
+  final shared = ProviderScope.containerOf(
+    context,
+  ).read(sharedOverAccountSettingsProvider);
+  shared.setString('last-app-version', deviceReleaseTag);
   final deviceReleaseInfo = await getReleaseInfo(deviceReleaseTag);
-  if (context.mounted && dialog) Navigator.of(context).pop();
+  // Loading dialog uses the root navigator; do not pop the settings route.
+  if (context.mounted && dialog) popRootDialog(context);
   if (deviceReleaseInfo == null) return null;
   if (context.mounted) {
     if (dialog) {
@@ -71,15 +78,19 @@ void showUpdateInfoIfRequired(BuildContext context) async {
     );
     return;
   }
+  if (!context.mounted) return;
+  final shared = ProviderScope.containerOf(
+    context,
+  ).read(sharedOverAccountSettingsProvider);
   final latestReleaseInfo = await getReleaseInfo(null);
   if (latestReleaseInfo == null) return;
   final String latestReleaseTag = latestReleaseInfo['tag_name'];
   final String deviceReleaseTag = await getDeviceReleaseTag();
-  final String? storageReleaseTag = await sph!.prefs.kv.get('last-app-version');
-  await sph!.prefs.kv.set('last-app-version', deviceReleaseTag);
+  final String? storageReleaseTag = shared.getString('last-app-version');
+  shared.setString('last-app-version', deviceReleaseTag);
 
   if (storageReleaseTag != deviceReleaseTag) {
-    await sph!.prefs.kv.set('last-app-version', deviceReleaseTag);
+    shared.setString('last-app-version', deviceReleaseTag);
     if (latestReleaseTag == deviceReleaseTag && context.mounted) {
       await showDialog(
         context: context,
@@ -125,8 +136,8 @@ Future<Map?> getReleaseInfo(String? releaseTag) async {
       url =
           'https://api.github.com/repos/lanis-mobile/lanis/releases/tags/$releaseTag';
     }
-    final response = await sph!.session.dio.get(url);
-    return response.data;
+    final response = await Dio().get(url);
+    return response.data is Map ? response.data as Map : null;
   } on Exception {
     return null;
   }
@@ -232,7 +243,7 @@ class ReleaseNotesScreen extends StatelessWidget {
       ),
       floatingActionButton: showBack
           ? FloatingActionButton.extended(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => popRootDialog(context),
               icon: const Icon(Icons.done),
               label: Text(AppLocalizations.of(context).done),
             )

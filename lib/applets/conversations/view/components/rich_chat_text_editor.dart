@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:lanis/applets/conversations/view/send.dart';
@@ -27,11 +29,13 @@ class RichChatTextEditor extends StatefulWidget {
 
 class _RichChatTextEditorState extends State<RichChatTextEditor> {
   final QuillController quillController = QuillController.basic();
+  StreamSubscription<DocChange>? _changesSub;
   bool showToolbar = false;
   int editorlineCount = 1;
   final GlobalKey _widgetKey = GlobalKey();
 
   void onEditorChange() {
+    if (!mounted) return;
     final text = quillController.document.toPlainText();
     setState(() {
       editorlineCount = '\n'.allMatches(text).length + 1;
@@ -42,6 +46,7 @@ class _RichChatTextEditorState extends State<RichChatTextEditor> {
 
   void _notifyHeightChange() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       final RenderBox? renderBox =
           _widgetKey.currentContext?.findRenderObject() as RenderBox?;
       if (renderBox != null) {
@@ -54,13 +59,14 @@ class _RichChatTextEditorState extends State<RichChatTextEditor> {
   @override
   void initState() {
     super.initState();
-    quillController.changes.listen((_) {
+    _changesSub = quillController.changes.listen((_) {
       onEditorChange();
     });
   }
 
   @override
   void dispose() {
+    _changesSub?.cancel();
     quillController.dispose();
     super.dispose();
   }

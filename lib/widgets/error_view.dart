@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../models/client_status_exceptions.dart';
+import 'package:liblanis/liblanis.dart';
+
 import '../utils/mono_text_viewer.dart';
 
 class AppletErrorView extends StatelessWidget {

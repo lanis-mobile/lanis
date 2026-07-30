@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:liblanis/liblanis.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../models/lessons_teacher.dart';
 
 class CourseFolderCard extends StatelessWidget {
   final CourseFolderStartPage courseFolder;

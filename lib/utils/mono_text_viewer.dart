@@ -57,7 +57,7 @@ class MonoTextViewer extends StatelessWidget {
               });
           showFileModal(
             context,
-            FileInfo.local(filePath: file.path, name: fileName, size: ""),
+            DownloadableFile.local(filePath: file.path, name: fileName, size: ""),
           );
         },
       ),

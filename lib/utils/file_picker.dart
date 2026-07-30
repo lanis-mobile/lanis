@@ -1,17 +1,13 @@
 import 'dart:io';
 
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_doc_scanner/flutter_doc_scanner.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mime/mime.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:lanis/utils/file_operations.dart';
-import 'package:lanis/utils/random.dart';
-import 'package:pdf/widgets.dart' as pw;
+import 'package:lanis/utils/root_nav.dart';
 
 import '../generated/l10n.dart';
 
@@ -43,50 +39,29 @@ extension Actions on PickedFile {
   }
 }
 
-const storageChannel = MethodChannel('io.github.lanis-mobile/storage');
-
-// /// Allows the user to pick any file using any supported method
-// Future<PickedFile?> pickSingleFile(
-//    BuildContext context, List<String>? allowedExtensions) async {
-//  List<bool> allowedMethods = [true, true, true, true];
-//  final picked = await showPickerUI(context, allowedMethods, allowedExtensions);
-//  return picked[0];
-//}
-
 /// Allows the user to pick multiple files using any supported method (only Gallery and File Manager support multiple files)
 Future<List<PickedFile>> pickMultipleFiles(
   BuildContext context,
   List<String>? allowedExtensions,
 ) async {
-  List<bool> allowedMethods = [true, true, true, true];
+  List<bool> allowedMethods = [true, true, true];
   return showPickerUI(context, allowedMethods, allowedExtensions);
 }
 
 /// Allowed Methods (Position in [List<bool>]):
 /// ```
 /// 0 = File Manager
-/// 1 = Scan Document (Requires API >= 26)
-/// 2 = Camera
-/// 3 = Gallery (iOS Only)
+/// 1 = Camera
+/// 2 = Gallery (iOS Only)
 /// ```
 Future<List<PickedFile>> showPickerUI(
   BuildContext context,
   List<bool> allowedMethods,
   List<String>? allowedExtensions,
 ) async {
-  bool documentScannerSupported = true;
-
-  if (Platform.isAndroid) {
-    DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
-    final androidInfo = await deviceInfo.androidInfo;
-    if (androidInfo.version.sdkInt < 26) {
-      documentScannerSupported = false;
-    }
-  }
-
   List<PickedFile> pickedFiles = [];
   if (context.mounted) {
-    await showModalBottomSheet(
+    await showRootModalBottomSheet(
       context: context,
       showDragHandle: true,
       builder: (context) {
@@ -118,30 +93,7 @@ Future<List<PickedFile>> showPickerUI(
                         ],
                       ),
                     )),
-                  if (allowedMethods[1] && documentScannerSupported)
-                    (MenuItemButton(
-                      onPressed: () async {
-                        final result = await pickFileUsingDocumentScanner(
-                          context,
-                        );
-                        if (result != null) {
-                          pickedFiles.add(result);
-                        }
-
-                        if (context.mounted && pickedFiles.isNotEmpty) {
-                          Navigator.pop(context);
-                        }
-                      },
-                      child: Row(
-                        children: [
-                          Padding(padding: EdgeInsets.only(left: 10.0)),
-                          Icon(Icons.document_scanner_rounded),
-                          Padding(padding: EdgeInsets.only(right: 8.0)),
-                          Text(AppLocalizations.of(context).documentScanner),
-                        ],
-                      ),
-                    )),
-                  if (allowedMethods[2])
+                  if (allowedMethods[1])
                     (MenuItemButton(
                       onPressed: () async {
                         final result = await pickFileUsingCamera(context);
@@ -162,7 +114,7 @@ Future<List<PickedFile>> showPickerUI(
                         ],
                       ),
                     )),
-                  if (allowedMethods[3] &&
+                  if (allowedMethods[2] &&
                       Platform
                           .isIOS) // DocumentsUI supports galleries and the photo picker is horrible (from a user perspective)
                     (MenuItemButton(
@@ -281,99 +233,6 @@ Future<List<PickedFile>> pickFilesUsingGallery(BuildContext context) async {
   return result;
 }
 
-Future<PickedFile?> pickFileUsingDocumentScanner(BuildContext context) async {
-  List<String> paths = List.empty(growable: true);
-  bool breakLoop = false;
-
-  if (Platform.isAndroid) {
-    while (true) {
-      String? path = await storageChannel.invokeMethod("scanDocument");
-      if (path == null) {
-        return null;
-      }
-
-      final newPath = "$path-${getRandomString(32)}";
-      await moveFile(path, newPath);
-      paths.add(newPath);
-
-      if (context.mounted) {
-        await showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text(AppLocalizations.of(context).morePages),
-              content: Text(
-                AppLocalizations.of(context).scanAnotherPageQuestion,
-              ),
-              actions: <Widget>[
-                ElevatedButton(
-                  onPressed: () {
-                    breakLoop = true;
-                    Navigator.pop(context);
-                  },
-                  child: Text(AppLocalizations.of(context).no),
-                ),
-                FilledButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(AppLocalizations.of(context).yes),
-                ),
-              ],
-            );
-          },
-        );
-        if (breakLoop) {
-          break;
-        }
-      }
-    }
-  } else if (Platform.isIOS) {
-    dynamic scannedDocuments;
-    try {
-      scannedDocuments = await FlutterDocScanner().getScannedDocumentAsImages(
-        page: 4,
-      );
-    } on PlatformException {
-      return null;
-    }
-
-    final List<Object?> list = scannedDocuments;
-
-    for (final s in list) {
-      final uri = Uri.parse(s.toString());
-      paths.add(uri.path);
-    }
-  } else {
-    return null;
-  }
-  List<String>? newPaths;
-
-  if (context.mounted) {
-    newPaths = await imageCycler(context, paths);
-  }
-
-  if (newPaths == null) {
-    return null;
-  }
-
-  String? filePath;
-  if (context.mounted) {
-    filePath = await mergeImagesIntoPDF(newPaths, context);
-  }
-
-  if (filePath == null) {
-    return null;
-  }
-
-  File file = File(filePath);
-
-  PickedFile pickedFile = PickedFile(
-    name: filePath.split("/").last,
-    path: filePath,
-    size: await file.length(),
-  );
-  return pickedFile;
-}
-
 Future<String?> askFileName(BuildContext context) async {
   String? result;
   final TextEditingController controller = TextEditingController();
@@ -404,182 +263,4 @@ Future<String?> askFileName(BuildContext context) async {
   );
 
   return result;
-}
-
-Future<String?> mergeImagesIntoPDF(
-  List<String> paths,
-  BuildContext context,
-) async {
-  String? pathName = await askFileName(context);
-  if (pathName == null) {
-    return null;
-  }
-
-  if (!pathName.endsWith(".pdf")) {
-    pathName = "$pathName.pdf";
-  }
-
-  pw.Document pdf = pw.Document();
-  for (String path in paths) {
-    File file = File(path);
-    final bytes = await file.readAsBytes();
-    pdf.addPage(
-      pw.Page(
-        build: (pw.Context context) {
-          return pw.Center(
-            child: pw.Image(pw.MemoryImage(bytes)),
-            widthFactor: double.infinity,
-          );
-        },
-        margin: pw.EdgeInsets.zero,
-      ),
-    );
-  }
-
-  final cache = (await getApplicationCacheDirectory()).path;
-  final path = "$cache/$pathName";
-  final file = File(path);
-  file.create();
-  file.writeAsBytes(await pdf.save());
-  return path;
-}
-
-Future<List<String>?> imageCycler(
-  BuildContext context,
-  List<String> paths,
-) async {
-  return await Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => ImageCyclerScreen(initialPaths: paths),
-    ),
-  );
-}
-
-class ImageCyclerScreen extends StatefulWidget {
-  final List<String> initialPaths;
-
-  const ImageCyclerScreen({super.key, required this.initialPaths});
-
-  @override
-  ImageCyclerScreenState createState() => ImageCyclerScreenState();
-}
-
-class ImageCyclerScreenState extends State<ImageCyclerScreen> {
-  late List<String> paths;
-  int currentIndex = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    paths = List.from(widget.initialPaths);
-  }
-
-  void removeImage(int index) {
-    setState(() {
-      paths.removeAt(index);
-      if (currentIndex >= paths.length) {
-        currentIndex = paths.length - 1;
-      }
-      if (paths.isEmpty) {
-        Navigator.pop(context);
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        actions: [
-          IconButton(
-            icon: Icon(Icons.check_rounded),
-            onPressed: () {
-              Navigator.pop(context, paths);
-            },
-            tooltip: AppLocalizations.of(context).confirm,
-          ),
-        ],
-      ),
-      body: Center(
-        child: Container(
-          width: double.infinity,
-          height: double.infinity,
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).padding.bottom,
-          ),
-          child: Column(
-            children: [
-              if (paths.isNotEmpty)
-                (Expanded(
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: InteractiveViewer(
-                      maxScale: 10,
-                      minScale: 1,
-                      child: Image.file(File(paths[currentIndex])),
-                    ),
-                  ),
-                )),
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: SizedBox(
-                  width: double.infinity,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      Flexible(
-                        child: currentIndex > 0
-                            ? IconButton(
-                                padding: EdgeInsets.all(0.0),
-                                icon: Icon(
-                                  Icons.arrow_left_rounded,
-                                  size: 48.0,
-                                ),
-                                tooltip: AppLocalizations.of(
-                                  context,
-                                ).previousImage,
-                                onPressed: () {
-                                  setState(() {
-                                    currentIndex = currentIndex - 1;
-                                  });
-                                },
-                              )
-                            : SizedBox(width: 48.0),
-                      ),
-                      Flexible(
-                        child: IconButton(
-                          padding: EdgeInsets.all(0.0),
-                          icon: Icon(Icons.delete_forever_rounded, size: 32.0),
-                          tooltip: AppLocalizations.of(context).deleteImage,
-                          onPressed: () => removeImage(currentIndex),
-                        ),
-                      ),
-                      Flexible(
-                        child: currentIndex < paths.length - 1
-                            ? IconButton(
-                                padding: EdgeInsets.all(0.0),
-                                icon: Icon(
-                                  Icons.arrow_right_rounded,
-                                  size: 48.0,
-                                ),
-                                tooltip: AppLocalizations.of(context).nextImage,
-                                onPressed: () {
-                                  setState(() {
-                                    currentIndex = currentIndex + 1;
-                                  });
-                                },
-                              )
-                            : SizedBox(width: 48.0),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }

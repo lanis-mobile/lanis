@@ -3,19 +3,19 @@ import 'dart:async';
 import 'package:dart_date/dart_date.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:open_file/open_file.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:liblanis/liblanis.dart';
+import 'package:lanis/applets/lessons/student/upload_dates.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/utils/file_picker.dart';
+import 'package:lanis/utils/root_nav.dart';
 import 'package:lanis/widgets/error_view.dart';
+import 'package:open_file/open_file.dart';
 
-import '../../../core/sph/sph.dart';
-import '../../../models/lessons.dart';
-import '../../../models/client_status_exceptions.dart';
 import '../../../utils/file_operations.dart';
 import '../../../utils/logger.dart';
 
-class UploadScreen extends StatefulWidget {
+class UploadScreen extends ConsumerStatefulWidget {
   final String url;
   final String name;
   final String status;
@@ -27,10 +27,10 @@ class UploadScreen extends StatefulWidget {
   });
 
   @override
-  State<UploadScreen> createState() => _UploadScreenState();
+  ConsumerState<UploadScreen> createState() => _UploadScreenState();
 }
 
-class _UploadScreenState extends State<UploadScreen> {
+class _UploadScreenState extends ConsumerState<UploadScreen> {
   late Future _future;
   final ValueNotifier<int> _addedFiles = ValueNotifier(
     0,
@@ -41,13 +41,13 @@ class _UploadScreenState extends State<UploadScreen> {
 
   void forceReloadPage() {
     setState(() {
-      _future = sph!.parser.lessonsStudentParser.getUploadInfo(widget.url);
+      _future = ref.read(lessonsStudentParserProvider).getUploadInfo(widget.url);
     });
   }
 
   @override
   void initState() {
-    _future = sph!.parser.lessonsStudentParser.getUploadInfo(widget.url);
+    _future = ref.read(lessonsStudentParserProvider).getUploadInfo(widget.url);
     super.initState();
   }
 
@@ -101,31 +101,35 @@ class _UploadScreenState extends State<UploadScreen> {
       future: _future,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
-          if (snapshot.hasError && snapshot.error is LanisException) {
+          if (snapshot.hasError) {
+            final error = snapshot.error is LanisException
+                ? snapshot.error as LanisException
+                : UnknownException(snapshot.error.toString());
             return Scaffold(
               appBar: AppBar(title: Text(widget.name)),
-              body: AppletErrorView(error: snapshot.error as LanisException),
+              body: AppletErrorView(error: error),
             );
           }
 
-          final DateTime startDate = DateFormat("EEEE d.M.yy H:mm", "de").parse(
-            snapshot.data["start"]
-                .replaceAll(",", "")
-                .replaceAll(" den", "")
-                .replaceAll(" Uhr", ""),
+          final data = snapshot.data;
+          final dates = UploadDates.tryParse(
+            startRaw: data?["start"] as String?,
+            deadlineRaw: data?["deadline"] as String?,
+            deletionRaw: data?["automatic_deletion"] as String?,
           );
-          final DateTime endDate = DateFormat("EEEE d.M.yy H:mm", "de").parse(
-            snapshot.data["deadline"]
-                .replaceAll(",", "")
-                .replaceAll(" den", "")
-                .replaceAll(" Uhr", ""),
-          );
+          if (dates == null) {
+            return Scaffold(
+              appBar: AppBar(title: Text(widget.name)),
+              body: AppletErrorView(
+                error: UnknownException('Invalid upload dates'),
+              ),
+            );
+          }
+          final startDate = dates.start;
+          final endDate = dates.deadline;
+          final deleteDate = dates.automaticDeletion;
           final DateTime now = DateTime.now();
 
-          final DateTime deleteDate = DateFormat(
-            "d.M.yyyy",
-            "de",
-          ).parse(snapshot.data["automatic_deletion"]);
           final bool filesDeleted =
               now.isAfter(deleteDate) || now.isAtSameMomentAs(deleteDate);
 
@@ -181,9 +185,7 @@ class _UploadScreenState extends State<UploadScreen> {
                               List<FileStatus> fileStatus;
 
                               try {
-                                fileStatus = await sph!
-                                    .parser
-                                    .lessonsStudentParser
+                                fileStatus = await ref.read(lessonsStudentParserProvider)
                                     .uploadFile(
                                       course: snapshot.data["course_id"],
                                       entry: snapshot.data["entry_id"],
@@ -199,7 +201,8 @@ class _UploadScreenState extends State<UploadScreen> {
                                   ScaffoldMessenger.of(
                                     context,
                                   ).hideCurrentSnackBar();
-                                  Navigator.of(context).push(
+                                  pushInShell(
+                                    context,
                                     MaterialPageRoute(
                                       builder: (context) {
                                         return Scaffold(
@@ -220,9 +223,10 @@ class _UploadScreenState extends State<UploadScreen> {
                               for (final status in fileStatus) {
                                 if (status.status == "erfolgreich") {
                                   successfulUploads++;
-                                  if (status.message!.contains(
-                                    "Datei mit gleichem Namen schon vorhanden.",
-                                  )) {
+                                  if (status.message?.contains(
+                                        "Datei mit gleichem Namen schon vorhanden.",
+                                      ) ==
+                                      true) {
                                     renamed = true;
                                   }
                                 }
@@ -568,7 +572,21 @@ class _UploadScreenState extends State<UploadScreen> {
                                     );
                                   },
                                 );
-                                sph!.storage
+                                final storage = ref.read(storageManagerProvider);
+                                if (storage == null) {
+                                  if (context.mounted) {
+                                    Navigator.of(context).pop();
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          AppLocalizations().error,
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                  return;
+                                }
+                                storage
                                     .downloadFile(
                                       snapshot.data["public_files"][index].url,
                                       snapshot.data["public_files"][index].name,
@@ -699,9 +717,7 @@ class _UploadScreenState extends State<UploadScreen> {
                                               );
                                               String response;
                                               try {
-                                                response = await sph!
-                                                    .parser
-                                                    .lessonsStudentParser
+                                                response = await ref.read(lessonsStudentParserProvider)
                                                     .deleteUploadedFile(
                                                       course: snapshot
                                                           .data["course_id"],
@@ -712,20 +728,30 @@ class _UploadScreenState extends State<UploadScreen> {
                                                       file: snapshot
                                                           .data["own_files"][index]
                                                           .index,
-                                                      userPasswordEncrypted: sph!
-                                                          .session
-                                                          .cryptor
-                                                          .encryptString(
-                                                            passwordController
-                                                                .text,
-                                                          ),
+                                                      userPasswordEncrypted: () {
+                                                        final session = ref
+                                                            .read(sessionProvider)
+                                                            .asData
+                                                            ?.value;
+                                                        if (session == null) {
+                                                          throw ConfigurationException(
+                                                            'No active session',
+                                                          );
+                                                        }
+                                                        return session.cryptor
+                                                            .encryptString(
+                                                          passwordController
+                                                              .text,
+                                                        );
+                                                      }(),
                                                     );
                                               } on LanisException catch (ex) {
                                                 if (context.mounted) {
                                                   ScaffoldMessenger.of(
                                                     context,
                                                   ).hideCurrentSnackBar();
-                                                  Navigator.of(context).push(
+                                                  pushInShell(
+                                                    context,
                                                     MaterialPageRoute(
                                                       builder: (context) {
                                                         return Scaffold(
@@ -792,7 +818,7 @@ class _UploadScreenState extends State<UploadScreen> {
                             ? () {
                                 showFileModal(
                                   context,
-                                  FileInfo(
+                                  DownloadableFile(
                                     name:
                                         snapshot.data["own_files"][index].name,
                                     url: Uri.parse(
@@ -807,7 +833,7 @@ class _UploadScreenState extends State<UploadScreen> {
                                 logger.d(snapshot.data["own_files"][index]);
                                 launchFile(
                                   context,
-                                  FileInfo(
+                                  DownloadableFile(
                                     name:
                                         snapshot.data["own_files"][index].name,
                                     url: Uri.parse(

@@ -2,8 +2,7 @@ import 'dart:io' show exit, Platform;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:lanis/core/database/account_database/account_db.dart'
-    show secureStorage;
+import 'package:lanis/bridge/flutter_secret_store.dart';
 import 'package:lanis/utils/logger.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -137,7 +136,7 @@ void forceReset() async {
   }
 
   // Clear secure storage
-  secureStorage.deleteAll();
+  await FlutterSecretStore().deleteAll();
 
   // Stop the process emediately to avoid any further writes.
   exit(200);

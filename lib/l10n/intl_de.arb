@@ -124,14 +124,8 @@
 
   "camera": "Kamera",
   "cameraPermissionToast": "Bitte erlaube den Kamera zugriff",
-  "documentScanner": "Dokumentenscanner",
   "gallery": "Gallerie",
   "fileManager": "Dateien",
-  "morePages": "Mehr Seiten?",
-  "scanAnotherPageQuestion": "Möchtest du noch eine Seite scannen?",
-  "previousImage": "Vorheriges Bild",
-  "nextImage": "Nächstes Bild",
-  "deleteImage": "Bild löschen",
   "filename": "Dateiname",
 
   "yes": "Ja",
@@ -171,6 +165,16 @@
   "featureRequest": "Feature-Anfrage",
   "latestRelease": "Neuste Version",
   "privacyPolicy": "Datenschutzerklärung",
+  "privacyPolicyGateTitle": "Aktualisierte Datenschutzerklärung",
+  "privacyPolicyGateBody": "Bitte lies und akzeptiere die Datenschutzerklärung, um die App weiter zu nutzen.",
+  "privacyPolicyGateOpen": "Datenschutzerklärung öffnen",
+  "privacyPolicyGateAccept": "Akzeptieren und fortfahren",
+  "errorReporting": "Fehlerberichte",
+  "errorReportingSubtitle": "Optionale Absturzberichte über GlitchTip",
+  "errorReportingSwitch": "Fehlerberichte senden",
+  "errorReportingBody": "Wenn aktiviert, werden anonyme Absturz- und Fehlerberichte an unseren selbst gehosteten GlitchTip-Server gesendet, damit wir Fehler beheben können. Account-Passwörter sind nicht enthalten.",
+  "errorReportingDeviceWide": "Diese Einstellung gilt für das gesamte Gerät, nicht für einen einzelnen Account.",
+  "authErrorReportingOptional": "Anonyme Fehlerberichte senden (gerätweit, optional)",
   "openSourceLicenses": "Open-Source Lizenzen",
   "buildInformation": "Build Informationen",
   "notImplemented": "Nicht implementiert",
@@ -339,12 +343,9 @@
   "undo": "Rückgängig",
   "start": "Start",
   "end": "Ende",
-  "quickActions": "Shortcuts",
   "applets": "Applets",
   "external": "Extern",
   "restartRequired": "Nach einer Änderung ist ein Neustart der App erforderlich, um die Änderungen anzuwenden.",
-  "quickActionsDisclaimer": "Du kannst bis zu {num} Shortcuts hinzufügen. Diese Shortcuts sind auf dem Startbildschirm verfügbar.",
-  "quickActionsAndroid": "Shortcuts, die zum Startbildschirm hinzugefügt wurden, funktionieren auch nach der Deaktivierung aus der App, werden jedoch nicht aktualisiert. Daher ist es auch möglich mehr als 2 Shortcuts auf dem Startbildschirm zu benutzen.",
 
   "ignoreBatteryOptimizationPart1": "Wenn Sie keine Benachrichtigungen erhalten, kann dies an herstellerspezifischen Akku-Optimierungen liegen. Sie können diese hier deaktivieren, um sicherzustellen, dass die App im Hintergrund ordnungsgemäß funktioniert. ",
   "ignoreBatteryOptimizationSettings": "Batterie Einstellungen",
@@ -359,5 +360,51 @@
   "openIOSSettingsToChangeLanguage": "Wählen Sie auf dem nächsten Bildschirm \"Lanis\" und ändern dann die Sprache im Abschnitt \"Bevorzugte Sprache\".",
   "copy": "Kopieren",
   "openExternalUrl": "Externe URL öffnen",
-  "openExternalUrlDescription": "Möchtest du die folgende URL öffnen?"
+  "openExternalUrlDescription": "Möchtest du die folgende URL öffnen?",
+
+  "delete": "Löschen",
+  "save": "Speichern",
+  "date": "Datum",
+  "topic": "Thema",
+  "contentLabel": "Inhalt",
+  "inAdvance": "Vorab",
+  "teacherPreviewBanner": "Vorschau-Version für Lehrer! Zur Zeit nur teilweise funktionsfähig.",
+  "visibilityChangedSuccess": "Sichtbarkeit erfolgreich geändert",
+  "visibilityChangeError": "Fehler beim Ändern der Sichtbarkeit",
+  "confirmDeleteTitle": "Wirklich löschen?",
+  "confirmDeleteFile": "Möchtest du die Datei wirklich löschen?",
+  "fileDeletedSuccess": "Datei erfolgreich gelöscht",
+  "fileDeleteError": "Fehler beim Löschen der Datei",
+  "openOrShare": "Öffnen oder Teilen",
+  "changeStudentVisibility": "Sichtbarkeit (SuS) ändern",
+  "deleteEntry": "Eintrag löschen",
+  "editEntry": "Eintrag bearbeiten",
+  "confirmDeleteEntry": "Möchtest du diesen Eintrag wirklich löschen?",
+  "entryDeleted": "Eintrag gelöscht",
+  "entryDeleteFailed": "Eintrag konnte nicht gelöscht werden",
+  "newEntry": "Neuer Eintrag",
+  "newEntryTitle": "Neuer Eintrag ({courseName})",
+  "@newEntryTitle": {
+    "placeholders": {
+      "courseName": {}
+    }
+  },
+  "entryCreated": "Eintrag erstellt",
+  "entryCreateFailed": "Eintrag konnte nicht erstellt werden",
+  "entrySaving": "Eintrag wird gespeichert...",
+  "visibleForStudents": "Sichtbar für Schüler",
+  "notVisibleForStudents": "Nicht sichtbar für Schüler",
+  "pleaseEnterTopic": "Bitte ein Thema eingeben",
+  "topicRequiredLabel": "Thema *",
+  "useDocumentSubmission": "Dokumentenabgabe verwenden",
+  "documentSubmission": "Dokumentenabgabe",
+  "visibleForAllLearners": "Sichtbar für alle Lernenden",
+  "lessonHour": "Stunde {hour}",
+  "@lessonHour": {
+    "placeholders": {
+      "hour": {}
+    }
+  },
+  "unknownUploadError": "Unbekannter Fehler beim Hochladen",
+  "addFile": "Datei hinzufügen"
 }

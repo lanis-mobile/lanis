@@ -1,11 +1,10 @@
 import 'package:dart_date/dart_date.dart';
 import 'package:flutter/material.dart';
-import 'package:lanis/models/account_types.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:liblanis/liblanis.dart';
 
 import 'package:lanis/generated/l10n.dart';
-import 'package:lanis/models/client_status_exceptions.dart';
-import '../core/applet_parser.dart';
-import '../core/sph/sph.dart';
+import 'package:lanis/utils/applet_settings.dart';
 import 'error_view.dart';
 
 typedef RefreshFunction = Future<void> Function();
@@ -20,7 +19,7 @@ typedef BuilderFunction<T> =
       RefreshFunction? refresh,
     );
 
-class CombinedAppletBuilder<T> extends StatefulWidget {
+class CombinedAppletBuilder<T> extends ConsumerStatefulWidget {
   final AppletParser<T> parser;
   final String phpUrl;
   final Map<String, dynamic> settingsDefaults;
@@ -41,45 +40,115 @@ class CombinedAppletBuilder<T> extends StatefulWidget {
   });
 
   @override
-  State<CombinedAppletBuilder<T>> createState() =>
+  ConsumerState<CombinedAppletBuilder<T>> createState() =>
       _CombinedAppletBuilderState<T>();
 }
 
-class _CombinedAppletBuilderState<T> extends State<CombinedAppletBuilder<T>> {
+class _CombinedAppletBuilderState<T>
+    extends ConsumerState<CombinedAppletBuilder<T>> {
   late Map<String, dynamic> appletSettings;
   bool _loading = true;
+  bool _fetchStarted = false;
 
   Widget _loadingState() {
     return Scaffold(
       appBar: widget.loadingAppBar,
-      body: Center(child: CircularProgressIndicator()),
+      body: const Center(child: CircularProgressIndicator()),
     );
   }
 
-  void initSettings() async {
-    appletSettings = await sph!.prefs.kv.getAllApplet(
-      widget.phpUrl,
-      widget.settingsDefaults,
-    );
+  String _settingKey(String key) => '${widget.phpUrl}/$key';
+
+  void initSettings() {
+    final settings = ref.read(accountSpecificSettingsProvider);
+    final loaded = <String, dynamic>{};
+    for (final entry in widget.settingsDefaults.entries) {
+      if (settings == null) {
+        loaded[entry.key] = entry.value;
+        continue;
+      }
+      loaded[entry.key] = resolveStoredAppletSetting(
+        settings,
+        _settingKey(entry.key),
+        entry.value,
+      );
+    }
+    appletSettings = loaded;
     if (mounted) {
-      setState(() {
-        _loading = false;
-      });
+      setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _updateSetting(String key, dynamic value) async {
+    final settings = ref.read(accountSpecificSettingsProvider);
+    if (settings == null) return;
+    final namespaced = _settingKey(key);
+    persistAppletSetting(settings, namespaced, value);
+    setState(() {
+      if (value is Map) {
+        appletSettings[key] = Map<String, dynamic>.from(value);
+      } else {
+        appletSettings[key] = value;
+      }
+    });
+  }
+
+  void _syncVisibility() {
+    // IndexedStack disables [TickerMode] for offstage branches.
+    final active = TickerMode.of(context);
+    if (active) {
+      widget.parser.startAutoRefresh();
+      if (!_fetchStarted) {
+        _fetchStarted = true;
+        widget.parser.fetchData();
+      }
+    } else {
+      widget.parser.stopAutoRefresh();
     }
   }
 
   @override
   void initState() {
-    widget.parser.fetchData();
     super.initState();
-    initSettings();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      initSettings();
+      _syncVisibility();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncVisibility();
+  }
+
+  @override
+  void didUpdateWidget(covariant CombinedAppletBuilder<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.parser != widget.parser ||
+        oldWidget.phpUrl != widget.phpUrl) {
+      oldWidget.parser.stopAutoRefresh();
+      setState(() {
+        _loading = true;
+        _fetchStarted = false;
+      });
+      initSettings();
+      _syncVisibility();
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.parser.stopAutoRefresh();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder(
       stream: widget.parser.stream,
-      initialData: widget.parser.stream.value,
+      initialData: widget.parser.latestResponse,
       builder: (context, snapshot) {
         if (snapshot.hasError || snapshot.data?.status == FetcherStatus.error) {
           return Scaffold(
@@ -88,7 +157,11 @@ class _CombinedAppletBuilderState<T> extends State<CombinedAppletBuilder<T>> {
               error: snapshot.data!.contentStatus == ContentStatus.offline
                   ? NoConnectionException()
                   : snapshot.data!.error != null
-                  ? snapshot.data!.error!.exception
+                  ? (snapshot.data!.error!.exception is Exception
+                        ? snapshot.data!.error!.exception as Exception
+                        : UnknownException(
+                            snapshot.data!.error!.exception.toString(),
+                          ))
                   : UnknownException(),
               stack: snapshot.data!.error?.stackTrace,
               retry: snapshot.data!.contentStatus == ContentStatus.online
@@ -121,7 +194,7 @@ class _CombinedAppletBuilderState<T> extends State<CombinedAppletBuilder<T>> {
                             Icons.offline_pin,
                             color: Theme.of(context).colorScheme.primary,
                           ),
-                          SizedBox(width: 4),
+                          const SizedBox(width: 4),
                           Text(
                             '${AppLocalizations.of(context).offline} (${snapshot.data?.fetchedAt.format('E dd.MM HH:mm')})',
                             style: Theme.of(context).textTheme.bodyMedium!
@@ -144,16 +217,7 @@ class _CombinedAppletBuilderState<T> extends State<CombinedAppletBuilder<T>> {
                     snapshot.data!.content as T,
                     widget.accountType,
                     appletSettings,
-                    (String key, dynamic value) async {
-                      await sph!.prefs.kv.setAppletValue(
-                        widget.phpUrl,
-                        key,
-                        value,
-                      );
-                      setState(() {
-                        appletSettings[key] = value;
-                      });
-                    },
+                    _updateSetting,
                     () async {
                       await widget.parser.fetchData(forceRefresh: true);
                     },

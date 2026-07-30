@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/applets/lessons/definition.dart';
 import 'package:lanis/widgets/combined_applet_builder.dart';
+import 'package:liblanis/liblanis.dart';
 
-import '../../../core/sph/sph.dart';
-import '../../../models/lessons.dart';
-import 'attendances.dart';
 import 'lesson_list_tile.dart';
 
-class LessonsStudentView extends StatefulWidget {
+class LessonsStudentView extends ConsumerStatefulWidget {
   final Function? openDrawerCb;
   const LessonsStudentView({super.key, this.openDrawerCb});
 
   @override
-  State<StatefulWidget> createState() => _LessonsStudentViewState();
+  ConsumerState<LessonsStudentView> createState() => _LessonsStudentViewState();
 }
 
-class _LessonsStudentViewState extends State<LessonsStudentView>
+class _LessonsStudentViewState extends ConsumerState<LessonsStudentView>
     with TickerProviderStateMixin {
   Widget noDataScreen(context) => Center(
     child: Column(
@@ -35,58 +35,81 @@ class _LessonsStudentViewState extends State<LessonsStudentView>
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(activeAccountIdProvider, (previous, next) {
+      if (previous == next) return;
+      globalSettings = null;
+      globalUpdateSetting = null;
+      homeworkLessons = null;
+    });
+    final session = ref.watch(sessionProvider).asData?.value;
+    if (session == null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(lessonsDefinition.label(context)),
+          leading: widget.openDrawerCb != null
+              ? IconButton(
+                  icon: const Icon(Icons.menu),
+                  onPressed: () => widget.openDrawerCb!(),
+                )
+              : null,
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
     return Scaffold(
-      appBar: widget.openDrawerCb != null
-          ? AppBar(
-              title: Text(lessonsDefinition.label(context)),
-              leading: IconButton(
+      appBar: AppBar(
+        title: Text(lessonsDefinition.label(context)),
+        leading: widget.openDrawerCb != null
+            ? IconButton(
                 icon: const Icon(Icons.menu),
                 onPressed: () => widget.openDrawerCb!(),
-              ),
-              actions:
-                  globalSettings != null &&
-                      globalUpdateSetting != null &&
-                      homeworkLessons != null &&
-                      homeworkLessons!.isNotEmpty
-                  ? [
-                      globalSettings!['showHomework'] == true
-                          ? Tooltip(
-                              message: AppLocalizations.of(context).lessons,
-                              child: IconButton(
-                                icon: const Icon(Icons.school_outlined),
-                                onPressed: () {
-                                  globalUpdateSetting!('showHomework', false);
-                                  WidgetsBinding.instance.addPostFrameCallback((
-                                    _,
-                                  ) {
-                                    setState(() {});
-                                  });
-                                },
-                              ),
-                            )
-                          : Tooltip(
-                              message: AppLocalizations.of(context).homework,
-                              child: IconButton(
-                                icon: const Icon(Icons.task_outlined),
-                                onPressed: () {
-                                  globalUpdateSetting!('showHomework', true);
-                                  WidgetsBinding.instance.addPostFrameCallback((
-                                    _,
-                                  ) {
-                                    setState(() {});
-                                  });
-                                },
-                              ),
-                            ),
-                    ]
-                  : null,
-            )
-          : null,
+              )
+            : null,
+        actions:
+            globalSettings != null &&
+                globalUpdateSetting != null &&
+                homeworkLessons != null &&
+                homeworkLessons!.isNotEmpty
+            ? [
+                globalSettings!['showHomework'] == true
+                    ? Tooltip(
+                        message: AppLocalizations.of(context).lessons,
+                        child: IconButton(
+                          icon: const Icon(Icons.school_outlined),
+                          onPressed: () {
+                            globalUpdateSetting!('showHomework', false);
+                            WidgetsBinding.instance.addPostFrameCallback((
+                              _,
+                            ) {
+                              setState(() {});
+                            });
+                          },
+                        ),
+                      )
+                    : Tooltip(
+                        message: AppLocalizations.of(context).homework,
+                        child: IconButton(
+                          icon: const Icon(Icons.task_outlined),
+                          onPressed: () {
+                            globalUpdateSetting!('showHomework', true);
+                            WidgetsBinding.instance.addPostFrameCallback((
+                              _,
+                            ) {
+                              setState(() {});
+                            });
+                          },
+                        ),
+                      ),
+              ]
+            : null,
+      ),
       body: CombinedAppletBuilder<Lessons>(
-        parser: sph!.parser.lessonsStudentParser,
+        parser: ref.watch(lessonsStudentParserProvider),
         phpUrl: lessonsDefinition.appletPhpUrl,
         settingsDefaults: lessonsDefinition.settingsDefaults,
-        accountType: sph!.session.accountType,
+        accountType: session.accountTypeOrNull ??
+            ref.read(activeAccountProvider)?.accountType ??
+            AccountType.student,
         builder:
             (context, lessons, accountType, settings, updateSetting, refresh) {
               Lessons? attendanceLessons;
@@ -145,7 +168,10 @@ class _LessonsStudentViewState extends State<LessonsStudentView>
                                   left: 8,
                                   right: 8,
                                 ),
-                                child: LessonListTile(lesson: lessons[index]),
+                                child: LessonListTile(
+                                  lesson: lessons[index],
+                                  accountType: accountType,
+                                ),
                               ),
                         )
                       : Column(
@@ -159,13 +185,7 @@ class _LessonsStudentViewState extends State<LessonsStudentView>
                       attendanceLessons != null && attendanceLessons.isNotEmpty,
                   child: FloatingActionButton.extended(
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              AttendancesScreen(lessons: attendanceLessons!),
-                        ),
-                      );
+                      context.push('/${accountType.name}/lessons/attendances');
                     },
                     label: Text(AppLocalizations.of(context).attendances),
                     icon: const Icon(Icons.access_alarm),

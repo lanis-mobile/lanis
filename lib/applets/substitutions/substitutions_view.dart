@@ -1,28 +1,29 @@
 import 'package:dart_date/dart_date.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:flutter_masonry_view/flutter_masonry_view.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 import 'package:intl/intl.dart';
 import 'package:lanis/applets/substitutions/definition.dart';
-import 'package:lanis/applets/substitutions/substitutions_filter_settings.dart';
 import 'package:lanis/applets/substitutions/substitutions_listtile.dart';
-import 'package:lanis/models/substitution.dart';
 import 'package:lanis/utils/cached_network_image.dart';
+import 'package:lanis/utils/root_nav.dart';
+import 'package:liblanis/liblanis.dart';
 
-import '../../core/sph/sph.dart';
 import '../../utils/url_modal.dart';
 import '../../widgets/combined_applet_builder.dart';
 
-class SubstitutionsView extends StatefulWidget {
+class SubstitutionsView extends ConsumerStatefulWidget {
   final Function? openDrawerCb;
   const SubstitutionsView({super.key, this.openDrawerCb});
 
   @override
-  State<SubstitutionsView> createState() => _SubstitutionsViewState();
+  ConsumerState<SubstitutionsView> createState() => _SubstitutionsViewState();
 }
 
-class _SubstitutionsViewState extends State<SubstitutionsView>
+class _SubstitutionsViewState extends ConsumerState<SubstitutionsView>
     with TickerProviderStateMixin {
   static const double padding = 12.0;
 
@@ -31,6 +32,16 @@ class _SubstitutionsViewState extends State<SubstitutionsView>
   ];
   TabController? _tabController;
   String? _selectedDate;
+
+  void _ensureGlobalKeys(int dayCount) {
+    final needed = dayCount == 0 ? 1 : dayCount + 1;
+    if (globalKeys.length != needed) {
+      globalKeys = List.generate(
+        needed,
+        (_) => GlobalKey<RefreshIndicatorState>(),
+      );
+    }
+  }
 
   Widget lastWidget({required int entriesLength, required DateTime lastEdit}) {
     return ListTile(
@@ -156,7 +167,7 @@ class _SubstitutionsViewState extends State<SubstitutionsView>
     BuildContext context,
     List<SubstitutionInfo> infos,
   ) {
-    showModalBottomSheet(
+    showRootModalBottomSheet(
       context: context,
       useSafeArea: true,
       showDragHandle: true,
@@ -200,7 +211,7 @@ class _SubstitutionsViewState extends State<SubstitutionsView>
                         },
                         onTapImage: (imageMetadata) {
                           if (imageMetadata.sources.isNotEmpty) {
-                            Navigator.push(
+                            pushOverlay(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => FullScreenImageView(
@@ -231,25 +242,30 @@ class _SubstitutionsViewState extends State<SubstitutionsView>
 
   @override
   Widget build(BuildContext context) {
+    final session = ref.watch(sessionProvider).asData?.value;
+    if (session == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    final parser = ref.watch(substitutionsParserProvider);
     return CombinedAppletBuilder<SubstitutionPlan>(
-      accountType: sph!.session.accountType,
-      parser: sph!.parser.substitutionsParser,
+      accountType: session.accountTypeOrNull ??
+          ref.read(activeAccountProvider)?.accountType ??
+          AccountType.student,
+      parser: parser,
       phpUrl: substitutionDefinition.appletPhpUrl,
       settingsDefaults: substitutionDefinition.settingsDefaults,
       loadingAppBar: AppBar(
         title: Text(substitutionDefinition.label(context)),
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () => widget.openDrawerCb!(),
-        ),
+        leading: widget.openDrawerCb != null
+            ? IconButton(
+                icon: const Icon(Icons.menu),
+                onPressed: () => widget.openDrawerCb!(),
+              )
+            : null,
       ),
       builder: (context, data, accountType, settings, updateSetting, refresh) {
         if (data.days.isEmpty) {
-          // GlobalKeys for RefreshIndicator and Refresh-FAB
-          globalKeys += List.generate(
-            data.days.length,
-            (index) => GlobalKey<RefreshIndicatorState>(),
-          );
+          _ensureGlobalKeys(0);
           return Scaffold(
             appBar: AppBar(
               title: Text(substitutionDefinition.label(context)),
@@ -260,18 +276,12 @@ class _SubstitutionsViewState extends State<SubstitutionsView>
                     )
                   : null,
             ),
-            floatingActionButton: widget.openDrawerCb != null
-                ? FloatingActionButton(
-                    onPressed: () async {
-                      await Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => SubstitutionsFilterSettings(),
-                        ),
-                      );
-                    },
-                    child: const Icon(Icons.filter_alt),
-                  )
-                : null,
+            floatingActionButton: FloatingActionButton(
+              onPressed: () async {
+                await context.push('/common/substitutions/filter');
+              },
+              child: const Icon(Icons.filter_alt),
+            ),
             body: RefreshIndicator(
               key: globalKeys[0],
               notificationPredicate: refresh != null
@@ -320,25 +330,31 @@ class _SubstitutionsViewState extends State<SubstitutionsView>
             ),
           );
         } else {
-          globalKeys += List.generate(
-            data.days.length,
-            (index) => GlobalKey<RefreshIndicatorState>(),
-          );
+          _ensureGlobalKeys(data.days.length);
           int currentIndex = _selectedDate != null
               ? data.days
                     .indexWhere((day) => day.parsedDate == _selectedDate)
                     .clamp(0, data.days.length)
               : 0;
 
-          if (_tabController != null) _tabController!.dispose();
-          _tabController = TabController(
-            length: data.days.length,
-            vsync: this,
-            initialIndex: currentIndex,
-          );
-          _tabController!.addListener(() {
-            _selectedDate = data.days[_tabController!.index].parsedDate;
-          });
+          if (_tabController == null ||
+              _tabController!.length != data.days.length) {
+            final old = _tabController;
+            _tabController = TabController(
+              length: data.days.length,
+              vsync: this,
+              initialIndex: currentIndex.clamp(0, data.days.length - 1),
+            );
+            _tabController!.addListener(() {
+              _selectedDate = data.days[_tabController!.index].parsedDate;
+            });
+            if (old != null) {
+              WidgetsBinding.instance.addPostFrameCallback((_) => old.dispose());
+            }
+          } else if (_tabController!.index != currentIndex &&
+              currentIndex < data.days.length) {
+            _tabController!.index = currentIndex;
+          }
 
           return Scaffold(
             appBar: AppBar(
@@ -350,18 +366,12 @@ class _SubstitutionsViewState extends State<SubstitutionsView>
                     )
                   : null,
             ),
-            floatingActionButton: widget.openDrawerCb != null
-                ? FloatingActionButton(
-                    onPressed: () async {
-                      await Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => SubstitutionsFilterSettings(),
-                        ),
-                      );
-                    },
-                    child: const Icon(Icons.filter_alt),
-                  )
-                : null,
+            floatingActionButton: FloatingActionButton(
+              onPressed: () async {
+                await context.push('/common/substitutions/filter');
+              },
+              child: const Icon(Icons.filter_alt),
+            ),
             body: Column(
               children: [
                 TabBar(

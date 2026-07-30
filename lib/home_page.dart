@@ -1,225 +1,163 @@
+import 'dart:math' as math;
 import 'dart:ui';
-import 'package:lanis/core/database/account_database/account_db.dart';
-import 'package:lanis/core/sph/session.dart';
-import 'package:lanis/models/account_types.dart';
-import 'package:lanis/models/client_status_exceptions.dart';
-import 'package:lanis/generated/l10n.dart';
 
 import 'package:flutter/material.dart';
-import 'package:lanis/utils/authentication_state.dart';
-import 'package:lanis/utils/whats_new.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:liblanis/liblanis.dart';
+import 'package:lanis/applets/definitions.dart';
+import 'package:lanis/generated/l10n.dart';
+import 'package:lanis/l10n/account_type_ui.dart';
+import 'package:lanis/features/auth/auth_controller.dart';
+import 'package:lanis/shell_navigation.dart';
 import 'package:lanis/utils/cached_network_image.dart';
-import 'package:lanis/view/account_switcher/account_switcher.dart';
-import 'package:lanis/view/moodle.dart';
-import 'package:lanis/view/settings/settings.dart';
+import 'package:lanis/utils/deep_link.dart';
+import 'package:lanis/utils/responsive.dart';
+import 'package:lanis/utils/whats_new.dart';
+import 'package:lanis/widgets/applet_home_shell.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'applets/definitions.dart';
-import 'core/sph/sph.dart';
+/// Nested home applet paths (order matches bottom-nav / shell branches).
+List<String> homeAppletPathsFor(AccountType accountType) => AppDefinitions
+    .homeApplets
+    .map((a) => appletHomePath(a, accountType))
+    .toList();
 
-const String surveyUrl =
-    'https://ruggmtk.edudocs.de/apps/forms/s/ScZp5xZMKYTksEcQMwgPHfFz';
+List<String> get homeAppletPhpUrls =>
+    AppDefinitions.homeApplets.map((a) => a.appletPhpUrl).toList();
 
-typedef ActionFunction = void Function(BuildContext);
-
-int selectedDestinationDrawer = -1;
-final GlobalKey<HomePageState> homeKey = GlobalKey<HomePageState>();
-
-class Destination {
-  final Icon icon;
-  final Icon selectedIcon;
-  final bool enableBottomNavigation;
-  final bool enableDrawer;
-  final bool addDivider;
-  final String Function(BuildContext) label;
-  final ActionFunction? action;
-  final Widget Function(BuildContext, AccountType, Function openDrawerCb)? body;
-  late final bool isSupported;
-
-  Destination({
-    this.body,
-    this.action,
-    this.addDivider = false,
-    required this.isSupported,
-    required this.enableBottomNavigation,
-    required this.enableDrawer,
-    required this.icon,
-    required this.selectedIcon,
-    required this.label,
-  });
-
-  factory Destination.fromAppletDefinition(AppletDefinition appletDefinition) {
-    return Destination(
-      body: appletDefinition.appletType == AppletType.nested
-          ? appletDefinition.bodyBuilder
-          : null,
-      action: appletDefinition.appletType != AppletType.nested
-          ? (context) => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) {
-                  return appletDefinition.bodyBuilder!(
-                    context,
-                    sph!.session.accountType,
-                    () {},
-                  );
-                },
-              ),
-            )
-          : null,
-      addDivider: appletDefinition.addDivider,
-      isSupported: sph!.session.doesSupportFeature(appletDefinition),
-      enableBottomNavigation: appletDefinition.appletType == AppletType.nested,
-      enableDrawer: true,
-      icon: appletDefinition.icon,
-      selectedIcon: appletDefinition.selectedIcon,
-      label: appletDefinition.label,
-    );
+/// First home tab path for [accountType] given supported PHP applet URLs.
+String firstSupportedHomePathFor({
+  required Set<String> supported,
+  required AccountType accountType,
+}) {
+  for (final def in AppDefinitions.homeApplets) {
+    if (supported.contains(def.appletPhpUrl) &&
+        def.supportedAccountTypes.contains(accountType)) {
+      return appletHomePath(def, accountType);
+    }
   }
+  return appletHomePath(AppDefinitions.homeApplets.first, accountType);
 }
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+/// First home tab path supported by the current session's feature set.
+String firstSupportedHomePath(WidgetRef ref) {
+  return firstSupportedHomePathFor(
+    supported: ref.read(supportedAppletPhpUrlsProvider),
+    accountType:
+        ref.read(activeAccountProvider)?.accountType ?? AccountType.student,
+  );
+}
+
+/// Same as [firstSupportedHomePath] for non-widget [Ref] (e.g. go_router).
+String firstSupportedHomePathFromRef(Ref ref) {
+  return firstSupportedHomePathFor(
+    supported: ref.read(supportedAppletPhpUrlsProvider),
+    accountType:
+        ref.read(activeAccountProvider)?.accountType ?? AccountType.student,
+  );
+}
+
+class HomePage extends ConsumerStatefulWidget {
+  final StatefulNavigationShell navigationShell;
+
+  const HomePage({super.key, required this.navigationShell});
 
   @override
-  State<HomePage> createState() => HomePageState();
+  ConsumerState<HomePage> createState() => HomePageState();
 }
 
-class HomePageState extends State<HomePage> {
+class HomePageState extends ConsumerState<HomePage> {
   final GlobalKey<ScaffoldState> _drawerKey = GlobalKey();
 
-  bool doesSupportAnyApplet = true;
-  List<Destination> destinations = [];
-
-  void resetState() {
-    doesSupportAnyApplet = true;
-    setState(() {
-      selectedDestinationDrawer = -1;
-      destinations.clear();
-      for (var destination in AppDefinitions.applets) {
-        destinations.add(Destination.fromAppletDefinition(destination));
-      }
-      destinations.addAll(endDestinations);
-      setDefaultDestination();
-    });
-  }
+  /// Last bottom-nav (home) branch — restored on system back from storage/settings.
+  int _lastHomeBranchIndex = 0;
 
   @override
   void initState() {
-    for (var destination in AppDefinitions.applets) {
-      destinations.add(Destination.fromAppletDefinition(destination));
-    }
-    destinations.addAll(endDestinations);
-    setDefaultDestination();
     super.initState();
-    showUpdateInfoIfRequired(context);
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-  }
-
-  void updateDestination(int newIndex) {
-    setState(() {
-      selectedDestinationDrawer = newIndex;
+    final current = widget.navigationShell.currentIndex;
+    if (current < AppDefinitions.homeApplets.length) {
+      _lastHomeBranchIndex = current;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) showUpdateInfoIfRequired(context);
     });
   }
 
-  final List<Destination> endDestinations = [
-    Destination(
-      label: (context) => AppLocalizations.of(context).openMoodle,
-      icon: const Icon(Icons.open_in_new),
-      selectedIcon: const Icon(Icons.open_in_new),
-      isSupported: true,
-      enableBottomNavigation: false,
-      addDivider: true,
-      enableDrawer: true,
-      action: (context) => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const MoodleWebView()),
-      ),
-    ),
-    Destination(
-      label: (context) => AppLocalizations.of(context).openLanisInBrowser,
-      icon: const Icon(Icons.open_in_new),
-      selectedIcon: const Icon(Icons.open_in_new),
-      isSupported: true,
-      enableBottomNavigation: false,
-      enableDrawer: true,
-      action: (context) {
-        SessionHandler.getLoginURL(sph!.account).then((response) {
-          launchUrl(Uri.parse(response));
-        });
-      },
-    ),
-    Destination(
-      label: (context) => AppLocalizations.of(context).settings,
-      icon: const Icon(Icons.settings),
-      selectedIcon: const Icon(Icons.settings),
-      isSupported: true,
-      enableBottomNavigation: false,
-      enableDrawer: true,
-      addDivider: true,
-      action: (context) => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const SettingsScreen()),
-      ),
-    ),
-    Destination(
-      isSupported: true,
-      enableBottomNavigation: false,
-      enableDrawer: true,
-      icon: Icon(Icons.logout),
-      selectedIcon: Icon(Icons.logout_outlined),
-      label: (context) => AppLocalizations.of(context).logout,
-      action: (context) async {
-        await sph!.session.deAuthenticate();
-        await accountDatabase.deleteAccount(sph!.account.localId);
-        if (context.mounted) authenticationState.reset(context);
-      },
-    ),
-  ];
+  LanisSession? get _session => ref.read(sessionProvider).asData?.value;
 
-  void setDefaultDestination() {
-    for (var destination in destinations) {
-      if (destination.isSupported && destination.enableBottomNavigation) {
-        selectedDestinationDrawer = destinations.indexOf(destination);
-        doesSupportAnyApplet = true;
-        return;
-      }
+  ClearTextAccount? get _account => ref.read(activeAccountProvider);
+
+  bool _supports(String phpUrl) =>
+      ref.read(supportedAppletPhpUrlsProvider).contains(phpUrl);
+
+  bool get _onHomeBranch =>
+      widget.navigationShell.currentIndex < AppDefinitions.homeApplets.length;
+
+  Future<void> _openLanisInBrowser() async {
+    final account = _account;
+    final config = ref.read(lanisConfigProvider);
+    if (account == null) return;
+    try {
+      final url = await LanisSession.getLoginURL(account, config);
+      await launchUrl(Uri.parse(url));
+    } on LanisException catch (ex) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ex.cause), duration: const Duration(seconds: 1)),
+      );
     }
-    doesSupportAnyApplet = false;
-    selectedDestinationDrawer = -1;
   }
 
-  void openLanisInBrowser(BuildContext? context) {
-    SessionHandler.getLoginURL(sph!.account)
-        .then((response) {
-          launchUrl(Uri.parse(response));
-        })
-        .catchError((ex) {
-          if (context == null || !context.mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(ex.cause),
-              duration: const Duration(seconds: 1),
-              action: SnackBarAction(label: 'ACTION', onPressed: () {}),
-            ),
-          );
-        }, test: (e) => e is LanisException);
+  Future<void> _logout() async {
+    final account = _account;
+    if (account == null) {
+      await ref.read(authControllerProvider.notifier).logout();
+      if (mounted) context.go('/welcome');
+      return;
+    }
+    await ref
+        .read(authControllerProvider.notifier)
+        .removeAccountAndContinue(account.localId);
+    final phase = ref.read(authControllerProvider).phase;
+    if (!mounted) return;
+    if (phase == AuthPhase.authenticated) {
+      context.go(firstSupportedHomePath(ref));
+    } else {
+      context.go('/welcome');
+    }
+  }
+
+  void _goBranch(int index) {
+    if (index < AppDefinitions.homeApplets.length) {
+      _lastHomeBranchIndex = index;
+    }
+    widget.navigationShell.goBranch(
+      index,
+      initialLocation: index == widget.navigationShell.currentIndex,
+    );
+  }
+
+  void _returnToLastHomeBranch() {
+    final dest = _supportedHomeDestinations();
+    final fallback = dest.indexes.isEmpty ? 0 : dest.indexes.first;
+    final target = dest.indexes.contains(_lastHomeBranchIndex)
+        ? _lastHomeBranchIndex
+        : fallback;
+    _goBranch(target);
   }
 
   Widget noAppsSupported() {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Lanis-Mobile'),
+        title: const Text('Lanis-Mobile'),
         leading: IconButton(
-          icon: Icon(Icons.menu),
+          icon: const Icon(Icons.menu),
           onPressed: () => _drawerKey.currentState!.openDrawer(),
         ),
       ),
       body: Center(
-        // In case no feature is supported at all just show an open in browser button.
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -229,7 +167,7 @@ class HomePageState extends State<HomePage> {
               child: Text(AppLocalizations.of(context).noSupportOpenInBrowser),
             ),
             ElevatedButton(
-              onPressed: () => openLanisInBrowser(context),
+              onPressed: _openLanisInBrowser,
               child: Text(AppLocalizations.of(context).openLanisInBrowser),
             ),
           ],
@@ -238,35 +176,102 @@ class HomePageState extends State<HomePage> {
     );
   }
 
-  void openDestination(int index, bool fromDrawer) {
-    if (destinations[index].action != null) {
-      destinations[index].action!(context);
-    } else {
-      setState(() {
-        selectedDestinationDrawer = index;
-        if (fromDrawer) Navigator.pop(context);
-      });
-    }
-  }
-
-  NavigationDrawer navDrawer(context) {
-    List<Widget> drawerDestinations = [];
-
-    for (var destination in destinations) {
-      if (destination.enableDrawer) {
-        if (destination.addDivider) {
-          drawerDestinations.add(const Divider());
-        }
-        drawerDestinations.add(
-          NavigationDrawerDestination(
-            label: Text(destination.label(context)),
-            icon: destination.icon,
-            selectedIcon: destination.selectedIcon,
-            enabled: destination.isSupported,
-          ),
-        );
+  /// Supported home-tab destinations shared by bottom bar and rail.
+  ({List<int> indexes, List<AppletDefinition> defs}) _supportedHomeDestinations() {
+    final nestedDefs = AppDefinitions.homeApplets;
+    final indexes = <int>[];
+    final defs = <AppletDefinition>[];
+    for (var i = 0; i < nestedDefs.length; i++) {
+      if (_supports(nestedDefs[i].appletPhpUrl)) {
+        indexes.add(i);
+        defs.add(nestedDefs[i]);
       }
     }
+    return (indexes: indexes, defs: defs);
+  }
+
+  /// Drawer rows that participate in [NavigationDrawer.selectedIndex].
+  List<({
+    String label,
+    Icon icon,
+    Icon selectedIcon,
+    bool enabled,
+    int? branchIndex,
+    VoidCallback onTap,
+  })> _drawerDestinations(BuildContext context) {
+    final items = <({
+      String label,
+      Icon icon,
+      Icon selectedIcon,
+      bool enabled,
+      int? branchIndex,
+      VoidCallback onTap,
+    })>[];
+
+    for (final def in AppDefinitions.homeApplets) {
+      items.add((
+        label: def.label(context),
+        icon: def.icon,
+        selectedIcon: def.selectedIcon,
+        enabled: _supports(def.appletPhpUrl),
+        branchIndex: shellBranchIndexForApplet(def),
+        onTap: () => _goBranch(shellBranchIndexForApplet(def)),
+      ));
+    }
+
+    for (final def in AppDefinitions.navigationApplets) {
+      if (!_supports(def.appletPhpUrl)) continue;
+      items.add((
+        label: def.label(context),
+        icon: def.icon,
+        selectedIcon: def.selectedIcon,
+        enabled: true,
+        branchIndex: shellBranchIndexForApplet(def),
+        onTap: () => _goBranch(shellBranchIndexForApplet(def)),
+      ));
+    }
+
+    items.add((
+      label: AppLocalizations.of(context).openMoodle,
+      icon: const Icon(Icons.open_in_new),
+      selectedIcon: const Icon(Icons.open_in_new),
+      enabled: true,
+      branchIndex: null,
+      onTap: () => context.push(SettingsDeepLinks.moodle),
+    ));
+    items.add((
+      label: AppLocalizations.of(context).openLanisInBrowser,
+      icon: const Icon(Icons.open_in_new),
+      selectedIcon: const Icon(Icons.open_in_new),
+      enabled: true,
+      branchIndex: null,
+      onTap: _openLanisInBrowser,
+    ));
+    items.add((
+      label: AppLocalizations.of(context).settings,
+      icon: const Icon(Icons.settings),
+      selectedIcon: const Icon(Icons.settings),
+      enabled: true,
+      branchIndex: settingsShellBranchIndex,
+      onTap: () => _goBranch(settingsShellBranchIndex),
+    ));
+    items.add((
+      label: AppLocalizations.of(context).logout,
+      icon: const Icon(Icons.logout),
+      selectedIcon: const Icon(Icons.logout),
+      enabled: true,
+      branchIndex: null,
+      onTap: _logout,
+    ));
+
+    return items;
+  }
+
+  NavigationDrawer navDrawer(BuildContext context) {
+    final account = _account;
+    final session = _session;
+    final homeCount = AppDefinitions.homeApplets.length;
+    final destinations = _drawerDestinations(context);
 
     final Color imageColor = Theme.of(
       context,
@@ -275,9 +280,19 @@ class HomePageState extends State<HomePage> {
         ? Colors.white
         : Colors.black;
 
+    final currentBranch = widget.navigationShell.currentIndex;
+    final selectedIndex = destinations.indexWhere(
+      (d) => d.branchIndex == currentBranch,
+    );
+
     return NavigationDrawer(
-      selectedIndex: selectedDestinationDrawer,
-      onDestinationSelected: (int index) => openDestination(index, true),
+      selectedIndex: selectedIndex < 0 ? null : selectedIndex,
+      onDestinationSelected: (int index) {
+        Navigator.pop(context);
+        if (index >= 0 && index < destinations.length) {
+          destinations[index].onTap();
+        }
+      },
       children: [
         Padding(
           padding: const EdgeInsets.only(bottom: 12.0),
@@ -298,22 +313,18 @@ class HomePageState extends State<HomePage> {
                           aspectRatio: 16 / 8,
                           child: CachedNetworkImage(
                             imageUrl: Uri.parse(
-                              "https://startcache.schulportal.hessen.de/exporteur.php?a=schoolbg&i=${sph!.account.schoolID}&s=xs",
+                              'https://startcache.schulportal.hessen.de/exporteur.php?a=schoolbg&i=${account?.schoolID ?? 0}&s=xs',
                             ),
                             placeholder: const Image(
-                              image: AssetImage("assets/icon.png"),
+                              image: AssetImage('assets/icon.png'),
                               fit: BoxFit.cover,
                             ),
-                            builder:
-                                (
-                                  BuildContext context,
-                                  ImageProvider<Object> imageProvider,
-                                ) {
-                                  return Image(
-                                    fit: BoxFit.cover,
-                                    image: imageProvider,
-                                  );
-                                },
+                            builder: (context, imageProvider) {
+                              return Image(
+                                fit: BoxFit.cover,
+                                image: imageProvider,
+                              );
+                            },
                           ),
                         ),
                       ),
@@ -325,7 +336,7 @@ class HomePageState extends State<HomePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "${sph?.session.userData["nachname"]}, ${sph?.session.userData["vorname"]}",
+                          '${session?.userData['nachname'] ?? ''}, ${session?.userData['vorname'] ?? ''}',
                           style: Theme.of(context).textTheme.headlineSmall
                               ?.copyWith(
                                 fontWeight: FontWeight.bold,
@@ -333,15 +344,14 @@ class HomePageState extends State<HomePage> {
                               ),
                         ),
                         Text(
-                          sph!.account.schoolName,
+                          account?.schoolName ?? '',
                           style: Theme.of(
                             context,
                           ).textTheme.titleMedium?.copyWith(color: textColor),
                         ),
-                        if (sph?.account.accountType != null)
+                        if (account?.accountType != null)
                           Text(
-                            sph?.account.accountType?.readableName(context) ??
-                                "Loading...",
+                            account!.accountType!.readableName(context),
                             style: Theme.of(
                               context,
                             ).textTheme.bodyMedium?.copyWith(color: textColor),
@@ -354,16 +364,10 @@ class HomePageState extends State<HomePage> {
               Align(
                 alignment: Alignment.topRight,
                 child: Padding(
-                  padding: EdgeInsets.only(top: 2, right: 2),
+                  padding: const EdgeInsets.only(top: 2, right: 2),
                   child: IconButton(
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => AccountSwitcher(),
-                        ),
-                      );
-                    },
-                    icon: Icon(Icons.switch_account),
+                    onPressed: () => context.push('/accounts'),
+                    icon: const Icon(Icons.switch_account),
                     color: textColor,
                     iconSize: 32,
                   ),
@@ -372,89 +376,173 @@ class HomePageState extends State<HomePage> {
             ],
           ),
         ),
-        ...drawerDestinations,
+        for (var i = 0; i < destinations.length; i++) ...[
+          if (i == homeCount) const Divider(),
+          NavigationDrawerDestination(
+            label: Text(destinations[i].label),
+            icon: destinations[i].icon,
+            selectedIcon: destinations[i].selectedIcon,
+            enabled: destinations[i].enabled,
+          ),
+        ],
       ],
     );
   }
 
-  NavigationBar navBar(BuildContext context) {
-    List<NavigationDestination> barDestinations = [];
+  Widget? navRail(BuildContext context) {
+    final destinations = <NavigationRailDestination>[];
+    final onSelected = <VoidCallback>[];
+    final branchIndexes = <int>[];
 
-    for (var destination in destinations) {
-      if (destination.enableBottomNavigation && destination.isSupported) {
-        barDestinations.add(
-          NavigationDestination(
-            label: destination.label(context),
-            icon: destination.icon,
-            selectedIcon: destination.selectedIcon,
-            enabled: destination.isSupported,
+    void addBranch({
+      required String label,
+      required Icon icon,
+      required Icon selectedIcon,
+      required int branchIndex,
+    }) {
+      destinations.add(
+        NavigationRailDestination(
+          label: Text(label),
+          icon: icon,
+          selectedIcon: selectedIcon,
+        ),
+      );
+      branchIndexes.add(branchIndex);
+      onSelected.add(() => _goBranch(branchIndex));
+    }
+
+    for (final def in AppDefinitions.homeApplets) {
+      if (!_supports(def.appletPhpUrl)) continue;
+      addBranch(
+        label: def.label(context),
+        icon: def.icon,
+        selectedIcon: def.selectedIcon,
+        branchIndex: shellBranchIndexForApplet(def),
+      );
+    }
+    for (final def in AppDefinitions.navigationApplets) {
+      if (!_supports(def.appletPhpUrl)) continue;
+      addBranch(
+        label: def.label(context),
+        icon: def.icon,
+        selectedIcon: def.selectedIcon,
+        branchIndex: shellBranchIndexForApplet(def),
+      );
+    }
+    addBranch(
+      label: AppLocalizations.of(context).settings,
+      icon: const Icon(Icons.settings),
+      selectedIcon: const Icon(Icons.settings),
+      branchIndex: settingsShellBranchIndex,
+    );
+
+    for (final ext in AppDefinitions.external) {
+      if (!ext.showInNavigationRail) continue;
+      destinations.add(
+        NavigationRailDestination(
+          label: Text(ext.label(context)),
+          icon: ext.icon,
+          selectedIcon: ext.icon,
+        ),
+      );
+      branchIndexes.add(-1);
+      onSelected.add(() => ext.action?.call(context));
+    }
+
+    if (destinations.isEmpty) return null;
+
+    final current = widget.navigationShell.currentIndex;
+    final selectedInRail = branchIndexes.indexOf(current);
+
+    // NavigationRail sizes to max height and clips destinations; give it an
+    // explicit tall-enough height and scroll when the viewport is shorter.
+    const leadingHeight = 72.0;
+    const destinationHeight = 72.0;
+    final contentHeight =
+        leadingHeight + destinations.length * destinationHeight;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final height = math.max(constraints.maxHeight, contentHeight);
+        return SingleChildScrollView(
+          child: SizedBox(
+            height: height,
+            child: NavigationRail(
+              leading: IconButton(
+                tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
+                icon: const Icon(Icons.menu),
+                onPressed: () => _drawerKey.currentState?.openDrawer(),
+              ),
+              selectedIndex: selectedInRail < 0 ? 0 : selectedInRail,
+              onDestinationSelected: (int index) {
+                if (index >= 0 && index < onSelected.length) {
+                  onSelected[index]();
+                }
+              },
+              labelType: NavigationRailLabelType.all,
+              destinations: destinations,
+            ),
           ),
         );
-      }
-    }
-
-    List<int?> indexNavbarTranslationLayer = [];
-
-    int helpIndex = 0;
-    for (var destination in destinations) {
-      if (destination.enableBottomNavigation && destination.isSupported) {
-        indexNavbarTranslationLayer.add(helpIndex);
-        helpIndex += 1;
-      } else {
-        indexNavbarTranslationLayer.add(null);
-      }
-    }
-    return NavigationBar(
-      destinations: barDestinations,
-      selectedIndex: indexNavbarTranslationLayer[selectedDestinationDrawer]!,
-      onDestinationSelected: (int index) =>
-          openDestination(indexNavbarTranslationLayer.indexOf(index), false),
-      labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      key: _drawerKey,
-      body: doesSupportAnyApplet
-          ? destinations[selectedDestinationDrawer].body!(
-              context,
-              sph!.session.accountType,
-              () {
-                _drawerKey.currentState!.openDrawer();
-              },
-            )
-          : noAppsSupported(),
-      bottomNavigationBar: doesSupportAnyApplet ? navBar(context) : null,
-      drawer: navDrawer(context),
-      // floatingActionButton: StreamBuilder(
-      //         stream: sph!.prefs.kv.subscribe('poll_survey_1_12_25_clicked'),
-      //         builder: (context, snapshot) {
-      //           return Visibility(
-      //             visible: !snapshot.hasData || !snapshot.data,
-      //             child: Padding(
-      //               padding: const EdgeInsets.only(bottom: kBottomNavigationBarHeight + 24),
-      //               child: ElevatedButton(
-      //                   onPressed: () async {
-      //                     await launchUrl(Uri.parse(surveyUrl));
-      //                     await sph!.prefs.kv.set('poll_survey_1_12_25_clicked', true);
-      //                   },
-      //                   child: Row(
-      //                   mainAxisSize: MainAxisSize.min,
-      //                   spacing: 4,
-      //                   crossAxisAlignment: CrossAxisAlignment.end,
-      //                   children: [
-      //                     Icon(Icons.feedback),
-      //                     Text(AppLocalizations.of(context).feedback)
-      //                   ],
-      //                 ),
-      //               ),
-      //             ),
-      //           );
-      //         }
-      //       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.startDocked,
+    ref.watch(supportedAppletPhpUrlsProvider);
+    ref.watch(activeAccountProvider);
+
+    final anySupported = homeAppletPhpUrls.any(_supports);
+    final isTablet = Responsive.isTablet(context);
+    final onHomeBranch = _onHomeBranch;
+    final rail = isTablet ? navRail(context) : null;
+    final content = anySupported
+        ? widget.navigationShell
+        : noAppsSupported();
+
+    // Outer chrome: tablet rail + drawer only. Phone bottom bar is nested in
+    // [appletHomeShell] under each applet home route.
+    return HomeChrome(
+      navigationShell: widget.navigationShell,
+      goBranch: _goBranch,
+      openDrawer: () => _drawerKey.currentState?.openDrawer(),
+      child: PopScope(
+        canPop: isTablet || onHomeBranch,
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop || isTablet || onHomeBranch) return;
+          _returnToLastHomeBranch();
+        },
+        child: Scaffold(
+          key: _drawerKey,
+          body: isTablet && rail != null
+              ? Row(
+                  children: [
+                    GestureDetector(
+                      behavior: HitTestBehavior.translucent,
+                      onHorizontalDragEnd: (details) {
+                        final velocity = details.primaryVelocity ?? 0;
+                        // Swipe right on the rail opens the drawer.
+                        if (velocity > 250) {
+                          _drawerKey.currentState?.openDrawer();
+                        }
+                      },
+                      child: rail,
+                    ),
+                    const VerticalDivider(width: 1, thickness: 1),
+                    Expanded(child: content),
+                  ],
+                )
+              : content,
+          drawer: navDrawer(context),
+        ),
+      ),
     );
   }
+}
+
+/// Helper for applet bodies that need an open-drawer callback.
+void Function() openHomeDrawer(BuildContext context) {
+  final scaffold = Scaffold.maybeOf(context);
+  return () => scaffold?.openDrawer();
 }

@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/applets/data_storage/data_storage_root_view.dart';
+import 'package:lanis/applets/data_storage/routes.dart';
 import 'package:lanis/applets/definitions.dart';
-
-import '../../models/account_types.dart';
+import 'package:lanis/generated/l10n.dart';
+import 'package:lanis/l10n/account_type_ui.dart';
+import 'package:lanis/utils/deep_link.dart';
 
 final dataStorageDefinition = AppletDefinition(
   appletPhpUrl: 'dateispeicher.php',
+  pathSegment: 'storage',
+  deepLinkScope: DeepLinkScope.common,
+  buildRoutes: buildDataStorageRoutes,
   addDivider: true,
   appletType: AppletType.navigation,
   icon: const Icon(Icons.folder_copy),
@@ -18,9 +22,10 @@ final dataStorageDefinition = AppletDefinition(
     AccountType.parent,
   ],
   allowOffline: false,
+  showInNavigationRail: true,
   settingsDefaults: {},
   refreshInterval: const Duration(minutes: 5),
   bodyBuilder: (context, accountType, openDrawerCb) {
-    return DataStorageRootView();
+    return DataStorageRootView(openDrawerCb: openDrawerCb);
   },
 );

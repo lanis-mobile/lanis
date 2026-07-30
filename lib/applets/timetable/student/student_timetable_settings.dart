@@ -1,19 +1,21 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:liblanis/liblanis.dart';
+import 'package:lanis/utils/liblanis_ui.dart';
 import 'package:intl/intl.dart';
 import 'package:lanis/applets/conversations/view/shared.dart';
 import 'package:lanis/applets/timetable/definition.dart';
 import 'package:lanis/applets/timetable/student/timetable_helper.dart';
 import 'package:lanis/generated/l10n.dart';
-import 'package:lanis/models/account_types.dart';
+import 'package:lanis/l10n/account_type_ui.dart';
+import 'package:lanis/utils/root_nav.dart';
 import 'package:lanis/view/settings/settings_page_builder.dart';
 import 'package:lanis/widgets/combined_applet_builder.dart';
 
-import '../../../core/sph/sph.dart';
-import '../../../models/timetable.dart';
 
-class StudentTimetableSettings extends SettingsColours {
+class StudentTimetableSettings extends ConsumerSettingsColours {
   final Function? openDrawerCb;
   final bool showBack;
   const StudentTimetableSettings({
@@ -23,12 +25,12 @@ class StudentTimetableSettings extends SettingsColours {
   });
 
   @override
-  State<StudentTimetableSettings> createState() =>
+  ConsumerState<StudentTimetableSettings> createState() =>
       _StudentTimetableSettingsState();
 }
 
 class _StudentTimetableSettingsState
-    extends SettingsColoursState<StudentTimetableSettings> {
+    extends ConsumerSettingsColoursState<StudentTimetableSettings> {
   List<TimetableDay> getSelectedPlan(
     TimeTable data,
     TimeTableType selectedType,
@@ -54,7 +56,7 @@ class _StudentTimetableSettingsState
     TimeTableRow startTime = hours[0];
     TimeTableRow endTime = hours[1];
     int selectedWeek = 0;
-    List<String?> allBadges = currentTimetable.planForAll!
+    List<String?> allBadges = (currentTimetable.planForAll ?? const [])
         .expand((day) => day.map((lesson) => lesson.badge))
         .where((badge) => badge != null)
         .toSet()
@@ -71,15 +73,19 @@ class _StudentTimetableSettingsState
       roomController.text = lesson.raum ?? '';
       startTime = hours.firstWhere(
         (hour) => hour.startTime == lesson.startTime,
+        orElse: () => hours.first,
       );
-      endTime = hours.firstWhere((hour) => hour.endTime == lesson.endTime);
+      endTime = hours.firstWhere(
+        (hour) => hour.endTime == lesson.endTime,
+        orElse: () => hours.last,
+      );
       selectedWeek = lesson.badge == null
           ? 0
           : allBadges.indexOf(lesson.badge) + 1;
       duration = lesson.duration;
     }
 
-    showModalBottomSheet(
+    showRootModalBottomSheet(
       showDragHandle: true,
       useSafeArea: true,
       context: context,
@@ -242,11 +248,11 @@ class _StudentTimetableSettingsState
                                   .toList();
                             }
 
-                            List<List<TimetableSubject>>? days =
-                                TimeTableHelper.getCustomLessons(settings);
-
-                            if (days == null) {
-                              throw Exception('days is null');
+                            List<List<TimetableSubject>> days =
+                                TimeTableHelper.getCustomLessons(settings) ??
+                                List.generate(7, (_) => <TimetableSubject>[]);
+                            while (days.length <= currentDay) {
+                              days.add(<TimetableSubject>[]);
                             }
 
                             if (lesson != null) {
@@ -281,21 +287,37 @@ class _StudentTimetableSettingsState
 
   @override
   Widget build(BuildContext context) {
+    final session = ref.watch(sessionProvider).asData?.value;
+    if (session == null) {
+      return SettingsPage(
+        backgroundColor: backgroundColor,
+        title: Text(AppLocalizations.of(context).timeTable),
+        showBackButton: widget.showBack,
+        children: const [
+          Padding(
+            padding: EdgeInsets.all(24),
+            child: Center(child: CircularProgressIndicator()),
+          ),
+        ],
+      );
+    }
     return SettingsPage(
       backgroundColor: backgroundColor,
       title: Text(AppLocalizations.of(context).timeTable),
       showBackButton: widget.showBack,
       children: [
         CombinedAppletBuilder<TimeTable>(
-          parser: sph!.parser.timetableStudentParser,
+          parser: ref.watch(timetableParserProvider),
           phpUrl: timeTableDefinition.appletPhpUrl,
           settingsDefaults: timeTableDefinition.settingsDefaults,
-          accountType: AccountType.student,
+          accountType: session.accountTypeOrNull ??
+              ref.read(activeAccountProvider)?.accountType ??
+              AccountType.student,
           builder: (context, timetable, _, settings, updateSettings, refresh) {
             final ids = settings['hidden-lessons'];
             Map<int, List<TimetableSubject>> lessons = {};
 
-            for (var (dayIndex, day) in timetable.planForAll!.indexed) {
+            for (var (dayIndex, day) in (timetable.planForAll ?? const []).indexed) {
               lessons[dayIndex] = [];
               if (ids == null) continue;
               for (var lesson in day) {
@@ -307,10 +329,22 @@ class _StudentTimetableSettingsState
             List<List<TimetableSubject>>? customLessons =
                 TimeTableHelper.getCustomLessons(settings);
 
-            List<String> weekDays = DateFormat.EEEE(
+            // Prefer locale weekday names; fall back if symbols are empty
+            // (some Platform.localeName values yield an empty WEEKDAYS list).
+            final symbols = DateFormat.EEEE(
               Platform.localeName,
             ).dateSymbols.WEEKDAYS;
-            weekDays = weekDays.sublist(1)..add(weekDays[0]);
+            final List<String> weekDays = symbols.length >= 7
+                ? (symbols.sublist(1)..add(symbols.first))
+                : const [
+                    'Monday',
+                    'Tuesday',
+                    'Wednesday',
+                    'Thursday',
+                    'Friday',
+                    'Saturday',
+                    'Sunday',
+                  ];
 
             return DefaultTabController(
               length: weekDays.length,
@@ -327,11 +361,14 @@ class _StudentTimetableSettingsState
                   Expanded(
                     child: TabBarView(
                       children: weekDays.map((dayName) {
-                        final dayLessons =
-                            lessons[weekDays.indexOf(dayName)] ?? [];
-                        final List<TimetableSubject>? customDayLessons =
-                            customLessons?[weekDays.indexOf(dayName)];
                         final currentDay = weekDays.indexOf(dayName);
+                        final dayLessons = lessons[currentDay] ?? [];
+                        final List<TimetableSubject>? customDayLessons =
+                            (customLessons != null &&
+                                currentDay >= 0 &&
+                                currentDay < customLessons.length)
+                            ? customLessons[currentDay]
+                            : null;
                         return SingleChildScrollView(
                           child: Padding(
                             padding: const EdgeInsets.all(16.0),
@@ -360,7 +397,7 @@ class _StudentTimetableSettingsState
                                             dense: true,
                                             title: Text(lesson.name ?? ''),
                                             subtitle: Text(
-                                              "${lesson.startTime.format(context)} - ${lesson.endTime.format(context)}",
+                                              "${lesson.startTime.toFlutter().format(context)} - ${lesson.endTime.toFlutter().format(context)}",
                                             ),
                                             trailing: IconButton(
                                               icon: Icon(Icons.delete),
@@ -419,7 +456,7 @@ class _StudentTimetableSettingsState
                                             dense: true,
                                             title: Text(lesson.name ?? ''),
                                             subtitle: Text(
-                                              "${lesson.startTime.format(context)} - ${lesson.endTime.format(context)}",
+                                              "${lesson.startTime.toFlutter().format(context)} - ${lesson.endTime.toFlutter().format(context)}",
                                             ),
                                             trailing: Row(
                                               mainAxisSize: MainAxisSize.min,

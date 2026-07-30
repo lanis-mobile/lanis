@@ -1,17 +1,17 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:liblanis/liblanis.dart';
 
 import '../../background_service.dart';
-import '../../core/sph/sph.dart';
-import '../../models/account_types.dart';
-import '../../models/substitution.dart';
+import 'package:lanis/l10n/account_type_ui.dart';
 
 Future<void> substitutionsBackgroundTask(
-  SPH sph,
+  ProviderContainer container,
   AccountType accountType,
   BackgroundTaskToolkit tools,
 ) async {
-  final vPlan = await sph.parser.substitutionsParser.getHome();
+  final vPlan = await container.read(substitutionsParserProvider).getHome();
   List<Substitution> allSubstitutions = vPlan.allSubstitutions;
   String messageBody = "";
 
@@ -38,7 +38,7 @@ Future<void> substitutionsBackgroundTask(
     return;
   }
 
-  tools.sendMessage(
+  await tools.sendMessage(
     title: '${allSubstitutions.length} Einträge im Vertretungsplan',
     message: messageBody,
     id: 0,

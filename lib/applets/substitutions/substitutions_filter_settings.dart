@@ -1,21 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lanis/generated/l10n.dart';
+import 'package:liblanis/liblanis.dart';
 
-import '../../core/sph/sph.dart';
 import 'chips_input.dart';
 
-class SubstitutionsFilterSettings extends StatefulWidget {
+class SubstitutionsFilterSettings extends ConsumerStatefulWidget {
   const SubstitutionsFilterSettings({super.key});
 
   @override
-  State<StatefulWidget> createState() => _SubstitutionsFilterSettingsState();
+  ConsumerState<SubstitutionsFilterSettings> createState() =>
+      _SubstitutionsFilterSettingsState();
 }
 
 class _SubstitutionsFilterSettingsState
-    extends State<SubstitutionsFilterSettings> {
+    extends ConsumerState<SubstitutionsFilterSettings> {
   bool loadingFilter = false;
   @override
   Widget build(BuildContext context) {
+    if (ref.watch(sessionProvider).asData?.value == null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(AppLocalizations.of(context).substitutionsFilter),
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+    final parser = ref.watch(substitutionsParserProvider);
     return Scaffold(
       appBar: AppBar(
         title: Text(AppLocalizations.of(context).substitutionsFilter),
@@ -25,8 +36,8 @@ class _SubstitutionsFilterSettingsState
         children: [
           ElevatedButton(
             onPressed: () {
-              sph!.parser.substitutionsParser.localFilter = {};
-              sph!.parser.substitutionsParser.saveFilterToStorage();
+              parser.localFilter = {};
+              parser.saveFilterToStorage();
               Navigator.pop(context);
             },
             child: Text(AppLocalizations.of(context).reset),
@@ -70,7 +81,7 @@ class _SubstitutionsFilterSettingsState
   }
 }
 
-class SubstitutionFilterEditor extends StatefulWidget {
+class SubstitutionFilterEditor extends ConsumerStatefulWidget {
   final String objKey;
   final String title;
 
@@ -81,38 +92,38 @@ class SubstitutionFilterEditor extends StatefulWidget {
   });
 
   @override
-  State<SubstitutionFilterEditor> createState() =>
+  ConsumerState<SubstitutionFilterEditor> createState() =>
       _SubstitutionFilterEditorState();
 }
 
-class _SubstitutionFilterEditorState extends State<SubstitutionFilterEditor> {
+class _SubstitutionFilterEditorState
+    extends ConsumerState<SubstitutionFilterEditor> {
   bool strict = false;
   late List<String> filterTags;
 
   @override
   void initState() {
     super.initState();
-    strict =
-        sph!.parser.substitutionsParser.localFilter[widget.objKey]?["strict"] ??
-        false;
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
+    // localFilter is populated when the parser provider is first created;
+    // read after first frame so the provider is available.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final parser = ref.read(substitutionsParserProvider);
+      setState(() {
+        strict = parser.localFilter[widget.objKey]?["strict"] ?? false;
+      });
+    });
   }
 
   void overrideFilter(List<String> data) {
-    sph!.parser.substitutionsParser.localFilter[widget.objKey] = {
-      "strict": strict,
-    };
-    sph!.parser.substitutionsParser.localFilter[widget.objKey]?["filter"] =
-        data;
-    sph!.parser.substitutionsParser.saveFilterToStorage();
+    final parser = ref.read(substitutionsParserProvider);
+    parser.localFilter[widget.objKey] = {"strict": strict};
+    parser.localFilter[widget.objKey]?["filter"] = data;
+    parser.saveFilterToStorage();
   }
 
   @override
   Widget build(BuildContext context) {
+    final parser = ref.watch(substitutionsParserProvider);
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Column(
@@ -130,10 +141,8 @@ class _SubstitutionFilterEditorState extends State<SubstitutionFilterEditor> {
                 onPressed: () {
                   setState(() {
                     strict = !strict;
-                    sph!.parser.substitutionsParser.localFilter[widget
-                            .objKey]?["strict"] =
-                        strict;
-                    sph!.parser.substitutionsParser.saveFilterToStorage();
+                    parser.localFilter[widget.objKey]?["strict"] = strict;
+                    parser.saveFilterToStorage();
                   });
                 },
               ),
@@ -141,9 +150,7 @@ class _SubstitutionFilterEditorState extends State<SubstitutionFilterEditor> {
           ),
           StringListEditor(
             initialValues:
-                sph!.parser.substitutionsParser.localFilter[widget
-                    .objKey]?["filter"] ??
-                [],
+                parser.localFilter[widget.objKey]?["filter"] ?? [],
             onChanged: (data) {
               filterTags = data;
               overrideFilter(data);

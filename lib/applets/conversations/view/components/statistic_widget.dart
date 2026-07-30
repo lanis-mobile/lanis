@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:liblanis/liblanis.dart';
 import 'package:lanis/applets/conversations/view/shared.dart';
 import 'package:lanis/generated/l10n.dart';
-import 'package:lanis/models/conversations.dart';
 
 class StatisticWidget extends StatelessWidget {
   final String conversationTitle;

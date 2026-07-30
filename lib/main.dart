@@ -1,32 +1,33 @@
 import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
-import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:lanis/applets/conversations/view/shared.dart';
+import 'package:lanis/background_service.dart';
+import 'package:lanis/bridge/lanis_bootstrap.dart';
+import 'package:lanis/generated/l10n.dart';
+import 'package:lanis/router.dart';
+import 'package:lanis/themes.dart';
+import 'package:lanis/utils/glitchtip.dart';
 import 'package:lanis/utils/logger.dart';
 import 'package:lanis/utils/mono_text_viewer.dart';
 import 'package:lanis/utils/phoenix.dart';
-import 'package:lanis/core/sph/sph.dart';
-import 'package:lanis/generated/l10n.dart';
-import 'package:lanis/startup.dart';
-import 'package:lanis/themes.dart';
-import 'package:lanis/utils/authentication_state.dart';
-import 'package:lanis/utils/quick_actions.dart';
+import 'package:lanis/utils/theme_settings.dart';
 import 'package:lanis/view/startup_error_view.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
-import 'applets/conversations/view/shared.dart';
-import 'background_service.dart';
-import 'core/database/account_database/account_db.dart'
-    show accountDatabase, AccountDatabase;
+Future<void> main() async {
+  await initGlitchTip(_startApp);
+}
 
-void main() async {
+Future<void> _startApp() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
 
@@ -36,34 +37,33 @@ void main() async {
       };
     }
 
-    await moveDatabases();
-
-    driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
-
-    accountDatabase = AccountDatabase();
+    final overrides = await bootstrapLanisClient();
+    syncGlitchTipReportingFromConfig();
 
     enableTransparentNavigationBar();
 
-    authenticationState.login().then((v) {
-      if (sph?.session != null) QuickActionsStartUp();
-    });
-
     try {
-      // Some iOS database lock operation is blocking this?
-      await setupBackgroundService(accountDatabase);
+      await setupBackgroundService();
       await initializeNotifications();
     } catch (e, stack) {
       logger.e('Failed to initialize background service and notifications');
       logger.e(e, stackTrace: stack);
+      await captureGlitchTipException(e, stackTrace: stack);
     }
 
     await initializeDateFormatting();
 
-    // logger.testLogger();
-
-    runApp(Phoenix(child: const App()));
+    runApp(
+      ProviderScope(
+        overrides: overrides,
+        child: Phoenix(
+          child: SentryWidget(child: const App()),
+        ),
+      ),
+    );
   } catch (e, st) {
     logger.e(e, stackTrace: st);
+    await captureGlitchTipException(e, stackTrace: st);
 
     runApp(
       MaterialApp(
@@ -77,46 +77,10 @@ void main() async {
   }
 }
 
-// Move all .sqlite files from documents to cache, to avoid them being backed up by Android.
-// Temporary migration; Remove maybe like May 26 or keep if it causes no issues.
-Future<void> moveDatabases() async {
-  final oldPath = await getApplicationDocumentsDirectory();
-  final newPath = await getApplicationCacheDirectory();
-
-  final oldFiles = oldPath.listSync().whereType<File>().where((file) {
-    return file.path.endsWith('.sqlite');
-  });
-
-  logger.i('Found ${oldFiles.length} .sqlite files to migrate');
-
-  for (var file in oldFiles) {
-    final newFile = File('${newPath.path}/${file.uri.pathSegments.last}');
-    if (!await newFile.exists()) {
-      try {
-        await file.rename(newFile.path);
-        logger.i('Migrated ${file.uri.pathSegments.last} to cache directory');
-      } catch (e) {
-        logger.e('Failed to migrate ${file.uri.pathSegments.last}: $e');
-      }
-    } else {
-      logger.i(
-        '${file.uri.pathSegments.last} already exists in cache directory',
-      );
-    }
-  }
-
-  logger.i('Database migration completed');
-}
-
-// Or translucent when 3-Way.
 Future<void> enableTransparentNavigationBar() async {
   if (Platform.isAndroid) {
-    DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
-    final androidInfo = await deviceInfo.androidInfo;
-    int androidVersion = androidInfo.version.sdkInt;
-
-    // Android 10 and above
-    if (androidVersion >= 29) {
+    final androidInfo = await DeviceInfoPlugin().androidInfo;
+    if (androidInfo.version.sdkInt >= 29) {
       SystemChrome.setSystemUIOverlayStyle(
         const SystemUiOverlayStyle(
           systemNavigationBarColor: Colors.transparent,
@@ -127,98 +91,82 @@ Future<void> enableTransparentNavigationBar() async {
   }
 }
 
-class App extends StatelessWidget {
+class App extends ConsumerWidget {
   const App({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return StreamBuilder(
-      stream: accountDatabase.kv.subscribeMultiple([
-        'color',
-        'theme',
-        'is-amoled',
-      ]),
-      builder:
-          (BuildContext context, AsyncSnapshot<Map<String, dynamic>> snapshot) {
-            late ThemeMode mode;
-            late Themes theme;
-            if (snapshot.hasData) {
-              mode = snapshot.data!['theme'] == 'system'
-                  ? ThemeMode.system
-                  : snapshot.data!['theme'] == 'dark'
-                  ? ThemeMode.dark
-                  : ThemeMode.light;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final snapshot = ref.watch(themeSettingsProvider);
+    final router = ref.watch(goRouterProvider);
 
-              if (snapshot.data!['color'] == 'standard') {
-                theme = Themes.standardTheme;
-              } else if (snapshot.data!['color'] != 'standard' &&
-                  snapshot.data!['color'] != 'dynamic') {
-                if (Themes.flutterColorThemes.containsKey(
-                  snapshot.data!['color'],
-                )) {
-                  theme = Themes.flutterColorThemes[snapshot.data!['color']!]!;
-                } else {
-                  theme = Themes.standardTheme;
-                }
-              } else {
-                theme = Themes.standardTheme;
-              }
-              if (snapshot.data!['is-amoled'] == true) {
-                theme = Themes.getAmoledThemes(theme);
-              }
-            } else {
-              mode = ThemeMode.system;
-              theme = Themes.standardTheme;
-            }
-            return DynamicColorBuilder(
-              builder: (lightDynamic, darkDynamic) {
-                if (lightDynamic != null && darkDynamic != null) {
-                  Themes.dynamicTheme = Themes.getNewTheme(
-                    lightDynamic.primary,
-                  );
-                }
-                if (snapshot.data?['color'] == 'dynamic') {
-                  var dynamicTheme = Themes.dynamicTheme;
-                  var darkTheme = dynamicTheme.darkTheme;
-                  if (snapshot.data!['is-amoled'] == true) {
-                    darkTheme = Themes.getAmoledThemes(dynamicTheme).darkTheme;
-                  }
+    late ThemeMode mode;
+    late Themes theme;
 
-                  theme = Themes(dynamicTheme.lightTheme, darkTheme);
-                }
+    mode = snapshot['theme'] == 'system'
+        ? ThemeMode.system
+        : snapshot['theme'] == 'dark'
+        ? ThemeMode.dark
+        : ThemeMode.light;
 
-                if (mode == ThemeMode.light ||
-                    mode == ThemeMode.system &&
-                        MediaQuery.of(context).platformBrightness ==
-                            Brightness.light) {
-                  BubbleStyles.init(theme.lightTheme!);
-                } else if (mode == ThemeMode.dark ||
-                    mode == ThemeMode.system &&
-                        MediaQuery.of(context).platformBrightness ==
-                            Brightness.dark) {
-                  BubbleStyles.init(
-                    theme.darkTheme ?? Themes.standardTheme.darkTheme!,
-                  );
-                }
+    if (snapshot['color'] == 'standard') {
+      theme = Themes.standardTheme;
+    } else if (snapshot['color'] != 'standard' &&
+        snapshot['color'] != 'dynamic') {
+      if (Themes.flutterColorThemes.containsKey(snapshot['color'])) {
+        theme = Themes.flutterColorThemes[snapshot['color']!]!;
+      } else {
+        theme = Themes.standardTheme;
+      }
+    } else {
+      theme = Themes.standardTheme;
+    }
+    if (snapshot['is-amoled'] == true) {
+      theme = Themes.getAmoledThemes(theme);
+    }
 
-                return MaterialApp(
-                  title: 'Lanis Mobile',
-                  theme: theme.lightTheme,
-                  darkTheme: theme.darkTheme,
-                  themeMode: mode,
-                  localizationsDelegates: [
-                    AppLocalizations.delegate,
-                    GlobalMaterialLocalizations.delegate,
-                    GlobalWidgetsLocalizations.delegate,
-                    GlobalCupertinoLocalizations.delegate,
-                    FlutterQuillLocalizations.delegate,
-                  ],
-                  supportedLocales: AppLocalizations.delegate.supportedLocales,
-                  home: const Scaffold(body: StartupScreen()),
-                );
-              },
-            );
-          },
+    return DynamicColorBuilder(
+      builder: (lightDynamic, darkDynamic) {
+        if (lightDynamic != null && darkDynamic != null) {
+          Themes.dynamicTheme = Themes.getNewTheme(lightDynamic.primary);
+        }
+        if (snapshot['color'] == 'dynamic') {
+          var dynamicTheme = Themes.dynamicTheme;
+          var darkTheme = dynamicTheme.darkTheme;
+          if (snapshot['is-amoled'] == true) {
+            darkTheme = Themes.getAmoledThemes(dynamicTheme).darkTheme;
+          }
+          theme = Themes(dynamicTheme.lightTheme, darkTheme);
+        }
+
+        if (mode == ThemeMode.light ||
+            (mode == ThemeMode.system &&
+                MediaQuery.of(context).platformBrightness ==
+                    Brightness.light)) {
+          BubbleStyles.init(theme.lightTheme!);
+        } else if (mode == ThemeMode.dark ||
+            (mode == ThemeMode.system &&
+                MediaQuery.of(context).platformBrightness == Brightness.dark)) {
+          BubbleStyles.init(
+            theme.darkTheme ?? Themes.standardTheme.darkTheme!,
+          );
+        }
+
+        return MaterialApp.router(
+          title: 'Lanis Mobile',
+          theme: theme.lightTheme,
+          darkTheme: theme.darkTheme,
+          themeMode: mode,
+          routerConfig: router,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+            FlutterQuillLocalizations.delegate,
+          ],
+          supportedLocales: AppLocalizations.delegate.supportedLocales,
+        );
+      },
     );
   }
 }
@@ -229,7 +177,7 @@ Widget errorWidget(FlutterErrorDetails details, {BuildContext? context}) {
   String error = details.exception.toString();
 
   return Container(
-    color: Color.fromARGB(255, 249, 222, 220),
+    color: const Color.fromARGB(255, 249, 222, 220),
     child: Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 32.0),
       child: Column(
@@ -241,9 +189,9 @@ Widget errorWidget(FlutterErrorDetails details, {BuildContext? context}) {
             size: 60,
             color: Color.fromARGB(255, 179, 38, 30),
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           DefaultTextStyle(
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
               color: Color.fromARGB(255, 179, 38, 30),
@@ -253,7 +201,7 @@ Widget errorWidget(FlutterErrorDetails details, {BuildContext? context}) {
               textAlign: TextAlign.center,
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           DefaultTextStyle(
             style: const TextStyle(
               fontSize: 16,
@@ -264,22 +212,22 @@ Widget errorWidget(FlutterErrorDetails details, {BuildContext? context}) {
               textAlign: TextAlign.center,
             ),
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           FilledButton(
             onPressed: () async {
               await Clipboard.setData(
                 ClipboardData(
-                  text: "${details.exception}\n${details.stack.toString()}",
+                  text: '${details.exception}\n${details.stack.toString()}',
                 ),
               );
-              if (context!.mounted) {
+              if (context != null && context.mounted) {
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) => MonoTextViewer(
                       report:
-                          "${details.exception}\n${details.stack.toString()}",
-                      title: "Stack Trace",
-                      fileNameStart: "stack_trace_default",
+                          '${details.exception}\n${details.stack.toString()}',
+                      title: 'Stack Trace',
+                      fileNameStart: 'stack_trace_default',
                     ),
                   ),
                 );
@@ -288,9 +236,9 @@ Widget errorWidget(FlutterErrorDetails details, {BuildContext? context}) {
             style: ButtonStyle(
               backgroundColor: WidgetStateProperty.resolveWith((states) {
                 if (states.contains(WidgetState.pressed)) {
-                  return Color.fromARGB(255, 198, 40, 32);
+                  return const Color.fromARGB(255, 198, 40, 32);
                 }
-                return Color.fromARGB(255, 179, 38, 30);
+                return const Color.fromARGB(255, 179, 38, 30);
               }),
             ),
             child: Text(AppLocalizations.current.copyErrorToClipboard),

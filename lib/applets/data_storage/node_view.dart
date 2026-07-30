@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lanis/applets/data_storage/folder_listtile.dart';
 import 'package:lanis/generated/l10n.dart';
+import 'package:liblanis/liblanis.dart';
 
-import '../../core/sph/sph.dart';
-import '../../models/datastorage.dart';
-import '../../models/client_status_exceptions.dart';
 import 'file_listtile.dart';
 
-class DataStorageNodeView extends StatefulWidget {
+class DataStorageNodeView extends ConsumerStatefulWidget {
   final int nodeID;
   final String title;
 
@@ -18,10 +17,11 @@ class DataStorageNodeView extends StatefulWidget {
   });
 
   @override
-  State<StatefulWidget> createState() => _DataStorageNodeViewState();
+  ConsumerState<DataStorageNodeView> createState() =>
+      _DataStorageNodeViewState();
 }
 
-class _DataStorageNodeViewState extends State<DataStorageNodeView> {
+class _DataStorageNodeViewState extends ConsumerState<DataStorageNodeView> {
   var loading = true;
   var error = false;
   late List<FileNode> files;
@@ -30,13 +30,15 @@ class _DataStorageNodeViewState extends State<DataStorageNodeView> {
   @override
   void initState() {
     super.initState();
-    loadItems();
+    Future.microtask(loadItems);
   }
 
   void loadItems() async {
     try {
-      final (fileList, folderList) = await sph!.parser.dataStorageParser
+      final (fileList, folderList) = await ref
+          .read(dataStorageParserProvider)
           .getNode(widget.nodeID);
+      if (!mounted) return;
       files = fileList;
       folders = folderList;
 
@@ -44,6 +46,7 @@ class _DataStorageNodeViewState extends State<DataStorageNodeView> {
         loading = false;
       });
     } on LanisException {
+      if (!mounted) return;
       setState(() {
         error = true;
         loading = false;

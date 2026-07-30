@@ -1,59 +1,57 @@
 import 'package:custom_refresh_indicator/custom_refresh_indicator.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:liblanis/liblanis.dart';
 import 'package:dart_date/dart_date.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:html/parser.dart';
-import 'package:intl/intl.dart';
+import 'package:lanis/applets/conversations/view/chat_app_bar.dart';
+import 'package:lanis/applets/conversations/view/chat_intro_header.dart';
+import 'package:lanis/applets/conversations/view/chat_scroll_to_bottom_fab.dart';
+import 'package:lanis/applets/conversations/view/chat_triangle_pattern.dart';
 import 'package:lanis/applets/conversations/view/components/date_header_widget.dart';
 import 'package:lanis/applets/conversations/view/components/message_widget.dart';
 import 'package:lanis/applets/conversations/view/components/rich_chat_text_editor.dart';
-import 'package:lanis/applets/conversations/view/components/statistic_widget.dart';
+import 'package:lanis/applets/conversations/view/conversation_date.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'dart:async';
 import 'package:flutter/services.dart';
-
-import '../../../core/sph/sph.dart';
-import '../../../models/client_status_exceptions.dart';
-import '../../../models/conversations.dart';
 import '../../../utils/fetch_more_indicator.dart';
 import '../../../utils/logger.dart';
 import '../../../widgets/error_view.dart';
 import 'shared.dart';
 
-class ConversationsChat extends StatefulWidget {
+class ConversationsChat extends ConsumerStatefulWidget {
   final String id;
   final String title;
   final NewConversationSettings? newSettings;
   final bool hidden;
-  final bool isTablet;
-  final Function refreshSidebar;
+  final VoidCallback? onSidebarChanged;
 
   const ConversationsChat({
     super.key,
     required this.title,
     required this.id,
     this.newSettings,
-    required this.isTablet,
-    required this.refreshSidebar,
+    this.onSidebarChanged,
     this.hidden = false,
   });
 
   ConversationsChat.fromEntry(
-    OverviewEntry entry,
-    this.isTablet, {
+    OverviewEntry entry, {
     super.key,
-    required this.refreshSidebar,
+    this.onSidebarChanged,
   }) : id = entry.id,
        title = entry.title,
        newSettings = null,
        hidden = entry.hidden;
+
   @override
-  State<ConversationsChat> createState() => _ConversationsChatState();
+  ConsumerState<ConversationsChat> createState() => _ConversationsChatState();
 }
 
-class _ConversationsChatState extends State<ConversationsChat>
+class _ConversationsChatState extends ConsumerState<ConversationsChat>
     with SingleTickerProviderStateMixin {
-  late final Future<void> _conversationFuture = initConversation();
+  late Future<void> _conversationFuture = initConversation();
   Timer? _refreshTimer;
   int _lastRefresh = 0;
   final List<String> _messagesSendInThisSession = [];
@@ -84,15 +82,15 @@ class _ConversationsChatState extends State<ConversationsChat>
   void initRefreshTimer() {
     _refreshTimer?.cancel();
     _refreshTimer = Timer.periodic(const Duration(seconds: 20), (_) async {
-      if (mounted) {
-        setState(() {
-          refreshing = true;
-        });
-        await refreshConversation(scrollToEnd: false);
-        setState(() {
-          refreshing = false;
-        });
-      }
+      if (!mounted) return;
+      setState(() {
+        refreshing = true;
+      });
+      await refreshConversation(scrollToEnd: false);
+      if (!mounted) return;
+      setState(() {
+        refreshing = false;
+      });
     });
   }
 
@@ -107,9 +105,9 @@ class _ConversationsChatState extends State<ConversationsChat>
 
   @override
   void dispose() {
-    super.dispose();
-    scrollController.dispose();
     _refreshTimer?.cancel();
+    scrollController.dispose();
+    super.dispose();
   }
 
   void toggleScrollToBottomFab() {
@@ -117,11 +115,23 @@ class _ConversationsChatState extends State<ConversationsChat>
     isScrollToBottomVisible.value = currentScrollPosition > 100;
   }
 
+  void _notifySidebar() {
+    if (widget.onSidebarChanged != null) {
+      widget.onSidebarChanged!();
+      return;
+    }
+    unawaited(
+      ref.read(conversationsParserProvider).fetchData(forceRefresh: true),
+    );
+  }
+
   Future<void> refreshConversation({bool scrollToEnd = true}) async {
     if (widget.newSettings == null) {
       try {
-        final result = await sph!.parser.conversationsParser
+        final result = await ref.read(conversationsParserProvider)
             .refreshConversation(widget.id, _lastRefresh);
+
+        if (!mounted) return;
 
         _lastRefresh = result.lastRefresh;
         for (final UnparsedMessage message in result.messages) {
@@ -133,7 +143,7 @@ class _ConversationsChatState extends State<ConversationsChat>
           });
         }
         if (result.messages.isNotEmpty) {
-          widget.refreshSidebar();
+          _notifySidebar();
         }
 
         // Update send button visibility
@@ -203,30 +213,6 @@ class _ConversationsChatState extends State<ConversationsChat>
     );
   }
 
-  static DateTime parseDateString(String date) {
-    if (date.contains("heute")) {
-      DateTime now = DateTime.now();
-      DateTime conversation = DateFormat("H:m").parse(date.substring(6));
-
-      return now.copyWith(
-        hour: conversation.hour,
-        minute: conversation.minute,
-        second: 0,
-      );
-    } else if (date.contains("gestern")) {
-      DateTime yesterday = DateTime.now().subtract(const Duration(days: 1));
-      DateTime conversation = DateFormat("H:m").parse(date.substring(8));
-
-      return yesterday.copyWith(
-        hour: conversation.hour,
-        minute: conversation.minute,
-        second: 0,
-      );
-    } else {
-      return DateFormat("d.M.y H:m").parse(date);
-    }
-  }
-
   void addAuthorTextStyles(final List<String> authors) {
     final ThemeData theme = Theme.of(context);
     for (final String author in authors) {
@@ -261,15 +247,27 @@ class _ConversationsChatState extends State<ConversationsChat>
       }
     });
 
-    final result = await sph!.parser.conversationsParser.replyToConversation(
-      settings.id,
-      "all",
-      settings.groupChat ? "ja" : "nein",
-      settings.onlyPrivateAnswers ? "ja" : "nein",
-      text,
-    );
+    late final ReplyToConversationResult result;
+    try {
+      result = await ref.read(conversationsParserProvider).replyToConversation(
+        settings.id,
+        "all",
+        settings.groupChat ? "ja" : "nein",
+        settings.onlyPrivateAnswers ? "ja" : "nein",
+        text,
+      );
+    } catch (_) {
+      _notifySidebar();
+      if (!mounted) return;
+      setState(() {
+        chat.last.status = MessageStatus.error;
+      });
+      showSnackbar(context, AppLocalizations.of(context).errorSendingMessage);
+      return;
+    }
 
-    widget.refreshSidebar();
+    _notifySidebar();
+    if (!mounted) return;
     setState(() {
       if (result.success) {
         _messagesSendInThisSession.add(result.messageId);
@@ -289,7 +287,7 @@ class _ConversationsChatState extends State<ConversationsChat>
       text: content,
       own: message.own,
       author: message.author,
-      date: parseDateString(message.date),
+      date: parseConversationDate(message.date),
       state: position,
       status: MessageStatus.sent,
     );
@@ -298,7 +296,7 @@ class _ConversationsChatState extends State<ConversationsChat>
   List<String> authors = [];
 
   void _renderSingleMessage(UnparsedMessage message) {
-    final DateTime messageDate = parseDateString(message.date);
+    final DateTime messageDate = parseConversationDate(message.date);
     final String messageAuthor = message.author;
     MessageState position = MessageState.first;
 
@@ -333,7 +331,7 @@ class _ConversationsChatState extends State<ConversationsChat>
     authors.clear(); // Clear existing authors
 
     // Process parent message
-    final DateTime parentDate = parseDateString(unparsedMessages.parent.date);
+    final DateTime parentDate = parseConversationDate(unparsedMessages.parent.date);
     final String parentAuthor = unparsedMessages.parent.author;
 
     if (unparsedMessages.parent.own != true) {
@@ -356,7 +354,7 @@ class _ConversationsChatState extends State<ConversationsChat>
 
   Future<void> initConversation() async {
     if (widget.newSettings == null) {
-      Conversation result = await sph!.parser.conversationsParser
+      Conversation result = await ref.read(conversationsParserProvider)
           .getSingleConversation(widget.id);
       _lastRefresh = result.msgLastRefresh;
       logger.d("last refresh: $_lastRefresh");
@@ -408,143 +406,49 @@ class _ConversationsChatState extends State<ConversationsChat>
     }
   }
 
-  Widget appBar() {
-    return AppBar(
-      title: Text(widget.title),
-      scrolledUnderElevation: 0.0,
-      backgroundColor: Colors.transparent,
-      actions: [
-        if (refreshing)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2.5,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-            ),
-          ),
-        if (settings.groupChat == false &&
-            settings.onlyPrivateAnswers == false &&
-            settings.noReply == false)
-          IconButton(
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) {
-                  return AlertDialog(
-                    icon: const Icon(Icons.groups),
-                    title: Text(
-                      AppLocalizations.of(
-                        context,
-                      ).conversationTypeName(ChatType.openChat.name),
-                    ),
-                    content: Text(AppLocalizations.of(context).openChatWarning),
-                    actions: [
-                      FilledButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: const Text("Ok"),
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
-            icon: const Icon(Icons.warning),
-          ),
-        if (statistics != null)
-          IconButton(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => StatisticWidget(
-                    statistics: statistics!,
-                    conversationTitle: widget.title,
-                  ),
-                ),
-              );
-            },
-            icon: const Icon(Icons.people),
-          ),
-      ],
-    );
-  }
-
-  Widget triangularPattern({required Color lineColor}) {
-    return SvgPicture.asset(
-      "assets/triangle_pattern.svg",
-      fit: BoxFit.cover,
-      colorFilter: ColorFilter.mode(lineColor, BlendMode.srcIn),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: ValueListenableBuilder(
-        valueListenable: isScrollToBottomVisible,
-        builder: (context, isVisible, _) {
-          return Visibility(
-            visible: isVisible,
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 60),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(15),
-                onTap: () =>
-                    scrollToBottom(initDelay: const Duration(milliseconds: 50)),
-                child: Container(
-                  height: 30,
-                  width: 30,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(15),
-                    border: Border.all(
-                      color: Theme.of(context).colorScheme.secondaryFixedDim,
-                      width: 1.5,
-                    ),
-                    color: Theme.of(context).colorScheme.surfaceDim,
-                  ),
-                  child: const Icon(Icons.keyboard_arrow_down),
-                ),
-              ),
-            ),
-          );
-        },
+      floatingActionButton: ChatScrollToBottomFab(
+        isVisible: isScrollToBottomVisible,
+        onPressed: () =>
+            scrollToBottom(initDelay: const Duration(milliseconds: 50)),
       ),
+      // Horizontal SafeArea insets leave a blank scaffold strip on devices with
+      // landscape cutouts (e.g. Pixel 6). Keep only vertical insets so the
+      // tablet detail pane / full-width chat can paint to the side edges.
       body: SafeArea(
+        left: false,
+        right: false,
         child: FutureBuilder(
           future: _conversationFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState != ConnectionState.waiting) {
               // Error content
               if (snapshot.hasError) {
-                if (snapshot.error is LanisException) {
-                  return AppletErrorView(
-                    error: snapshot.error as LanisException,
-                    showAppBar: true,
-                    retry: () {
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
-                          builder: (_) => ConversationsChat(
-                            refreshSidebar: widget.refreshSidebar,
-                            title: widget.title,
-                            id: widget.id,
-                            newSettings: widget.newSettings,
-                            isTablet: widget.isTablet,
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                }
+                final error = snapshot.error is LanisException
+                    ? snapshot.error as LanisException
+                    : UnknownException(snapshot.error.toString());
+                return AppletErrorView(
+                  error: error,
+                  showAppBar: true,
+                  retry: () {
+                    setState(() {
+                      _conversationFuture = initConversation();
+                    });
+                  },
+                );
               }
 
               return Column(
                 children: [
-                  appBar(),
+                  ConversationsChatAppBar(
+                    title: widget.title,
+                    refreshing: refreshing,
+                    settings: settings,
+                    statistics: statistics,
+                    conversationId: widget.id,
+                  ),
                   Container(
                     width: double.infinity,
                     height: 1,
@@ -561,8 +465,9 @@ class _ConversationsChatState extends State<ConversationsChat>
                   ),
                   Expanded(
                     child: Stack(
+                      fit: StackFit.expand,
                       children: [
-                        triangularPattern(
+                        ChatTrianglePattern(
                           lineColor: Theme.of(context)
                               .colorScheme
                               .onSurfaceVariant
@@ -616,65 +521,9 @@ class _ConversationsChatState extends State<ConversationsChat>
                                     },
                                   ),
                                   SliverToBoxAdapter(
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(
-                                        bottom: 12.0,
-                                      ),
-                                      child: Column(
-                                        children: [
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              Flexible(
-                                                child: Padding(
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 12.0,
-                                                      ),
-                                                  child: Text(
-                                                    widget.title,
-                                                    style: Theme.of(
-                                                      context,
-                                                    ).textTheme.headlineMedium,
-                                                    textAlign: TextAlign.center,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          if (settings.onlyPrivateAnswers &&
-                                              !settings.own) ...[
-                                            Container(
-                                              alignment: Alignment.center,
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    vertical: 8.0,
-                                                    horizontal: 12.0,
-                                                  ),
-                                              margin: const EdgeInsets.only(
-                                                top: 16.0,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                color: Theme.of(context)
-                                                    .colorScheme
-                                                    .surfaceContainerHigh,
-                                              ),
-                                              child: Text(
-                                                AppLocalizations.of(
-                                                  context,
-                                                ).privateConversation(
-                                                  settings.author!,
-                                                ),
-                                                style: Theme.of(
-                                                  context,
-                                                ).textTheme.bodyMedium,
-                                                textAlign: TextAlign.center,
-                                              ),
-                                            ),
-                                          ],
-                                        ],
-                                      ),
+                                    child: ChatIntroHeader(
+                                      title: widget.title,
+                                      settings: settings,
                                     ),
                                   ),
                                 ],
