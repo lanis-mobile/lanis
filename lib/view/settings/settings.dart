@@ -245,7 +245,8 @@ class _SettingsScreenState extends ConsumerSettingsColoursState<SettingsScreen> 
   Widget build(BuildContext context) {
     ref.watch(supportedAppletPhpUrlsProvider);
     final settingsTiles = _buildSettingsTiles();
-    final isTablet = Responsive.isTablet(context) || widget.embeddedInTabletShell;
+    final isTablet =
+        Responsive.isSplitView(context) || widget.embeddedInTabletShell;
     final currentPath = GoRouterState.of(context).uri.path;
 
     final double availableHeight =

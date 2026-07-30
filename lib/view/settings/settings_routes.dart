@@ -26,7 +26,7 @@ List<RouteBase> buildSettingsRoutes() {
   return [
     ShellRoute(
       builder: (context, state, child) {
-        if (Responsive.isTablet(context)) {
+        if (Responsive.isSplitView(context)) {
           return SettingsTabletShell(child: child);
         }
         return child;
@@ -40,7 +40,7 @@ List<RouteBase> buildSettingsRoutes() {
             // pane is never an empty white panel.
             if (path == SettingsDeepLinks.base ||
                 path == SettingsDeepLinks.home) {
-              if (Responsive.isTablet(context)) {
+              if (Responsive.isSplitView(context)) {
                 return SettingsDeepLinks.appearance;
               }
             }
@@ -53,7 +53,7 @@ List<RouteBase> buildSettingsRoutes() {
             GoRoute(
               path: 'home',
               builder: (context, state) {
-                if (Responsive.isTablet(context)) {
+                if (Responsive.isSplitView(context)) {
                   return const SizedBox.shrink();
                 }
                 return const SettingsScreen();

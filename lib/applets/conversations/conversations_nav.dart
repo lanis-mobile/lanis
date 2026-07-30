@@ -13,7 +13,7 @@ void openConversationRoute(
 }) {
   final encoded = Uri.encodeComponent(title);
   final path = '/common/conversations/chat/$id?title=$encoded';
-  if (Responsive.isConversationsSplit(context)) {
+  if (Responsive.isSplitView(context)) {
     context.go(path, extra: extra);
   } else {
     context.push(path, extra: extra);

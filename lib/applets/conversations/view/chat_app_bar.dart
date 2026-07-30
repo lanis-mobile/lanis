@@ -37,7 +37,7 @@ class ConversationsChatAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Read live — route builders may not rebuild across phone/tablet resize.
-    final showBack = !Responsive.isConversationsSplit(context);
+    final showBack = !Responsive.isSplitView(context);
     return AppBar(
       title: Text(title),
       scrolledUnderElevation: 0.0,

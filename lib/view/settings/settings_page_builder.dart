@@ -59,7 +59,7 @@ abstract class ConsumerSettingsColoursState<T extends ConsumerStatefulWidget>
 
 bool _effectiveShowBack(BuildContext context, bool showBackButton) {
   // Live width check so tablet→phone resize shows a back control.
-  return showBackButton && !Responsive.isTablet(context);
+  return showBackButton && !Responsive.isSplitView(context);
 }
 
 class SettingsPage extends StatelessWidget {

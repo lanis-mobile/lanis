@@ -51,14 +51,14 @@ void main() {
     expect(tablet, isFalse);
   });
 
-  testWidgets('exactly 780 is not conversations split', (tester) async {
+  testWidgets('exactly 780 is not split view', (tester) async {
     late bool split;
     await tester.pumpWidget(
       MediaQuery(
         data: const MediaQueryData(size: Size(780, 600)),
         child: Builder(
           builder: (context) {
-            split = Responsive.isConversationsSplit(context);
+            split = Responsive.isSplitView(context);
             return const SizedBox();
           },
         ),
@@ -67,14 +67,14 @@ void main() {
     expect(split, isFalse);
   });
 
-  testWidgets('width above 780 is conversations split', (tester) async {
+  testWidgets('width above 780 is split view', (tester) async {
     late bool split;
     await tester.pumpWidget(
       MediaQuery(
         data: const MediaQueryData(size: Size(781, 600)),
         child: Builder(
           builder: (context) {
-            split = Responsive.isConversationsSplit(context);
+            split = Responsive.isSplitView(context);
             return const SizedBox();
           },
         ),
@@ -83,7 +83,7 @@ void main() {
     expect(split, isTrue);
   });
 
-  testWidgets('mid-band is tablet but not conversations split', (tester) async {
+  testWidgets('mid-band is tablet but not split view', (tester) async {
     late bool tablet;
     late bool split;
     await tester.pumpWidget(
@@ -92,7 +92,7 @@ void main() {
         child: Builder(
           builder: (context) {
             tablet = Responsive.isTablet(context);
-            split = Responsive.isConversationsSplit(context);
+            split = Responsive.isSplitView(context);
             return const SizedBox();
           },
         ),
