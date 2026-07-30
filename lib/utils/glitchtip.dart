@@ -36,6 +36,24 @@ Future<void> captureGlitchTipException(
   await Sentry.captureException(throwable, stackTrace: stackTrace);
 }
 
+/// Report an unexpected applet fetch error from liblanis (opt-in gated).
+Future<void> captureUnexpectedAppletError(
+  Object throwable,
+  StackTrace stackTrace, {
+  required String appletPhpUrl,
+}) async {
+  if (!glitchTipReportingEnabled) return;
+  await Sentry.addBreadcrumb(
+    Breadcrumb(
+      category: 'applet',
+      message: 'Unexpected fetch error',
+      data: {'appletPhpUrl': appletPhpUrl},
+      level: SentryLevel.error,
+    ),
+  );
+  await Sentry.captureException(throwable, stackTrace: stackTrace);
+}
+
 /// Configure [SentryFlutter] for our self-hosted GlitchTip instance.
 ///
 /// Error reporting only — no session envelopes, traces, metrics, profiles,
