@@ -68,7 +68,7 @@ class _ConversationsViewState extends ConsumerState<ConversationsView> {
   List<String> noBadgeConversations = [];
 
   bool get _isTablet =>
-      Responsive.isTablet(context) || widget.embeddedInTabletShell;
+      Responsive.isConversationsSplit(context) || widget.embeddedInTabletShell;
 
   String? get _selectedConversationId =>
       conversationIdFromLocation(GoRouterState.of(context).uri.path);

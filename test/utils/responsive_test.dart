@@ -50,4 +50,55 @@ void main() {
     );
     expect(tablet, isFalse);
   });
+
+  testWidgets('exactly 780 is not conversations split', (tester) async {
+    late bool split;
+    await tester.pumpWidget(
+      MediaQuery(
+        data: const MediaQueryData(size: Size(780, 600)),
+        child: Builder(
+          builder: (context) {
+            split = Responsive.isConversationsSplit(context);
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+    expect(split, isFalse);
+  });
+
+  testWidgets('width above 780 is conversations split', (tester) async {
+    late bool split;
+    await tester.pumpWidget(
+      MediaQuery(
+        data: const MediaQueryData(size: Size(781, 600)),
+        child: Builder(
+          builder: (context) {
+            split = Responsive.isConversationsSplit(context);
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+    expect(split, isTrue);
+  });
+
+  testWidgets('mid-band is tablet but not conversations split', (tester) async {
+    late bool tablet;
+    late bool split;
+    await tester.pumpWidget(
+      MediaQuery(
+        data: const MediaQueryData(size: Size(700, 600)),
+        child: Builder(
+          builder: (context) {
+            tablet = Responsive.isTablet(context);
+            split = Responsive.isConversationsSplit(context);
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+    expect(tablet, isTrue);
+    expect(split, isFalse);
+  });
 }

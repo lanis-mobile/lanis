@@ -29,7 +29,7 @@ List<RouteBase> buildConversationsRoutes(AppletRouteContext ctx) {
       routes: [
         ShellRoute(
           builder: (context, state, child) {
-            if (Responsive.isTablet(context)) {
+            if (Responsive.isConversationsSplit(context)) {
               return ConversationsTabletShell(child: child);
             }
             return child;
@@ -37,7 +37,7 @@ List<RouteBase> buildConversationsRoutes(AppletRouteContext ctx) {
           routes: [
             appletHomeShell(
               homeBuilder: (context, state) {
-                if (Responsive.isTablet(context)) {
+                if (Responsive.isConversationsSplit(context)) {
                   return const SizedBox.shrink();
                 }
                 return ctx.homeBody(conversationsDefinition);
