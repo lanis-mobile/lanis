@@ -12,6 +12,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:lanis/applets/conversations/view/shared.dart';
 import 'package:lanis/background_service.dart';
 import 'package:lanis/bridge/lanis_bootstrap.dart';
+import 'package:lanis/bridge/legacy_storage_cleanup.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/router.dart';
 import 'package:lanis/themes.dart';
@@ -37,6 +38,7 @@ Future<void> _startApp() async {
       };
     }
 
+    await removeLegacyV3StorageArtifacts();
     final overrides = await bootstrapLanisClient();
     syncGlitchTipReportingFromConfig();
 

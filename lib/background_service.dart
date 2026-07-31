@@ -11,6 +11,7 @@ import 'package:liblanis/liblanis.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:lanis/applets/definitions.dart';
 import 'package:lanis/bridge/lanis_bootstrap.dart';
+import 'package:lanis/bridge/legacy_storage_cleanup.dart';
 import 'package:lanis/l10n/account_type_ui.dart';
 import 'package:lanis/utils/logger.dart';
 import 'package:lanis/utils/privacy_policy.dart';
@@ -22,6 +23,7 @@ Future<void> setupBackgroundService() async {
     return;
   }
 
+  await removeLegacyV3StorageArtifacts();
   final overrides = await bootstrapLanisClient();
   final container = ProviderContainer(overrides: overrides);
   try {
@@ -120,6 +122,7 @@ Future<void> callbackDispatcher() async {
     backgroundLogger.i('Background fetch triggered');
     await initializeNotifications();
 
+    await removeLegacyV3StorageArtifacts();
     final overrides = await bootstrapLanisClient();
     final container = ProviderContainer(overrides: overrides);
     try {

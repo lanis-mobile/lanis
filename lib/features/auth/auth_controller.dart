@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:liblanis/liblanis.dart';
+import 'package:lanis/bridge/login_telemetry.dart';
 import 'package:lanis/utils/privacy_policy.dart';
 
 enum AuthPhase { unauthenticated, authenticating, authenticated, error }
@@ -60,7 +61,7 @@ class AuthController extends Notifier<AuthState> {
       await override(ref);
       return;
     }
-    await ref.read(sessionProvider.notifier).authenticate();
+    await authenticateWithLoginTelemetry(ref.read(sessionProvider.notifier));
   }
 
   Future<void> _deauthenticate() async {
