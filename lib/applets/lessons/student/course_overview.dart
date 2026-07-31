@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:intl/intl.dart';
+import 'package:lanis/bridge/login_telemetry.dart';
 import 'package:lanis/generated/l10n.dart';
 
 import '../../../utils/file_operations.dart' as fo;
@@ -62,7 +63,9 @@ class _CourseOverviewAnsichtState extends ConsumerState<CourseOverviewAnsicht> {
   Future<void> _loadData({bool secondTry = false, bool force = false}) async {
     try {
       if (secondTry) {
-        await ref.read(sessionProvider.notifier).authenticate();
+        await authenticateWithLoginTelemetry(
+          ref.read(sessionProvider.notifier),
+        );
       }
 
       String url = widget.dataFetchURL;
