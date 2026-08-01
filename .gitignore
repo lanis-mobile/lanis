@@ -66,3 +66,7 @@ generated/
 # Local SPH credentials for fixture recording only (never used by tests/CI)
 .credentials.env
 *.credentials.env
+
+# Local store upload secrets for build.py
+.env
+.build.env

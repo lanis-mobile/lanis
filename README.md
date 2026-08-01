@@ -89,4 +89,38 @@ If you are producing a build that you intend to distribute to other people, plea
 flutter build <apk|aab|ipa> --release --dart-define=cronetHttpNoPlay=true
 ```
 
-An alternative is the `build.sh` script, which builds the android binarys when on linux and the iOS binarys when on macOS and opens the file manager with the build output when complete.
+An alternative is the interactive `build.py` script, which can build Android and/or iOS in one run, copy artifacts into `artifacts/`, and optionally upload to App Store Connect / Google Play:
+
+```shell
+python3 build.py
+# or non-interactive:
+python3 build.py --android --ios --skip-upgrade --yes
+```
+
+#### Store uploads (optional)
+
+`build.py` loads secrets from gitignored `.env` / `.build.env` in the repo root (real environment variables win). Example:
+
+```env
+ASC_API_KEY_ID=XXXXXXXXXX
+ASC_API_ISSUER_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+ASC_API_KEY_PATH=/path/to/AuthKey_XXXXXXXXXX.p8
+PLAY_SERVICE_ACCOUNT_JSON=/path/to/service-account.json
+```
+
+Extra file: `python3 build.py --env-file /path/to/secrets.env`.
+
+For Play uploads, install the optional Python deps and use a Google Cloud service account that has been invited in Play Console (Users and permissions) with permission to manage tracks:
+
+```shell
+pip install -r requirements-build.txt
+python3 build.py --android --upload-android --play-track internal --yes
+```
+
+For App Store Connect uploads (macOS + Xcode), create an App Store Connect API key, put the values in `.env` (or export them), then:
+
+```shell
+python3 build.py --ios --upload-ios --yes
+```
+
+Uploads deliver the binary only (TestFlight / Play track). They do not submit for App Review or promote a production rollout.
