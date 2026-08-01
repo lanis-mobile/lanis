@@ -261,7 +261,7 @@ class _StudentTimetableSettingsState
                             days[currentDay].add(newLesson);
 
                             updateSettings('custom-lessons', days);
-                            Navigator.of(context).pop();
+                            popRootDialog(context1);
                             showSnackbar(
                               context,
                               AppLocalizations.of(
