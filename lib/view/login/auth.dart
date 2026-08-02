@@ -163,7 +163,14 @@ class LoginFormState extends ConsumerState<LoginForm> {
           Padding(
             padding: EdgeInsets.only(right: 32, top: 32),
             child: IconButton(
-              onPressed: () => context.pop(),
+              onPressed: () {
+                // Welcome uses go('/login') (no stack); account switcher uses push.
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go('/welcome');
+                }
+              },
               icon: Icon(Icons.arrow_back),
             ),
           ),
