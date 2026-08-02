@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/utils/glitchtip.dart';
 import 'package:lanis/view/settings/settings_page_builder.dart';
+import 'package:lanis/view/settings/subsettings/debug_export.dart';
 import 'package:lanis/widgets/switch_tile.dart';
 import 'package:liblanis/liblanis.dart';
 
@@ -101,6 +102,18 @@ class _ErrorReportingSettingsState
             ),
           ),
         ],
+        const SizedBox(height: 24.0),
+        const Divider(),
+        ListTile(
+          leading: const Icon(Icons.bug_report_outlined),
+          title: Text(l10n.debugExport),
+          subtitle: Text(l10n.debugExportSubtitle),
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (context) => const DebugExport()),
+            );
+          },
+        ),
       ],
     );
   }
