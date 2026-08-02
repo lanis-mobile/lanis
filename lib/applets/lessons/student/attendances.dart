@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:lanis/generated/l10n.dart';
 
-
 class AttendancesScreen extends StatelessWidget {
   const AttendancesScreen({super.key, required this.lessons});
 
@@ -10,10 +9,15 @@ class AttendancesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Some courses omit attendance maps; never force-unwrap.
+    final attendanceLessons = lessons
+        .where((lesson) => lesson.attendances != null)
+        .toList();
+
     return Scaffold(
       appBar: AppBar(title: Text(AppLocalizations.of(context).attendances)),
       body: ListView.builder(
-        itemCount: lessons.length + 1,
+        itemCount: attendanceLessons.length + 1,
         itemBuilder: (context, index) {
           if (index == 0) {
             return Column(
@@ -21,17 +25,17 @@ class AttendancesScreen extends StatelessWidget {
                 AttendanceCard(
                   title: AppLocalizations.of(context).allAttendances,
                   teachers: [],
-                  attendances: getCombinedAttendances(lessons),
+                  attendances: getCombinedAttendances(attendanceLessons),
                 ),
                 Divider(),
               ],
             );
           }
-          final lesson = lessons[index - 1];
+          final lesson = attendanceLessons[index - 1];
           return AttendanceCard(
             title: lesson.name,
             teachers: lesson.teachers,
-            attendances: lesson.attendances!,
+            attendances: lesson.attendances ?? const {},
           );
         },
       ),
@@ -131,7 +135,9 @@ class AttendanceCard extends StatelessWidget {
 Map<String, String> getCombinedAttendances(Lessons lessons) {
   final attendances = <String, int>{};
   for (final lesson in lessons) {
-    for (final entry in lesson.attendances!.entries) {
+    final lessonAttendances = lesson.attendances;
+    if (lessonAttendances == null) continue;
+    for (final entry in lessonAttendances.entries) {
       final key = entry.key;
       final value = int.tryParse(entry.value) ?? 0;
       attendances.update(key, (val) => val + value, ifAbsent: () => value);
