@@ -174,9 +174,8 @@ class App extends ConsumerWidget {
 }
 
 Widget errorWidget(FlutterErrorDetails details, {BuildContext? context}) {
-  if (context != null) AppLocalizations.of(context);
-
-  String error = details.exception.toString();
+  // Hardcoded German copy: ErrorWidget can run before AppLocalizations is loaded.
+  final error = details.exception.toString();
 
   return Container(
     color: const Color.fromARGB(255, 249, 222, 220),
@@ -192,14 +191,14 @@ Widget errorWidget(FlutterErrorDetails details, {BuildContext? context}) {
             color: Color.fromARGB(255, 179, 38, 30),
           ),
           const SizedBox(height: 24),
-          DefaultTextStyle(
-            style: const TextStyle(
+          const DefaultTextStyle(
+            style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
               color: Color.fromARGB(255, 179, 38, 30),
             ),
             child: Text(
-              AppLocalizations.current.errorOccurred,
+              'Ein Fehler ist aufgetreten.',
               textAlign: TextAlign.center,
             ),
           ),
@@ -210,7 +209,7 @@ Widget errorWidget(FlutterErrorDetails details, {BuildContext? context}) {
               color: Color.fromARGB(255, 179, 38, 30),
             ),
             child: Text(
-              AppLocalizations.current.errorOccurredDetails(error),
+              'Problem: $error',
               textAlign: TextAlign.center,
             ),
           ),
@@ -243,7 +242,7 @@ Widget errorWidget(FlutterErrorDetails details, {BuildContext? context}) {
                 return const Color.fromARGB(255, 179, 38, 30);
               }),
             ),
-            child: Text(AppLocalizations.current.copyErrorToClipboard),
+            child: const Text('Fehler in die Zwischenablage kopieren'),
           ),
         ],
       ),
