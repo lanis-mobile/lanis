@@ -11,8 +11,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -31,11 +29,3 @@ jobs:
 
       - name: App unit and widget tests
         run: flutter test
-
-      - name: Install liblanis dependencies
-        working-directory: liblanis
-        run: dart pub get
-
-      - name: liblanis unit tests
-        working-directory: liblanis
-        run: dart test

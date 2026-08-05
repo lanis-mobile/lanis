@@ -23,8 +23,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  liblanis:
-    path: liblanis
+  liblanis: any
   flutter_riverpod: ^3.0.3
   go_router: ^16.0.0
   dio_cookie_manager: ^3.3.0
