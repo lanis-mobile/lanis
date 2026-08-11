@@ -20,6 +20,7 @@ class MarqueeWidget extends StatefulWidget {
 
 class _MarqueeWidgetState extends State<MarqueeWidget> {
   late ScrollController scrollController;
+  bool _active = true;
 
   @override
   void initState() {
@@ -30,6 +31,7 @@ class _MarqueeWidgetState extends State<MarqueeWidget> {
 
   @override
   void dispose() {
+    _active = false;
     scrollController.dispose();
     super.dispose();
   }
@@ -45,23 +47,22 @@ class _MarqueeWidgetState extends State<MarqueeWidget> {
   }
 
   void scroll(_) async {
-    while (scrollController.hasClients) {
+    while (_active && scrollController.hasClients) {
       await Future.delayed(widget.pauseDuration);
-      if (scrollController.hasClients) {
-        await scrollController.animateTo(
-          scrollController.position.maxScrollExtent,
-          duration: widget.animationDuration,
-          curve: Curves.ease,
-        );
-      }
+      if (!_active || !scrollController.hasClients) return;
+      await scrollController.animateTo(
+        scrollController.position.maxScrollExtent,
+        duration: widget.animationDuration,
+        curve: Curves.ease,
+      );
+      if (!_active) return;
       await Future.delayed(widget.pauseDuration);
-      if (scrollController.hasClients) {
-        await scrollController.animateTo(
-          0.0,
-          duration: widget.backDuration,
-          curve: Curves.easeOut,
-        );
-      }
+      if (!_active || !scrollController.hasClients) return;
+      await scrollController.animateTo(
+        0.0,
+        duration: widget.backDuration,
+        curve: Curves.easeOut,
+      );
     }
   }
 }

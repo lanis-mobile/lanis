@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:lanis/applets/timetable/definition.dart';
 import 'package:lanis/applets/timetable/student/student_timetable_item.dart';
 import 'package:lanis/applets/timetable/student/timetable_helper.dart';
+import 'package:lanis/applets/timetable/student/timetable_week_selection.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/l10n/account_type_ui.dart';
 import 'package:lanis/widgets/combined_applet_builder.dart';
@@ -108,16 +109,23 @@ class _StudentTimetableBetterViewState
                 .toList();
 
             if (currentWeekIndex == -1) {
-              currentWeekIndex = (showByWeek || timetable.weekBadge == null)
-                  ? 0
-                  : uniqueBadges.indexOf(timetable.weekBadge!) + 1;
+              currentWeekIndex = initialTimetableWeekIndex(
+                showByWeek: showByWeek,
+                weekBadge: timetable.weekBadge,
+                uniqueBadges: uniqueBadges,
+              );
             }
+            final weekSelection = resolveTimetableWeekSelection(
+              currentWeekIndex: currentWeekIndex,
+              uniqueBadges: uniqueBadges,
+            );
+            currentWeekIndex = weekSelection.index;
 
             TimeTableData data = TimeTableData(
               selectedPlan,
               timetable,
               settings,
-              currentWeekIndex == 0 ? null : uniqueBadges[currentWeekIndex - 1],
+              weekSelection.badge,
             );
 
             headerHeight =
@@ -179,7 +187,10 @@ class _StudentTimetableBetterViewState
                     ],
             );
 
-            if (data.hours.isEmpty) {
+            if (isTimetableVisuallyEmpty(
+              hoursEmpty: data.hours.isEmpty,
+              daysEmpty: data.timetableDays.isEmpty,
+            )) {
               return Scaffold(
                 appBar: appBar,
                 body: RefreshIndicator(
@@ -414,6 +425,9 @@ class TimeTableView extends StatelessWidget {
                           }).toList(),
                         );
                       } else {
+                        if (days.isEmpty) {
+                          return const SizedBox.shrink();
+                        }
                         var initialIndex = (DateTime.now().weekday - 1) % 7;
                         if (initialIndex >= days.length) {
                           initialIndex = 0;
@@ -578,6 +592,10 @@ class _TimeMarkerWidgetState extends ConsumerState<TimeMarkerWidget> {
 
     if (currentDay != widget.day) {
       return SizedBox();
+    }
+
+    if (widget.data.hours.isEmpty || widget.data.timetableDays.isEmpty) {
+      return const SizedBox();
     }
 
     if (nowTod < widget.data.hours.first.startTime) {

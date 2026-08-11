@@ -12,6 +12,14 @@ class SubstitutionListTile extends StatelessWidget {
     return empty.contains(info);
   }
 
+  /// Prefer [value] when present; otherwise fall back to [valueAlt].
+  /// Returns null when both are blank placeholders.
+  String? primaryOrAlt(String? value, String? valueAlt) {
+    if (!isBlankNotice(value)) return value;
+    if (!isBlankNotice(valueAlt)) return valueAlt;
+    return null;
+  }
+
   Widget? getSubstitutionInfo({
     required BuildContext context,
     required String displayKey,
@@ -19,7 +27,8 @@ class SubstitutionListTile extends StatelessWidget {
     required String? valueAlt,
     required IconData icon,
   }) {
-    if (isBlankNotice(value) && isBlankNotice(valueAlt)) {
+    final displayValue = primaryOrAlt(value, valueAlt);
+    if (displayValue == null) {
       return null;
     }
 
@@ -42,9 +51,7 @@ class SubstitutionListTile extends StatelessWidget {
             ],
           ),
           SubstitutionsFormattedText(
-            !isBlankNotice(value)
-                ? value!
-                : valueAlt!,
+            displayValue,
             Theme.of(context).textTheme.bodyMedium!,
           ),
         ],
@@ -156,52 +163,73 @@ class SubstitutionListTile extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  if (!isBlankNotice(substitutionData.klasse) || !isBlankNotice(substitutionData.klasse_alt)) ...[
-                    ConstrainedBox(
-                      constraints: BoxConstraints(maxWidth: maxClassWidth),
-                      child: MarqueeWidget(
-                        direction: Axis.horizontal,
-                        child: Row(
-                          spacing: 2,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (isBlankNotice(substitutionData.klasse)) ...[
-                              Icon(
-                                Icons.help_outline_outlined,
-                                size: Theme.of(context).textTheme.titleMedium?.fontSize,
+                  Builder(
+                    builder: (context) {
+                      final klasseLabel = primaryOrAlt(
+                        substitutionData.klasse,
+                        substitutionData.klasse_alt,
+                      );
+                      if (klasseLabel == null) {
+                        return const SizedBox.shrink();
+                      }
+                      return ConstrainedBox(
+                        constraints: BoxConstraints(maxWidth: maxClassWidth),
+                        child: MarqueeWidget(
+                          direction: Axis.horizontal,
+                          child: Row(
+                            spacing: 2,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (isBlankNotice(substitutionData.klasse)) ...[
+                                Icon(
+                                  Icons.help_outline_outlined,
+                                  size: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.fontSize,
+                                ),
+                              ],
+                              Text(
+                                klasseLabel,
+                                style: Theme.of(context).textTheme.titleMedium,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ],
-                            Text(
-                              substitutionData.klasse!,
-                              style: Theme.of(context).textTheme.titleMedium,
-                              overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  Builder(
+                    builder: (context) {
+                      final fachLabel = primaryOrAlt(
+                        substitutionData.fach,
+                        substitutionData.fach_alt,
+                      );
+                      if (fachLabel == null) {
+                        return const SizedBox.shrink();
+                      }
+                      return Row(
+                        spacing: 2,
+                        mainAxisSize: .min,
+                        children: [
+                          if (isBlankNotice(substitutionData.fach)) ...[
+                            Icon(
+                              Icons.help_outline_outlined,
+                              size: Theme.of(context)
+                                  .textTheme
+                                  .titleLarge
+                                  ?.fontSize,
                             ),
                           ],
-                        ),
-                      ),
-                    ),
-                  ],
-                  if (!isBlankNotice(substitutionData.fach) || !isBlankNotice(substitutionData.fach_alt)) ...[
-                    Row(
-                      spacing: 2,
-                      mainAxisSize: .min,
-                      children: [
-                        if (isBlankNotice(substitutionData.fach)) ...[
-                          Icon(
-                            Icons.help_outline_outlined,
-                            size: Theme.of(context).textTheme.titleLarge?.fontSize,
+                          Text(
+                            fachLabel,
+                            style: Theme.of(context).textTheme.titleLarge,
                           ),
                         ],
-                        Text(
-                          // prioritize new subject over old subject
-                          !isBlankNotice(substitutionData.fach)
-                              ? substitutionData.fach!
-                              : substitutionData.fach_alt!,
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                      ],
-                    ),
-                  ],
+                      );
+                    },
+                  ),
                   if (!isBlankNotice(substitutionData.stunde)) ...[
                     Text(
                       substitutionData.stunde,

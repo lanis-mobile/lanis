@@ -33,12 +33,17 @@ class _CachedNetworkImageState extends ConsumerState<CachedNetworkImage> {
   bool loading = true;
   late ImageProvider imageProvider;
 
+  void _safeSetLoading(bool value) {
+    if (!mounted) return;
+    setState(() {
+      loading = value;
+    });
+  }
+
   Future<void> loadData() async {
     final storage = ref.read(storageManagerProvider);
     if (storage == null) {
-      setState(() {
-        loading = true;
-      });
+      _safeSetLoading(true);
       return;
     }
     try {
@@ -47,15 +52,12 @@ class _CachedNetworkImageState extends ConsumerState<CachedNetworkImage> {
         'image.${widget.imageType.toString().split('.').last}',
         followRedirects: true,
       );
+      if (!mounted) return;
       File imageFile = File(imagePath);
       imageProvider = FileImage(imageFile);
-      setState(() {
-        loading = false;
-      });
+      _safeSetLoading(false);
     } catch (_) {
-      setState(() {
-        loading = true;
-      });
+      _safeSetLoading(true);
     }
   }
 
@@ -70,14 +72,10 @@ class _CachedNetworkImageState extends ConsumerState<CachedNetworkImage> {
         Uint8List bytes = base64Decode(base64Data);
 
         imageProvider = MemoryImage(bytes);
-        setState(() {
-          loading = false;
-        });
+        _safeSetLoading(false);
       }
     } catch (e) {
-      setState(() {
-        loading = true;
-      });
+      _safeSetLoading(true);
     }
   }
 
