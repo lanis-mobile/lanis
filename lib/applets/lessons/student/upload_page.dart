@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:lanis/applets/lessons/student/upload_dates.dart';
+import 'package:lanis/applets/lessons/student/upload_multipart.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/utils/file_picker.dart';
 import 'package:lanis/utils/root_nav.dart';
@@ -185,16 +186,21 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                               List<FileStatus> fileStatus;
 
                               try {
+                                // Clone before each attempt: Dio MultipartFile
+                                // streams can only be finalized once (retry after
+                                // a failed upload would otherwise crash).
+                                final uploadFiles =
+                                    cloneMultipartFiles(_multipartFiles);
                                 fileStatus = await ref.read(lessonsStudentParserProvider)
                                     .uploadFile(
                                       course: snapshot.data["course_id"],
                                       entry: snapshot.data["entry_id"],
                                       upload: snapshot.data["upload_id"],
-                                      file1: _multipartFiles[0],
-                                      file2: _multipartFiles.elementAtOrNull(1),
-                                      file3: _multipartFiles.elementAtOrNull(2),
-                                      file4: _multipartFiles.elementAtOrNull(3),
-                                      file5: _multipartFiles.elementAtOrNull(4),
+                                      file1: uploadFiles[0],
+                                      file2: uploadFiles.elementAtOrNull(1),
+                                      file3: uploadFiles.elementAtOrNull(2),
+                                      file4: uploadFiles.elementAtOrNull(3),
+                                      file5: uploadFiles.elementAtOrNull(4),
                                     );
                               } on LanisException catch (ex) {
                                 if (context.mounted) {

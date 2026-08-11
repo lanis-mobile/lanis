@@ -132,31 +132,37 @@ class App extends ConsumerWidget {
           Themes.dynamicTheme = Themes.getNewTheme(lightDynamic.primary);
         }
         if (snapshot['color'] == 'dynamic') {
-          var dynamicTheme = Themes.dynamicTheme;
-          var darkTheme = dynamicTheme.darkTheme;
-          if (snapshot['is-amoled'] == true) {
-            darkTheme = Themes.getAmoledThemes(dynamicTheme).darkTheme;
+          final dynamicTheme = Themes.dynamicTheme;
+          // DynamicColorBuilder may call this before platform colors exist;
+          // keep the already-selected fallback theme instead of null themes.
+          if (dynamicTheme.lightTheme != null) {
+            var darkTheme = dynamicTheme.darkTheme;
+            if (snapshot['is-amoled'] == true) {
+              darkTheme = Themes.getAmoledThemes(dynamicTheme).darkTheme;
+            }
+            theme = Themes(dynamicTheme.lightTheme, darkTheme);
           }
-          theme = Themes(dynamicTheme.lightTheme, darkTheme);
         }
 
+        final lightTheme =
+            theme.lightTheme ?? Themes.standardTheme.lightTheme!;
+        final darkTheme =
+            theme.darkTheme ?? Themes.standardTheme.darkTheme!;
         if (mode == ThemeMode.light ||
             (mode == ThemeMode.system &&
                 MediaQuery.of(context).platformBrightness ==
                     Brightness.light)) {
-          BubbleStyles.init(theme.lightTheme!);
+          BubbleStyles.init(lightTheme);
         } else if (mode == ThemeMode.dark ||
             (mode == ThemeMode.system &&
                 MediaQuery.of(context).platformBrightness == Brightness.dark)) {
-          BubbleStyles.init(
-            theme.darkTheme ?? Themes.standardTheme.darkTheme!,
-          );
+          BubbleStyles.init(darkTheme);
         }
 
         return MaterialApp.router(
           title: 'Lanis Mobile',
-          theme: theme.lightTheme,
-          darkTheme: theme.darkTheme,
+          theme: lightTheme,
+          darkTheme: darkTheme,
           themeMode: mode,
           routerConfig: router,
           localizationsDelegates: const [

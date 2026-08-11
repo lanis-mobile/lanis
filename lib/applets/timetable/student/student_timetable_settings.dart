@@ -36,9 +36,9 @@ class _StudentTimetableSettingsState
     TimeTableType selectedType,
   ) {
     if (selectedType == TimeTableType.own) {
-      return data.planForOwn!;
+      return data.planForOwn ?? const [];
     }
-    return data.planForAll!;
+    return data.planForAll ?? const [];
   }
 
   void showCustomLessonDialog(
@@ -51,7 +51,11 @@ class _StudentTimetableSettingsState
   }) {
     List<TimeTableRow>? hours = currentTimetable.hours;
     if (hours == null || hours.length <= 1) {
-      throw Exception('hours is null or too short');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).noDataFound)),
+      );
+      return;
     }
     TimeTableRow startTime = hours[0];
     TimeTableRow endTime = hours[1];
