@@ -9,7 +9,6 @@ app/dist/
 .idea/libraries/Dart_Packages.xml
 .idea/workspace.xml
 
-
 # Miscellaneous
 *.class
 *.log
@@ -70,3 +69,8 @@ generated/
 # Local store upload secrets for build.py
 .env
 .build.env
+
+# FVM Version Cache
+.fvm/
+# FVM Version file
+.fvmrc

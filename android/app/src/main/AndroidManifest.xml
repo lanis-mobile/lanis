@@ -46,17 +46,6 @@
             android:name="flutterEmbedding"
             android:value="2" />
 
-
-        <provider
-            android:name="com.pichillilorenzo.flutter_inappwebview_android.InAppWebViewFileProvider"
-            android:authorities="${applicationId}.flutter_inappwebview_android.fileprovider"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/provider_paths" />
-        </provider>
-
         <service
             android:name="dev.fluttercommunity.plus.androidalarmmanager.AlarmService"
             android:permission="android.permission.BIND_JOB_SERVICE"
