@@ -1,12 +1,12 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'dart:io' as dio_core;
+import 'package:webview_flutter/webview_flutter.dart';
 
 import '../utils/file_operations.dart';
 import 'moodle_sso.dart';
@@ -21,7 +21,8 @@ class MoodleWebView extends ConsumerStatefulWidget {
 class _MoodleWebViewState extends ConsumerState<MoodleWebView> {
   static const noInternetError = "net::ERR_INTERNET_DISCONNECTED";
 
-  final CookieManager cookieManager = CookieManager.instance();
+  final WebViewCookieManager cookieManager = WebViewCookieManager();
+  late final WebViewController webViewController;
 
   ValueNotifier<bool> canGoBack = ValueNotifier(false);
   ValueNotifier<bool> canGoForward = ValueNotifier(false);
@@ -29,7 +30,7 @@ class _MoodleWebViewState extends ConsumerState<MoodleWebView> {
   ValueNotifier<String> currentPageTitle = ValueNotifier("");
 
   String? error;
-  WebUri? errorUrl;
+  Uri? errorUrl;
 
   bool isLoginError = false;
   String loginError = "";
@@ -38,23 +39,18 @@ class _MoodleWebViewState extends ConsumerState<MoodleWebView> {
   bool showWebView = true;
   bool isLoggedIn = false;
 
-  InAppWebViewController? webViewController;
-  WebUri? _pendingMoodleUrl;
-  PullToRefreshController? pullToRefreshController;
-
-  void addWebViewCookies(
-    final List<dio_core.Cookie> cookies,
-    List<String> urls,
-  ) {
+  Future<void> addWebViewCookies(
+      final List<dio_core.Cookie> cookies,
+      List<String> urls,
+      ) async {
     for (int i = 0; i < cookies.length; i++) {
-      cookieManager.setCookie(
-        url: WebUri(urls[i]),
-        name: cookies[i].name,
-        value: cookies[i].value,
-        path: cookies[i].path!,
-        domain: cookies[i].domain,
-        isHttpOnly: cookies[i].httpOnly,
-        isSecure: cookies[i].secure,
+      await cookieManager.setCookie(
+        WebViewCookie(
+          name: cookies[i].name,
+          value: cookies[i].value,
+          domain: cookies[i].domain ?? Uri.parse(urls[i]).host,
+          path: cookies[i].path ?? '/',
+        ),
       );
     }
   }
@@ -92,7 +88,7 @@ class _MoodleWebViewState extends ConsumerState<MoodleWebView> {
         password: account.password,
       );
 
-      addWebViewCookies(
+      await addWebViewCookies(
         [
           result.moProd01Cookie,
           result.moodleId1Cookie,
@@ -101,13 +97,9 @@ class _MoodleWebViewState extends ConsumerState<MoodleWebView> {
         [result.location3, result.location4, result.location4],
       );
 
-      final moodleHome = WebUri(result.moodleHomeUrl);
-      final controller = webViewController;
-      if (controller != null) {
-        await controller.loadUrl(urlRequest: URLRequest(url: moodleHome));
-      } else {
-        _pendingMoodleUrl = moodleHome;
-      }
+      final moodleHome = Uri.parse(result.moodleHomeUrl);
+      await webViewController.loadRequest(moodleHome);
+
       session.jar.saveFromResponse(Uri.parse(result.location3), [
         result.moProd01Cookie,
       ]);
@@ -134,46 +126,145 @@ class _MoodleWebViewState extends ConsumerState<MoodleWebView> {
     }
   }
 
-  void refresh() {
-    if (webViewController != null) {
-      if (error != null) {
-        webViewController!.loadUrl(urlRequest: URLRequest(url: errorUrl));
-
-        error = null;
-        errorUrl = null;
-
-        return;
+  Future<void> refresh() async {
+    if (error != null) {
+      error = null;
+      if (errorUrl != null) {
+        await webViewController.loadRequest(errorUrl!);
       }
-
-      webViewController!.reload();
+      errorUrl = null;
+      return;
     }
+    await webViewController.reload();
+  }
+
+  Future<void> _handleMoodleDownload(Uri uri) async {
+    double fileSize = 0;
+    final storage = ref.read(storageManagerProvider);
+    final fallbackName = storage?.generateUniqueHash(uri.toString()) ??
+        uri.toString().hashCode.toString();
+    String fileName = fallbackName;
+
+    try {
+      final session = ref.read(sessionProvider).asData?.value;
+      if (session != null) {
+        // Fetch headers securely using active session cookies
+        final response = await session.dio.headUri(uri);
+
+        final disposition = response.headers.value('content-disposition');
+        if (disposition != null) {
+          final match = RegExp(r'filename="?([^"]+)"?').firstMatch(disposition);
+          if (match != null) {
+            fileName = match.group(1) ?? fallbackName;
+          }
+        }
+
+        final length = response.headers.value('content-length');
+        if (length != null) {
+          fileSize = double.parse(length) / 1000000;
+        }
+      }
+    } catch (_) {
+      // Get filename the dirty way if HEAD request fails
+      if (uri.pathSegments.isNotEmpty && uri.pathSegments.last.contains('.')) {
+        fileName = uri.pathSegments.last;
+      }
+    }
+
+    if (!mounted) return;
+    showFileModal(
+      context,
+      DownloadableFile(
+        name: fileName,
+        url: uri,
+        size: fileSize > 0 ? "(${fileSize.toStringAsFixed(2)} MB)" : "(N/A)",
+      ),
+    );
   }
 
   @override
   void initState() {
     super.initState();
 
-    getCookies();
-  }
+    webViewController = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(Colors.transparent)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onProgress: (int progress) {
+            if (progress == 100) {
+              progressIndicator.value = 0;
+            } else {
+              progressIndicator.value = progress;
+            }
+          },
+          onPageStarted: (String url) async {
+            error = null;
+            errorUrl = null;
+            canGoBack.value = await webViewController.canGoBack();
+            canGoForward.value = await webViewController.canGoForward();
+          },
+          onPageFinished: (String url) async {
+            progressIndicator.value = 0;
+            currentPageTitle.value = await webViewController.getTitle() ?? "";
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
+            // Hide logout buttons
+            await webViewController.runJavaScript(
+                '''
+              var dropdownLogout = document.querySelector("div#user-action-menu a.dropdown-item[href*='/login/logout.php']");
+              if (dropdownLogout) dropdownLogout.style.display = "none";
+              var navLogout = document.querySelector("div.navbar li a[href*='index.php?logout=']");
+              if (navLogout) navLogout.style.display = "none";
+              '''
+            );
+          },
+          onWebResourceError: (WebResourceError resourceError) {
+            error = resourceError.description;
+            errorUrl = Uri.tryParse(resourceError.url ?? "");
+            progressIndicator.value = 0;
+            setState(() {});
+          },
+          onNavigationRequest: (NavigationRequest request) async {
+            error = null;
+            final Uri? parsedUri = Uri.tryParse(request.url);
 
-    pullToRefreshController ??= PullToRefreshController(
-      settings: PullToRefreshSettings(
-        color: Theme.of(context).colorScheme.primary,
-        backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
-      ),
-      onRefresh: refresh,
-    );
+            if (parsedUri != null) {
+              // Block logout URLs
+              if (isSchulportalDomain(parsedUri) &&
+                  (parsedUri.path == '/login/logout.php' ||
+                      (parsedUri.path == '/index.php' &&
+                          parsedUri.queryParameters['logout'] == 'all'))) {
+                return NavigationDecision.prevent;
+              }
 
-    if (webViewController != null) {
-      pullToRefreshController!.setColor(Theme.of(context).colorScheme.primary);
-      pullToRefreshController!.setBackgroundColor(
-        Theme.of(context).colorScheme.surfaceContainer,
+              // Handle navigation to lanis
+              if (parsedUri.host.toLowerCase() == 'start.schulportal.hessen.de') {
+                setState(() {
+                  showWebView = false;
+                });
+                if (mounted) Navigator.pop(context);
+                return NavigationDecision.prevent;
+              }
+
+              // Intercept file downloads
+              if (parsedUri.path.contains('pluginfile.php') ||
+                  parsedUri.queryParameters.containsKey('forcedownload')) {
+                _handleMoodleDownload(parsedUri);
+                return NavigationDecision.prevent;
+              }
+            }
+
+            // Open external URLs in browser
+            if (parsedUri == null || !isSchulportalDomain(parsedUri)) {
+              await launchUrl(Uri.parse(request.url));
+              return NavigationDecision.prevent;
+            }
+
+            return NavigationDecision.navigate;
+          },
+        ),
       );
-    }
+    getCookies();
   }
 
   @override
@@ -201,15 +292,8 @@ class _MoodleWebViewState extends ConsumerState<MoodleWebView> {
                 return;
               }
 
-              final controller = webViewController;
-              if (controller == null) {
-                if (context.mounted) Navigator.pop(context);
-                return;
-              }
-
-              final canGoBack = await controller.canGoBack();
-              if (canGoBack) {
-                controller.goBack();
+              if (await webViewController.canGoBack()) {
+                webViewController.goBack();
               } else {
                 setState(() {
                   showWebView = false;
@@ -220,131 +304,11 @@ class _MoodleWebViewState extends ConsumerState<MoodleWebView> {
             },
             child: Visibility(
               visible: showWebView,
-              child: InAppWebView(
-                pullToRefreshController: pullToRefreshController,
-                initialSettings: InAppWebViewSettings(
-                  transparentBackground: true,
-                ),
-                onWebViewCreated: (controller) {
-                  webViewController = controller;
-                  final pending = _pendingMoodleUrl;
-                  if (pending != null) {
-                    _pendingMoodleUrl = null;
-                    controller.loadUrl(
-                      urlRequest: URLRequest(url: pending),
-                    );
-                  }
-                },
-                shouldOverrideUrlLoading: (controller, navigationAction) async {
-                  error = null;
-
-                  final WebUri uri = navigationAction.request.url!;
-                  final parsedUri = Uri.tryParse(uri.rawValue);
-
-                  // Block logout URLs (secure host + path check)
-                  if (parsedUri != null &&
-                      isSchulportalDomain(parsedUri) &&
-                      (parsedUri.path == '/login/logout.php' ||
-                          (parsedUri.path == '/index.php' &&
-                              parsedUri.queryParameters['logout'] == 'all'))) {
-                    return NavigationActionPolicy.CANCEL;
-                  }
-
-                  // Handle start.schulportal.hessen.de navigation
-                  if (parsedUri != null &&
-                      parsedUri.host.toLowerCase() ==
-                          'start.schulportal.hessen.de') {
-                    setState(() {
-                      showWebView = false;
-                    });
-                    Navigator.pop(context);
-                    return NavigationActionPolicy.CANCEL;
-                  }
-
-                  // Open external URLs in browser
-                  if (parsedUri == null || !isSchulportalDomain(parsedUri)) {
-                    await launchUrl(uri);
-
-                    return NavigationActionPolicy.CANCEL;
-                  }
-
-                  return NavigationActionPolicy.ALLOW;
-                },
-                onLoadStart: (controller, uri) async {
-                  error = null;
-                  errorUrl = null;
-
-                  if (await controller.canGoBack()) {
-                    canGoBack.value = true;
-                  } else {
-                    canGoBack.value = false;
-                  }
-
-                  if (await controller.canGoForward()) {
-                    canGoForward.value = true;
-                  } else {
-                    canGoForward.value = false;
-                  }
-                },
-                onLoadStop: (controller, url) async {
-                  pullToRefreshController!.endRefreshing();
-                  progressIndicator.value = 0;
-
-                  setState(() {}); // error
-                },
-                onTitleChanged: (controller, title) {
-                  currentPageTitle.value = title ?? "";
-                },
-                onPageCommitVisible: (controller, uri) async {
-                  // Hack to enable pull to refresh in Moodle.
-                  controller.evaluateJavascript(
-                    source:
-                        "document.documentElement.style.height = document.documentElement.clientHeight + 1 + 'px';",
-                  );
-
-                  // Hide logout buttons.
-                  controller.evaluateJavascript(
-                    source:
-                        '''document.querySelector("div#user-action-menu a.dropdown-item[href*='/login/logout.php']").style.display = "none";''',
-                  );
-                  controller.evaluateJavascript(
-                    source:
-                        '''document.querySelector("div.navbar li a[href*='index.php?logout=']").style.display = "none";''',
-                  );
-                },
-                onProgressChanged: (controller, progress) {
-                  if (progress == 100) {
-                    pullToRefreshController!.endRefreshing();
-                    progressIndicator.value = 0;
-                    return;
-                  }
-
-                  progressIndicator.value = progress;
-                },
-                onReceivedError: (controller, request, response) async {
-                  error = response.description;
-                  errorUrl = request.url;
-
-                  pullToRefreshController!.endRefreshing();
-                  progressIndicator.value = 0;
-                },
-                onDownloadStartRequest: (controller, request) {
-                  double fileSize = request.contentLength / 1000000;
-                  final storage = ref.read(storageManagerProvider);
-                  final fallbackName = storage?.generateUniqueHash(
-                        request.url.rawValue,
-                      ) ??
-                      request.url.rawValue.hashCode.toString();
-
-                  showFileModal(
-                    context,
-                    DownloadableFile(
-                      name: request.suggestedFilename ?? fallbackName,
-                      url: request.url,
-                      size: "(${fileSize.toStringAsFixed(2)} MB)",
-                    ),
-                  );
-                },
+              child: RefreshIndicator(
+                color: Theme.of(context).colorScheme.primary,
+                backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
+                onRefresh: refresh,
+                child: WebViewWidget(controller: webViewController),
               ),
             ),
           ),
@@ -515,7 +479,7 @@ class _MoodleWebViewState extends ConsumerState<MoodleWebView> {
                         const SizedBox(width: 8),
                         Flexible(
                           child: Text(
-                            errorUrl?.rawValue ?? "Unknown error",
+                            errorUrl?.toString() ?? "Unknown error",
                             style: Theme.of(context).textTheme.bodyMedium,
                             maxLines: 3,
                             overflow: TextOverflow.ellipsis,
@@ -532,97 +496,90 @@ class _MoodleWebViewState extends ConsumerState<MoodleWebView> {
       ),
       bottomNavigationBar: isLoggedIn
           ? SafeArea(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ValueListenableBuilder(
-                    valueListenable: progressIndicator,
-                    builder: (context, progress, _) {
-                      return Visibility(
-                        visible: progress != 0,
-                        maintainSize: true,
-                        maintainState: true,
-                        maintainAnimation: true,
-                        child: LinearProgressIndicator(value: progress / 100),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ValueListenableBuilder(
+              valueListenable: progressIndicator,
+              builder: (context, progress, _) {
+                return Visibility(
+                  visible: progress != 0,
+                  maintainSize: true,
+                  maintainState: true,
+                  maintainAnimation: true,
+                  child: LinearProgressIndicator(value: progress / 100),
+                );
+              },
+            ),
+            Row(
+              children: [
+                IconButton(
+                  onPressed: refresh,
+                  icon: const Icon(Icons.refresh),
+                ),
+                IconButton(
+                  onPressed: () async {
+                    if (error != null) {
+                      await Clipboard.setData(
+                        ClipboardData(
+                          text: errorUrl?.toString() ?? "Unknown error",
+                        ),
                       );
-                    },
-                  ),
-                  Row(
-                    children: [
-                      IconButton(
-                        onPressed: refresh,
-                        icon: const Icon(Icons.refresh),
-                      ),
-                      IconButton(
-                        onPressed: () async {
-                          if (error != null) {
-                            await Clipboard.setData(
-                              ClipboardData(
-                                text: errorUrl?.rawValue ?? "Unknown error",
-                              ),
-                            );
+                      return;
+                    }
 
-                            return;
-                          }
-
-                          if (webViewController != null) {
-                            await Clipboard.setData(
-                              ClipboardData(
-                                text: (await webViewController!.getUrl())!
-                                    .rawValue,
-                              ),
-                            );
-                          }
-                        },
-                        icon: const Icon(Icons.link),
+                    final currentUrl = await webViewController.currentUrl();
+                    if (currentUrl != null) {
+                      await Clipboard.setData(
+                        ClipboardData(text: currentUrl),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.link),
+                ),
+                Expanded(
+                  child: error == null
+                      ? Center(
+                    child: ValueListenableBuilder(
+                      valueListenable: currentPageTitle,
+                      builder: (context, title, _) => Text(
+                        title,
+                        style: Theme.of(context).textTheme.labelLarge,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      Expanded(
-                        child: error == null
-                            ? Center(
-                                child: ValueListenableBuilder(
-                                  valueListenable: currentPageTitle,
-                                  builder: (context, title, _) => Text(
-                                    title,
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.labelLarge,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              )
-                            : SizedBox.shrink(),
-                      ),
-                      ValueListenableBuilder(
-                        valueListenable: canGoBack,
-                        builder: (context, can, _) {
-                          return IconButton(
-                            onPressed: can
-                                ? () {
-                                    webViewController?.goBack();
-                                  }
-                                : null,
-                            icon: const Icon(Icons.arrow_back),
-                          );
-                        },
-                      ),
-                      ValueListenableBuilder(
-                        valueListenable: canGoForward,
-                        builder: (context, can, _) {
-                          return IconButton(
-                            onPressed: can
-                                ? () {
-                                    webViewController?.goForward();
-                                  }
-                                : null,
-                            icon: const Icon(Icons.arrow_forward),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            )
+                    ),
+                  )
+                      : const SizedBox.shrink(),
+                ),
+                ValueListenableBuilder(
+                  valueListenable: canGoBack,
+                  builder: (context, can, _) {
+                    return IconButton(
+                      onPressed: can
+                          ? () {
+                        webViewController.goBack();
+                      }
+                          : null,
+                      icon: const Icon(Icons.arrow_back),
+                    );
+                  },
+                ),
+                ValueListenableBuilder(
+                  valueListenable: canGoForward,
+                  builder: (context, can, _) {
+                    return IconButton(
+                      onPressed: can
+                          ? () { webViewController.goForward(); }
+                          : null,
+                      icon: const Icon(Icons.arrow_forward),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+      )
           : SizedBox.shrink(),
     );
   }
