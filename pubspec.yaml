@@ -56,12 +56,12 @@ dependencies:
   table_calendar: ^3.0.9
   flutter_localizations:
     sdk: flutter
-  app_settings: ^7.0.0
+  app_settings: ^9.0.0
   device_info_plus: ^13.2.0
   flutter_quill: ^11.5.1
   webview_flutter: ^4.14.1
   flutter_secure_storage: ^10.0.0
-  native_dio_adapter: ^1.5.0
+  native_dio_adapter: ^1.7.0
   flutter_widget_from_html_core: ^0.17.0
   flutter_colorpicker: ^1.1.0
   flutter_masonry_view: ^0.0.2
@@ -72,7 +72,7 @@ dependencies:
   uuid: ^4.5.2
   colored_logger: ^2.1.1
   riverpod: ^3.0.3
-  sentry_flutter: ^9.25.0
+  sentry_flutter: ^9.27.0
 
 flutter_launcher_icons:
   android: false
