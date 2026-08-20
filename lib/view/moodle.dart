@@ -148,7 +148,6 @@ class _MoodleWebViewState extends ConsumerState<MoodleWebView> {
     try {
       final session = ref.read(sessionProvider).asData?.value;
       if (session != null) {
-        // Fetch headers securely using active session cookies
         final response = await session.dio.headUri(uri);
 
         final disposition = response.headers.value('content-disposition');

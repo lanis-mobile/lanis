@@ -32,7 +32,7 @@ dependencies:
   path: ^1.9.1
   url_launcher: ^6.1.14
   cookie_jar: ^4.0.8
-  dio: ^5.9.0
+  dio: ^5.11.0
   html: ^0.15.4
   flutter_launcher_icons: ^0.14.0
   flutter_local_notifications: ^21.0.0
