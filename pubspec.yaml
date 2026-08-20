@@ -49,7 +49,7 @@ dependencies:
   linkify: ^5.0.0
   flutter_svg: ^2.0.10+1
   dynamic_color: ^1.6.9
-  flutter_markdown: ^0.7.1
+  flutter_markdown_plus: ^1.0.12
   file_picker: ^12.0.0
   mime: ^2.0.0
   flutter_native_splash: ^2.4.1
