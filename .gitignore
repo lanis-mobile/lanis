@@ -72,3 +72,5 @@ generated/
 
 # FVM Version Cache
 .fvm/
+# FVM Version file
+.fvmrc
