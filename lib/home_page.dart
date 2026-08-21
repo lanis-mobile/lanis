@@ -13,9 +13,9 @@ import 'package:lanis/shell_navigation.dart';
 import 'package:lanis/utils/cached_network_image.dart';
 import 'package:lanis/utils/deep_link.dart';
 import 'package:lanis/utils/responsive.dart';
+import 'package:lanis/utils/safe_launch.dart';
 import 'package:lanis/utils/whats_new.dart';
 import 'package:lanis/widgets/applet_home_shell.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 /// Nested home applet paths (order matches bottom-nav / shell branches).
 List<String> homeAppletPathsFor(AccountType accountType) => AppDefinitions
@@ -101,7 +101,8 @@ class HomePageState extends ConsumerState<HomePage> {
     if (account == null) return;
     try {
       final url = await LanisSession.getLoginURL(account, config);
-      await launchUrl(Uri.parse(url));
+      if (!mounted) return;
+      await safeLaunchUrl(Uri.parse(url), context: context);
     } on LanisException catch (ex) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -120,8 +121,8 @@ class HomePageState extends ConsumerState<HomePage> {
     await ref
         .read(authControllerProvider.notifier)
         .removeAccountAndContinue(account.localId);
-    final phase = ref.read(authControllerProvider).phase;
     if (!mounted) return;
+    final phase = ref.read(authControllerProvider).phase;
     if (phase == AuthPhase.authenticated) {
       context.go(firstSupportedHomePath(ref));
     } else {
@@ -177,7 +178,8 @@ class HomePageState extends ConsumerState<HomePage> {
   }
 
   /// Supported home-tab destinations shared by bottom bar and rail.
-  ({List<int> indexes, List<AppletDefinition> defs}) _supportedHomeDestinations() {
+  ({List<int> indexes, List<AppletDefinition> defs})
+  _supportedHomeDestinations() {
     final nestedDefs = AppDefinitions.homeApplets;
     final indexes = <int>[];
     final defs = <AppletDefinition>[];
@@ -191,22 +193,28 @@ class HomePageState extends ConsumerState<HomePage> {
   }
 
   /// Drawer rows that participate in [NavigationDrawer.selectedIndex].
-  List<({
-    String label,
-    Icon icon,
-    Icon selectedIcon,
-    bool enabled,
-    int? branchIndex,
-    VoidCallback onTap,
-  })> _drawerDestinations(BuildContext context) {
-    final items = <({
+  List<
+    ({
       String label,
       Icon icon,
       Icon selectedIcon,
       bool enabled,
       int? branchIndex,
       VoidCallback onTap,
-    })>[];
+    })
+  >
+  _drawerDestinations(BuildContext context) {
+    final items =
+        <
+          ({
+            String label,
+            Icon icon,
+            Icon selectedIcon,
+            bool enabled,
+            int? branchIndex,
+            VoidCallback onTap,
+          })
+        >[];
 
     for (final def in AppDefinitions.homeApplets) {
       items.add((
@@ -497,9 +505,7 @@ class HomePageState extends ConsumerState<HomePage> {
     final isTablet = Responsive.isTablet(context);
     final onHomeBranch = _onHomeBranch;
     final rail = isTablet ? navRail(context) : null;
-    final content = anySupported
-        ? widget.navigationShell
-        : noAppsSupported();
+    final content = anySupported ? widget.navigationShell : noAppsSupported();
 
     // Outer chrome: tablet rail + drawer only. Phone bottom bar is nested in
     // [appletHomeShell] under each applet home route.
