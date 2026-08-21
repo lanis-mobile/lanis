@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:lanis/bridge/login_telemetry.dart';
 import 'package:lanis/utils/privacy_policy.dart';
+import 'package:lanis/spam_alessio.dart';
 
 enum AuthPhase { unauthenticated, authenticating, authenticated, error }
 
@@ -88,7 +89,11 @@ class AuthController extends Notifier<AuthState> {
     try {
       final db = ref.read(lanisDatabaseProvider);
       final accounts = await db.listAccounts();
+
+      spamAlessio("try login");
+
       if (accounts.isEmpty) {
+        spamAlessio("accounts.isEmpty");
         await ref.read(activeAccountProvider.notifier).clear();
         state = const AuthState.unauthenticated();
         return;
@@ -97,18 +102,21 @@ class AuthController extends Notifier<AuthState> {
       final shared = ref.read(sharedOverAccountSettingsProvider);
       if (!isPrivacyPolicyAccepted(shared)) {
         // Returning users must accept the update gate before auth continues.
+        spamAlessio("!isPrivacyPolicyAccepted");
         state = const AuthState.unauthenticated();
         return;
       }
 
       await ref.read(activeAccountProvider.notifier).selectPreferred();
       if (ref.read(activeAccountProvider) == null) {
+        spamAlessio("ref.read(activeAccountProvider) == null");
         state = const AuthState.unauthenticated();
         return;
       }
 
       await _authenticate();
       state = const AuthState.authenticated();
+      spamAlessio("authenticated");
     } on WrongCredentialsException catch (e) {
       // Keep the failed account selected so ResetAccountPage can fix credentials.
       state = AuthState.error(e);
