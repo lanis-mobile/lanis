@@ -63,7 +63,7 @@ class AppletErrorView extends StatelessWidget {
               OutlinedButton(
                 onPressed: () {
                   launchUrl(
-                    Uri.parse("https://github.com/alessioC42/lanis/issues"),
+                    Uri.parse("https://github.com/lanis-mobile/lanis/issues"),
                   );
                 },
                 child: const Text("GitHub"),
