@@ -241,7 +241,7 @@
   "introCustomize": "You can customize the app to your needs in the settings.",
   "introSchoolPortal": "The school portal has a modular structure. This means that your school may not support all the features of the app or the app may not support all the features of your school.",
   "introAnalytics": "Due to the modular nature of the school portal, there may be occasional problems for your school. In this case, please send us a bug report via GitHub or email.",
-  "introHaveFun": "Log in now to use lanis-mobile. Use the login credentials that you normally use for the school portal website.",
+  "introHaveFun": "Login now to use lanis-mobile. Use the login credentials that you normally use for the school portal website.",
 
   "startupError": "Critical error!",
   "startupErrorMessage": "A critical error occurred during the login! You can retry it or report the bold error message.",
@@ -283,7 +283,7 @@
   "errorSendingMessage": "Error occurred during sending the message!",
   "errorCreatingConversation": "Couldn't create new conversation!",
   "receivers": "Receivers",
-  "statistic": "Statistics",
+  "statistics": "Statistics",
   "participants": "Participants",
   "supervisors": "Supervisors",
   "parents": "Parents",
