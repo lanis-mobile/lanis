@@ -128,11 +128,6 @@ class _StudentTimetableBetterViewState
               weekSelection.badge,
             );
 
-            headerHeight =
-                timetable.weekBadge != null && timetable.weekBadge!.isNotEmpty
-                ? 40
-                : 26;
-
             final appBar = AppBar(
               title: Text(timeTableDefinition.label(context)),
               leading: widget.openDrawerCb != null
