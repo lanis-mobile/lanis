@@ -89,8 +89,14 @@ class HomePageState extends ConsumerState<HomePage> {
 
   ClearTextAccount? get _account => ref.read(activeAccountProvider);
 
-  bool _supports(String phpUrl) =>
-      ref.read(supportedAppletPhpUrlsProvider).contains(phpUrl);
+  bool _supports(AppletDefinition definition) {
+    final accountType = _account?.accountType;
+    return accountType != null &&
+        definition.supportedAccountTypes.contains(accountType) &&
+        ref
+            .read(supportedAppletPhpUrlsProvider)
+            .contains(definition.appletPhpUrl);
+  }
 
   bool get _onHomeBranch =>
       widget.navigationShell.currentIndex < AppDefinitions.homeApplets.length;
@@ -184,7 +190,7 @@ class HomePageState extends ConsumerState<HomePage> {
     final indexes = <int>[];
     final defs = <AppletDefinition>[];
     for (var i = 0; i < nestedDefs.length; i++) {
-      if (_supports(nestedDefs[i].appletPhpUrl)) {
+      if (_supports(nestedDefs[i])) {
         indexes.add(i);
         defs.add(nestedDefs[i]);
       }
@@ -221,14 +227,14 @@ class HomePageState extends ConsumerState<HomePage> {
         label: def.label(context),
         icon: def.icon,
         selectedIcon: def.selectedIcon,
-        enabled: _supports(def.appletPhpUrl),
+        enabled: _supports(def),
         branchIndex: shellBranchIndexForApplet(def),
         onTap: () => _goBranch(shellBranchIndexForApplet(def)),
       ));
     }
 
     for (final def in AppDefinitions.navigationApplets) {
-      if (!_supports(def.appletPhpUrl)) continue;
+      if (!_supports(def)) continue;
       items.add((
         label: def.label(context),
         icon: def.icon,
@@ -420,7 +426,7 @@ class HomePageState extends ConsumerState<HomePage> {
     }
 
     for (final def in AppDefinitions.homeApplets) {
-      if (!_supports(def.appletPhpUrl)) continue;
+      if (!_supports(def)) continue;
       addBranch(
         label: def.label(context),
         icon: def.icon,
@@ -429,7 +435,7 @@ class HomePageState extends ConsumerState<HomePage> {
       );
     }
     for (final def in AppDefinitions.navigationApplets) {
-      if (!_supports(def.appletPhpUrl)) continue;
+      if (!_supports(def)) continue;
       addBranch(
         label: def.label(context),
         icon: def.icon,
@@ -501,7 +507,7 @@ class HomePageState extends ConsumerState<HomePage> {
     ref.watch(supportedAppletPhpUrlsProvider);
     ref.watch(activeAccountProvider);
 
-    final anySupported = homeAppletPhpUrls.any(_supports);
+    final anySupported = AppDefinitions.homeApplets.any(_supports);
     final isTablet = Responsive.isTablet(context);
     final onHomeBranch = _onHomeBranch;
     final rail = isTablet ? navRail(context) : null;

@@ -248,6 +248,7 @@ class ReleaseNotesScreen extends StatelessWidget {
       ),
       floatingActionButton: showBack
           ? FloatingActionButton.extended(
+              heroTag: null,
               onPressed: () => popRootDialog(context),
               icon: const Icon(Icons.done),
               label: Text(AppLocalizations.of(context).done),
