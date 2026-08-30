@@ -36,6 +36,7 @@
   "reportError": "A problem occurred. Please report it in case of repeated occurrence.",
   "errorOccurred": "An error occurred",
   "errorOccurredWebsite": "An error occurred while accessing the website!",
+  "couldNotOpenUrl": "Could not open this link.",
   "supported": "supported",
   "unsupported": "unsupported",
   "noResults": "No results",

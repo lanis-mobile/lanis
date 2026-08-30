@@ -13,9 +13,9 @@ import 'package:lanis/shell_navigation.dart';
 import 'package:lanis/utils/cached_network_image.dart';
 import 'package:lanis/utils/deep_link.dart';
 import 'package:lanis/utils/responsive.dart';
+import 'package:lanis/utils/safe_launch.dart';
 import 'package:lanis/utils/whats_new.dart';
 import 'package:lanis/widgets/applet_home_shell.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 /// Nested home applet paths (order matches bottom-nav / shell branches).
 List<String> homeAppletPathsFor(AccountType accountType) => AppDefinitions
@@ -107,7 +107,8 @@ class HomePageState extends ConsumerState<HomePage> {
     if (account == null) return;
     try {
       final url = await LanisSession.getLoginURL(account, config);
-      await launchUrl(Uri.parse(url));
+      if (!mounted) return;
+      await safeLaunchUrl(Uri.parse(url), context: context);
     } on LanisException catch (ex) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -126,8 +127,8 @@ class HomePageState extends ConsumerState<HomePage> {
     await ref
         .read(authControllerProvider.notifier)
         .removeAccountAndContinue(account.localId);
-    final phase = ref.read(authControllerProvider).phase;
     if (!mounted) return;
+    final phase = ref.read(authControllerProvider).phase;
     if (phase == AuthPhase.authenticated) {
       context.go(firstSupportedHomePath(ref));
     } else {

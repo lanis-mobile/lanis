@@ -29,6 +29,7 @@
   "reportError": "Es gab wohl ein Problem, bitte melde den Fehler bei wiederholtem Auftreten.",
   "errorOccurred": "Ein Fehler ist aufgetreten.",
   "errorOccurredWebsite": "Ein Fehler ist beim Öffnen der Seite aufgetreten!",
+  "couldNotOpenUrl": "Dieser Link konnte nicht geöffnet werden.",
   "noResults": "Keine Ergebnisse",
   "theme": "Thema",
   "light": "Hell",
