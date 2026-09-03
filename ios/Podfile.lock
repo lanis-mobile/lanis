@@ -10,8 +10,6 @@ PODS:
     - Flutter
     - FlutterMacOS
   - Flutter (1.0.0)
-  - flutter_background_executor (0.0.1):
-    - Flutter
   - flutter_keyboard_visibility_temp_fork (0.0.1):
     - Flutter
   - flutter_local_notifications (0.0.1):
@@ -38,9 +36,6 @@ PODS:
     - Sentry/HybridSDK (= 8.58.4)
   - share_plus (0.0.1):
     - Flutter
-  - shared_preferences_foundation (0.0.1):
-    - Flutter
-    - FlutterMacOS
   - TSBackgroundFetch (4.1.1)
   - url_launcher_ios (0.0.1):
     - Flutter
@@ -54,7 +49,6 @@ DEPENDENCIES:
   - device_info_plus (from `.symlinks/plugins/device_info_plus/ios`)
   - file_picker_darwin (from `.symlinks/plugins/file_picker_darwin/darwin`)
   - Flutter (from `Flutter`)
-  - flutter_background_executor (from `.symlinks/plugins/flutter_background_executor/ios`)
   - flutter_keyboard_visibility_temp_fork (from `.symlinks/plugins/flutter_keyboard_visibility_temp_fork/ios`)
   - flutter_local_notifications (from `.symlinks/plugins/flutter_local_notifications/ios`)
   - flutter_secure_storage_darwin (from `.symlinks/plugins/flutter_secure_storage_darwin/darwin`)
@@ -66,7 +60,6 @@ DEPENDENCIES:
   - quill_native_bridge_ios (from `.symlinks/plugins/quill_native_bridge_ios/ios`)
   - sentry_flutter (from `.symlinks/plugins/sentry_flutter/ios`)
   - share_plus (from `.symlinks/plugins/share_plus/ios`)
-  - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
   - url_launcher_ios (from `.symlinks/plugins/url_launcher_ios/ios`)
   - webview_flutter_wkwebview (from `.symlinks/plugins/webview_flutter_wkwebview/darwin`)
 
@@ -86,8 +79,6 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/file_picker_darwin/darwin"
   Flutter:
     :path: Flutter
-  flutter_background_executor:
-    :path: ".symlinks/plugins/flutter_background_executor/ios"
   flutter_keyboard_visibility_temp_fork:
     :path: ".symlinks/plugins/flutter_keyboard_visibility_temp_fork/ios"
   flutter_local_notifications:
@@ -110,8 +101,6 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/sentry_flutter/ios"
   share_plus:
     :path: ".symlinks/plugins/share_plus/ios"
-  shared_preferences_foundation:
-    :path: ".symlinks/plugins/shared_preferences_foundation/darwin"
   url_launcher_ios:
     :path: ".symlinks/plugins/url_launcher_ios/ios"
   webview_flutter_wkwebview:
@@ -123,7 +112,6 @@ SPEC CHECKSUMS:
   device_info_plus: 21fcca2080fbcd348be798aa36c3e5ed849eefbe
   file_picker_darwin: 4c2b9a50ea44cb3b071381ea0cf48591bdd80251
   Flutter: 71a624a5bc0c04062bf19101d501e466baf2fb47
-  flutter_background_executor: 8896055e67e989e9e1c02d84884b0dfaf9acce82
   flutter_keyboard_visibility_temp_fork: 95b2d534bacf6ac62e7fcbe5c2a9e2c2a17ce06f
   flutter_local_notifications: 643a3eda1ce1c0599413ca31672536d423dee214
   flutter_secure_storage_darwin: acdb3f316ed05a3e68f856e0353b133eec373a23
@@ -136,11 +124,10 @@ SPEC CHECKSUMS:
   Sentry: 5321d74bdd28d6f6f8beaa1ca06f1fdc746bff49
   sentry_flutter: 771dee2d190e0952aa3873211c4a3a10f0c1ef04
   share_plus: 50da8cb520a8f0f65671c6c6a99b3617ed10a58a
-  shared_preferences_foundation: 7036424c3d8ec98dfe75ff1667cb0cd531ec82bb
   TSBackgroundFetch: 18918b6449a1e3f01eb0f5b44d6d79ce6160a5a5
   url_launcher_ios: 7a95fa5b60cc718a708b8f2966718e93db0cef1b
   webview_flutter_wkwebview: 8ebf4fded22593026f7dbff1fbff31ea98573c8d
 
-PODFILE CHECKSUM: 730d2d1ad5a7d04af09871cb0734b17ea30169ba
+PODFILE CHECKSUM: 49ab128cb5618d1184c0a203a0cb504f1490c070
 
 COCOAPODS: 1.16.2
