@@ -134,8 +134,10 @@ class _MoodleWebViewState extends ConsumerState<MoodleWebView> {
   Future<void> refresh() async {
     if (error != null) {
       error = null;
-      if (errorUrl != null) {
+      if (errorUrl?.hasScheme == true) {
         await webViewController.loadRequest(errorUrl!);
+      } else {
+        await webViewController.reload();
       }
       errorUrl = null;
       return;

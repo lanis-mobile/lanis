@@ -44,8 +44,11 @@ class _HomeworkBoxState extends ConsumerState<HomeworkBox> with WidgetsBindingOb
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Checks if the context is still available to prevent _TypeError
       if (_columnKey.currentContext != null) {
-        final RenderBox renderBox =
-            _columnKey.currentContext!.findRenderObject() as RenderBox;
+        final renderBox = _columnKey.currentContext!.findRenderObject();
+        if (!mounted || renderBox is! RenderBox ||
+            !renderBox.attached || !renderBox.hasSize) {
+          return;
+        }
         setState(() {
           _columnSize = renderBox.size;
         });

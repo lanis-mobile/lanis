@@ -12,6 +12,7 @@ app/dist/
 # Miscellaneous
 *.class
 *.log
+!docs/reports/fix-evidence/*.log
 *.pyc
 *.swp
 .DS_Store
@@ -74,3 +75,4 @@ generated/
 .fvm/
 # FVM Version file
 .fvmrc
+docs/
