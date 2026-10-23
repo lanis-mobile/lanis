@@ -35,6 +35,9 @@ final class _PickedFile extends PlatformFile {
   Uri get uri => file.uri;
   @override
   XFile get xFile => XFile(file.path);
+  // Added in later 12.x interfaces; older versions have no member to override.
+  // ignore: annotate_overrides
+  int lengthSync() => file.lengthSync();
   @override
   Future<int> length() async => file.lengthSync();
   @override
@@ -56,6 +59,8 @@ class _Picker extends FilePickerPlatform {
     Function(FilePickerStatus)? onFileLoading,
     int compressionQuality = 0,
     AndroidOptions androidOptions = const AndroidOptions(),
+    // Accept the newer option without requiring its type in older 12.x exports.
+    Object? darwinOptions,
     WindowsOptions windowsOptions = const WindowsOptions(),
     LinuxOptions linuxOptions = const LinuxOptions(),
     WebOptions webOptions = const WebOptions(),
