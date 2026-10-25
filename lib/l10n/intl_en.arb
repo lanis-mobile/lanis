@@ -31,7 +31,7 @@
   "couldNotLoadDataStorage": "Failed to load Datastorage!",
   "couldNotLoadFiles": "Failed to load files!",
   "lanisDownError": "Lanis is down!",
-  "lanisDownErrorMessage": "Looks like Lanis is down.\nPlease check the status of Lanis (PaedOrg) on the Website.",
+  "lanisDownErrorMessage": "Schulportal Hesse appears to be unavailable.\nPlease check the server status on our status page.",
 
   "reportError": "A problem occurred. Please report it in case of repeated occurrence.",
   "errorOccurred": "An error occurred",
@@ -167,7 +167,7 @@
   "cancel": "Cancel",
   "ok": "OK",
 
-  "settingsInfoUserData": "All user data is stored on the Lanis servers.",
+  "settingsInfoUserData": "All user data is stored on the servers of the school portal hesse.",
   "settingsInfoNotifications": "The frequency and time at which everything is updated depends on various factors relating to the end device.",
   "settingsUnsupportedInfoAppearance": "Missing an option? Dynamic accent colours are not supported on iOS or older Android devices.",
   "settingsInfoDynamicColor": "Depending on your Android-System you can change your dynamic accent colour. Normally it's always a colour from your wallpaper.",

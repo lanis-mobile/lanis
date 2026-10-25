@@ -24,7 +24,7 @@
   "couldNotLoadDataStorage": "Fehler beim Laden des Dateispeichers!",
   "couldNotLoadFiles": "Fehler beim Laden der Dateien!",
   "lanisDownError": "Lanis ist nicht aufrufbar!",
-  "lanisDownErrorMessage": "Anscheinend ist Lanis nicht verfügbar.\nBitte überprüfe den Status von Lanis (PaedOrg) auf der Website.",
+  "lanisDownErrorMessage": "Anscheinend ist das Schulportal Hessen nicht verfügbar.\nBitte überprüfe den Serverstatus auf unserer Statusseite.",
 
   "reportError": "Es gab wohl ein Problem, bitte melde den Fehler bei wiederholtem Auftreten.",
   "errorOccurred": "Ein Fehler ist aufgetreten.",
@@ -137,7 +137,7 @@
   "cancel": "Abbrechen",
   "ok": "OK",
 
-  "settingsInfoUserData": "Alle Benutzerdaten sind auf den Lanis-Servern gespeichert.",
+  "settingsInfoUserData": "Alle Benutzerdaten sind auf den Servern des Schulportal Hessen gespeichert.",
   "settingsInfoNotifications": "Die Häufigkeit und der Zeitpunkt der Aktualisierung hängen von verschiedenen Faktoren des Endgeräts ab.",
   "settingsInfoClearCache": "Alle Dateien, die du jemals heruntergeladen hast, bilden den Cache. Hier kannst du ihn leeren, um Speicherplatz freizugeben. Dateien werden automatisch nach 7 Tagen gelöscht.",
   "settingsUnsupportedInfoAppearance": "Vermisst du eine Option? Dynamische Akzentfarben werden unter iOS oder älteren Android-Versionen nicht unterstützt.",

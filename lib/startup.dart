@@ -152,8 +152,7 @@ class StartupAuthErrorContent extends StatelessWidget {
     required this.onRetry,
   });
 
-  static const _statusUrl =
-      'https://info.schulportal.hessen.de/status-des-schulportal-hessen/';
+  static const _statusUrl = 'https://status-lanis-mobile.alessioc42.dev/';
 
   @override
   Widget build(BuildContext context) {
