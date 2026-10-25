@@ -68,6 +68,7 @@
   "logout": "Abmelden",
   "logoutConfirmation": "Bist du sicher, dass du dich abmelden möchtest?",
   "checkStatus": "Serverstatus überprüfen",
+  "serverStatus": "Serverstatus",
   "loading": "Lade...",
   "downloading": "Downloaden...",
   "teacher": "Lehrer",

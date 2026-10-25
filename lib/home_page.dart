@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:lanis/applets/definitions.dart';
 import 'package:lanis/generated/l10n.dart';
@@ -14,6 +15,7 @@ import 'package:lanis/utils/cached_network_image.dart';
 import 'package:lanis/utils/deep_link.dart';
 import 'package:lanis/utils/responsive.dart';
 import 'package:lanis/utils/safe_launch.dart';
+import 'package:lanis/utils/server_status.dart';
 import 'package:lanis/utils/whats_new.dart';
 import 'package:lanis/widgets/applet_home_shell.dart';
 
@@ -277,6 +279,18 @@ class HomePageState extends ConsumerState<HomePage> {
       branchIndex: null,
       onTap: _logout,
     ));
+    items.add((
+      label: AppLocalizations.of(context).serverStatus,
+      icon: const Icon(Icons.dns_outlined),
+      selectedIcon: const Icon(Icons.dns_outlined),
+      enabled: true,
+      branchIndex: null,
+      onTap: () => safeLaunchUrl(
+        Uri.parse(serverStatusUrl),
+        context: context,
+        mode: LaunchMode.externalApplication,
+      ),
+    ));
 
     return items;
   }
@@ -391,7 +405,7 @@ class HomePageState extends ConsumerState<HomePage> {
           ),
         ),
         for (var i = 0; i < destinations.length; i++) ...[
-          if (i == homeCount) const Divider(),
+          if (i == homeCount || i == destinations.length - 1) const Divider(),
           NavigationDrawerDestination(
             label: Text(destinations[i].label),
             icon: destinations[i].icon,

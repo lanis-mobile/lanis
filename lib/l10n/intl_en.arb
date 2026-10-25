@@ -96,6 +96,7 @@
   "logout": "Logout",
   "logoutConfirmation": "Do you really want to log out?",
   "checkStatus": "Check server status",
+  "serverStatus": "Server status",
   "allSettingsWillBeLost": "All settings will be lost!",
   "loading": "Loading...",
   "downloading": "Downloading...",
