@@ -1,41 +1,69 @@
-/// Resolves the selected week badge for the student timetable.
-///
-/// [currentWeekIndex] uses `0` for "all weeks" and `1..n` for
-/// [uniqueBadges] entries. Out-of-range / empty badge lists fall back to
-/// "all weeks" so UI builds never index an empty list.
-({int index, String? badge}) resolveTimetableWeekSelection({
-  required int currentWeekIndex,
-  required List<String> uniqueBadges,
-}) {
-  if (uniqueBadges.isEmpty || currentWeekIndex <= 0) {
-    return (index: 0, badge: null);
+import 'package:dart_date/dart_date.dart';
+
+enum TimetableWeekMode { current, all, badge }
+
+/// A school-week choice is identified by its badge, never by its position in a
+/// plan's lessons. Current-week mode follows newly fetched server badges.
+class TimetableWeekSelection {
+  final TimetableWeekMode mode;
+  final String? badge;
+
+  const TimetableWeekSelection.current()
+    : mode = TimetableWeekMode.current,
+      badge = null;
+  const TimetableWeekSelection.all()
+    : mode = TimetableWeekMode.all,
+      badge = null;
+  const TimetableWeekSelection.badge(this.badge)
+    : mode = TimetableWeekMode.badge;
+
+  factory TimetableWeekSelection.fromSettings(Map<String, dynamic> settings) {
+    final saved = settings['student-week-selection'];
+    if (saved is Map) {
+      if (saved['mode'] == 'all') return const TimetableWeekSelection.all();
+      final badge = saved['badge'];
+      if (saved['mode'] == 'badge' &&
+          badge is String &&
+          badge.trim().isNotEmpty) {
+        return TimetableWeekSelection.badge(badge.trim());
+      }
+      if (saved['mode'] == 'current') {
+        return const TimetableWeekSelection.current();
+      }
+    }
+    // The legacy boolean used true for all weeks and false for current week.
+    return settings['student-selected-week'] == true
+        ? const TimetableWeekSelection.all()
+        : const TimetableWeekSelection.current();
   }
-  if (currentWeekIndex > uniqueBadges.length) {
-    return (index: 0, badge: null);
+
+  Map<String, dynamic> toJson() => {
+    'mode': mode.name,
+    if (mode == TimetableWeekMode.badge) 'badge': badge,
+  };
+
+  String? resolveBadge(String? currentBadge) {
+    final value = switch (mode) {
+      TimetableWeekMode.current => currentBadge,
+      TimetableWeekMode.all => null,
+      TimetableWeekMode.badge => badge,
+    };
+    return value == null || value.trim().isEmpty ? null : value.trim();
   }
-  return (
-    index: currentWeekIndex,
-    badge: uniqueBadges[currentWeekIndex - 1],
-  );
 }
 
-/// Initial week index from settings / current school week badge.
-int initialTimetableWeekIndex({
-  required bool showByWeek,
-  required String? weekBadge,
-  required List<String> uniqueBadges,
-}) {
-  if (showByWeek || weekBadge == null || weekBadge.isEmpty) {
-    return 0;
-  }
-  final idx = uniqueBadges.indexOf(weekBadge);
-  return idx >= 0 ? idx + 1 : 0;
-}
+/// Keep Sunday in the server's current school week. Advancing to next Monday
+/// would require a server badge for that week, not an inferred A/B alternation.
+DateTime timetableWeekStart(DateTime date) => DateTime(
+  date.year,
+  date.month,
+  date.day - (date.weekday - DateTime.monday),
+);
 
-/// True when the timetable has hour rows but no visible day columns after
-/// week / hidden-lesson filtering (would crash [DefaultTabController]).
+int timetableWeekNumber(DateTime weekStart) => weekStart.getISOWeek;
+
+/// True when the timetable has no visible lessons after filtering.
 bool isTimetableVisuallyEmpty({
   required bool hoursEmpty,
   required bool daysEmpty,
-}) =>
-    hoursEmpty || daysEmpty;
+}) => hoursEmpty || daysEmpty;

@@ -23,6 +23,7 @@ final timeTableDefinition = AppletDefinition(
     'student-selected-type': 'TimeTableType.own',
     'current-timetable-view': 'CalendarView.workWeek',
     'student-selected-week': false,
+    'student-week-selection': <String, dynamic>{},
     'hidden-lessons': <dynamic>[],
     'custom-lessons': <dynamic>[],
     'lesson-colors': <String, dynamic>{},
