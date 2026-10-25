@@ -91,6 +91,7 @@ class _NotificationSettingsState
 
   void initVars() async {
     notificationPermissionStatus = await Permission.notification.status;
+    if (!mounted) return;
     final shared = ref.read(sharedOverAccountSettingsProvider);
     final accountSettings = ref.read(accountSpecificSettingsProvider);
 

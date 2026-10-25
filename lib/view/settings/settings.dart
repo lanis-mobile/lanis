@@ -406,6 +406,10 @@ class _SettingsTileWidgetState extends State<SettingsTileWidget> {
           return _buildTile(subtitle);
         }
 
+        if (snapshot.hasError || !snapshot.hasData) {
+          return _buildTile(AppLocalizations.of(context).error);
+        }
+
         subtitle = snapshot.data![1] as String;
 
         return Visibility(

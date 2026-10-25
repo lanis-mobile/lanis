@@ -11,7 +11,6 @@ import 'package:lanis/applets/timetable/student/student_timetable_item.dart';
 import 'package:lanis/applets/timetable/student/timetable_helper.dart';
 import 'package:lanis/applets/timetable/student/timetable_week_selection.dart';
 import 'package:lanis/generated/l10n.dart';
-import 'package:lanis/l10n/account_type_ui.dart';
 import 'package:lanis/widgets/combined_applet_builder.dart';
 
 final double itemHeight = 46;
@@ -47,8 +46,6 @@ class _StudentTimetableBetterViewState
     return TimeTableHelper.mergeByIndices(planForAll, customLessons);
   }
 
-  int currentWeekIndex = -1;
-
   @override
   Widget build(BuildContext context) {
     final session = ref.watch(sessionProvider).asData?.value;
@@ -66,11 +63,13 @@ class _StudentTimetableBetterViewState
         body: const Center(child: CircularProgressIndicator()),
       );
     }
-    final accountType = session.accountTypeOrNull ??
+    final accountType =
+        session.accountTypeOrNull ??
         ref.read(activeAccountProvider)?.accountType ??
         AccountType.student;
+    final parser = ref.watch(timetableParserProvider);
     return CombinedAppletBuilder<TimeTable>(
-      parser: ref.watch(timetableParserProvider),
+      parser: parser,
       phpUrl: timeTableDefinition.appletPhpUrl,
       settingsDefaults: timeTableDefinition.settingsDefaults,
       accountType: accountType,
@@ -96,36 +95,40 @@ class _StudentTimetableBetterViewState
                 settings['student-selected-type'] == 'TimeTableType.own'
                 ? TimeTableType.own
                 : TimeTableType.all;
-            bool showByWeek = settings['student-selected-week'] == true;
             List<TimetableDay> selectedPlan = getSelectedPlan(
               timetable,
               selectedType,
               settings,
             );
-            final List<String> uniqueBadges = selectedPlan
-                .expand((innerList) => innerList.map((e) => e.badge))
-                .whereType<String>()
-                .toSet()
-                .toList();
-
-            if (currentWeekIndex == -1) {
-              currentWeekIndex = initialTimetableWeekIndex(
-                showByWeek: showByWeek,
-                weekBadge: timetable.weekBadge,
-                uniqueBadges: uniqueBadges,
-              );
-            }
-            final weekSelection = resolveTimetableWeekSelection(
-              currentWeekIndex: currentWeekIndex,
-              uniqueBadges: uniqueBadges,
+            final weekSelection = TimetableWeekSelection.fromSettings(settings);
+            final selectedBadge = weekSelection.resolveBadge(
+              timetable.weekBadge,
             );
-            currentWeekIndex = weekSelection.index;
+            final uniqueBadges = <String>{
+              for (final plan in [
+                timetable.planForAll,
+                timetable.planForOwn,
+                selectedPlan,
+              ])
+                for (final day in plan ?? <TimetableDay>[])
+                  for (final lesson in day)
+                    if (lesson.badge != null && lesson.badge!.trim().isNotEmpty)
+                      lesson.badge!.trim(),
+              if (timetable.weekBadge?.trim().isNotEmpty ?? false)
+                timetable.weekBadge!.trim(),
+              if (weekSelection.badge != null) weekSelection.badge!,
+            }.toList()..sort();
+            // Cached/offline badges belong to the fetched week too. Advance
+            // the dates only when fresh server data supplies the new badge.
+            final weekStart = timetableWeekStart(
+              parser.latestResponse?.fetchedAt ?? DateTime.now(),
+            );
 
             TimeTableData data = TimeTableData(
               selectedPlan,
               timetable,
               settings,
-              weekSelection.badge,
+              selectedBadge,
             );
 
             final appBar = AppBar(
@@ -143,28 +146,55 @@ class _StudentTimetableBetterViewState
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
                         child: Row(
                           children: [
-                            if (uniqueBadges.isNotEmpty &&
-                                timetable.weekBadge != null)
-                              TextButton(
-                                onPressed: () {
-                                  currentWeekIndex =
-                                      (currentWeekIndex + 1) %
-                                      (uniqueBadges.length + 1);
-                                  updateSettings(
-                                    'student-selected-week',
-                                    currentWeekIndex == 0,
-                                  );
-                                },
-                                child: Text(
-                                  (currentWeekIndex < 1)
-                                      ? AppLocalizations.of(
+                            if (uniqueBadges.isNotEmpty)
+                              PopupMenuButton<TimetableWeekSelection>(
+                                tooltip: AppLocalizations.of(context).week,
+                                onSelected: (selection) => updateSettings(
+                                  'student-week-selection',
+                                  selection.toJson(),
+                                ),
+                                itemBuilder: (context) => [
+                                  PopupMenuItem(
+                                    value:
+                                        const TimetableWeekSelection.current(),
+                                    child: Text(
+                                      AppLocalizations.of(context).currentWeek,
+                                    ),
+                                  ),
+                                  PopupMenuItem(
+                                    value: const TimetableWeekSelection.all(),
+                                    child: Text(
+                                      AppLocalizations.of(
+                                        context,
+                                      ).timetableAllWeeks,
+                                    ),
+                                  ),
+                                  for (final badge in uniqueBadges)
+                                    PopupMenuItem(
+                                      value: TimetableWeekSelection.badge(
+                                        badge,
+                                      ),
+                                      child: Text(
+                                        AppLocalizations.of(
                                           context,
-                                        ).timetableAllWeeks
-                                      : AppLocalizations.of(
-                                          context,
-                                        ).timetableWeek(
-                                          uniqueBadges[currentWeekIndex - 1],
-                                        ),
+                                        ).timetableWeek(badge),
+                                      ),
+                                    ),
+                                ],
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8),
+                                  child: Text(switch (weekSelection.mode) {
+                                    TimetableWeekMode.current =>
+                                      AppLocalizations.of(context).currentWeek,
+                                    TimetableWeekMode.all =>
+                                      AppLocalizations.of(
+                                        context,
+                                      ).timetableAllWeeks,
+                                    TimetableWeekMode.badge =>
+                                      AppLocalizations.of(
+                                        context,
+                                      ).timetableWeek(selectedBadge!),
+                                  }),
                                 ),
                               ),
                             IconButton(
@@ -182,12 +212,33 @@ class _StudentTimetableBetterViewState
                     ],
             );
 
+            final switchPlanButton = timetable.planForOwn != null
+                ? FloatingActionButton(
+                    heroTag: "toggle",
+                    tooltip: selectedType == TimeTableType.all
+                        ? AppLocalizations.of(context).timetableSwitchToPersonal
+                        : AppLocalizations.of(context).timetableSwitchToClass,
+                    onPressed: () => updateSettings(
+                      'student-selected-type',
+                      selectedType == TimeTableType.all
+                          ? 'TimeTableType.own'
+                          : 'TimeTableType.all',
+                    ),
+                    child: Icon(
+                      selectedType == TimeTableType.all
+                          ? Icons.person
+                          : Icons.people,
+                    ),
+                  )
+                : null;
+
             if (isTimetableVisuallyEmpty(
               hoursEmpty: data.hours.isEmpty,
               daysEmpty: data.timetableDays.isEmpty,
             )) {
               return Scaffold(
                 appBar: appBar,
+                floatingActionButton: switchPlanButton,
                 body: RefreshIndicator(
                   notificationPredicate: refresh != null
                       ? (_) => true
@@ -230,42 +281,14 @@ class _StudentTimetableBetterViewState
                 padding: const EdgeInsets.symmetric(horizontal: 4.0),
                 child: TimeTableView(
                   data: data,
+                  weekStart: weekStart,
                   timetable: timetable,
                   settings: settings,
                   updateSettings: updateSettings,
                   refresh: refresh,
                 ),
               ),
-              floatingActionButton: timetable.planForOwn != null
-                  ? Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        FloatingActionButton(
-                          heroTag: "toggle",
-                          tooltip: selectedType == TimeTableType.all
-                              ? AppLocalizations.of(
-                                  context,
-                                ).timetableSwitchToPersonal
-                              : AppLocalizations.of(
-                                  context,
-                                ).timetableSwitchToClass,
-                          onPressed: () {
-                            updateSettings(
-                              'student-selected-type',
-                              selectedType == TimeTableType.all
-                                  ? 'TimeTableType.own'
-                                  : 'TimeTableType.all',
-                            );
-                          },
-                          child: Icon(
-                            selectedType == TimeTableType.all
-                                ? Icons.person
-                                : Icons.people,
-                          ),
-                        ),
-                      ],
-                    )
-                  : null,
+              floatingActionButton: switchPlanButton,
             );
           },
     );
@@ -274,6 +297,7 @@ class _StudentTimetableBetterViewState
 
 class TimeTableView extends StatelessWidget {
   final TimeTableData data;
+  final DateTime weekStart;
   final TimeTable timetable;
   final Map<String, dynamic> settings;
   final Function updateSettings;
@@ -291,27 +315,10 @@ class TimeTableView extends StatelessWidget {
     return totalHeight;
   }
 
-  int numOfWeeks(int year) {
-    DateTime dec28 = DateTime(year, 12, 28);
-    int dayOfDec28 = int.parse(DateFormat("D").format(dec28));
-    return ((dayOfDec28 - dec28.weekday + 10) / 7).floor();
-  }
-
-  int getCurrentWeekNumber() {
-    DateTime date = DateTime.now();
-    int dayOfYear = int.parse(DateFormat("D").format(date));
-    int woy = ((dayOfYear - date.weekday + 10) / 7).floor();
-    if (woy < 1) {
-      woy = numOfWeeks(date.year - 1);
-    } else if (woy > numOfWeeks(date.year)) {
-      woy = 1;
-    }
-    return woy;
-  }
-
   const TimeTableView({
     super.key,
     required this.data,
+    required this.weekStart,
     required this.timetable,
     required this.settings,
     required this.updateSettings,
@@ -321,7 +328,7 @@ class TimeTableView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
-      onRefresh: refresh!,
+      onRefresh: refresh ?? () async {},
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         child: Stack(
@@ -335,22 +342,22 @@ class TimeTableView extends StatelessWidget {
                   children: [
                     SizedBox(
                       height: headerHeight,
-                        child: Column(
+                      child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text("KW ${getCurrentWeekNumber()}"),
-                          if (timetable.weekBadge != null &&
-                              timetable.weekBadge!.isNotEmpty)
+                        children: [
+                          Text("KW ${timetableWeekNumber(weekStart)}"),
+                          if (data.weekBadge != null &&
+                              data.weekBadge!.isNotEmpty)
                             Text(
-                                    AppLocalizations.of(
-                                      context,
-                                    ).timetableWeek(timetable.weekBadge!),
-                                    style: TextStyle(
-                                      overflow: TextOverflow.ellipsis,
-                                      fontSize: 10,
-                                    ),
+                              AppLocalizations.of(
+                                context,
+                              ).timetableWeek(data.weekBadge!),
+                              style: TextStyle(
+                                overflow: TextOverflow.ellipsis,
+                                fontSize: 10,
+                              ),
                             ),
-                          ],
+                        ],
                       ),
                     ),
                     for (var (row) in data.hours)
@@ -378,7 +385,9 @@ class TimeTableView extends StatelessWidget {
                               ...(row.type == TimeTableRowType.lesson
                                   ? [
                                       Text(
-                                        row.startTime.toFlutter().format(context),
+                                        row.startTime.toFlutter().format(
+                                          context,
+                                        ),
                                         style: TextStyle(fontSize: 10),
                                       ),
                                       Text(
@@ -410,6 +419,7 @@ class TimeTableView extends StatelessWidget {
                                   e,
                                   TimeMarkerWidget(
                                     data: data,
+                                    weekStart: weekStart,
                                     timetable: timetable,
                                     settings: settings,
                                     day: days.indexOf(e),
@@ -444,6 +454,7 @@ class TimeTableView extends StatelessWidget {
                                       e,
                                       TimeMarkerWidget(
                                         data: data,
+                                        weekStart: weekStart,
                                         timetable: timetable,
                                         settings: settings,
                                         day: days.indexOf(e),
@@ -481,11 +492,11 @@ class TimeTableView extends StatelessWidget {
               ),
               child: Builder(
                 builder: (context) {
-                  var today = DateTime.now().startOfWeek;
-                  var monday = DateTime(
-                    today.year,
-                    today.month,
-                    today.day - (today.weekday - 1) + 7,
+                  // Calendar construction keeps local midnight across DST changes.
+                  final date = DateTime(
+                    weekStart.year,
+                    weekStart.month,
+                    weekStart.day + i,
                   );
 
                   return Column(
@@ -494,11 +505,11 @@ class TimeTableView extends StatelessWidget {
                       Text(
                         DateFormat.E(
                           Localizations.localeOf(context).languageCode,
-                        ).format(monday.add(Duration(days: i))),
+                        ).format(date),
                         textAlign: TextAlign.center,
                       ),
                       Text(
-                        monday.add(Duration(days: i)).format('dd.MM.'),
+                        date.format('dd.MM.'),
                         textAlign: TextAlign.center,
                         style: TextStyle(fontSize: 10),
                       ),
@@ -540,12 +551,14 @@ class TimeMarkerWidget extends ConsumerStatefulWidget {
   const TimeMarkerWidget({
     super.key,
     required this.data,
+    required this.weekStart,
     required this.timetable,
     required this.settings,
     this.day,
   });
 
   final TimeTableData data;
+  final DateTime weekStart;
   final TimeTable timetable;
   final Map<String, dynamic> settings;
   final int? day;
@@ -580,6 +593,11 @@ class _TimeMarkerWidgetState extends ConsumerState<TimeMarkerWidget> {
   Widget build(BuildContext context) {
     double offset = 8;
     final now = DateTime.now();
+    if (timetableWeekStart(now) != widget.weekStart ||
+        (widget.data.weekBadge != null &&
+            widget.data.weekBadge != widget.timetable.weekBadge)) {
+      return const SizedBox.shrink();
+    }
     final nowTod = SphTimeOfDay(hour: now.hour, minute: now.minute);
 
     // Current day 0 Monday, 6 Sunday

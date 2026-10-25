@@ -41,6 +41,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
   final List<ListTile> _fileWidgets = [];
 
   void forceReloadPage() {
+    if (!mounted) return;
     setState(() {
       _future = ref.read(lessonsStudentParserProvider).getUploadInfo(widget.url);
     });
@@ -224,6 +225,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                                 return;
                               }
 
+                              if (!mounted) return;
                               int successfulUploads = 0;
                               bool renamed = false;
                               for (final status in fileStatus) {
@@ -244,6 +246,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                                 action: SnackBarAction(
                                   label: AppLocalizations().seeMore,
                                   onPressed: () {
+                                    if (!context.mounted) return;
                                     // We render the Widgets before so we can have a dynamically sized AlertDialog.
                                     final List<ListTile> fileStatusWidgets = [];
 
@@ -689,6 +692,12 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                         trailing: !filesDeleted
                             ? IconButton(
                                 onPressed: () async {
+                                  if (snapshot.data["course_id"] is! String ||
+                                      snapshot.data["entry_id"] is! String ||
+                                      snapshot.data["upload_id"] is! String) {
+                                    showSnackbar(text: AppLocalizations().error);
+                                    return;
+                                  }
                                   final TextEditingController
                                   passwordController = TextEditingController();
                                   showDialog(

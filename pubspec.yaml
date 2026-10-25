@@ -23,7 +23,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  liblanis: ^0.1.2
+  liblanis: ^0.1.3
   flutter_riverpod: ^3.0.3
   go_router: ^16.0.0
   dio_cookie_manager: ^3.3.0
@@ -230,6 +230,7 @@ flutter_native_splash:
 
 
 dev_dependencies:
+  webview_flutter_platform_interface: ^2.15.1
   flutter_test:
     sdk: flutter
 

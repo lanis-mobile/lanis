@@ -341,7 +341,7 @@ class _ConversationsViewState extends ConsumerState<ConversationsView> {
     final List<OverviewEntry> entries,
     final List<OverviewEntry> oldEntries,
   ) {
-    if (oldEntries.isEmpty) return;
+    if (oldEntries.isEmpty || scrollController.positions.length != 1) return;
 
     final offsetTopIndex = (scrollController.offset / 80).toInt();
 
@@ -479,7 +479,7 @@ class _ConversationsViewState extends ConsumerState<ConversationsView> {
       final chatData = await context.push<ChatCreationData>(
         '/common/conversations/compose',
       );
-      if (chatData == null) return;
+      if (!mounted || chatData == null) return;
       final text = await Navigator.of(context).push<String>(
         MaterialPageRoute(
           builder: (context) =>

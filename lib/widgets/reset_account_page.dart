@@ -192,10 +192,11 @@ class _ResetAccountPageState extends ConsumerState<ResetAccountPage> {
                 ),
                 ElevatedButton.icon(
                   onPressed: () async {
+                    final auth = ref.read(authControllerProvider.notifier);
                     await ref
                         .read(accountsProvider.notifier)
                         .remove(account.localId);
-                    await ref.read(authControllerProvider.notifier).bootstrap();
+                    await auth.bootstrap();
                     if (context.mounted) context.go('/startup');
                   },
                   icon: Icon(Icons.no_accounts),

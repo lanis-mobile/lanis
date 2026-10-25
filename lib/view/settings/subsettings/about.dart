@@ -113,11 +113,13 @@ class _AboutSettingsState extends ConsumerSettingsColoursState<AboutSettings> {
       final response = await session.dio.get(
         'https://api.github.com/repos/lanis-mobile/lanis/contributors',
       );
+      if (!mounted) return;
       setState(() {
         contributors = response.data;
       });
     } catch (e) {
       logger.e(e);
+      if (!mounted) return;
       setState(() {
         error = true;
       });

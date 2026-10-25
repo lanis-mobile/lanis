@@ -254,7 +254,10 @@ Future<String?> askFileName(BuildContext context) async {
     builder: (context) {
       return AlertDialog(
         title: Text(AppLocalizations.of(context).filename),
-        content: TextField(controller: controller),
+        content: TextField(
+          controller: controller,
+          inputFormatters: [FilteringTextInputFormatter.deny(RegExp(r'[/\\]'))],
+        ),
         actions: [
           TextButton(
             child: Text(AppLocalizations.of(context).cancel),

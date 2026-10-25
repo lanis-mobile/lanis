@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show ProviderException;
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lanis/applets/conversations/conversations_nav.dart';
@@ -16,6 +17,24 @@ import 'package:lanis/utils/responsive.dart';
 import 'package:lanis/widgets/applet_home_shell.dart';
 import 'package:lanis/widgets/error_view.dart';
 import 'package:liblanis/liblanis.dart';
+
+final _refreshConversationSidebarProvider = Provider<VoidCallback>((ref) {
+  final parser = ref.watch(conversationsParserProvider);
+  return () {
+    // A pending reply can finish after its chat page has been removed.
+    // Keep the overview fresh while this parser's provider is still alive.
+    if (!ref.mounted) return;
+    final ConversationsParser currentParser;
+    try {
+      currentParser = ref.read(conversationsParserProvider);
+    } on ProviderException {
+      // Logout may invalidate the parser before its replacement is available.
+      return;
+    }
+    if (!identical(currentParser, parser)) return;
+    parser.fetchData(forceRefresh: true);
+  };
+});
 
 List<RouteBase> buildConversationsRoutes(AppletRouteContext ctx) {
   final home = conversationsDefinition.homePath();
@@ -168,9 +187,7 @@ class ConversationChatPage extends ConsumerWidget {
       id: id,
       title: title,
       newSettings: newSettings,
-      onSidebarChanged: () {
-        ref.read(conversationsParserProvider).fetchData(forceRefresh: true);
-      },
+      onSidebarChanged: ref.watch(_refreshConversationSidebarProvider),
     );
   }
 }
