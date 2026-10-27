@@ -51,6 +51,7 @@ class ConversationSettings {
   final bool noReply;
   final bool own;
   final String? author;
+  final String? sender; // "Sender" of the head message
 
   const ConversationSettings({
     required this.id,
@@ -59,6 +60,7 @@ class ConversationSettings {
     required this.noReply,
     required this.own,
     this.author,
+    this.sender,
   });
 }
 

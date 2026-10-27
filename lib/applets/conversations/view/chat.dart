@@ -251,7 +251,10 @@ class _ConversationsChatState extends ConsumerState<ConversationsChat>
     try {
       result = await ref.read(conversationsParserProvider).replyToConversation(
         settings.id,
-        "all",
+        // Replies to a "Mitteilung" must only go to its author, like on the website.
+        settings.onlyPrivateAnswers && !settings.own && settings.sender != null
+            ? settings.sender!
+            : "all",
         settings.groupChat ? "ja" : "nein",
         settings.onlyPrivateAnswers ? "ja" : "nein",
         text,
@@ -365,6 +368,7 @@ class _ConversationsChatState extends ConsumerState<ConversationsChat>
         onlyPrivateAnswers: result.onlyPrivateAnswers,
         noReply: result.noReply,
         author: result.parent.author,
+        sender: result.sender,
         own: result.parent.own,
       );
 
