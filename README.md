@@ -66,7 +66,7 @@ dart run intl_utils:generate # Lokalisierungen
 Beachte hierbei folgende Flags:
 #### `--dart-define=cronetHttpNoPlay=true`
 **[Teilweise optional]**
-Dieses Flag wird verwendet, um die Cronet-Binärdatei für das Networking auf Geräten ohne Play Services einzubinden (diese Version stellen wir auch im Play Store bereit).
+Diese Flag wird verwendet, um die Cronet-Binärdatei für das Networking auf Geräten ohne Play Services einzubinden (diese Version stellen wir auch im Play Store bereit).
 
 Falls du aktuell das Standard-Android-Emulator-Image verwendest, solltest du stattdessen ein AOSP-Image nutzen, da diese in der Regel deutlich performanter sind als Versionen mit Play Services.
 
@@ -74,7 +74,7 @@ Bei iOS-Builds ist dieses Flag nicht erforderlich.
 
 #### `--dart-define=ANSI=true`
 **[Optional]**
-Dieses Flag ermöglicht farbige Logs der Anwendung, was sehr hilfreich sein kann, falls du noch nicht die Log-Filter-Tools deiner IDE nutzt. (Auf macOS wird empfohlen, dieses Flag wegzulassen, da das Standard-Terminal dies nicht unterstützt.)
+Diese Flag ermöglicht farbige Logs der Anwendung, was sehr hilfreich sein kann, falls du noch nicht die Log-Filter-Tools deiner IDE nutzt. (Auf macOS wird empfohlen, dieses Flag wegzulassen, da das Standard-Terminal dies nicht unterstützt.)
 
 ```shell
 flutter run --dart-define=cronetHttpNoPlay=true --dart-define=ANSI=true

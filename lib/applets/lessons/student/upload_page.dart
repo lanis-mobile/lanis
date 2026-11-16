@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:dart_date/dart_date.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +11,7 @@ import 'package:lanis/utils/file_picker.dart';
 import 'package:lanis/utils/root_nav.dart';
 import 'package:lanis/widgets/error_view.dart';
 import 'package:open_file/open_file.dart';
+import 'package:intl/intl.dart';
 
 import '../../../utils/file_operations.dart';
 import '../../../utils/logger.dart';
@@ -43,7 +43,9 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
   void forceReloadPage() {
     if (!mounted) return;
     setState(() {
-      _future = ref.read(lessonsStudentParserProvider).getUploadInfo(widget.url);
+      _future = ref
+          .read(lessonsStudentParserProvider)
+          .getUploadInfo(widget.url);
     });
   }
 
@@ -99,6 +101,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final dateLocale = Localizations.localeOf(context).toString();
     return FutureBuilder(
       future: _future,
       builder: (context, snapshot) {
@@ -141,7 +144,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
             appBar: AppBar(title: Text(widget.name)),
             floatingActionButton: ValueListenableBuilder(
               valueListenable: _addedFiles,
-              builder: (_, filesLength, __) {
+              builder: (_, filesLength, _) {
                 return Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -190,9 +193,11 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                                 // Clone before each attempt: Dio MultipartFile
                                 // streams can only be finalized once (retry after
                                 // a failed upload would otherwise crash).
-                                final uploadFiles =
-                                    cloneMultipartFiles(_multipartFiles);
-                                fileStatus = await ref.read(lessonsStudentParserProvider)
+                                final uploadFiles = cloneMultipartFiles(
+                                  _multipartFiles,
+                                );
+                                fileStatus = await ref
+                                    .read(lessonsStudentParserProvider)
                                     .uploadFile(
                                       course: snapshot.data["course_id"],
                                       entry: snapshot.data["entry_id"],
@@ -424,9 +429,12 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                       title: Text(AppLocalizations().start),
                       subtitle: Text(
                         AppLocalizations().dateTimeString(
-                          startDate.format("EEEE"),
-                          startDate.format("dd.MM.yyyy"),
-                          startDate.format("hh:mm"),
+                          DateFormat('EEEE', dateLocale).format(startDate),
+                          DateFormat(
+                            'dd.MM.yyyy',
+                            dateLocale,
+                          ).format(startDate),
+                          DateFormat('HH:mm', dateLocale).format(startDate),
                         ),
                       ),
                       leading: const Icon(Icons.hourglass_top),
@@ -435,9 +443,9 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                       title: Text(AppLocalizations().end),
                       subtitle: Text(
                         AppLocalizations().dateTimeString(
-                          endDate.format("EEEE"),
-                          endDate.format("dd.MM.yyyy"),
-                          endDate.format("hh:mm"),
+                          DateFormat('EEEE', dateLocale).format(endDate),
+                          DateFormat('dd.MM.yyyy', dateLocale).format(endDate),
+                          DateFormat('HH:mm', dateLocale).format(endDate),
                         ),
                       ),
                       leading: const Icon(Icons.hourglass_bottom),
@@ -581,15 +589,15 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                                     );
                                   },
                                 );
-                                final storage = ref.read(storageManagerProvider);
+                                final storage = ref.read(
+                                  storageManagerProvider,
+                                );
                                 if (storage == null) {
                                   if (context.mounted) {
                                     Navigator.of(context).pop();
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
-                                        content: Text(
-                                          AppLocalizations().error,
-                                        ),
+                                        content: Text(AppLocalizations().error),
                                       ),
                                     );
                                   }
@@ -695,7 +703,9 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                                   if (snapshot.data["course_id"] is! String ||
                                       snapshot.data["entry_id"] is! String ||
                                       snapshot.data["upload_id"] is! String) {
-                                    showSnackbar(text: AppLocalizations().error);
+                                    showSnackbar(
+                                      text: AppLocalizations().error,
+                                    );
                                     return;
                                   }
                                   final TextEditingController
@@ -732,7 +742,10 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                                               );
                                               String response;
                                               try {
-                                                response = await ref.read(lessonsStudentParserProvider)
+                                                response = await ref
+                                                    .read(
+                                                      lessonsStudentParserProvider,
+                                                    )
                                                     .deleteUploadedFile(
                                                       course: snapshot
                                                           .data["course_id"],
@@ -745,7 +758,9 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                                                           .index,
                                                       userPasswordEncrypted: () {
                                                         final session = ref
-                                                            .read(sessionProvider)
+                                                            .read(
+                                                              sessionProvider,
+                                                            )
                                                             .asData
                                                             ?.value;
                                                         if (session == null) {
@@ -755,9 +770,9 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                                                         }
                                                         return session.cryptor
                                                             .encryptString(
-                                                          passwordController
-                                                              .text,
-                                                        );
+                                                              passwordController
+                                                                  .text,
+                                                            );
                                                       }(),
                                                     );
                                               } on LanisException catch (ex) {
