@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import argparse
+import ctypes
+import getpass
 import os
 import platform
 import shutil
@@ -401,7 +403,56 @@ def move_artifact(src: Path, dest: Path) -> None:
     log(f"Moved {src.name} -> {dest}")
 
 
+def ensure_signing_keychain_unlocked() -> None:
+    """Unlock the default macOS keychain only if locked (including over SSH)."""
+    if not is_darwin():
+        return
+
+    security = ctypes.CDLL(
+        "/System/Library/Frameworks/Security.framework/Security"
+    )
+    security.SecKeychainGetStatus.argtypes = [
+        ctypes.c_void_p, ctypes.POINTER(ctypes.c_uint32)
+    ]
+    security.SecKeychainGetStatus.restype = ctypes.c_int32
+    security.SecKeychainUnlock.argtypes = [
+        ctypes.c_void_p, ctypes.c_uint32, ctypes.c_void_p, ctypes.c_ubyte
+    ]
+    security.SecKeychainUnlock.restype = ctypes.c_int32
+
+    # A NULL keychain reference selects the user's default keychain.
+    status = ctypes.c_uint32()
+    result = security.SecKeychainGetStatus(None, ctypes.byref(status))
+    if result != 0:
+        raise RuntimeError(f"Cannot check the default keychain (OSStatus {result})")
+    if status.value & 1:  # kSecUnlockStateStatus
+        return
+    if not sys.stdin.isatty():
+        raise RuntimeError(
+            "The default signing keychain is locked. Run this script in an "
+            "interactive terminal to enter its password, or unlock it before building."
+        )
+
+    password = getpass.getpass("Default keychain password (to enable iOS signing): ")
+    password_bytes = password.encode("utf-8")
+    password_buffer = ctypes.create_string_buffer(password_bytes)
+    try:
+        result = security.SecKeychainUnlock(
+            None, len(password_bytes), password_buffer, True
+        )
+    finally:
+        ctypes.memset(password_buffer, 0, ctypes.sizeof(password_buffer))
+        del password, password_bytes
+    if result != 0:
+        raise RuntimeError(
+            f"Could not unlock the default keychain (OSStatus {result}). "
+            "Check your keychain password and try again."
+        )
+    log("Default signing keychain unlocked.")
+
+
 def build_ios(cfg: Config) -> Path:
+    ensure_signing_keychain_unlocked()
     log(">>> build IPA")
     run(["flutter", "build", "ipa"])
     dest = cfg.output_dir / IPA_NAME
