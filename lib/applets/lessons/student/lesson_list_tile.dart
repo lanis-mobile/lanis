@@ -102,8 +102,10 @@ class _LessonListTileState extends State<LessonListTile> {
                   const Spacer(),
                   Text(
                     widget.lesson.currentEntry?.topicDate != null
-                      ? dateFormat.format(widget.lesson.currentEntry!.topicDate!)
-                      : AppLocalizations.of(context).noEntries
+                        ? dateFormat.format(
+                            widget.lesson.currentEntry!.topicDate!,
+                          )
+                        : AppLocalizations.of(context).noEntries,
                   ),
                   const Icon(Icons.calendar_today, size: 16),
                 ],
@@ -117,8 +119,12 @@ class _LessonListTileState extends State<LessonListTile> {
             final prefix = widget.accountType.name;
             final id = widget.lesson.courseID;
             final title = Uri.encodeComponent(widget.lesson.name);
+            final semester = widget.lesson.courseURL.queryParameters['halb'];
+            final semesterQuery = semester == null
+                ? ''
+                : '&semester=${Uri.encodeComponent(semester)}';
             context.push(
-              '/$prefix/lessons/course/$id?title=$title',
+              '/$prefix/lessons/course/$id?title=$title$semesterQuery',
             );
           },
         ),

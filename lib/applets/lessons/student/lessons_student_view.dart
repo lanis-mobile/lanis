@@ -18,7 +18,7 @@ class LessonsStudentView extends ConsumerStatefulWidget {
 
 class _LessonsStudentViewState extends ConsumerState<LessonsStudentView>
     with TickerProviderStateMixin {
-  Widget noDataScreen(context) => Center(
+  Widget noDataScreen(BuildContext context) => Center(
     child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -151,25 +151,62 @@ class _LessonsStudentViewState extends ConsumerState<LessonsStudentView>
                     .toList();
               }
 
+              final showOlderHeading =
+                  settings['showHomework'] != true &&
+                  lessons.any((lesson) => lesson.isOlder);
+              final currentCount = lessons
+                  .where((lesson) => !lesson.isOlder)
+                  .length;
+              if (settings['showHomework'] != true) {
+                lessons = [
+                  ...lessons.where((lesson) => !lesson.isOlder),
+                  ...lessons.where((lesson) => lesson.isOlder),
+                ];
+              }
+
               return Scaffold(
                 body: RefreshIndicator(
                   onRefresh: () => refresh!(),
                   child: lessons.isNotEmpty
                       ? ListView.builder(
-                          itemCount: lessons.length,
-                          itemBuilder: (BuildContext context, int index) =>
-                              Padding(
-                                padding: EdgeInsets.only(
-                                  top: 4,
-                                  bottom: index == lessons.length - 1 ? 80 : 0,
-                                  left: 8,
-                                  right: 8,
+                          itemCount:
+                              lessons.length + (showOlderHeading ? 1 : 0),
+                          itemBuilder: (BuildContext context, int index) {
+                            if (showOlderHeading && index == currentCount) {
+                              return Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  20,
+                                  20,
+                                  20,
+                                  8,
                                 ),
-                                child: LessonListTile(
-                                  lesson: lessons[index],
-                                  accountType: accountType,
+                                child: Text(
+                                  AppLocalizations.of(context).olderCourses,
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.titleMedium,
                                 ),
+                              );
+                            }
+                            final lessonIndex =
+                                showOlderHeading && index > currentCount
+                                ? index - 1
+                                : index;
+                            return Padding(
+                              padding: EdgeInsets.only(
+                                top: 4,
+                                bottom: lessonIndex == lessons.length - 1
+                                    ? 80
+                                    : 0,
+                                left: 8,
+                                right: 8,
                               ),
+                              child: LessonListTile(
+                                lesson: lessons[lessonIndex],
+                                accountType: accountType,
+                              ),
+                            );
+                          },
                         )
                       : Column(
                           crossAxisAlignment: CrossAxisAlignment.center,

@@ -76,3 +76,4 @@ generated/
 # FVM Version file
 .fvmrc
 docs/
+pubspec_overrides.yaml

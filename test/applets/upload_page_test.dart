@@ -74,6 +74,8 @@ class _Parser extends LessonsStudentParser {
   bool missingCourse = false;
   bool hasOwnFile = false;
   int deletions = 0;
+  String start = 'Mittwoch 1.1.20 0:00';
+  String deadline = 'Donnerstag 1.1.99 0:00';
 
   _Parser(super.ctx);
 
@@ -81,8 +83,8 @@ class _Parser extends LessonsStudentParser {
   Future<dynamic> getUploadInfo(String url) async {
     infoCalls++;
     return {
-      'start': 'Mittwoch 1.1.20 0:00',
-      'deadline': 'Donnerstag 1.1.99 0:00',
+      'start': start,
+      'deadline': deadline,
       'automatic_deletion': '1.1.2100',
       'course_id': missingCourse ? null : 'course',
       'entry_id': 'entry',
@@ -224,6 +226,39 @@ void main() {
     }
     await tester.tap(find.byIcon(Icons.upload));
     await tester.pump();
+  }
+
+  for (final locale in ['de', 'en']) {
+    testWidgets('08:00–20:00 stays distinct and uses $locale weekdays', (
+      tester,
+    ) async {
+      parser.start = 'Mittwoch, den 04.11.26, 08:00 Uhr';
+      parser.deadline = 'Mittwoch, den 04.11.26, 20:00 Uhr';
+      await pumpTestApp(
+        tester,
+        locale: Locale(locale),
+        child: const UploadScreen(url: 'test', name: 'Test upload', status: ''),
+        overrides: [lessonsStudentParserProvider.overrideWithValue(parser)],
+      );
+      await tester.pumpAndSettle();
+      String subtitle(IconData icon) {
+        final tile = tester.widget<ListTile>(
+          find.ancestor(of: find.byIcon(icon), matching: find.byType(ListTile)),
+        );
+        return (tile.subtitle! as Text).data!;
+      }
+
+      final start = subtitle(Icons.hourglass_top);
+      final end = subtitle(Icons.hourglass_bottom);
+      expect(start, contains('08:00'));
+      expect(end, contains('20:00'));
+      expect(end, isNot(contains('08:00')));
+      for (final text in [start, end]) {
+        expect(text, contains('04.11.2026'));
+        expect(text, contains(locale == 'de' ? 'Mittwoch' : 'Wednesday'));
+      }
+      expect(tester.takeException(), isNull);
+    });
   }
 
   testWidgets(
