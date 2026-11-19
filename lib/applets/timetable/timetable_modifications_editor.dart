@@ -41,7 +41,12 @@ class _TimetableModificationsEditorState
     TimetableSubject? lesson,
   }) {
     final originalDay = currentDay;
-    final weekDays = _weekDays(context);
+    final weekDays = List.generate(
+      7,
+      (day) => DateFormat.E(
+        Localizations.localeOf(context).toLanguageTag(),
+      ).format(DateTime(2024, 1, 1 + day)),
+    );
     List<TimeTableRow>? hours = currentTimetable.hours;
     if (hours == null || hours.isEmpty) {
       if (!mounted) return;
@@ -53,11 +58,14 @@ class _TimetableModificationsEditorState
     TimeTableRow startTime = hours[0];
     TimeTableRow endTime = hours.first;
     int selectedWeek = 0;
-    List<String?> allBadges = (currentTimetable.planForAll ?? const [])
-        .expand((day) => day.map((lesson) => lesson.badge))
-        .where((badge) => badge != null)
-        .toSet()
-        .toList();
+    TimetableWeekParity? parity = lesson?.calendarWeekParity;
+    List<String> allBadges =
+        [...?currentTimetable.planForAll, ...?currentTimetable.planForOwn]
+            .expand((day) => day.map((lesson) => lesson.badge))
+            .whereType<String>()
+            .where((badge) => badge.trim().isNotEmpty)
+            .toSet()
+            .toList();
     final String noBadge = '-';
     final TextEditingController nameController = TextEditingController();
     final TextEditingController teacherController = TextEditingController();
@@ -77,11 +85,11 @@ class _TimetableModificationsEditorState
         orElse: () => hours.last,
       );
       if (lesson.badge != null && !allBadges.contains(lesson.badge)) {
-        allBadges.add(lesson.badge);
+        allBadges.add(lesson.badge!);
       }
       selectedWeek = lesson.badge == null
           ? 0
-          : allBadges.indexOf(lesson.badge) + 1;
+          : allBadges.indexOf(lesson.badge!) + 1;
       duration = lesson.duration;
     }
 
@@ -106,20 +114,22 @@ class _TimetableModificationsEditorState
                   spacing: 16.0,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    DropdownButtonFormField<int>(
+                    SingleChildScrollView(
                       key: const ValueKey('custom-lesson-weekday'),
-                      initialValue: currentDay,
-                      decoration: InputDecoration(
-                        labelText: AppLocalizations.of(context).day,
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        spacing: 8,
+                        children: [
+                          for (var day = 0; day < 7; day++)
+                            ChoiceChip(
+                              key: ValueKey('custom-lesson-weekday-$day'),
+                              label: Text(weekDays[day]),
+                              selected: currentDay == day,
+                              onSelected: (_) =>
+                                  setState(() => currentDay = day),
+                            ),
+                        ],
                       ),
-                      items: [
-                        for (var day = 0; day < 7; day++)
-                          DropdownMenuItem(
-                            value: day,
-                            child: Text(weekDays[day]),
-                          ),
-                      ],
-                      onChanged: (day) => setState(() => currentDay = day!),
                     ),
                     TextField(
                       key: const ValueKey('custom-lesson-name'),
@@ -157,87 +167,99 @@ class _TimetableModificationsEditorState
                         ),
                       ],
                     ),
-                    Wrap(
+                    Row(
                       spacing: 8,
-                      runSpacing: 8,
-                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        DropdownMenu(
-                          width: 100,
-                          initialSelection: startTime.label,
-                          onSelected: (value) {
-                            setState(() {
-                              startTime = hours.firstWhere(
-                                (hour) => hour.label == value,
-                              );
-                              duration =
-                                  hours.indexOf(endTime) -
-                                  hours.indexOf(startTime) +
-                                  1;
-                            });
-                          },
-                          dropdownMenuEntries: hours
-                              .map(
-                                (hour) => DropdownMenuEntry(
-                                  value: hour.label,
-                                  label: hour.label,
-                                ),
-                              )
-                              .toList(),
-                        ),
-                        Text('-'),
-                        DropdownMenu(
-                          width: 100,
-                          initialSelection: endTime.label,
-                          onSelected: (value) {
-                            setState(() {
-                              endTime = hours.firstWhere(
-                                (hour) => hour.label == value,
-                              );
-                              duration =
-                                  hours.indexOf(endTime) -
-                                  hours.indexOf(startTime) +
-                                  1;
-                            });
-                          },
-                          dropdownMenuEntries: hours
-                              .map(
-                                (hour) => DropdownMenuEntry(
-                                  value: hour.label,
-                                  label: hour.label,
-                                ),
-                              )
-                              .toList(),
-                        ),
-                        if (allBadges.isNotEmpty)
-                          DropdownMenu(
-                            width: 130.0,
-                            label: Text(AppLocalizations.of(context).week),
-                            initialSelection: [
-                              noBadge,
-                              ...allBadges,
-                            ][selectedWeek],
+                        Expanded(
+                          child: DropdownMenu(
+                            expandedInsets: EdgeInsets.zero,
+                            initialSelection: startTime.label,
                             onSelected: (value) {
                               setState(() {
-                                selectedWeek = [
-                                  noBadge,
-                                  ...allBadges,
-                                ].indexOf(value!);
+                                startTime = hours.firstWhere(
+                                  (hour) => hour.label == value,
+                                );
+                                duration =
+                                    hours.indexOf(endTime) -
+                                    hours.indexOf(startTime) +
+                                    1;
                               });
                             },
-                            dropdownMenuEntries: [noBadge, ...allBadges]
+                            dropdownMenuEntries: hours
                                 .map(
-                                  (badge) => DropdownMenuEntry(
-                                    value: badge,
-                                    label: badge != noBadge
-                                        ? AppLocalizations.of(
-                                            context,
-                                          ).timetableWeek(badge ?? '')
-                                        : badge!,
+                                  (hour) => DropdownMenuEntry(
+                                    value: hour.label,
+                                    label: hour.label,
                                   ),
                                 )
                                 .toList(),
                           ),
+                        ),
+                        Text('-'),
+                        Expanded(
+                          child: DropdownMenu(
+                            expandedInsets: EdgeInsets.zero,
+                            initialSelection: endTime.label,
+                            onSelected: (value) {
+                              setState(() {
+                                endTime = hours.firstWhere(
+                                  (hour) => hour.label == value,
+                                );
+                                duration =
+                                    hours.indexOf(endTime) -
+                                    hours.indexOf(startTime) +
+                                    1;
+                              });
+                            },
+                            dropdownMenuEntries: hours
+                                .map(
+                                  (hour) => DropdownMenuEntry(
+                                    value: hour.label,
+                                    label: hour.label,
+                                  ),
+                                )
+                                .toList(),
+                          ),
+                        ),
+                      ],
+                    ),
+                    DropdownMenu<String>(
+                      key: const ValueKey('custom-lesson-week'),
+                      expandedInsets: EdgeInsets.zero,
+                      label: Text(AppLocalizations.of(context).week),
+                      initialSelection: parity != null
+                          ? 'parity:${parity!.name}'
+                          : 'badge:$selectedWeek',
+                      onSelected: (value) {
+                        if (value == null) return;
+                        setState(() {
+                          parity = value.startsWith('parity:')
+                              ? TimetableWeekParity.values.byName(
+                                  value.substring(7),
+                                )
+                              : null;
+                          selectedWeek = parity == null
+                              ? int.parse(value.substring(6))
+                              : 0;
+                        });
+                      },
+                      dropdownMenuEntries: [
+                        DropdownMenuEntry(value: 'badge:0', label: noBadge),
+                        for (final (index, badge) in allBadges.indexed)
+                          DropdownMenuEntry(
+                            value: 'badge:${index + 1}',
+                            label: AppLocalizations.of(
+                              context,
+                            ).timetableWeek(badge),
+                          ),
+                        DropdownMenuEntry(
+                          value: 'parity:even',
+                          label: AppLocalizations.of(context).evenCalendarWeeks,
+                        ),
+                        DropdownMenuEntry(
+                          value: 'parity:odd',
+                          label: AppLocalizations.of(context).oddCalendarWeeks,
+                        ),
                       ],
                     ),
                     ElevatedButton(
@@ -257,6 +279,7 @@ class _TimetableModificationsEditorState
                                 badge: selectedWeek == 0
                                     ? null
                                     : allBadges[selectedWeek - 1],
+                                calendarWeekParity: parity,
                                 duration: duration,
                                 startTime: startTime.startTime,
                                 endTime: endTime.endTime,

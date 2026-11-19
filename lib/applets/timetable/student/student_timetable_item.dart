@@ -178,6 +178,17 @@ class ItemBlock extends StatelessWidget {
                 ),
                 if (subject?.lehrer != null)
                   modalSheetItem(subject!.lehrer!, Icons.person),
+                if (subject?.calendarWeekParity != null)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Chip(
+                      label: Text(
+                        subject!.calendarWeekParity == TimetableWeekParity.even
+                            ? AppLocalizations.of(context).evenCalendarWeeks
+                            : AppLocalizations.of(context).oddCalendarWeeks,
+                      ),
+                    ),
+                  ),
                 if (subject?.badge != null)
                   modalSheetItem(subject!.badge!, Icons.info),
               ],

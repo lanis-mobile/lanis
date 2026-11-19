@@ -429,5 +429,7 @@
   },
   "unknownUploadError": "Unbekannter Fehler beim Hochladen",
   "addFile": "Datei hinzufügen",
-  "offlineDataUnavailable": "Offline nicht verfügbar"
+  "offlineDataUnavailable": "Offline nicht verfügbar",
+  "evenCalendarWeeks": "Gerade KW",
+  "oddCalendarWeeks": "Ungerade KW"
 }

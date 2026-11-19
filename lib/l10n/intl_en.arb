@@ -472,5 +472,7 @@
   },
   "unknownUploadError": "Unknown upload error",
   "addFile": "Add file",
-  "offlineDataUnavailable": "Not available offline"
+  "offlineDataUnavailable": "Not available offline",
+  "evenCalendarWeeks": "Even calendar weeks",
+  "oddCalendarWeeks": "Odd calendar weeks"
 }

@@ -160,7 +160,7 @@ class _StudentTimetableBetterViewState
             );
 
             TimeTableData data = TimeTableData(
-              selectedPlan,
+              filterCalendarWeekLessons(selectedPlan, weekStart),
               timetable,
               settings,
               selectedBadge,
