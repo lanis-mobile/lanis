@@ -208,6 +208,33 @@ void main() {
   });
 
   testWidgets(
+    'single child uses an appbar subtitle and gains tabs after refresh',
+    (tester) async {
+      final parser = await pump(tester, pupilCount: 1);
+      expect(find.byType(TabBar), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byType(AppBar),
+          matching: find.text('Child 1'),
+        ),
+        findsOneWidget,
+      );
+      parser.pupilCount = 2;
+      await parser.fetchData(forceRefresh: true);
+      await tester.pumpAndSettle();
+      expect(find.byType(TabBar), findsOneWidget);
+      expect(find.text('Child 1'), findsOneWidget);
+      parser.pupilCount = 1;
+      await parser.fetchData(forceRefresh: true);
+      await tester.pumpAndSettle();
+      expect(find.byType(TabBar), findsNothing);
+      expect(find.text('Child 1'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  testWidgets(
     'parent module groups children and opens the exact course read-only',
     (tester) async {
       expect(

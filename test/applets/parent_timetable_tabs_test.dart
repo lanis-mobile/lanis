@@ -46,7 +46,11 @@ class _Parser extends TimetableParentParser {
     await homeGate?.future;
     if (offline) throw NoConnectionException();
     if (loaded) {
-      return ParentTimetableLoaded(pupilId: '1', timetable: plan('1'));
+      return ParentTimetableLoaded(
+        pupilId: '1',
+        pupilName: 'Child 1',
+        timetable: plan('1'),
+      );
     }
     return ParentTimetableSelection(
       timetables: [
@@ -232,7 +236,11 @@ void main() {
   testWidgets('one selection loads its only timetable', (tester) async {
     final parser = await pump(tester, count: 1);
     expect(parser.requests, ['1']);
-    expect(find.text('Child 1'), findsOneWidget);
+    expect(find.byType(TabBar), findsNothing);
+    expect(
+      find.descendant(of: find.byType(AppBar), matching: find.text('Child 1')),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
   });
@@ -243,6 +251,11 @@ void main() {
     final parser = await pump(tester, loaded: true);
     expect(parser.homeCalls, 1);
     expect(parser.requests, isEmpty);
+    expect(find.byType(TabBar), findsNothing);
+    expect(
+      find.descendant(of: find.byType(AppBar), matching: find.text('Child 1')),
+      findsOneWidget,
+    );
     expect(find.byType(StudentTimetableBetterView), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());

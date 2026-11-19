@@ -33,7 +33,11 @@ class _ParentParser extends TimetableParentParser {
     : super(isConnected: () async => true);
   @override
   Future<ParentTimetableHome> getHome() async => single
-      ? ParentTimetableLoaded(pupilId: '1', timetable: timetable())
+      ? ParentTimetableLoaded(
+          pupilId: '1',
+          pupilName: 'Child 1',
+          timetable: timetable(),
+        )
       : ParentTimetableSelection(
           timetables: [
             for (final id in ['1', '2'])
@@ -150,7 +154,16 @@ void main() {
         expect(find.text('Only child one'), findsOneWidget);
         expect(find.text('Account original'), findsNothing);
         final base = scope.read(accountSpecificSettingsProvider)!;
-        if (!single) {
+        if (single) {
+          expect(find.byType(TabBar), findsNothing);
+          expect(
+            find.descendant(
+              of: find.byType(AppBar),
+              matching: find.text('Child 1'),
+            ),
+            findsOneWidget,
+          );
+        } else {
           expect(
             tester.widget<TabBar>(find.byType(TabBar)).isScrollable,
             isTrue,

@@ -1,3 +1,4 @@
+import 'package:lanis/widgets/applet_app_bar_title.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -142,7 +143,10 @@ class _ParentLessonsTabsState extends State<_ParentLessonsTabs>
     final selected = entries.isEmpty ? null : entries[_tabs.index];
     return Scaffold(
       appBar: AppBar(
-        title: Text(lessonsDefinition.label(context)),
+        title: AppletAppBarTitle(
+          title: Text(lessonsDefinition.label(context)),
+          subtitle: entries.length == 1 ? entries.single.key.name : null,
+        ),
         leading: widget.openDrawerCb == null
             ? null
             : IconButton(
@@ -161,7 +165,7 @@ class _ParentLessonsTabsState extends State<_ParentLessonsTabs>
                 widget.updateSetting('showHomework', !widget.homeworkOnly),
           ),
         ],
-        bottom: entries.isEmpty
+        bottom: entries.length <= 1
             ? null
             : TabBar(
                 controller: _tabs,

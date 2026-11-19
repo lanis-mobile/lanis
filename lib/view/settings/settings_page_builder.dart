@@ -65,6 +65,7 @@ bool _effectiveShowBack(BuildContext context, bool showBackButton) {
 class SettingsPage extends StatelessWidget {
   final Color backgroundColor;
   final Text title;
+  final String? subtitle;
   final List<Widget> children;
   final EdgeInsets contentPadding;
   final void Function()? back;
@@ -76,6 +77,7 @@ class SettingsPage extends StatelessWidget {
     super.key,
     required this.backgroundColor,
     required this.title,
+    this.subtitle,
     this.contentPadding = EdgeInsets.zero,
     this.back,
     required this.children,
@@ -91,6 +93,7 @@ class SettingsPage extends StatelessWidget {
       backgroundColor: backgroundColor,
       appBar: LargeAppBar(
         title: title,
+        subtitle: subtitle,
         backgroundColor: backgroundColor,
         back: back,
         showBackButton: showBack,

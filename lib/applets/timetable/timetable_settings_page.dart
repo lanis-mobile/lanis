@@ -16,6 +16,8 @@ class TimetableSettingsPage extends ConsumerSettingsColours {
 
 class _TimetableSettingsPageState
     extends ConsumerSettingsColoursState<TimetableSettingsPage> {
+  String? _singlePupilName;
+
   @override
   Widget build(BuildContext context) {
     final session = ref.watch(sessionProvider).asData?.value;
@@ -25,6 +27,7 @@ class _TimetableSettingsPageState
     return SettingsPage(
       backgroundColor: backgroundColor,
       title: Text(AppLocalizations.of(context).timeTable),
+      subtitle: type == AccountType.parent ? _singlePupilName : null,
       children: [
         Theme(
           data: Theme.of(context).copyWith(
@@ -36,7 +39,14 @@ class _TimetableSettingsPageState
           child: session == null
               ? const Center(child: CircularProgressIndicator())
               : type == AccountType.parent
-              ? const ParentTimetableView(customize: true)
+              ? ParentTimetableView(
+                  customize: true,
+                  onSinglePupilChanged: (name) {
+                    if (mounted && name != _singlePupilName) {
+                      setState(() => _singlePupilName = name);
+                    }
+                  },
+                )
               : const TimetableSettingsView(showAppBar: false),
         ),
       ],

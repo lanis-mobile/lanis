@@ -1,3 +1,4 @@
+import 'package:lanis/widgets/applet_app_bar_title.dart';
 import 'dart:async';
 
 import 'package:dart_date/dart_date.dart';
@@ -25,6 +26,7 @@ class StudentTimetableBetterView extends ConsumerStatefulWidget {
   final AccountType? accountType;
   final PreferredSizeWidget? appBarBottom;
   final bool showAppBar;
+  final String? pupilName;
   final ValueChanged<AppBar>? onAppBarChanged;
   const StudentTimetableBetterView({
     super.key,
@@ -34,6 +36,7 @@ class StudentTimetableBetterView extends ConsumerStatefulWidget {
     this.accountType,
     this.appBarBottom,
     this.showAppBar = true,
+    this.pupilName,
     this.onAppBarChanged,
   });
 
@@ -79,7 +82,10 @@ class _StudentTimetableBetterViewState
       return Scaffold(
         appBar: _appBar(
           AppBar(
-            title: Text(timeTableDefinition.label(context)),
+            title: AppletAppBarTitle(
+              title: Text(timeTableDefinition.label(context)),
+              subtitle: widget.appBarBottom == null ? widget.pupilName : null,
+            ),
             bottom: widget.appBarBottom,
             leading: widget.openDrawerCb != null
                 ? IconButton(
@@ -107,7 +113,10 @@ class _StudentTimetableBetterViewState
       accountType: accountType,
       loadingAppBar: _appBar(
         AppBar(
-          title: Text(timeTableDefinition.label(context)),
+          title: AppletAppBarTitle(
+            title: Text(timeTableDefinition.label(context)),
+            subtitle: widget.appBarBottom == null ? widget.pupilName : null,
+          ),
           bottom: widget.appBarBottom,
           leading: widget.openDrawerCb != null
               ? IconButton(
@@ -167,7 +176,10 @@ class _StudentTimetableBetterViewState
             );
 
             final appBar = AppBar(
-              title: Text(timeTableDefinition.label(context)),
+              title: AppletAppBarTitle(
+                title: Text(timeTableDefinition.label(context)),
+                subtitle: widget.appBarBottom == null ? widget.pupilName : null,
+              ),
               bottom: widget.appBarBottom,
               leading: widget.openDrawerCb != null
                   ? IconButton(

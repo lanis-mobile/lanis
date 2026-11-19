@@ -1,3 +1,4 @@
+import 'package:lanis/widgets/applet_app_bar_title.dart';
 import '../timetable_settings_scope.dart';
 import '../timetable_settings_view.dart';
 import 'dart:async';
@@ -18,8 +19,14 @@ AppBar _timetableAppBar(
   Function? openDrawerCb,
   PreferredSizeWidget? bottom,
   bool customize = false,
+  String? pupilName,
 }) => AppBar(
-  title: customize ? null : Text(AppLocalizations.of(context).timeTable),
+  title: customize
+      ? null
+      : AppletAppBarTitle(
+          title: Text(AppLocalizations.of(context).timeTable),
+          subtitle: pupilName,
+        ),
   toolbarHeight: customize ? 0 : kToolbarHeight,
   primary: !customize,
   automaticallyImplyLeading: !customize,
@@ -37,11 +44,13 @@ class ParentTimetableView extends ConsumerStatefulWidget {
   final Function? openDrawerCb;
   final OfflineCacheContext? offline;
   final bool customize;
+  final ValueChanged<String?>? onSinglePupilChanged;
   const ParentTimetableView({
     super.key,
     this.openDrawerCb,
     this.offline,
     this.customize = false,
+    this.onSinglePupilChanged,
   });
   @override
   ConsumerState<ParentTimetableView> createState() =>
@@ -51,6 +60,15 @@ class ParentTimetableView extends ConsumerStatefulWidget {
 class _ParentTimetableViewState extends ConsumerState<ParentTimetableView>
     with WidgetsBindingObserver {
   late final CachedDataSource<ParentTimetableHome> _home;
+  String? _reportedSinglePupil;
+  void _reportSinglePupil(String? name) {
+    if (name == _reportedSinglePupil) return;
+    _reportedSinglePupil = name;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) widget.onSinglePupilChanged?.call(name);
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -203,6 +221,7 @@ class _ParentTimetableViewState extends ConsumerState<ParentTimetableView>
         }
         switch (home) {
           case ParentTimetableLoaded loaded:
+            _reportSinglePupil(loaded.pupilName);
             MaybeCacheResult<TimeTable> map(
               MaybeCacheResult<ParentTimetableHome> value,
             ) => value.map((home) {
@@ -213,6 +232,7 @@ class _ParentTimetableViewState extends ConsumerState<ParentTimetableView>
             });
             return _PlanScreen(
               key: ValueKey(loaded.pupilId),
+              pupilName: loaded.pupilName,
               settings: timetableSettingsForPupil(_settings, loaded.pupilId),
               customize: widget.customize,
               openDrawerCb: widget.openDrawerCb,
@@ -230,6 +250,11 @@ class _ParentTimetableViewState extends ConsumerState<ParentTimetableView>
               read: () async => map(await _readHome()),
             );
           case ParentTimetableSelection selection:
+            _reportSinglePupil(
+              selection.timetables.length == 1
+                  ? selection.timetables.single.pupilName
+                  : null,
+            );
             return _TimetableTabs(
               selection: selection,
               customize: widget.customize,
@@ -391,27 +416,29 @@ class _TimetableTabsState extends State<_TimetableTabs>
         body: const Center(child: CircularProgressIndicator()),
       );
     }
-    final tabs = TabBar(
-      controller: _tabs,
-      isScrollable: true,
-      tabAlignment: TabAlignment.start,
-      tabs: [
-        for (final reference in _references)
-          Tab(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(reference.pupilName),
-                if (widget.cacheOnly &&
-                    !_cachedPlans.containsKey(reference.pupilId)) ...[
-                  const SizedBox(width: 6),
-                  const Icon(Icons.error_outline, size: 16),
-                ],
-              ],
-            ),
-          ),
-      ],
-    );
+    final tabs = _references.length <= 1
+        ? null
+        : TabBar(
+            controller: _tabs,
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
+            tabs: [
+              for (final reference in _references)
+                Tab(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(reference.pupilName),
+                      if (widget.cacheOnly &&
+                          !_cachedPlans.containsKey(reference.pupilId)) ...[
+                        const SizedBox(width: 6),
+                        const Icon(Icons.error_outline, size: 16),
+                      ],
+                    ],
+                  ),
+                ),
+            ],
+          );
     return ValueListenableBuilder<AppBar?>(
       valueListenable: _appBar,
       builder: (context, appBar, child) => Scaffold(
@@ -419,6 +446,9 @@ class _TimetableTabsState extends State<_TimetableTabs>
             appBar ??
             _timetableAppBar(
               context,
+              pupilName: _references.length == 1
+                  ? _references.single.pupilName
+                  : null,
               bottom: tabs,
               openDrawerCb: widget.openDrawerCb,
               customize: widget.customize,
@@ -439,6 +469,9 @@ class _TimetableTabsState extends State<_TimetableTabs>
                   : _visited.contains(reference.pupilId)
                   ? _PlanScreen(
                       key: ValueKey(reference.pupilId),
+                      pupilName: _references.length == 1
+                          ? reference.pupilName
+                          : null,
                       initial: _cachedPlans[reference.pupilId],
                       settings: timetableSettingsForPupil(
                         widget.settings,
@@ -481,6 +514,7 @@ class _PlanScreen extends StatefulWidget {
   final bool customize;
   final PreferredSizeWidget? appBarBottom;
   final bool showAppBar;
+  final String? pupilName;
   final ValueChanged<AppBar>? onAppBarChanged;
   final Function? openDrawerCb;
   const _PlanScreen({
@@ -493,6 +527,7 @@ class _PlanScreen extends StatefulWidget {
     this.customize = false,
     this.appBarBottom,
     this.showAppBar = true,
+    this.pupilName,
     this.onAppBarChanged,
     this.openDrawerCb,
   });
@@ -552,6 +587,7 @@ class _PlanScreenState extends State<_PlanScreen>
       dataSource: source,
       settings: widget.settings,
       accountType: AccountType.parent,
+      pupilName: widget.pupilName,
       openDrawerCb: widget.openDrawerCb,
       appBarBottom: widget.appBarBottom,
       showAppBar: widget.showAppBar,
