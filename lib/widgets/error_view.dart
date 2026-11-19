@@ -6,6 +6,20 @@ import 'package:liblanis/liblanis.dart';
 
 import '../utils/mono_text_viewer.dart';
 
+/// A missing offline snapshot is an expected empty state, not a diagnostic error.
+class OfflineDataUnavailableView extends StatelessWidget {
+  const OfflineDataUnavailableView({super.key});
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Icon(
+      Icons.cloud_off_outlined,
+      size: 60,
+      semanticLabel: AppLocalizations.of(context).offlineDataUnavailable,
+    ),
+  );
+}
+
 class AppletErrorView extends StatelessWidget {
   final Exception error;
   final void Function()? retry;
@@ -37,9 +51,11 @@ class AppletErrorView extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10.0),
           child: Text(
-            error is! NoConnectionException
-                ? AppLocalizations.of(context).errorOccurred
-                : AppLocalizations.of(context).noInternetConnection2,
+            error is CacheUnavailableException
+                ? AppLocalizations.of(context).offlineDataUnavailable
+                : error is NoConnectionException
+                ? AppLocalizations.of(context).noInternetConnection2
+                : AppLocalizations.of(context).errorOccurred,
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
@@ -56,7 +72,8 @@ class AppletErrorView extends StatelessWidget {
               ),
             ],
           ),
-        if (error is! NoConnectionException) ...[
+        if (error is! NoConnectionException &&
+            error is! CacheUnavailableException) ...[
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lanis/applets/definitions.dart';
 import 'package:lanis/applets/timetable/routes.dart';
+import 'package:lanis/applets/timetable/parent/parent_timetable_view.dart';
 import 'package:lanis/applets/timetable/student/student_timetable_better_view.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/l10n/account_type_ui.dart';
@@ -16,7 +17,7 @@ final timeTableDefinition = AppletDefinition(
   appletType: AppletType.nested,
   addDivider: false,
   label: (context) => AppLocalizations.of(context).timeTable,
-  supportedAccountTypes: [AccountType.student],
+  supportedAccountTypes: [AccountType.student, AccountType.parent],
   refreshInterval: Duration(hours: 1),
   allowOffline: true,
   settingsDefaults: {
@@ -31,6 +32,8 @@ final timeTableDefinition = AppletDefinition(
   bodyBuilder: (context, accountType, openDrawerCb) {
     if (accountType == AccountType.student) {
       return StudentTimetableBetterView(openDrawerCb: openDrawerCb);
+    } else if (accountType == AccountType.parent) {
+      return ParentTimetableView(openDrawerCb: openDrawerCb);
     } else {
       return Placeholder();
     }

@@ -251,7 +251,9 @@ class _CalendarViewState extends ConsumerState<CalendarView> {
                     shape: BoxShape.circle,
                     color: colorFromArgb(events[index].colorArgb),
                     border:
-                        (colorFromArgb(events[index].colorArgb).computeLuminance() -
+                        (colorFromArgb(
+                                      events[index].colorArgb,
+                                    ).computeLuminance() -
                                     Theme.of(
                                       context,
                                     ).colorScheme.surface.computeLuminance())
@@ -412,7 +414,8 @@ class _CalendarViewState extends ConsumerState<CalendarView> {
               parser: ref.watch(calendarParserProvider),
               phpUrl: calendarDefinition.appletPhpUrl,
               settingsDefaults: calendarDefinition.settingsDefaults,
-              accountType: session.accountTypeOrNull ??
+              accountType:
+                  session.accountTypeOrNull ??
                   ref.watch(activeAccountProvider)?.accountType ??
                   AccountType.student,
               builder:

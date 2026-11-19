@@ -11,6 +11,7 @@ import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/l10n/account_type_ui.dart';
 import 'package:lanis/features/auth/auth_controller.dart';
 import 'package:lanis/shell_navigation.dart';
+import 'package:lanis/features/offline/foreground_connection_monitor.dart';
 import 'package:lanis/utils/cached_network_image.dart';
 import 'package:lanis/utils/deep_link.dart';
 import 'package:lanis/utils/responsive.dart';
@@ -18,6 +19,7 @@ import 'package:lanis/utils/safe_launch.dart';
 import 'package:lanis/utils/server_status.dart';
 import 'package:lanis/utils/whats_new.dart';
 import 'package:lanis/widgets/applet_home_shell.dart';
+import 'package:lanis/widgets/offline_banner.dart';
 
 /// Nested home applet paths (order matches bottom-nav / shell branches).
 List<String> homeAppletPathsFor(AccountType accountType) => AppDefinitions
@@ -518,6 +520,7 @@ class HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(foregroundConnectionMonitorProvider);
     ref.watch(supportedAppletPhpUrlsProvider);
     ref.watch(activeAccountProvider);
 
@@ -541,25 +544,27 @@ class HomePageState extends ConsumerState<HomePage> {
         },
         child: Scaffold(
           key: _drawerKey,
-          body: isTablet && rail != null
-              ? Row(
-                  children: [
-                    GestureDetector(
-                      behavior: HitTestBehavior.translucent,
-                      onHorizontalDragEnd: (details) {
-                        final velocity = details.primaryVelocity ?? 0;
-                        // Swipe right on the rail opens the drawer.
-                        if (velocity > 250) {
-                          _drawerKey.currentState?.openDrawer();
-                        }
-                      },
-                      child: rail,
-                    ),
-                    const VerticalDivider(width: 1, thickness: 1),
-                    Expanded(child: content),
-                  ],
-                )
-              : content,
+          body: GlobalOfflineShell(
+            child: isTablet && rail != null
+                ? Row(
+                    children: [
+                      GestureDetector(
+                        behavior: HitTestBehavior.translucent,
+                        onHorizontalDragEnd: (details) {
+                          final velocity = details.primaryVelocity ?? 0;
+                          // Swipe right on the rail opens the drawer.
+                          if (velocity > 250) {
+                            _drawerKey.currentState?.openDrawer();
+                          }
+                        },
+                        child: rail,
+                      ),
+                      const VerticalDivider(width: 1, thickness: 1),
+                      Expanded(child: content),
+                    ],
+                  )
+                : content,
+          ),
           drawer: navDrawer(context),
         ),
       ),

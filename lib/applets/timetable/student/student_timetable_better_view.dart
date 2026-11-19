@@ -20,7 +20,22 @@ final double pauseHeight = 18;
 
 class StudentTimetableBetterView extends ConsumerStatefulWidget {
   final Function? openDrawerCb;
-  const StudentTimetableBetterView({super.key, this.openDrawerCb});
+  final AppletDataSource<TimeTable>? dataSource;
+  final TypedSettings? settings;
+  final AccountType? accountType;
+  final PreferredSizeWidget? appBarBottom;
+  final bool showAppBar;
+  final ValueChanged<AppBar>? onAppBarChanged;
+  const StudentTimetableBetterView({
+    super.key,
+    this.openDrawerCb,
+    this.dataSource,
+    this.settings,
+    this.accountType,
+    this.appBarBottom,
+    this.showAppBar = true,
+    this.onAppBarChanged,
+  });
 
   @override
   ConsumerState<StudentTimetableBetterView> createState() =>
@@ -29,6 +44,15 @@ class StudentTimetableBetterView extends ConsumerStatefulWidget {
 
 class _StudentTimetableBetterViewState
     extends ConsumerState<StudentTimetableBetterView> {
+  AppBar? _appBar(AppBar appBar) {
+    if (widget.onAppBarChanged != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) widget.onAppBarChanged?.call(appBar);
+      });
+    }
+    return widget.showAppBar ? appBar : null;
+  }
+
   List<TimetableDay> getSelectedPlan(
     TimeTable data,
     TimeTableType selectedType,
@@ -48,11 +72,43 @@ class _StudentTimetableBetterViewState
 
   @override
   Widget build(BuildContext context) {
-    final session = ref.watch(sessionProvider).asData?.value;
-    if (session == null) {
+    final session = widget.dataSource == null
+        ? ref.watch(sessionProvider).asData?.value
+        : null;
+    if (session == null && widget.dataSource == null) {
       return Scaffold(
-        appBar: AppBar(
+        appBar: _appBar(
+          AppBar(
+            title: Text(timeTableDefinition.label(context)),
+            bottom: widget.appBarBottom,
+            leading: widget.openDrawerCb != null
+                ? IconButton(
+                    icon: const Icon(Icons.menu),
+                    onPressed: () => widget.openDrawerCb!(),
+                  )
+                : null,
+          ),
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+    final accountType = widget.dataSource != null
+        ? widget.accountType ?? AccountType.student
+        : session?.accountTypeOrNull ??
+              ref.read(activeAccountProvider)?.accountType ??
+              AccountType.student;
+    final AppletDataSource<TimeTable> parser =
+        widget.dataSource ?? ref.watch(timetableParserProvider);
+    return CombinedAppletBuilder<TimeTable>(
+      parser: parser,
+      settings: widget.settings,
+      phpUrl: timeTableDefinition.appletPhpUrl,
+      settingsDefaults: timeTableDefinition.settingsDefaults,
+      accountType: accountType,
+      loadingAppBar: _appBar(
+        AppBar(
           title: Text(timeTableDefinition.label(context)),
+          bottom: widget.appBarBottom,
           leading: widget.openDrawerCb != null
               ? IconButton(
                   icon: const Icon(Icons.menu),
@@ -60,27 +116,6 @@ class _StudentTimetableBetterViewState
                 )
               : null,
         ),
-        body: const Center(child: CircularProgressIndicator()),
-      );
-    }
-    final accountType =
-        session.accountTypeOrNull ??
-        ref.read(activeAccountProvider)?.accountType ??
-        AccountType.student;
-    final parser = ref.watch(timetableParserProvider);
-    return CombinedAppletBuilder<TimeTable>(
-      parser: parser,
-      phpUrl: timeTableDefinition.appletPhpUrl,
-      settingsDefaults: timeTableDefinition.settingsDefaults,
-      accountType: accountType,
-      loadingAppBar: AppBar(
-        title: Text(timeTableDefinition.label(context)),
-        leading: widget.openDrawerCb != null
-            ? IconButton(
-                icon: const Icon(Icons.menu),
-                onPressed: () => widget.openDrawerCb!(),
-              )
-            : null,
       ),
       builder:
           (
@@ -133,6 +168,7 @@ class _StudentTimetableBetterViewState
 
             final appBar = AppBar(
               title: Text(timeTableDefinition.label(context)),
+              bottom: widget.appBarBottom,
               leading: widget.openDrawerCb != null
                   ? IconButton(
                       icon: const Icon(Icons.menu),
@@ -237,7 +273,7 @@ class _StudentTimetableBetterViewState
               daysEmpty: data.timetableDays.isEmpty,
             )) {
               return Scaffold(
-                appBar: appBar,
+                appBar: _appBar(appBar),
                 floatingActionButton: switchPlanButton,
                 body: RefreshIndicator(
                   notificationPredicate: refresh != null
@@ -276,7 +312,7 @@ class _StudentTimetableBetterViewState
             }
 
             return Scaffold(
-              appBar: appBar,
+              appBar: _appBar(appBar),
               body: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4.0),
                 child: TimeTableView(

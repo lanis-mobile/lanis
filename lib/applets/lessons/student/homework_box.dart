@@ -8,17 +8,20 @@ import '../../../widgets/format_text.dart';
 class HomeworkBox extends ConsumerStatefulWidget {
   final CurrentEntry currentEntry;
   final String courseID;
+  final bool readOnly;
   const HomeworkBox({
     super.key,
     required this.currentEntry,
     required this.courseID,
+    this.readOnly = false,
   });
 
   @override
   ConsumerState<HomeworkBox> createState() => _HomeworkBoxState();
 }
 
-class _HomeworkBoxState extends ConsumerState<HomeworkBox> with WidgetsBindingObserver {
+class _HomeworkBoxState extends ConsumerState<HomeworkBox>
+    with WidgetsBindingObserver {
   final GlobalKey _columnKey = GlobalKey();
   Size _columnSize = Size.zero;
 
@@ -45,8 +48,10 @@ class _HomeworkBoxState extends ConsumerState<HomeworkBox> with WidgetsBindingOb
       // Checks if the context is still available to prevent _TypeError
       if (_columnKey.currentContext != null) {
         final renderBox = _columnKey.currentContext!.findRenderObject();
-        if (!mounted || renderBox is! RenderBox ||
-            !renderBox.attached || !renderBox.hasSize) {
+        if (!mounted ||
+            renderBox is! RenderBox ||
+            !renderBox.attached ||
+            !renderBox.hasSize) {
           return;
         }
         setState(() {
@@ -100,60 +105,73 @@ class _HomeworkBoxState extends ConsumerState<HomeworkBox> with WidgetsBindingOb
                   ],
                 ),
                 const Spacer(),
-                Checkbox(
-                  visualDensity: VisualDensity.compact,
-                  value: widget.currentEntry.homework!.homeWorkDone,
-                  side: BorderSide(
-                    color: Theme.of(context).colorScheme.onPrimary,
-                    width: 2,
-                  ),
-                  onChanged: (bool? value) async {
-                    if (value == null) return;
-                    try {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            AppLocalizations.of(context).homeworkSaving,
-                          ),
-                          duration: const Duration(milliseconds: 500),
-                        ),
-                      );
-                      final val = await ref
-                          .read(lessonsStudentParserProvider)
-                          .setHomework(
-                            widget.courseID,
-                            widget.currentEntry.entryID,
-                            value,
-                          );
-                      if (val != "1") {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                AppLocalizations.of(
-                                  context,
-                                ).homeworkSavingError,
-                              ),
+                if (widget.readOnly)
+                  // Match the compact checkbox's layout, including when empty.
+                  SizedBox.square(
+                    dimension: 40,
+                    child: widget.currentEntry.homework!.homeWorkDone
+                        ? Icon(
+                            Icons.check,
+                            color: Theme.of(context).colorScheme.onPrimary,
+                            semanticLabel: AppLocalizations.of(context).done,
+                          )
+                        : null,
+                  )
+                else
+                  Checkbox(
+                    visualDensity: VisualDensity.compact,
+                    value: widget.currentEntry.homework!.homeWorkDone,
+                    side: BorderSide(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                      width: 2,
+                    ),
+                    onChanged: (bool? value) async {
+                      if (value == null) return;
+                      try {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              AppLocalizations.of(context).homeworkSaving,
                             ),
-                          );
-                        }
-                      } else if (mounted) {
-                        setState(() {
-                          widget.currentEntry.homework!.homeWorkDone = value;
-                        });
-                      }
-                    } catch (e) {
-                      if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            AppLocalizations.of(context).homeworkSavingError,
+                            duration: const Duration(milliseconds: 500),
                           ),
-                        ),
-                      );
-                    }
-                  },
-                ),
+                        );
+                        final val = await ref
+                            .read(lessonsStudentParserProvider)
+                            .setHomework(
+                              widget.courseID,
+                              widget.currentEntry.entryID,
+                              value,
+                            );
+                        if (val != "1") {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  AppLocalizations.of(
+                                    context,
+                                  ).homeworkSavingError,
+                                ),
+                              ),
+                            );
+                          }
+                        } else if (mounted) {
+                          setState(() {
+                            widget.currentEntry.homework!.homeWorkDone = value;
+                          });
+                        }
+                      } catch (e) {
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              AppLocalizations.of(context).homeworkSavingError,
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                  ),
                 const SizedBox(width: 4),
               ],
             ),

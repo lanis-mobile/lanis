@@ -1,3 +1,4 @@
+import 'package:lanis/generated/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show ProviderException;
@@ -87,7 +88,9 @@ List<RouteBase> buildConversationsRoutes(AppletRouteContext ctx) {
                   child: ConversationChatPage(
                     id: id,
                     title: title,
-                    newSettings: extra is NewConversationSettings ? extra : null,
+                    newSettings: extra is NewConversationSettings
+                        ? extra
+                        : null,
                   ),
                 );
               },
@@ -121,7 +124,8 @@ class ConversationsTabletShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final loc = GoRouterState.of(context).uri.path;
-    final onHome = loc == conversationsHomePath || loc == '/common/conversations';
+    final onHome =
+        loc == conversationsHomePath || loc == '/common/conversations';
     final deviceWidth = MediaQuery.sizeOf(context).width;
     final widthParts = deviceWidth ~/ 350 == 0 ? 1 : deviceWidth ~/ 350;
 
@@ -244,11 +248,13 @@ class _ConversationComposePageState
       context.pop();
       return;
     }
-    context.pop(ChatCreationData(
-      type: data.type,
-      subject: data.subject,
-      receivers: data.receivers,
-    ));
+    context.pop(
+      ChatCreationData(
+        type: data.type,
+        subject: data.subject,
+        receivers: data.receivers,
+      ),
+    );
   }
 
   @override
@@ -257,7 +263,12 @@ class _ConversationComposePageState
         (widget.subject != null && widget.subject!.isNotEmpty) &&
         (widget.receivers != null && widget.receivers!.isNotEmpty);
     if (hasPrefill) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(AppLocalizations.of(context).createNewConversation),
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
     }
     return const NewConversationConfigurator();
   }
@@ -297,15 +308,16 @@ class _ConversationStatsPageState extends ConsumerState<ConversationStatsPage> {
         if (snapshot.hasError) {
           final err = snapshot.error;
           return Scaffold(
-            appBar: AppBar(),
+            appBar: AppBar(title: Text(AppLocalizations.of(context).receivers)),
             body: AppletErrorView(
               error: err is Exception ? err : Exception(err.toString()),
             ),
           );
         }
         if (!snapshot.hasData) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+          return Scaffold(
+            appBar: AppBar(title: Text(AppLocalizations.of(context).receivers)),
+            body: const Center(child: CircularProgressIndicator()),
           );
         }
         final chat = snapshot.data!;

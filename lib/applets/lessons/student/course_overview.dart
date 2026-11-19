@@ -14,11 +14,15 @@ class CourseOverviewAnsicht extends ConsumerStatefulWidget {
   final String dataFetchURL;
   final String title;
   final int? initialTab;
+  final AccountType accountType;
+  final String? pupilName;
   const CourseOverviewAnsicht({
     super.key,
     required this.dataFetchURL,
     required this.title,
     this.initialTab,
+    this.accountType = AccountType.student,
+    this.pupilName,
   });
 
   @override
@@ -35,6 +39,7 @@ class _CourseOverviewAnsichtState extends ConsumerState<CourseOverviewAnsicht> {
   late int _currentIndex = widget.initialTab ?? 0;
   bool loading = true;
   DetailedLesson? data;
+  late String? _pupilName = widget.pupilName;
   final _refreshIndicatorKey = GlobalKey<RefreshIndicatorState>();
 
   @override
@@ -43,8 +48,7 @@ class _CourseOverviewAnsichtState extends ConsumerState<CourseOverviewAnsicht> {
     _loadData();
   }
 
-  String get _accountPrefix =>
-      ref.read(activeAccountProvider)?.accountType?.name ?? 'student';
+  String get _accountPrefix => widget.accountType.name;
 
   Future<void> _openUpload(String url, String name, String status) async {
     final encoded = Uri.encodeComponent(url);
@@ -57,6 +61,27 @@ class _CourseOverviewAnsichtState extends ConsumerState<CourseOverviewAnsicht> {
   void _openSemester1() {
     final courseId = data?.courseID;
     if (courseId == null) return;
+    if (widget.accountType == AccountType.parent) {
+      final current = Uri.parse(widget.dataFetchURL);
+      final semester = data!.semester1URL!;
+      final url = semester.replace(
+        queryParameters: {
+          ...semester.queryParameters,
+          'p': current.queryParameters['p']!,
+        },
+      );
+      context.push(
+        Uri(
+          path: '/parent/lessons/course/$courseId',
+          queryParameters: {
+            'title': widget.title,
+            'url': url.toString(),
+            'pupilName': ?_pupilName,
+          },
+        ).toString(),
+      );
+      return;
+    }
     final title = Uri.encodeComponent(widget.title);
     context.push(
       '/$_accountPrefix/lessons/course/$courseId?title=$title&semester=1',
@@ -72,9 +97,23 @@ class _CourseOverviewAnsichtState extends ConsumerState<CourseOverviewAnsicht> {
       }
 
       String url = widget.dataFetchURL;
-      data = await ref
-          .read(lessonsStudentParserProvider)
-          .getDetailedCourseView(url, force: force);
+      if (widget.accountType == AccountType.parent && _pupilName == null) {
+        final parser = ref.read(lessonsParentParserProvider);
+        final overview =
+            parser.latestResponse?.content ?? await parser.getHome();
+        final pupilId = Uri.parse(url).queryParameters['p'];
+        _pupilName = overview.lessonsByPupil.keys
+            .where((pupil) => pupil.id == pupilId)
+            .firstOrNull
+            ?.name;
+      }
+      data = widget.accountType == AccountType.parent
+          ? await ref
+                .read(lessonsParentParserProvider)
+                .getDetailedCourseView(url, force: force)
+          : await ref
+                .read(lessonsStudentParserProvider)
+                .getDetailedCourseView(url, force: force);
 
       if (!mounted) return;
       setState(() {
@@ -168,7 +207,9 @@ class _CourseOverviewAnsichtState extends ConsumerState<CourseOverviewAnsicht> {
                   }
 
                   List<Widget> uploads = [];
-                  for (var upload in data!.history[index].uploads) {
+                  for (var upload in data!.history[index].uploads.where(
+                    (_) => widget.accountType != AccountType.parent,
+                  )) {
                     if (upload.status == "open") {
                       uploads.add(
                         Container(
@@ -381,7 +422,7 @@ class _CourseOverviewAnsichtState extends ConsumerState<CourseOverviewAnsicht> {
                                     data!.history[index].topicTitle!,
                                     style: Theme.of(
                                       context,
-                                    ).textTheme.titleLarge,
+                                    ).textTheme.titleMedium,
                                   ),
                                 ],
                                 if (data!.history[index].description !=
@@ -403,6 +444,9 @@ class _CourseOverviewAnsichtState extends ConsumerState<CourseOverviewAnsicht> {
                                   HomeworkBox(
                                     currentEntry: data!.history[index],
                                     courseID: data!.courseID,
+                                    readOnly:
+                                        widget.accountType ==
+                                        AccountType.parent,
                                   ),
                                 Visibility(
                                   visible: files.isNotEmpty,
@@ -548,11 +592,26 @@ class _CourseOverviewAnsichtState extends ConsumerState<CourseOverviewAnsicht> {
     }
   }
 
+  Widget _appBarTitle() => _pupilName == null
+      ? Text(widget.title)
+      : Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(widget.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+            Text(
+              _pupilName!,
+              style: Theme.of(context).textTheme.bodySmall,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        );
+
   @override
   Widget build(BuildContext context) {
     if (loading) {
       return Scaffold(
-        appBar: AppBar(title: Text(widget.title)),
+        appBar: AppBar(title: _appBarTitle()),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -564,7 +623,7 @@ class _CourseOverviewAnsichtState extends ConsumerState<CourseOverviewAnsicht> {
         child: _buildBody(),
       ),
       appBar: AppBar(
-        title: Text(widget.title),
+        title: _appBarTitle(),
         actions: [
           if (data?.semester1URL != null)
             IconButton(

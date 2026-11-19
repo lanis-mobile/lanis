@@ -9,11 +9,13 @@ import 'homework_box.dart';
 class LessonListTile extends StatefulWidget {
   final Lesson lesson;
   final AccountType accountType;
+  final String? pupilName;
 
   const LessonListTile({
     super.key,
     required this.lesson,
     this.accountType = AccountType.student,
+    this.pupilName,
   });
 
   @override
@@ -79,6 +81,7 @@ class _LessonListTileState extends State<LessonListTile> {
                 HomeworkBox(
                   currentEntry: widget.lesson.currentEntry!,
                   courseID: widget.lesson.courseID,
+                  readOnly: widget.accountType == AccountType.parent,
                 ),
                 const SizedBox(height: 4),
               ],
@@ -116,6 +119,20 @@ class _LessonListTileState extends State<LessonListTile> {
             borderRadius: BorderRadius.circular(12),
           ),
           onTap: () {
+            if (widget.accountType == AccountType.parent) {
+              context.push(
+                Uri(
+                  path: '/parent/lessons/course/${widget.lesson.courseID}',
+                  queryParameters: {
+                    'title': widget.lesson.name,
+                    'url': widget.lesson.courseURL.toString(),
+                    if (widget.pupilName != null)
+                      'pupilName': widget.pupilName!,
+                  },
+                ).toString(),
+              );
+              return;
+            }
             final prefix = widget.accountType.name;
             final id = widget.lesson.courseID;
             final title = Uri.encodeComponent(widget.lesson.name);

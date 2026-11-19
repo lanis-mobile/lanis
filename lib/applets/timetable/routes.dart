@@ -6,19 +6,20 @@ import 'package:lanis/widgets/applet_home_shell.dart';
 
 List<RouteBase> buildTimetableRoutes(AppletRouteContext ctx) {
   return [
-    GoRoute(
-      path: '/student/timetable',
-      redirect: (context, state) {
-        if (state.uri.path == '/student/timetable') {
-          return timeTableDefinition.homePath(AccountType.student);
-        }
-        return null;
-      },
-      routes: [
-        appletHomeShell(
-          homeBuilder: (context, state) => ctx.homeBody(timeTableDefinition),
-        ),
-      ],
-    ),
+    for (final type in [AccountType.student, AccountType.parent])
+      GoRoute(
+        path: '/${type.name}/timetable',
+        redirect: (context, state) {
+          if (state.uri.path == '/${type.name}/timetable') {
+            return timeTableDefinition.homePath(type);
+          }
+          return null;
+        },
+        routes: [
+          appletHomeShell(
+            homeBuilder: (context, state) => ctx.homeBody(timeTableDefinition),
+          ),
+        ],
+      ),
   ];
 }

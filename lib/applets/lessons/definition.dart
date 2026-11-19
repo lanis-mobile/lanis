@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lanis/applets/definitions.dart';
 import 'package:lanis/applets/lessons/routes.dart';
+import 'parent/lessons_parent_view.dart';
 import 'package:lanis/applets/lessons/student/lessons_student_view.dart';
 import 'package:lanis/applets/lessons/teacher/lessons_teacher_view.dart';
 import 'package:lanis/generated/l10n.dart';
@@ -17,13 +18,15 @@ final lessonsDefinition = AppletDefinition(
   icon: const Icon(Icons.school),
   selectedIcon: const Icon(Icons.school_outlined),
   label: (context) => AppLocalizations.of(context).lessons,
-  supportedAccountTypes: [AccountType.student],
+  supportedAccountTypes: [AccountType.student, AccountType.parent],
   allowOffline: false,
   settingsDefaults: {'showHomework': false},
   refreshInterval: const Duration(minutes: 15),
   bodyBuilder: (context, accountType, openDrawerCb) {
     if (accountType == AccountType.student) {
       return LessonsStudentView(openDrawerCb: openDrawerCb);
+    } else if (accountType == AccountType.parent) {
+      return LessonsParentView(openDrawerCb: openDrawerCb);
     } else if (accountType == AccountType.teacher) {
       return LessonsTeacherView(openDrawerCb: openDrawerCb);
     }

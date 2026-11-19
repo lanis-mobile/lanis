@@ -116,30 +116,31 @@ final goRouterProvider = Provider<GoRouter>((ref) {
 
   final routeCtx = _routeContext();
 
+  StatefulShellBranch appletBranch(AppletDefinition def) {
+    final accountTyped = def.deepLinkScope == DeepLinkScope.accountTyped;
+    // The router exists before login. Resolve role-specific defaults when a
+    // branch is first opened or reselected, after account selection has finished.
+    final entryPath = '/_applet/${def.pathSegment}';
+    return StatefulShellBranch(
+      observers: [glitchTipNavigatorObserver()],
+      initialLocation: accountTyped ? entryPath : def.homePath(),
+      routes: [
+        if (accountTyped)
+          GoRoute(
+            path: entryPath,
+            redirect: (context, state) => def.homePath(
+              ref.read(activeAccountProvider)?.accountType ??
+                  def.supportedAccountTypes.first,
+            ),
+          ),
+        ...def.buildRoutes(routeCtx),
+      ],
+    );
+  }
+
   final shellBranches = <StatefulShellBranch>[
-    for (final def in AppDefinitions.homeApplets)
-      StatefulShellBranch(
-        // Separate observer instance per navigator (Sentry forbids sharing one).
-        observers: [glitchTipNavigatorObserver()],
-        initialLocation: def.homePath(
-          def.deepLinkScope == DeepLinkScope.common
-              ? null
-              : (ref.read(activeAccountProvider)?.accountType ??
-                    def.supportedAccountTypes.first),
-        ),
-        routes: def.buildRoutes(routeCtx),
-      ),
-    for (final def in AppDefinitions.navigationApplets)
-      StatefulShellBranch(
-        observers: [glitchTipNavigatorObserver()],
-        initialLocation: def.homePath(
-          def.deepLinkScope == DeepLinkScope.common
-              ? null
-              : (ref.read(activeAccountProvider)?.accountType ??
-                    def.supportedAccountTypes.first),
-        ),
-        routes: def.buildRoutes(routeCtx),
-      ),
+    for (final def in AppDefinitions.homeApplets) appletBranch(def),
+    for (final def in AppDefinitions.navigationApplets) appletBranch(def),
     StatefulShellBranch(
       observers: [glitchTipNavigatorObserver()],
       initialLocation: SettingsDeepLinks.home,

@@ -38,6 +38,14 @@ class CacheSettings extends ConsumerSettingsColours {
 
 class _CacheSettingsState extends ConsumerSettingsColoursState<CacheSettings> {
   Map<String, int> cacheStats = {'fileNum': 0, 'size': 0};
+  ({int entries, int bytes}) _structured = (entries: 0, bytes: 0);
+
+  void _updateStructured() {
+    final id = ref.read(activeAccountProvider)?.localId;
+    _structured = id == null
+        ? (entries: 0, bytes: 0)
+        : ref.read(lanisDatabaseProvider).structuredCacheUsage(accountId: id);
+  }
 
   Directory? _cacheDir() {
     final storage = ref.read(storageManagerProvider);
@@ -47,13 +55,17 @@ class _CacheSettingsState extends ConsumerSettingsColoursState<CacheSettings> {
 
   Future<void> clearCache() async {
     final dir = _cacheDir();
-    if (dir == null) return;
-    if (dir.existsSync()) {
+    final id = ref.read(activeAccountProvider)?.localId;
+    if (id != null) ref.read(cacheServiceProvider).clear(accountId: id);
+    if (dir != null && dir.existsSync()) {
       dir.deleteSync(recursive: true);
     }
 
     setState(() {
-      cacheStats = CacheSettings.dirStatSync(dir.path);
+      cacheStats = dir == null
+          ? {'fileNum': 0, 'size': 0}
+          : CacheSettings.dirStatSync(dir.path);
+      _updateStructured();
     });
   }
 
@@ -62,9 +74,12 @@ class _CacheSettingsState extends ConsumerSettingsColoursState<CacheSettings> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final dir = _cacheDir();
-      if (dir == null || !mounted) return;
+      if (!mounted) return;
       setState(() {
-        cacheStats = CacheSettings.dirStatSync(dir.path);
+        cacheStats = dir == null
+            ? {'fileNum': 0, 'size': 0}
+            : CacheSettings.dirStatSync(dir.path);
+        _updateStructured();
       });
     });
   }
@@ -90,11 +105,11 @@ class _CacheSettingsState extends ConsumerSettingsColoursState<CacheSettings> {
             AppLocalizations.of(context).questionPermanentlyEmptyCache,
           ),
           buttonText: Text(
-            cacheStats['fileNum'] != 0
+            (cacheStats['fileNum'] != 0 || _structured.entries != 0)
                 ? AppLocalizations.of(context).clearCache
                 : AppLocalizations.of(context).cacheEmpty,
           ),
-          onPressed: cacheStats['fileNum'] != 0
+          onPressed: (cacheStats['fileNum'] != 0 || _structured.entries != 0)
               ? () {
                   clearCache();
                 }
@@ -125,6 +140,9 @@ class _CacheSettingsState extends ConsumerSettingsColoursState<CacheSettings> {
               ),
             ),
           ],
+        ),
+        Text(
+          '${AppLocalizations.of(context).offline}: ${_structured.entries} (${_structured.bytes ~/ 1024} KB)',
         ),
         SizedBox(height: 28.0),
         Row(
