@@ -285,9 +285,11 @@ void shareFile(BuildContext context, DownloadableFile file, Function callback) {
 
   if (file.isLocal) {
     // For local files, share directly
-    Share.shareXFiles([XFile(file.localPath!)]).then((_) {
-      callback();
-    });
+    SharePlus.instance.share(ShareParams(files: [XFile(file.localPath!)])).then(
+      (_) {
+        callback();
+      },
+    );
     return;
   }
 
@@ -308,7 +310,7 @@ void shareFile(BuildContext context, DownloadableFile file, Function callback) {
             builder: (context) => errorDialog(context),
           );
         } else {
-          await Share.shareXFiles([XFile(filepath)]);
+          await SharePlus.instance.share(ShareParams(files: [XFile(filepath)]));
           callback();
         }
       })
