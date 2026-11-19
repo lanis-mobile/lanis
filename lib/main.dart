@@ -3,9 +3,8 @@ import 'dart:io';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -160,6 +159,10 @@ class App extends ConsumerWidget {
         }
 
         return MaterialApp.router(
+          // Some dependencies still use Flutter's legacy Material widgets.
+          builder: (context, child) => MaterialUiCompatibilityBridge(
+            child: child ?? const SizedBox.shrink(),
+          ),
           title: 'Lanis Mobile',
           theme: lightTheme,
           darkTheme: darkTheme,
@@ -167,9 +170,7 @@ class App extends ConsumerWidget {
           routerConfig: router,
           localizationsDelegates: const [
             AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
+            ...GlobalMaterialLocalizations.delegates,
             FlutterQuillLocalizations.delegate,
           ],
           supportedLocales: AppLocalizations.delegate.supportedLocales,

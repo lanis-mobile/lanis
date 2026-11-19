@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Keep the usual title when no child subtitle is needed.
 class AppletAppBarTitle extends StatelessWidget {

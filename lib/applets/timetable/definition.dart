@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:lanis/applets/definitions.dart';
 import 'package:lanis/applets/timetable/routes.dart';
 import 'package:lanis/applets/timetable/parent/parent_timetable_view.dart';

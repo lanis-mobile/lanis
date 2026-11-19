@@ -1,6 +1,6 @@
 import 'dart:io' show exit, Platform;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:lanis/bridge/flutter_secret_store.dart';
 import 'package:lanis/utils/logger.dart';

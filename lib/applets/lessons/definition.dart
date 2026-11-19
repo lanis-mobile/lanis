@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:lanis/applets/definitions.dart';
 import 'package:lanis/applets/lessons/routes.dart';
 import 'parent/lessons_parent_view.dart';

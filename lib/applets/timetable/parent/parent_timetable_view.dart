@@ -3,7 +3,7 @@ import '../timetable_settings_scope.dart';
 import '../timetable_settings_view.dart';
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:liblanis/liblanis.dart';

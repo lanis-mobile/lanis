@@ -1,5 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
@@ -15,9 +14,7 @@ List<Override> testLanisOverrides() => LanisClient.configure();
 
 List<LocalizationsDelegate<dynamic>> get testLocalizationsDelegates => [
   AppLocalizations.delegate,
-  GlobalMaterialLocalizations.delegate,
-  GlobalWidgetsLocalizations.delegate,
-  GlobalCupertinoLocalizations.delegate,
+  ...GlobalMaterialLocalizations.delegates,
 ];
 
 /// Pumps [child] under [ProviderScope] + MaterialApp with l10n.
@@ -36,6 +33,9 @@ Future<ProviderContainer> pumpTestApp(
         builder: (context) {
           container = ProviderScope.containerOf(context);
           return MaterialApp(
+            builder: (context, child) => MaterialUiCompatibilityBridge(
+              child: child ?? const SizedBox.shrink(),
+            ),
             locale: locale,
             localizationsDelegates: testLocalizationsDelegates,
             supportedLocales: AppLocalizations.delegate.supportedLocales,
@@ -70,6 +70,9 @@ Future<ProviderContainer> pumpTestRouterApp(
         builder: (context) {
           container = ProviderScope.containerOf(context);
           return MaterialApp.router(
+            builder: (context, child) => MaterialUiCompatibilityBridge(
+              child: child ?? const SizedBox.shrink(),
+            ),
             locale: locale,
             localizationsDelegates: testLocalizationsDelegates,
             supportedLocales: AppLocalizations.delegate.supportedLocales,

@@ -74,6 +74,9 @@ dependencies:
   riverpod: ^3.5.0
   sentry_flutter: ^10.6.0
 
+  material_ui: ^1.11.1
+  cupertino_ui: ^1.1.7
+
 flutter_launcher_icons:
   android: false
   ios: true

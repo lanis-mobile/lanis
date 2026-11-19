@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:background_fetch/background_fetch.dart';
 import 'package:crypto/crypto.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:liblanis/liblanis.dart';

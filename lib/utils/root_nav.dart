@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Pops a dialog/modal that was shown with [useRootNavigator] (the default
 /// for [showDialog]). Using the nearest navigator would pop a shell route.

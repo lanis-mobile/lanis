@@ -1,6 +1,6 @@
 // Credits: https://retroportalstudio.medium.com/focused-pop-up-menu-in-flutter-15766d0ab414
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class FocusedMenuItem {
   final String title;
