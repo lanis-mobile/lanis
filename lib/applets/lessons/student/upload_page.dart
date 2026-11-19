@@ -101,6 +101,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
     final dateLocale = Localizations.localeOf(context).toString();
     return FutureBuilder(
       future: _future,
@@ -164,17 +165,17 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                                   builder: (context) {
                                     return AlertDialog(
                                       title: Text(
-                                        AppLocalizations().uploadNotPossible,
+                                        localizations.uploadNotPossible,
                                       ),
                                       content: Text(
-                                        AppLocalizations()
+                                        localizations
                                             .multipleOrUnlimitedSubmissionNotSupportedMsg,
                                       ),
                                       actions: [
                                         FilledButton(
                                           onPressed: () =>
                                               Navigator.of(context).pop(),
-                                          child: Text(AppLocalizations().back),
+                                          child: Text(localizations.back),
                                         ),
                                       ],
                                     );
@@ -184,7 +185,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                               }
 
                               showSnackbar(
-                                text: AppLocalizations().tryingToUploadFiles,
+                                text: localizations.tryingToUploadFiles,
                               );
 
                               List<FileStatus> fileStatus;
@@ -247,9 +248,9 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
 
                               showSnackbar(
                                 text:
-                                    "$successfulUploads/${fileStatus.length} ${AppLocalizations().xWasUploadedSuccessfully} ${renamed == true ? AppLocalizations().howeverSomeFilesWereRenamed : ''}",
+                                    "$successfulUploads/${fileStatus.length} ${localizations.xWasUploadedSuccessfully} ${renamed == true ? localizations.howeverSomeFilesWereRenamed : ''}",
                                 action: SnackBarAction(
-                                  label: AppLocalizations().seeMore,
+                                  label: localizations.seeMore,
                                   onPressed: () {
                                     if (!context.mounted) return;
                                     // We render the Widgets before so we can have a dynamically sized AlertDialog.
@@ -277,7 +278,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                                       builder: (context) {
                                         return AlertDialog(
                                           title: Text(
-                                            AppLocalizations().moreDetails,
+                                            localizations.moreDetails,
                                           ),
                                           content: Column(
                                             mainAxisSize: MainAxisSize.min,
@@ -288,7 +289,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                                               onPressed: () =>
                                                   Navigator.of(context).pop(),
                                               child: Text(
-                                                AppLocalizations().back,
+                                                localizations.back,
                                               ),
                                             ),
                                           ],
@@ -334,7 +335,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
 
                           if ((pickedFiles.length + filesLength) > 5) {
                             showSnackbar(
-                              text: AppLocalizations().maxOfFiveFiles,
+                              text: localizations.maxOfFiveFiles,
                             );
                             return;
                           }
@@ -353,7 +354,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                             )) {
                               showSnackbar(
                                 text:
-                                    "${AppLocalizations().fileTypeNotAllowed} (${file.name})",
+                                    "${localizations.fileTypeNotAllowed} (${file.name})",
                               );
                               continue;
                             }
@@ -361,7 +362,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                             if ((file.size ?? 0) > maxFileSize) {
                               showSnackbar(
                                 text:
-                                    "${AppLocalizations().maxFileSizeExceeded} (${file.name})",
+                                    "${localizations.maxFileSizeExceeded} (${file.name})",
                               );
                               continue;
                             }
@@ -371,7 +372,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                               if (element.filename == file.name) {
                                 showSnackbar(
                                   text:
-                                      "${AppLocalizations().fileNameAlreadyExists} (${file.name})",
+                                      "${localizations.fileNameAlreadyExists} (${file.name})",
                                 );
                                 continue;
                               }
@@ -381,7 +382,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                             if (mimeType == null) {
                               showSnackbar(
                                 text:
-                                    "${AppLocalizations().failedToDetectFileType} (${file.name})",
+                                    "${localizations.failedToDetectFileType} (${file.name})",
                               );
                               continue;
                             }
@@ -426,9 +427,9 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                 children: [
                   requirementsInfo([
                     ListTile(
-                      title: Text(AppLocalizations().start),
+                      title: Text(localizations.start),
                       subtitle: Text(
-                        AppLocalizations().dateTimeString(
+                        localizations.dateTimeString(
                           DateFormat('EEEE', dateLocale).format(startDate),
                           DateFormat(
                             'dd.MM.yyyy',
@@ -440,9 +441,9 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                       leading: const Icon(Icons.hourglass_top),
                     ),
                     ListTile(
-                      title: Text(AppLocalizations().end),
+                      title: Text(localizations.end),
                       subtitle: Text(
-                        AppLocalizations().dateTimeString(
+                        localizations.dateTimeString(
                           DateFormat('EEEE', dateLocale).format(endDate),
                           DateFormat('dd.MM.yyyy', dateLocale).format(endDate),
                           DateFormat('HH:mm', dateLocale).format(endDate),
@@ -456,22 +457,22 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                         isBeforeStart || snapshot.data["course_id"] != null,
                     child: requirementsInfo([
                       ListTile(
-                        title: Text(AppLocalizations().uploadOfMultipleFiles),
+                        title: Text(localizations.uploadOfMultipleFiles),
                         subtitle: Text(
                           snapshot.data["upload_multiple_files"]
-                              ? AppLocalizations().possible
-                              : AppLocalizations().notPossible,
+                              ? localizations.possible
+                              : localizations.notPossible,
                         ),
                         leading: snapshot.data["upload_multiple_files"]
                             ? const Icon(Icons.file_upload)
                             : const Icon(Icons.file_upload_off),
                       ),
                       ListTile(
-                        title: Text(AppLocalizations().uploadUnlimitedTimes),
+                        title: Text(localizations.uploadUnlimitedTimes),
                         subtitle: Text(
                           snapshot.data["upload_any_number_of_times"]
-                              ? AppLocalizations().possible
-                              : AppLocalizations().notPossible,
+                              ? localizations.possible
+                              : localizations.notPossible,
                         ),
                         leading: snapshot.data["upload_any_number_of_times"]
                             ? const Icon(Icons.file_upload)
@@ -485,12 +486,12 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                     child: requirementsInfo([
                       ListTile(
                         title: Text(
-                          "${AppLocalizations().filesVisibleForX}${snapshot.data["visibility"]}",
+                          "${localizations.filesVisibleForX}${snapshot.data["visibility"]}",
                         ),
                         leading: const Icon(Icons.visibility),
                       ),
                       ListTile(
-                        title: Text(AppLocalizations().automaticDeletion),
+                        title: Text(localizations.automaticDeletion),
                         subtitle: Text(snapshot.data["automatic_deletion"]),
                         leading: const Icon(Icons.delete_forever),
                       ),
@@ -502,8 +503,8 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                     child: requirementsInfo([
                       ListTile(
                         title: filesDeleted
-                            ? Text(AppLocalizations().filesWereDeleted)
-                            : Text(AppLocalizations().automaticDeletion),
+                            ? Text(localizations.filesWereDeleted)
+                            : Text(localizations.automaticDeletion),
                         subtitle: filesDeleted
                             ? null
                             : Text(snapshot.data["automatic_deletion"]),
@@ -516,7 +517,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                         isBeforeStart || snapshot.data["course_id"] != null,
                     child: requirementsInfo([
                       ListTile(
-                        title: Text(AppLocalizations().allowedFileTypes),
+                        title: Text(localizations.allowedFileTypes),
                         subtitle: Text(
                           snapshot.data["allowed_file_types"]
                               .toString()
@@ -531,7 +532,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                         leading: const Icon(Icons.description),
                       ),
                       ListTile(
-                        title: Text(AppLocalizations().maxFileSize),
+                        title: Text(localizations.maxFileSize),
                         subtitle: Text(snapshot.data["max_file_size"]),
                         leading: const Icon(Icons.description),
                       ),
@@ -542,7 +543,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                     child: requirementsInfo([
                       if (snapshot.data["additional_text"] != null) ...[
                         ListTile(
-                          title: Text(AppLocalizations().moreInformation),
+                          title: Text(localizations.moreInformation),
                           subtitle: Text(
                             snapshot.data["additional_text"] ?? "",
                           ),
@@ -580,7 +581,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                                   builder: (BuildContext context) {
                                     return AlertDialog(
                                       title: Text(
-                                        AppLocalizations().downloading,
+                                        localizations.downloading,
                                       ),
                                       content: Center(
                                         heightFactor: 1.1,
@@ -597,7 +598,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                                     Navigator.of(context).pop();
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
-                                        content: Text(AppLocalizations().error),
+                                        content: Text(localizations.error),
                                       ),
                                     );
                                   }
@@ -617,10 +618,10 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                                             context: context,
                                             builder: (context) => AlertDialog(
                                               title: Text(
-                                                "${AppLocalizations().error}!",
+                                                "${localizations.error}!",
                                               ),
                                               content: Text(
-                                                AppLocalizations()
+                                                localizations
                                                     .failedToDownloadFileMsg(
                                                       snapshot
                                                           .data["public_files"][index]
@@ -630,7 +631,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                                               actions: [
                                                 TextButton(
                                                   child: Text(
-                                                    AppLocalizations().ok,
+                                                    localizations.ok,
                                                   ),
                                                   onPressed: () {
                                                     Navigator.of(context).pop();
@@ -666,7 +667,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        AppLocalizations().noSubmissionMsg,
+                        localizations.noSubmissionMsg,
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                     ),
@@ -704,7 +705,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                                       snapshot.data["entry_id"] is! String ||
                                       snapshot.data["upload_id"] is! String) {
                                     showSnackbar(
-                                      text: AppLocalizations().error,
+                                      text: localizations.error,
                                     );
                                     return;
                                   }
@@ -715,7 +716,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                                     builder: (BuildContext context) {
                                       return AlertDialog(
                                         title: Text(
-                                          AppLocalizations()
+                                          localizations
                                               .confirmWithPassword,
                                         ),
                                         content: TextField(
@@ -729,7 +730,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                                             onPressed: () =>
                                                 Navigator.pop(context),
                                             child: Text(
-                                              AppLocalizations().back,
+                                              localizations.back,
                                             ),
                                           ),
                                           FilledButton(
@@ -737,7 +738,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                                               Navigator.pop(context);
 
                                               showSnackbar(
-                                                text: AppLocalizations()
+                                                text: localizations
                                                     .tryingToDeleteFiles,
                                               );
                                               String response;
@@ -800,17 +801,17 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                                               }
 
                                               String
-                                              message = AppLocalizations()
+                                              message = localizations
                                                   .unknownErrorWhileDeletingFile;
 
                                               if (response == "-1") {
-                                                message = AppLocalizations()
+                                                message = localizations
                                                     .wrongPassword;
                                               } else if (response == "-2") {
-                                                message = AppLocalizations()
+                                                message = localizations
                                                     .failedToDeleteFile;
                                               } else if (response == "1") {
-                                                message = AppLocalizations()
+                                                message = localizations
                                                     .fileDeletedSuccessfully;
                                               }
 
@@ -830,7 +831,7 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                                                   child: Icon(Icons.warning),
                                                 ),
                                                 Text(
-                                                  AppLocalizations()
+                                                  localizations
                                                       .deletePermanently,
                                                 ),
                                               ],
@@ -890,42 +891,42 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                           if (difference.inHours >= 24) {
                             final days = difference.inDays;
                             if (days == 1) {
-                              waitingTime = "$days ${AppLocalizations().day}";
+                              waitingTime = "$days ${localizations.day}";
                             } else {
-                              waitingTime = "$days ${AppLocalizations().days}";
+                              waitingTime = "$days ${localizations.days}";
                             }
                           } else if (difference.inHours <= 1) {
                             final minutes = difference.inMinutes;
                             if (minutes == 1) {
                               waitingTime =
-                                  "$minutes ${AppLocalizations().minute}";
+                                  "$minutes ${localizations.minute}";
                             } else {
                               waitingTime =
-                                  "$minutes ${AppLocalizations().minutes}";
+                                  "$minutes ${localizations.minutes}";
                             }
                           } else {
                             final hours = difference.inHours;
                             if (hours == 1) {
-                              waitingTime = "$hours ${AppLocalizations().hour}";
+                              waitingTime = "$hours ${localizations.hour}";
                             } else {
                               waitingTime =
-                                  "$hours ${AppLocalizations().hours}";
+                                  "$hours ${localizations.hours}";
                             }
                           }
 
                           return uploadStatusContainer(
-                            AppLocalizations().submissionPossibleInX(
+                            localizations.submissionPossibleInX(
                               waitingTime,
                             ),
                           );
                         }
 
                         return uploadStatusContainer(
-                          AppLocalizations().submissionNoLongerPossible,
+                          localizations.submissionNoLongerPossible,
                         );
                       } else if (value == 0) {
                         return uploadStatusContainer(
-                          AppLocalizations().addFilesToUpload,
+                          localizations.addFilesToUpload,
                         );
                       } else {
                         return Container(

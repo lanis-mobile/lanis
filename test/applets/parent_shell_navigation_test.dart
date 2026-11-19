@@ -129,7 +129,7 @@ void main() {
         child: MaterialApp.router(
           routerConfig: router,
           localizationsDelegates: testLocalizationsDelegates,
-          supportedLocales: AppLocalizations.delegate.supportedLocales,
+          supportedLocales: AppLocalizations.supportedLocales,
         ),
       ),
     );

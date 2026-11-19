@@ -124,7 +124,7 @@ void main() {
         container: scope,
         child: MaterialApp(
           localizationsDelegates: testLocalizationsDelegates,
-          supportedLocales: AppLocalizations.delegate.supportedLocales,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: GlobalOfflineShell(
             child: ParentTimetableView(openDrawerCb: openDrawerCb),
           ),

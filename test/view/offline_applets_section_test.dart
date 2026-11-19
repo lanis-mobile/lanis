@@ -46,7 +46,7 @@ void main() {
         container: container,
         child: MaterialApp(
           localizationsDelegates: testLocalizationsDelegates,
-          supportedLocales: AppLocalizations.delegate.supportedLocales,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: const Scaffold(body: OfflineAvailableAppletsSection()),
         ),
       ),
@@ -86,7 +86,7 @@ void main() {
         container: container,
         child: MaterialApp(
           localizationsDelegates: testLocalizationsDelegates,
-          supportedLocales: AppLocalizations.delegate.supportedLocales,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: const Scaffold(body: OfflineAvailableAppletsSection()),
         ),
       ),

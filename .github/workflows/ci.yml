@@ -28,7 +28,7 @@ jobs:
         run: flutter pub get
 
       - name: Generate l10n
-        run: dart run intl_utils:generate
+        run: flutter gen-l10n
 
       - name: Analyze
         run: flutter analyze --no-fatal-infos

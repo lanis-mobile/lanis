@@ -13,6 +13,7 @@ import 'package:lanis/background_service.dart';
 import 'package:lanis/bridge/lanis_bootstrap.dart';
 import 'package:lanis/bridge/legacy_storage_cleanup.dart';
 import 'package:lanis/generated/l10n.dart';
+import 'package:lanis/l10n/locale_resolution.dart';
 import 'package:lanis/router.dart';
 import 'package:lanis/themes.dart';
 import 'package:lanis/utils/glitchtip.dart';
@@ -173,7 +174,8 @@ class App extends ConsumerWidget {
             ...GlobalMaterialLocalizations.delegates,
             FlutterQuillLocalizations.delegate,
           ],
-          supportedLocales: AppLocalizations.delegate.supportedLocales,
+          supportedLocales: AppLocalizations.supportedLocales,
+          localeListResolutionCallback: resolveAppLocale,
         );
       },
     );

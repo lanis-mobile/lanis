@@ -77,7 +77,7 @@ void main() {
             return MaterialApp(
               locale: const Locale('en'),
               localizationsDelegates: testLocalizationsDelegates,
-              supportedLocales: AppLocalizations.delegate.supportedLocales,
+              supportedLocales: AppLocalizations.supportedLocales,
               home: const Scaffold(
                 body: LoginForm(showBackButton: false),
               ),

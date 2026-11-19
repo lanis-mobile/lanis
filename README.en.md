@@ -60,7 +60,7 @@ Bug reports can also be sent to <a href="mailto:lanis-mobile@alessioc42.dev">thi
 ### 2. Generate the code
 ```shell
 dart run build_runner build # Database
-dart run intl_utils:generate # Localisations
+flutter gen-l10n # Localisations
 ```
 ### 3. Development
 Note the flags here:

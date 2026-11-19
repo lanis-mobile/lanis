@@ -68,7 +68,7 @@ void main() {
         container: scope,
         child: MaterialApp(
           localizationsDelegates: testLocalizationsDelegates,
-          supportedLocales: AppLocalizations.delegate.supportedLocales,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: const Scaffold(body: OfflineAvailableAppletsSection()),
         ),
       ),

@@ -44,7 +44,10 @@ void _maybeShowSnackBar(BuildContext? context) {
   final messenger = ScaffoldMessenger.maybeOf(context);
   if (messenger == null) return;
   final message =
-      AppLocalizations.maybeOf(context)?.couldNotOpenUrl ??
+      Localizations.of<AppLocalizations>(
+        context,
+        AppLocalizations,
+      )?.couldNotOpenUrl ??
       'Could not open this link.';
   messenger.showSnackBar(SnackBar(content: Text(message)));
 }
