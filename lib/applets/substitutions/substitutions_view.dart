@@ -13,11 +13,21 @@ import 'package:lanis/utils/root_nav.dart';
 import 'package:liblanis/liblanis.dart';
 
 import '../../utils/url_modal.dart';
+import '../../features/offline/cache_context.dart';
 import '../../widgets/combined_applet_builder.dart';
 
 class SubstitutionsView extends ConsumerStatefulWidget {
   final Function? openDrawerCb;
-  const SubstitutionsView({super.key, this.openDrawerCb});
+  final AppletDataSource<SubstitutionPlan>? dataSource;
+  final TypedSettings? settings;
+  final AccountType? accountType;
+  const SubstitutionsView({
+    super.key,
+    this.openDrawerCb,
+    this.dataSource,
+    this.settings,
+    this.accountType,
+  });
 
   @override
   ConsumerState<SubstitutionsView> createState() => _SubstitutionsViewState();
@@ -167,70 +177,113 @@ class _SubstitutionsViewState extends ConsumerState<SubstitutionsView>
     BuildContext context,
     List<SubstitutionInfo> infos,
   ) {
+    final offline = ref.read(offlineCacheContextProvider);
     showRootModalBottomSheet(
       context: context,
       useSafeArea: true,
       showDragHandle: true,
       builder: (BuildContext context) {
-        return Padding(
-          padding: const EdgeInsets.only(right: 16, left: 16, bottom: 16),
-          child: ListView(
-            shrinkWrap: true,
-            children: [
-              ...infos.map(
-                (info) => Column(
-                  spacing: 4.0,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      info.header,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+        return ProviderScope(
+          overrides: [offlineCacheContextProvider.overrideWithValue(offline)],
+          child: Padding(
+            padding: const EdgeInsets.only(right: 16, left: 16, bottom: 16),
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                ...infos.map(
+                  (info) => Column(
+                    spacing: 4.0,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        info.header,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    SelectionArea(
-                      child: HtmlWidget(
-                        info.values.join('<br>'),
-                        renderMode: RenderMode.column,
-                        onTapUrl: (url) {
-                          openUrlModal(context, Uri.parse(url));
-                          return true;
-                        },
-                        customStylesBuilder: (element) {
-                          if (element.localName == 'a' &&
-                              element.attributes['style'] != null) {
-                            RegExp regex = RegExp(
-                              r'background-color:\s*[^;]+;',
-                            );
-                            element.attributes['style'] = element
-                                .attributes['style']!
-                                .replaceAll(regex, '');
-                          }
-                          return null;
-                        },
-                        onTapImage: (imageMetadata) {
-                          if (imageMetadata.sources.isNotEmpty) {
-                            pushOverlay(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => FullScreenImageView(
-                                  imageData: imageMetadata.sources.first.url,
-                                ),
-                              ),
-                            );
-                          }
-                        },
+                      SelectionArea(
+                        child: HtmlWidget(
+                          info.values.join('<br>'),
+                          renderMode: RenderMode.column,
+                          customWidgetBuilder: offline == null
+                              ? null
+                              : (element) {
+                                  if (element.localName != 'img') return null;
+                                  final uri = Uri.tryParse(
+                                    element.attributes['src'] ?? '',
+                                  );
+                                  if (uri == null) {
+                                    return const SizedBox.shrink();
+                                  }
+                                  return GestureDetector(
+                                    onTap: () => _showImage(
+                                      context,
+                                      uri.toString(),
+                                      offline,
+                                    ),
+                                    child: CachedNetworkImage(
+                                      placeholder: const Icon(
+                                        Icons.image_not_supported_outlined,
+                                      ),
+                                      imageUrl: uri,
+                                      builder: (_, provider) =>
+                                          Image(image: provider),
+                                    ),
+                                  );
+                                },
+                          onTapUrl: (url) {
+                            openUrlModal(context, Uri.parse(url));
+                            return true;
+                          },
+                          customStylesBuilder: (element) {
+                            if (element.localName == 'a' &&
+                                element.attributes['style'] != null) {
+                              RegExp regex = RegExp(
+                                r'background-color:\s*[^;]+;',
+                              );
+                              element.attributes['style'] = element
+                                  .attributes['style']!
+                                  .replaceAll(regex, '');
+                            }
+                            return null;
+                          },
+                          onTapImage: (imageMetadata) {
+                            if (imageMetadata.sources.isNotEmpty) {
+                              _showImage(
+                                context,
+                                imageMetadata.sources.first.url,
+                                offline,
+                              );
+                            }
+                          },
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 8.0),
-                  ],
+                      SizedBox(height: 8.0),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
+    );
+  }
+
+  void _showImage(
+    BuildContext context,
+    String url,
+    OfflineCacheContext? offline,
+  ) {
+    pushOverlay(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ProviderScope(
+          overrides: [offlineCacheContextProvider.overrideWithValue(offline)],
+          child: FullScreenImageView(imageData: url),
+        ),
+      ),
     );
   }
 
@@ -242,28 +295,37 @@ class _SubstitutionsViewState extends ConsumerState<SubstitutionsView>
 
   @override
   Widget build(BuildContext context) {
-    final session = ref.watch(sessionProvider).asData?.value;
-    if (session == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    final session = widget.dataSource == null
+        ? ref.watch(sessionProvider).asData?.value
+        : null;
+    final header = AppBar(
+      title: Text(substitutionDefinition.label(context)),
+      leading: widget.openDrawerCb != null
+          ? IconButton(
+              icon: const Icon(Icons.menu),
+              onPressed: () => widget.openDrawerCb!(),
+            )
+          : null,
+    );
+    if (session == null && widget.dataSource == null) {
+      return Scaffold(
+        appBar: header,
+        body: const Center(child: CircularProgressIndicator()),
+      );
     }
-    final parser = ref.watch(substitutionsParserProvider);
+    final AppletDataSource<SubstitutionPlan> parser =
+        widget.dataSource ?? ref.watch(substitutionsParserProvider);
     return CombinedAppletBuilder<SubstitutionPlan>(
-      accountType:
-          session.accountTypeOrNull ??
-          ref.read(activeAccountProvider)?.accountType ??
-          AccountType.student,
+      accountType: widget.dataSource != null
+          ? widget.accountType ?? AccountType.student
+          : session?.accountTypeOrNull ??
+                ref.read(activeAccountProvider)?.accountType ??
+                AccountType.student,
       parser: parser,
+      settings: widget.settings,
       phpUrl: substitutionDefinition.appletPhpUrl,
       settingsDefaults: substitutionDefinition.settingsDefaults,
-      loadingAppBar: AppBar(
-        title: Text(substitutionDefinition.label(context)),
-        leading: widget.openDrawerCb != null
-            ? IconButton(
-                icon: const Icon(Icons.menu),
-                onPressed: () => widget.openDrawerCb!(),
-              )
-            : null,
-      ),
+      loadingAppBar: header,
       builder: (context, data, accountType, settings, updateSetting, refresh) {
         if (data.days.isEmpty) {
           _ensureGlobalKeys(0);
@@ -279,9 +341,16 @@ class _SubstitutionsViewState extends ConsumerState<SubstitutionsView>
             ),
             floatingActionButton: FloatingActionButton(
               heroTag: null,
-              onPressed: () async {
-                await context.push('/common/substitutions/filter');
-              },
+              onPressed: widget.dataSource != null
+                  ? null
+                  : () async {
+                      await context.push('/common/substitutions/filter');
+                      if (parser is SubstitutionsParser) {
+                        await parser.fetchCachedData(
+                          policy: CacheReadPolicy.cacheOnly,
+                        );
+                      }
+                    },
               child: const Icon(Icons.filter_alt),
             ),
             body: RefreshIndicator(
@@ -372,9 +441,16 @@ class _SubstitutionsViewState extends ConsumerState<SubstitutionsView>
             ),
             floatingActionButton: FloatingActionButton(
               heroTag: null,
-              onPressed: () async {
-                await context.push('/common/substitutions/filter');
-              },
+              onPressed: widget.dataSource != null
+                  ? null
+                  : () async {
+                      await context.push('/common/substitutions/filter');
+                      if (parser is SubstitutionsParser) {
+                        await parser.fetchCachedData(
+                          policy: CacheReadPolicy.cacheOnly,
+                        );
+                      }
+                    },
               child: const Icon(Icons.filter_alt),
             ),
             body: Column(

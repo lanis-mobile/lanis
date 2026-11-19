@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lanis/applets/calendar/calendar_export.dart';
-import 'package:lanis/applets/timetable/student/student_timetable_settings.dart';
+import 'package:lanis/applets/timetable/timetable_settings_page.dart';
 import 'package:lanis/utils/deep_link.dart';
 import 'package:lanis/utils/responsive.dart';
 import 'package:lanis/view/settings/settings.dart';
@@ -14,10 +14,7 @@ import 'package:lanis/view/settings/subsettings/notifications.dart';
 import 'package:lanis/view/settings/subsettings/userdata.dart';
 import 'package:liblanis/liblanis.dart';
 
-Widget _settingsDetail({
-  required String fallbackPath,
-  required Widget child,
-}) {
+Widget _settingsDetail({required String fallbackPath, required Widget child}) {
   return DeepLinkPopScope(fallbackPath: fallbackPath, child: child);
 }
 
@@ -127,7 +124,7 @@ List<RouteBase> buildSettingsRoutes() {
               path: 'timetable',
               builder: (context, state) => _settingsDetail(
                 fallbackPath: SettingsDeepLinks.home,
-                child: const StudentTimetableSettings(),
+                child: const TimetableSettingsPage(),
               ),
             ),
           ],
@@ -146,7 +143,8 @@ class SettingsTabletShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final loc = GoRouterState.of(context).uri.path;
-    final onHome = loc == SettingsDeepLinks.home || loc == SettingsDeepLinks.base;
+    final onHome =
+        loc == SettingsDeepLinks.home || loc == SettingsDeepLinks.base;
 
     // Resize phone→tablet while on /home does not re-run go_router redirects.
     if (onHome) {
@@ -175,11 +173,7 @@ class SettingsTabletShell extends StatelessWidget {
             child: SettingsScreen(embeddedInTabletShell: true),
           ),
           const VerticalDivider(width: 1),
-          Expanded(
-            child: onHome
-                ? const SizedBox.shrink()
-                : child,
-          ),
+          Expanded(child: onHome ? const SizedBox.shrink() : child),
         ],
       ),
     );

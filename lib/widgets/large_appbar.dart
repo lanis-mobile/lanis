@@ -1,9 +1,11 @@
+import 'package:lanis/widgets/applet_app_bar_title.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 class LargeAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Color? backgroundColor;
   final Text title;
+  final String? subtitle;
   final void Function()? back;
   final bool showBackButton;
 
@@ -14,6 +16,7 @@ class LargeAppBar extends StatelessWidget implements PreferredSizeWidget {
   const LargeAppBar({
     super.key,
     required this.title,
+    this.subtitle,
     this.backgroundColor,
     this.back,
     this.showBackButton = true,
@@ -21,8 +24,9 @@ class LargeAppBar extends StatelessWidget implements PreferredSizeWidget {
   });
 
   @override
-  Size get preferredSize =>
-      Size.fromHeight(kToolbarHeight + (showBackButton ? 88 : 0));
+  Size get preferredSize => Size.fromHeight(
+    kToolbarHeight + (showBackButton ? 88 + (subtitle == null ? 0 : 20) : 0),
+  );
 
   void _handleBack(BuildContext context) {
     if (back != null) {
@@ -51,22 +55,29 @@ class LargeAppBar extends StatelessWidget implements PreferredSizeWidget {
               onPressed: () => _handleBack(context),
             )
           : null,
-      title: !showBackButton ? title : null,
+      title: !showBackButton
+          ? AppletAppBarTitle(title: title, subtitle: subtitle)
+          : null,
       automaticallyImplyLeading: false,
       bottom: showBackButton
           ? PreferredSize(
-              preferredSize: const Size.fromHeight(88),
+              preferredSize: Size.fromHeight(88 + (subtitle == null ? 0 : 20)),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.only(left: 16.0, bottom: 28),
-                    child: DefaultTextStyle(
-                      style: Theme.of(context).textTheme.headlineMedium!
-                          .copyWith(
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
-                      child: title,
+                  Flexible(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 16.0, bottom: 28),
+                      child: DefaultTextStyle(
+                        style: Theme.of(context).textTheme.headlineMedium!
+                            .copyWith(
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                        child: AppletAppBarTitle(
+                          title: title,
+                          subtitle: subtitle,
+                        ),
+                      ),
                     ),
                   ),
                 ],

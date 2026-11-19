@@ -1,57 +1,103 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lanis/applets/definitions.dart';
+import 'package:lanis/features/offline/cache_context.dart';
+import 'package:lanis/features/offline/offline_applet_page.dart';
 import 'package:liblanis/liblanis.dart';
-
-import 'package:lanis/l10n/account_type_ui.dart';
 
 class OfflineAvailableAppletsSection extends ConsumerStatefulWidget {
   const OfflineAvailableAppletsSection({super.key});
-
   @override
   ConsumerState<OfflineAvailableAppletsSection> createState() =>
       _OfflineAvailableAppletsSectionState();
 }
 
 class _OfflineAvailableAppletsSectionState
-    extends ConsumerState<OfflineAvailableAppletsSection> {
+    extends ConsumerState<OfflineAvailableAppletsSection>
+    with WidgetsBindingObserver {
   bool _loading = true;
-  List<OfflineApplet> possibleOfflineApplets = [];
-
+  List<
+    ({AccountSummary account, CachedAppletHome<dynamic> home, DateTime expiry})
+  >
+  _available = [];
+  int _accountCount = 0;
+  Timer? _expiry;
   Future<void> loadPossibleOfflineApplets() async {
     final db = ref.read(lanisDatabaseProvider);
+    final cache = ref.read(cacheServiceProvider);
+    await CachedAppletHomes.migrateLegacyTimetables(db);
     final accounts = await db.listAccounts();
-    final offlineRows = db.listAppletOfflineData();
-    final loaded = <OfflineApplet>[];
-
-    for (final row in offlineRows) {
-      final account = accounts
-          .where((a) => a.localId == row.accountId)
-          .firstOrNull;
-      if (account == null) continue;
-      loaded.add(
-        OfflineApplet(
-          localUserId: account.localId,
-          userDisplayName: accounts.length > 1
-              ? "${account.schoolName} (${account.username})"
-              : account.schoolName,
-          appletId: row.appletId,
-          accountType: account.accountType,
-        ),
-      );
+    final loaded =
+        <
+          ({
+            AccountSummary account,
+            CachedAppletHome<dynamic> home,
+            DateTime expiry,
+          })
+        >[];
+    for (final account in accounts) {
+      for (final home in CachedAppletHomes.all) {
+        if (home.accountType != account.accountType) continue;
+        final definition = AppDefinitions.getByPhpIdentifier(
+          home.applet.appletPhpUrl,
+        );
+        if (!definition.allowOffline ||
+            !definition.supportedAccountTypes.contains(account.accountType)) {
+          continue;
+        }
+        final availability = await cache.inspectCacheFor(
+          accountId: account.localId,
+          request: home.request(),
+        );
+        if (availability.isAvailable) {
+          loaded.add((
+            account: account,
+            home: home,
+            expiry: availability.expiresAt!,
+          ));
+        }
+      }
     }
-
     if (!mounted) return;
     setState(() {
-      possibleOfflineApplets = loaded;
+      _available = loaded;
+      _accountCount = accounts.length;
       _loading = false;
     });
+    _expiry?.cancel();
+    if (loaded.isNotEmpty) {
+      final next = loaded
+          .map((entry) => entry.expiry)
+          .reduce((a, b) => a.isBefore(b) ? a : b);
+      final delay = next.difference(DateTime.now());
+      _expiry = Timer(
+        delay.isNegative ? Duration.zero : delay,
+        () => loadPossibleOfflineApplets(),
+      );
+    }
   }
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     Future.microtask(loadPossibleOfflineApplets);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(loadPossibleOfflineApplets());
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _expiry?.cancel();
+    super.dispose();
   }
 
   @override
@@ -64,55 +110,41 @@ class _OfflineAvailableAppletsSectionState
     }
     return SafeArea(
       child: Column(
-        children: possibleOfflineApplets
-            .map(
-              (offlineApplet) => ListTile(
-                title: Text(offlineApplet.definition.label(context)),
-                subtitle: Text(offlineApplet.userDisplayName),
-                leading: offlineApplet.definition.icon,
-                onTap: () async {
-                  // Offline: select account only — full login needs network.
-                  await ref
-                      .read(activeAccountProvider.notifier)
-                      .select(offlineApplet.localUserId);
-                  if (!context.mounted) return;
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          offlineApplet.definition.bodyBuilder!(
-                            context,
-                            offlineApplet.accountType ?? AccountType.student,
-                            null,
-                          ),
-                    ),
-                  );
-                },
+        children: [
+          for (final entry in _available)
+            ListTile(
+              title: Text(
+                AppDefinitions.getByPhpIdentifier(
+                  entry.home.applet.appletPhpUrl,
+                ).label(context),
               ),
-            )
-            .toList(growable: false),
+              subtitle: Text(
+                _accountCount > 1
+                    ? '${entry.account.schoolName} (${entry.account.username})'
+                    : entry.account.schoolName,
+              ),
+              leading: AppDefinitions.getByPhpIdentifier(
+                entry.home.applet.appletPhpUrl,
+              ).icon,
+              onTap: () async {
+                final db = ref.read(lanisDatabaseProvider);
+                final offline = OfflineCacheContext(
+                  account: entry.account,
+                  cache: ref.read(cacheServiceProvider),
+                  settings: TypedSettings.account(db, entry.account.localId),
+                  config: ref.read(lanisConfigProvider),
+                );
+                await Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) =>
+                        OfflineAppletPage(context: offline, home: entry.home),
+                  ),
+                );
+                if (mounted) await loadPossibleOfflineApplets();
+              },
+            ),
+        ],
       ),
     );
   }
-}
-
-class OfflineApplet {
-  int? _definitionIndex;
-
-  final int localUserId;
-  final String userDisplayName;
-  final String appletId;
-  final AccountType? accountType;
-
-  int get _defIndex =>
-      _definitionIndex ??= AppDefinitions.getIndexByPhpIdentifier(appletId);
-
-  AppletDefinition get definition => AppDefinitions.applets[_defIndex];
-
-  OfflineApplet({
-    required this.localUserId,
-    required this.userDisplayName,
-    required this.appletId,
-    this.accountType,
-  });
 }

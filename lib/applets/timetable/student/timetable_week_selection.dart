@@ -1,4 +1,5 @@
 import 'package:dart_date/dart_date.dart';
+import 'package:liblanis/liblanis.dart';
 
 enum TimetableWeekMode { current, all, badge }
 
@@ -67,3 +68,20 @@ bool isTimetableVisuallyEmpty({
   required bool hoursEmpty,
   required bool daysEmpty,
 }) => hoursEmpty || daysEmpty;
+
+/// Calendar rules follow the week actually displayed, including offline data.
+List<TimetableDay> filterCalendarWeekLessons(
+  List<TimetableDay> plan,
+  DateTime displayedWeek,
+) {
+  final even = timetableWeekNumber(displayedWeek).isEven;
+  return [
+    for (final day in plan)
+      [
+        for (final lesson in day)
+          if (lesson.calendarWeekParity == null ||
+              (lesson.calendarWeekParity == TimetableWeekParity.even) == even)
+            lesson,
+      ],
+  ];
+}

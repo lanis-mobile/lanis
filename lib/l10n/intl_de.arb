@@ -335,7 +335,7 @@
   "removeAccount": "Account entfernen",
   "customizeTimetable": "Stundenplan anpassen",
   "customizeTimetableDescription": "Ausgeblendete Stunden, eigene Stunden",
-  "customizeTimetableDisclaimer": "Nachdem du Änderungen vorgenommen hast, musst du die App neu starten oder das Applet wechseln.",
+  "customizeTimetableDisclaimer": "Diese Änderungen werden nur in der App gespeichert und nicht an das Schulportal übertragen.",
   "lessonName": "Stundenname",
   "required": "benötigt",
   "room": "Raum",
@@ -428,5 +428,8 @@
     }
   },
   "unknownUploadError": "Unbekannter Fehler beim Hochladen",
-  "addFile": "Datei hinzufügen"
+  "addFile": "Datei hinzufügen",
+  "offlineDataUnavailable": "Offline nicht verfügbar",
+  "evenCalendarWeeks": "Gerade KW",
+  "oddCalendarWeeks": "Ungerade KW"
 }

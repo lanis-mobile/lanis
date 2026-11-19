@@ -70,7 +70,8 @@ class _LessonsTeacherViewState extends ConsumerState<LessonsTeacherView> {
         parser: ref.watch(lessonsTeacherParserProvider),
         phpUrl: lessonsDefinition.appletPhpUrl,
         settingsDefaults: lessonsDefinition.settingsDefaults,
-        accountType: session.accountTypeOrNull ??
+        accountType:
+            session.accountTypeOrNull ??
             ref.read(activeAccountProvider)?.accountType ??
             AccountType.student,
         builder: (context, data, _, settings, updateSettings, refresh) {

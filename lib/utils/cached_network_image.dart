@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:liblanis/liblanis.dart';
+import 'package:lanis/features/offline/cache_context.dart';
 
 typedef ImageBuilder =
     Widget Function(BuildContext context, ImageProvider imageProvider);
@@ -41,6 +42,18 @@ class _CachedNetworkImageState extends ConsumerState<CachedNetworkImage> {
   }
 
   Future<void> loadData() async {
+    final offline = ref.read(offlineCacheContextProvider);
+    if (offline != null) {
+      final path = offline.cachedDocument(
+        widget.imageUrl.toString(),
+        'image.${widget.imageType.name}',
+      );
+      if (path != null && mounted) {
+        imageProvider = FileImage(File(path));
+        _safeSetLoading(false);
+      }
+      return;
+    }
     final storage = ref.read(storageManagerProvider);
     if (storage == null) {
       _safeSetLoading(true);

@@ -377,7 +377,7 @@
   "changePassword": "Change password",
   "customizeTimetable": "Customize Timetable",
   "customizeTimetableDescription": "Hidden lessons, custom lessons",
-  "customizeTimetableDisclaimer": "After you make a change you need to restart the app or switch applets to see the changes.",
+  "customizeTimetableDisclaimer": "These changes are saved in the app and are not sent to Schulportal.",
   "lessonName": "Lesson name",
   "required": "required",
   "room": "Room",
@@ -471,5 +471,8 @@
     }
   },
   "unknownUploadError": "Unknown upload error",
-  "addFile": "Add file"
+  "addFile": "Add file",
+  "offlineDataUnavailable": "Not available offline",
+  "evenCalendarWeeks": "Even calendar weeks",
+  "oddCalendarWeeks": "Odd calendar weeks"
 }

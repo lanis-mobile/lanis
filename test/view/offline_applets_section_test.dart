@@ -21,7 +21,9 @@ void main() {
     expect(find.byType(ListTile), findsNothing);
   });
 
-  testWidgets('seeded offline data lists applet with school name', (tester) async {
+  testWidgets('seeded offline data lists applet with school name', (
+    tester,
+  ) async {
     final overrides = testLanisOverrides();
     final container = ProviderContainer(overrides: overrides);
     addTearDown(container.dispose);
@@ -31,11 +33,13 @@ void main() {
       schoolName: 'Alone School',
       username: 'solo',
     );
-    container.read(lanisDatabaseProvider).setAppletOfflineData(
-      accountId: id,
-      appletId: 'vertretungsplan.php',
-      json: '{"days":[]}',
-    );
+    await container
+        .read(cacheServiceProvider)
+        .execute(
+          accountId: id,
+          request: SubstitutionsParserCacheRequests.getHome(),
+          load: () async => SubstitutionPlan(days: []),
+        );
 
     await tester.pumpWidget(
       UncontrolledProviderScope(
@@ -69,11 +73,13 @@ void main() {
       schoolName: 'School B',
       username: 'bob',
     );
-    container.read(lanisDatabaseProvider).setAppletOfflineData(
-      accountId: idA,
-      appletId: 'vertretungsplan.php',
-      json: '{}',
-    );
+    await container
+        .read(cacheServiceProvider)
+        .execute(
+          accountId: idA,
+          request: SubstitutionsParserCacheRequests.getHome(),
+          load: () async => SubstitutionPlan(days: []),
+        );
 
     await tester.pumpWidget(
       UncontrolledProviderScope(
@@ -95,11 +101,13 @@ void main() {
     final container = createAuthTestContainer();
     addTearDown(container.dispose);
     final id = await addTestAccount(container);
-    container.read(lanisDatabaseProvider).setAppletOfflineData(
-      accountId: id,
-      appletId: 'vertretungsplan.php',
-      json: '{}',
-    );
+    container
+        .read(lanisDatabaseProvider)
+        .setAppletOfflineData(
+          accountId: id,
+          appletId: 'vertretungsplan.php',
+          json: '{}',
+        );
 
     final before = AuthController.authenticateCallCount;
     await container.read(activeAccountProvider.notifier).select(id);
@@ -107,8 +115,9 @@ void main() {
     expect(AuthController.authenticateCallCount, before);
   });
 
-  testWidgets('startup error content includes offline section for lanis-down',
-      (tester) async {
+  testWidgets('startup error content includes offline section for lanis-down', (
+    tester,
+  ) async {
     await pumpTestApp(
       tester,
       child: StartupAuthErrorContent(
@@ -119,15 +128,17 @@ void main() {
     expect(find.byType(OfflineAvailableAppletsSection), findsOneWidget);
   });
 
-  testWidgets('startup error content includes offline section for generic error',
-      (tester) async {
-    await pumpTestApp(
-      tester,
-      child: StartupAuthErrorContent(
-        exception: UnknownException('x'),
-        onRetry: () {},
-      ),
-    );
-    expect(find.byType(OfflineAvailableAppletsSection), findsOneWidget);
-  });
+  testWidgets(
+    'startup error content includes offline section for generic error',
+    (tester) async {
+      await pumpTestApp(
+        tester,
+        child: StartupAuthErrorContent(
+          exception: UnknownException('x'),
+          onRetry: () {},
+        ),
+      );
+      expect(find.byType(OfflineAvailableAppletsSection), findsOneWidget);
+    },
+  );
 }

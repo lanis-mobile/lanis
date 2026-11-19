@@ -26,6 +26,36 @@ class _UnlaidOutChild extends RenderProxyBox {
 
 void main() {
   tearDown(LanisClient.reset);
+  for (final done in [false, true]) {
+    testWidgets('parent homework shows only a completed checkmark: $done', (
+      tester,
+    ) async {
+      await pumpTestApp(
+        tester,
+        child: Scaffold(
+          body: HomeworkBox(
+            readOnly: true,
+            courseID: 'course',
+            currentEntry: CurrentEntry(
+              entryID: 'entry',
+              files: [],
+              uploads: [],
+              homework: Homework(
+                description: 'Parent homework',
+                homeWorkDone: done,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(Checkbox), findsNothing);
+      expect(find.byIcon(Icons.check), done ? findsOneWidget : findsNothing);
+      expect(find.text('Parent homework', findRichText: true), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   for (final layout in [false, true]) {
     testWidgets(
       'homework measurement ${layout ? 'reads a laid-out row' : 'skips a row with no layout'}',

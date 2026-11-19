@@ -2,10 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:lanis/generated/l10n.dart';
 
+AppBar attendanceAppBar(BuildContext context, {String? pupilName}) => AppBar(
+  title: pupilName == null
+      ? Text(AppLocalizations.of(context).attendances)
+      : Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(AppLocalizations.of(context).attendances),
+            Text(
+              pupilName,
+              style: Theme.of(context).textTheme.bodySmall,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+);
+
 class AttendancesScreen extends StatelessWidget {
-  const AttendancesScreen({super.key, required this.lessons});
+  const AttendancesScreen({super.key, required this.lessons, this.pupilName});
 
   final Lessons lessons;
+  final String? pupilName;
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +33,7 @@ class AttendancesScreen extends StatelessWidget {
         .toList();
 
     return Scaffold(
-      appBar: AppBar(title: Text(AppLocalizations.of(context).attendances)),
+      appBar: attendanceAppBar(context, pupilName: pupilName),
       body: ListView.builder(
         itemCount: attendanceLessons.length + 1,
         itemBuilder: (context, index) {
