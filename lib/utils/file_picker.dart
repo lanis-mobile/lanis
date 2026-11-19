@@ -155,7 +155,6 @@ Future<List<PickedFile>> pickFileUsingDocumentsUI(
   List<PlatformFile> files = await FilePicker.pickFiles(
     type: FileType.custom,
     allowedExtensions: allowedExtensions,
-    allowMultiple: true,
   );
   List<PickedFile> returnResult = [];
 

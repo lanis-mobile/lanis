@@ -338,8 +338,8 @@ class _ConversationsViewState extends ConsumerState<ConversationsView> {
   // Switching between two lists of overview entries messes up the scroll controller, so we just try to jump to the top visible tile and anchor to it.
   // If top tile is not visible in the new list, we try to find the first visible tile above the top tile and jump to it.
   void jumpToTopTile(
-    final List<OverviewEntry> entries,
-    final List<OverviewEntry> oldEntries,
+    List<OverviewEntry> entries,
+    List<OverviewEntry> oldEntries,
   ) {
     if (oldEntries.isEmpty || scrollController.positions.length != 1) return;
 

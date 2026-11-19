@@ -75,7 +75,9 @@ void configureGlitchTip(SentryFlutterOptions options) {
   options.enableAutoPerformanceTracing = false;
   options.enableUserInteractionTracing = false;
   options.enableFramesTracking = false;
-  options.enableLogs = false;
+  // Sentry 10 always enables logs and metrics; drop both before transport.
+  options.beforeSendLog = (log, hint) => null;
+  options.beforeSendMetric = (metric, hint) => null;
   options.replay.sessionSampleRate = 0;
   options.replay.onErrorSampleRate = 0;
 

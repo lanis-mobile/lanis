@@ -122,11 +122,11 @@ class BubbleStructure {
   static const double horizontalMargin = 8.0;
   static BorderRadius radius = BorderRadius.circular(20.0);
 
-  static CrossAxisAlignment getAlignment(final bool own) {
+  static CrossAxisAlignment getAlignment(bool own) {
     return own ? CrossAxisAlignment.end : CrossAxisAlignment.start;
   }
 
-  static CustomClipper<Path> getFirstStateClipper(final bool own) {
+  static CustomClipper<Path> getFirstStateClipper(bool own) {
     return ChatBubbleClipper(
       type: own ? ChatBubbleType.own : ChatBubbleType.other,
       nipWidth: nipWidth,
@@ -136,7 +136,7 @@ class BubbleStructure {
     );
   }
 
-  static EdgeInsets getPadding(final bool nipCompensation, final bool own) {
+  static EdgeInsets getPadding(bool nipCompensation, bool own) {
     final double margin = nipCompensation
         ? compensatedPadding
         : horizontalPadding;
@@ -149,7 +149,7 @@ class BubbleStructure {
     );
   }
 
-  static EdgeInsets getMargin(final MessageState state) {
+  static EdgeInsets getMargin(MessageState state) {
     final double combinedMargin = state == MessageState.first
         ? horizontalMargin
         : horizontalMargin + nipWidth;
@@ -262,7 +262,7 @@ abstract class BubbleStyles {
   static late BubbleStyle own;
   static late BubbleStyle other;
 
-  static void init(final ThemeData theme) {
+  static void init(ThemeData theme) {
     final TextStyle baseTextStyle = theme.textTheme.bodyMedium!;
     final TextStyle dateTextStyle = theme.textTheme.bodySmall!.copyWith(
       color: theme.colorScheme.onSurface,
@@ -368,8 +368,8 @@ class BubbleStyle {
   final FormatStyle textFormatStyle;
 
   static TextStyle getAuthorTextStyle(
-    final ThemeData theme,
-    final String author,
+    ThemeData theme,
+    String author,
   ) {
     final double hue = HSLColor.fromColor(theme.colorScheme.primary).hue;
     late final double minHue;
@@ -413,11 +413,11 @@ class BubbleStyle {
 }
 
 void showSnackbar(
-  final BuildContext context,
-  final String text, {
+  BuildContext context,
+  String text, {
   seconds = 1,
   milliseconds = 0,
-  final SnackBarAction? action,
+  SnackBarAction? action,
 }) {
   if (context.mounted) {
     // Hide the current SnackBar if one is already visible.

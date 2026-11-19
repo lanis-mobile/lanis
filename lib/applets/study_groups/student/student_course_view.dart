@@ -9,7 +9,7 @@ class StudentCourseView extends StatelessWidget {
 
   const StudentCourseView({super.key, required this.studyGroup});
 
-  BorderRadius getRadius(final int index, final int length) {
+  BorderRadius getRadius(int index, int length) {
     if (length == 1) {
       return BorderRadius.circular(12.0);
     }

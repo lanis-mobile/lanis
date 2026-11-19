@@ -213,7 +213,7 @@ class _ConversationsChatState extends ConsumerState<ConversationsChat>
     );
   }
 
-  void addAuthorTextStyles(final List<String> authors) {
+  void addAuthorTextStyles(List<String> authors) {
     final ThemeData theme = Theme.of(context);
     for (final String author in authors) {
       textStyles[author] = BubbleStyle.getAuthorTextStyle(theme, author);

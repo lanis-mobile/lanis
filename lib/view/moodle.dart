@@ -40,7 +40,7 @@ class _MoodleWebViewState extends ConsumerState<MoodleWebView> {
   bool isLoggedIn = false;
 
   Future<void> addWebViewCookies(
-    final List<dio_core.Cookie> cookies,
+    List<dio_core.Cookie> cookies,
     List<String> urls,
   ) async {
     for (int i = 0; i < cookies.length; i++) {

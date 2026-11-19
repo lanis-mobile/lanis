@@ -269,8 +269,8 @@ class RadioPillGroup<T> extends StatelessWidget {
   final _RadioPillGroupVariant _variant;
 
   RadioPill<T> instantiatePill(
-    final RadioPillGroupItem<T> pill,
-    final int index,
+    RadioPillGroupItem<T> pill,
+    int index,
   ) {
     late RadioBorder border;
 
