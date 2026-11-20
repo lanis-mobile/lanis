@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:app_settings/app_settings.dart';
+import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -52,7 +53,8 @@ class SettingsScreen extends ConsumerSettingsColours {
   ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends ConsumerSettingsColoursState<SettingsScreen> {
+class _SettingsScreenState
+    extends ConsumerSettingsColoursState<SettingsScreen> {
   bool _supports(AppletMeta applet) =>
       ref.read(supportedAppletPhpUrlsProvider).contains(applet.appletPhpUrl);
 
@@ -85,7 +87,38 @@ class _SettingsScreenState extends ConsumerSettingsColoursState<SettingsScreen> 
             },
             icon: Icons.language_rounded,
             screen: (context) async {
-              await AppSettings.openAppSettings(type: AppSettingsType.appLocale);
+              if (Platform.isIOS) {
+                final openSettings = await showCupertinoDialog<bool>(
+                  context: context,
+                  builder: (context) => CupertinoAlertDialog(
+                    title: Text(AppLocalizations.of(context).language),
+                    content: Text(
+                      AppLocalizations.of(context)
+                          .openIOSSettingsToChangeLanguage,
+                    ),
+                    actions: [
+                      CupertinoDialogAction(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: Text(AppLocalizations.of(context).cancel),
+                      ),
+                      CupertinoDialogAction(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: Text(
+                          AppLocalizations.of(context).openSystemSettings,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+                if (openSettings != true) return;
+              }
+              // iOS has no public language deep link. Its supported app-settings
+              // URL may resume Settings without navigating (observed on iOS 27).
+              await AppSettings.openAppSettings(
+                type: Platform.isIOS
+                    ? AppSettingsType.settings
+                    : AppSettingsType.appLocale,
+              );
             },
             show: () async {
               DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
@@ -167,8 +200,7 @@ class _SettingsScreenState extends ConsumerSettingsColoursState<SettingsScreen> 
             },
             icon: Icons.account_circle_rounded,
             routePath: SettingsDeepLinks.userdata,
-            screen: (context) async =>
-                context.push(SettingsDeepLinks.userdata),
+            screen: (context) async => context.push(SettingsDeepLinks.userdata),
           ),
         ],
       ),

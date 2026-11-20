@@ -429,7 +429,7 @@
   "lastSeen": "{days, plural, =0{Today} one{Yesterday} other{{days} days ago}}",
   "student": "Student",
   "parent": "Parent",
-  "openIOSSettingsToChangeLanguage": "On the next screen, select \"Lanis\" and then change the language in the \"Preferred Language\" section.",
+  "openIOSSettingsToChangeLanguage": "In Settings, open Language under Lanis and select English or Deutsch. If the main Settings screen opens, go to Apps → Lanis → Language (on older iOS versions: Lanis → Language).",
   "copy": "Copy",
   "openExternalUrl": "Open external URL",
   "openExternalUrlDescription": "Do you want to open the following URL in your browser?",
