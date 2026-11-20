@@ -2,7 +2,10 @@
   "@@locale": "en",
   "locale": "en_US",
   "language": "Language",
-  "welcomeBack": "Welcome Back",
+  "englishFallbackTestFixture": "English fallback test fixture",
+  "@englishFallbackTestFixture": {
+    "description": "Test fixture for missing-translation fallback. Intentionally omit from German translations; not displayed in the app UI."
+  },
   "substitutions": "Substitutions",
   "calendar": "Calendar",
   "calendarWeek": "Calendar Week",

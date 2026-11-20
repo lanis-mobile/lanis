@@ -82,7 +82,7 @@ void main() {
     'missing German translations continue to fall back to English',
     () async {
       final de = await AppLocalizations.delegate.load(const Locale('de'));
-      expect(de.welcomeBack, 'Welcome Back');
+      expect(de.englishFallbackTestFixture, 'English fallback test fixture');
     },
   );
 }
