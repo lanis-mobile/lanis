@@ -8,8 +8,7 @@ class Logger {
   final int _maxHistorySize;
   final List<String> _history = [];
 
-  Logger(this._name, {int maxHistorySize = 100})
-    : _maxHistorySize = maxHistorySize;
+  Logger(this._name, {this._maxHistorySize = 100});
 
   void _addToHistory(String message) {
     _history.add(message);

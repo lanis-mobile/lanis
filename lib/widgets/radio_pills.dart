@@ -51,11 +51,10 @@ class RadioPill<T> extends StatelessWidget {
     this.groupValue,
     this.onChanged,
     this.leading,
-    Widget? trailing,
+    this._trailing,
     this.border = RadioBorder.both,
     this.color,
-  }) : _variant = _RadioPillVariant.horizontal,
-       _trailing = trailing;
+  }) : _variant = _RadioPillVariant.horizontal;
 
   final Widget? _trailing;
 
@@ -227,9 +226,8 @@ class RadioPillGroupItem<T> {
     this.subtitle,
     required this.value,
     this.leading,
-    Widget? trailing,
-  }) : _trailing = trailing,
-       _variant = _RadioPillVariant.horizontal;
+    this._trailing,
+  }) : _variant = _RadioPillVariant.horizontal;
 
   final Widget? _trailing;
   final _RadioPillVariant _variant;
@@ -258,10 +256,9 @@ class RadioPillGroup<T> extends StatelessWidget {
     this.groupValue,
     this.onChanged,
     required Widget Function(T? groupValue, ValueChanged<T>? onChanged)
-    customPillBuilder,
+    this._customPillBuilder,
     this.color,
-  }) : _customPillBuilder = customPillBuilder,
-       _variant = _RadioPillGroupVariant.large;
+  }) : _variant = _RadioPillGroupVariant.large;
 
   final Widget Function(T? groupValue, ValueChanged<T>? onChanged)?
   _customPillBuilder;
@@ -353,21 +350,19 @@ class TrailingCircle extends StatelessWidget {
 
   const TrailingCircle({
     super.key,
-    required Color color,
+    required Color this._color,
     required this.selectedBackgroundColor,
     required this.selectedColor,
     required this.selected,
-  }) : _color = color,
-       _customCircle = null;
+  }) : _customCircle = null;
 
   const TrailingCircle.custom({
     super.key,
     required this.selectedBackgroundColor,
     required this.selectedColor,
     required this.selected,
-    required Widget customCircle,
-  }) : _customCircle = customCircle,
-       _color = null;
+    required Widget this._customCircle,
+  }) : _color = null;
 
   final Color? _color;
   final Widget? _customCircle;

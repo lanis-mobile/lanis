@@ -20,19 +20,19 @@ extension TimeOfDayExtension on TimeOfDay {
     return (other.hour - hour) * 60 + other.minute - minute;
   }
 
-  operator <=(TimeOfDay other) {
+  bool operator <=(TimeOfDay other) {
     return hour < other.hour || (hour == other.hour && minute <= other.minute);
   }
 
-  operator >=(TimeOfDay other) {
+  bool operator >=(TimeOfDay other) {
     return hour > other.hour || (hour == other.hour && minute >= other.minute);
   }
 
-  operator >(TimeOfDay other) {
+  bool operator >(TimeOfDay other) {
     return hour > other.hour || (hour == other.hour && minute > other.minute);
   }
 
-  operator <(TimeOfDay other) {
+  bool operator <(TimeOfDay other) {
     return hour < other.hour || (hour == other.hour && minute < other.minute);
   }
 }

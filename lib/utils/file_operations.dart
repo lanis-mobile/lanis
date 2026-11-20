@@ -51,11 +51,10 @@ class DownloadableFile {
   DownloadableFile({this.name, this.size, this.url}) : localPath = null;
 
   /// Create a file info for a local file
-  DownloadableFile.local({String? name, String? size, required String filePath})
-    : this.name = name ?? filePath.split('/').last,
-      this.size = size,
-      this.localPath = filePath,
-      this.url = null;
+  DownloadableFile.local({String? name, this.size, required String filePath})
+    : name = name ?? filePath.split('/').last,
+      localPath = filePath,
+      url = null;
 
   /// Returns true if this represents a local file
   bool get isLocal => localPath != null;

@@ -10,7 +10,6 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:lanis/applets/definitions.dart';
 import 'package:lanis/bridge/lanis_bootstrap.dart';
 import 'package:lanis/bridge/legacy_storage_cleanup.dart';
-import 'package:lanis/l10n/account_type_ui.dart';
 import 'package:lanis/utils/logger.dart';
 import 'package:lanis/utils/privacy_policy.dart';
 

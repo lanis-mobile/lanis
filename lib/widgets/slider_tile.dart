@@ -32,7 +32,7 @@ class SliderTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        if (leading != null) leading!,
+        ?leading,
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -41,7 +41,7 @@ class SliderTile extends StatelessWidget {
                 padding: const EdgeInsets.only(left: 20.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [title, if (subtitle != null) subtitle!],
+                  children: [title, ?subtitle],
                 ),
               ),
               Slider(

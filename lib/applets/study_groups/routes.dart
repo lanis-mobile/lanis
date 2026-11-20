@@ -6,7 +6,6 @@ import 'package:lanis/applets/study_groups/definition.dart';
 import 'package:lanis/applets/study_groups/student/student_course_view.dart';
 import 'package:lanis/applets/study_groups/student/student_exams_view.dart';
 import 'package:lanis/generated/l10n.dart';
-import 'package:lanis/l10n/account_type_ui.dart';
 import 'package:lanis/utils/deep_link.dart';
 import 'package:lanis/utils/responsive.dart';
 import 'package:lanis/widgets/combined_applet_builder.dart';
