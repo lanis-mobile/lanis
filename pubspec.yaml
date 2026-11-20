@@ -63,6 +63,8 @@ dependencies:
   flutter_quill: ^11.6.0
   webview_flutter: ^4.14.1
   flutter_secure_storage: ^11.2.0
+  # TODO: Check whether ok_http is stable before revisiting the Android HTTP transport.
+  # https://github.com/dart-lang/http/tree/master/pkgs/ok_http
   native_dio_adapter: ^1.8.0
   flutter_widget_from_html_core: ^0.17.4
   flutter_colorpicker: ^1.1.0
