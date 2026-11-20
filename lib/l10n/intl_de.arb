@@ -379,7 +379,7 @@
   "lastSeen": "{days, plural, =0{Heute} one{Gestern} other{{days} Tage her}}",
   "student": "Schüler",
   "parent": "Elternteil",
-  "openIOSSettingsToChangeLanguage": "Öffnen Sie in den Einstellungen unter Lanis den Punkt Sprache und wählen Sie English oder Deutsch. Falls die Hauptseite der Einstellungen erscheint, gehen Sie zu Apps → Lanis → Sprache (auf älteren iOS-Versionen: Lanis → Sprache).",
+  "openIOSSettingsToChangeLanguage": "Wählen Sie auf dem nächsten Bildschirm \"Lanis\" und ändern dann die Sprache im Abschnitt \"Bevorzugte Sprache\".",
   "copy": "Kopieren",
   "openExternalUrl": "Externe URL öffnen",
   "openExternalUrlDescription": "Möchtest du die folgende URL öffnen?",

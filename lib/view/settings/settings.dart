@@ -1,8 +1,8 @@
 import 'dart:io';
 
 import 'package:app_settings/app_settings.dart';
-import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -53,8 +53,7 @@ class SettingsScreen extends ConsumerSettingsColours {
   ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState
-    extends ConsumerSettingsColoursState<SettingsScreen> {
+class _SettingsScreenState extends ConsumerSettingsColoursState<SettingsScreen> {
   bool _supports(AppletMeta applet) =>
       ref.read(supportedAppletPhpUrlsProvider).contains(applet.appletPhpUrl);
 
@@ -87,38 +86,41 @@ class _SettingsScreenState
             },
             icon: Icons.language_rounded,
             screen: (context) async {
-              if (Platform.isIOS) {
-                final openSettings = await showCupertinoDialog<bool>(
-                  context: context,
-                  builder: (context) => CupertinoAlertDialog(
-                    title: Text(AppLocalizations.of(context).language),
-                    content: Text(
-                      AppLocalizations.of(context)
-                          .openIOSSettingsToChangeLanguage,
-                    ),
-                    actions: [
-                      CupertinoDialogAction(
-                        onPressed: () => Navigator.pop(context, false),
-                        child: Text(AppLocalizations.of(context).cancel),
-                      ),
-                      CupertinoDialogAction(
-                        onPressed: () => Navigator.pop(context, true),
-                        child: Text(
-                          AppLocalizations.of(context).openSystemSettings,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-                if (openSettings != true) return;
+              if (Platform.isAndroid) {
+                AppSettings.openAppSettings(type: AppSettingsType.appLocale);
               }
-              // iOS has no public language deep link. Its supported app-settings
-              // URL may resume Settings without navigating (observed on iOS 27).
-              await AppSettings.openAppSettings(
-                type: Platform.isIOS
-                    ? AppSettingsType.settings
-                    : AppSettingsType.appLocale,
-              );
+              if (Platform.isIOS) {
+                await showCupertinoDialog(
+                  context: context,
+                  builder: (context) {
+                    return CupertinoAlertDialog(
+                      title: Text(
+                        AppLocalizations.of(context).openSystemSettings,
+                      ),
+                      content: Text(
+                        AppLocalizations.of(
+                          context,
+                        ).openIOSSettingsToChangeLanguage,
+                      ),
+                      actions: [
+                        CupertinoDialogAction(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text(AppLocalizations.of(context).cancel),
+                        ),
+                        CupertinoDialogAction(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            AppSettings.openAppSettings(
+                              type: AppSettingsType.appLocale,
+                            );
+                          },
+                          child: Text(AppLocalizations.of(context).ok),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              }
             },
             show: () async {
               DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
@@ -200,7 +202,8 @@ class _SettingsScreenState
             },
             icon: Icons.account_circle_rounded,
             routePath: SettingsDeepLinks.userdata,
-            screen: (context) async => context.push(SettingsDeepLinks.userdata),
+            screen: (context) async =>
+                context.push(SettingsDeepLinks.userdata),
           ),
         ],
       ),

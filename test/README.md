@@ -54,30 +54,3 @@ the generator and fall back to the English template.
 Preserve the ordered placeholder metadata for `dateTimeString`: its positional
 API takes day name, date, then time. Localization regression tests cover this
 ordering, plural/select messages, locale fallback, and implicit `intl` formatting.
-
-### Native iOS per-app language
-
-`CFBundleLocalizations` in `ios/Runner/Info.plist` declares English and German so
-iOS exposes its native per-app Language menu. Flutter continues to follow the OS
-locale; there is no separate app-managed override.
-
-The Language tile explains the native route and opens the supported app-settings
-URL through `AppSettingsType.settings` on iOS. `appLocale` is Android-specific;
-the plugin falls back to that same general app-settings URL on iOS. There is no
-public URL for opening the language picker directly. Do not replace this with
-private `App-Prefs` paths.
-
-Verified on the iPhone 18 Pro / iOS 27.0 simulator:
-
-- Settings → Apps → Lanis contains Preferred Language → Language.
-- The Language row opens a navigable picker with English and Deutsch.
-- Selecting Deutsch makes Lanis render German while Settings remains English.
-- German persists after terminating and relaunching Lanis.
-- Selecting English restores the device's default language for Lanis.
-
-The app-settings URL opened Settings but did not reliably navigate to Lanis: it
-initially showed Settings home and later resumed the previous native page. The
-instruction dialog therefore includes the verified manual route, with the older
-iOS route as a fallback. Verify this shortcut on a physical device before claiming
-it always opens Lanis's page directly; simulator verification cannot establish
-that behavior for every supported OS version.
