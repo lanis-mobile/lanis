@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:app_settings/app_settings.dart';
 import 'package:device_info_plus/device_info_plus.dart';
-import 'package:cupertino_ui/cupertino_ui.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -86,41 +85,7 @@ class _SettingsScreenState extends ConsumerSettingsColoursState<SettingsScreen> 
             },
             icon: Icons.language_rounded,
             screen: (context) async {
-              if (Platform.isAndroid) {
-                AppSettings.openAppSettings(type: AppSettingsType.appLocale);
-              }
-              if (Platform.isIOS) {
-                await showCupertinoDialog(
-                  context: context,
-                  builder: (context) {
-                    return CupertinoAlertDialog(
-                      title: Text(
-                        AppLocalizations.of(context).openSystemSettings,
-                      ),
-                      content: Text(
-                        AppLocalizations.of(
-                          context,
-                        ).openIOSSettingsToChangeLanguage,
-                      ),
-                      actions: [
-                        CupertinoDialogAction(
-                          onPressed: () => Navigator.pop(context),
-                          child: Text(AppLocalizations.of(context).cancel),
-                        ),
-                        CupertinoDialogAction(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            AppSettings.openAppSettings(
-                              type: AppSettingsType.appLocale,
-                            );
-                          },
-                          child: Text(AppLocalizations.of(context).ok),
-                        ),
-                      ],
-                    );
-                  },
-                );
-              }
+              await AppSettings.openAppSettings(type: AppSettingsType.appLocale);
             },
             show: () async {
               DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
