@@ -11,16 +11,17 @@ void main() {
   tearDown(() => Intl.defaultLocale = previousLocale);
   setUpAll(initializeDateFormatting);
 
-  test('English remains the fallback for unsupported or absent locales', () {
-    expect(AppLocalizations.supportedLocales.first, const Locale('en'));
+  test('German is the fallback for unsupported or absent locales', () {
+    final locales = AppLocalizations.supportedLocales;
+    expect(locales.first, const Locale('de'));
     expect(
-      resolveAppLocale([
-        const Locale('fr', 'FR'),
-      ], AppLocalizations.supportedLocales),
-      const Locale('en'),
+      resolveAppLocale([const Locale('fr', 'FR')], locales),
+      const Locale('de'),
     );
+    expect(resolveAppLocale(null, locales), const Locale('de'));
+    expect(resolveAppLocale([], locales), const Locale('de'));
     expect(
-      resolveAppLocale(null, AppLocalizations.supportedLocales),
+      resolveAppLocale([const Locale('en', 'US')], locales),
       const Locale('en'),
     );
   });

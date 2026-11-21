@@ -48,8 +48,9 @@ physical device; simulator launch tests do not verify OS-scheduled fetches.
 Edit the English template (`lib/l10n/intl_en.arb`) and German translations
 (`lib/l10n/intl_de.arb`), then run `flutter gen-l10n`. The generated Dart files
 remain ignored by Git and are recreated by Flutter from `l10n.yaml`.
-English remains the fallback language. Missing German messages are reported by
-the generator and fall back to the English template.
+The app selects German when the system provides no supported locale. The
+generator reports missing German messages and uses the English template for
+those messages.
 
 Preserve the ordered placeholder metadata for `dateTimeString`: its positional
 API takes day name, date, then time. Localization regression tests cover this
