@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:intl/intl.dart';
 import 'package:lanis/utils/safe_launch.dart';
@@ -9,7 +9,7 @@ class StudentCourseView extends StatelessWidget {
 
   const StudentCourseView({super.key, required this.studyGroup});
 
-  BorderRadius getRadius(final int index, final int length) {
+  BorderRadius getRadius(int index, int length) {
     if (length == 1) {
       return BorderRadius.circular(12.0);
     }

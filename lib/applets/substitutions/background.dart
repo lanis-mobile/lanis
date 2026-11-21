@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import 'package:liblanis/liblanis.dart';
 
 import '../../background_service.dart';
-import 'package:lanis/l10n/account_type_ui.dart';
 
 Future<void> substitutionsBackgroundTask(
   ProviderContainer container,

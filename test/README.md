@@ -1,12 +1,13 @@
 # Testing
 
-Account-free CI runs **analyzer + unit/widget tests** only (no device builds, no live SPH login).
+Account-free CI runs **analyzer, unit/widget tests, and an Android debug build**
+(no live SPH login).
 
 ## Run locally (same as CI)
 
 ```bash
 flutter pub get
-dart run intl_utils:generate
+flutter gen-l10n
 flutter analyze --no-fatal-infos
 flutter test
 ```
@@ -19,9 +20,9 @@ Library tests for [`liblanis`](https://pub.dev/packages/liblanis) live in the [l
 
 ## iOS scene lifecycle
 
-Use Flutter 3.41 or newer. The app uses `FlutterSceneDelegate` with the `Main`
+Use Flutter 3.50 or newer (Dart 3.13 minimum). The app uses `FlutterSceneDelegate` with the `Main`
 storyboard, and registers plugins through `FlutterImplicitEngineDelegate`.
-`background_fetch` 1.7.0 or newer is required for scene lifecycle support.
+`background_fetch` 2.0.1 or newer is required for scene lifecycle support.
 
 On macOS with Xcode and an installed iOS simulator, build the app and run the
 native launch regression tests (replace the destination with an available device):
@@ -41,3 +42,16 @@ For a device smoke test, cold-launch, background and resume the app, then open a
 `lanis://common/settings/home` link both while running and after terminating it.
 With a signed-in account, verify notification delivery and background fetch on a
 physical device; simulator launch tests do not verify OS-scheduled fetches.
+
+## Localization
+
+Edit the English template (`lib/l10n/intl_en.arb`) and German translations
+(`lib/l10n/intl_de.arb`), then run `flutter gen-l10n`. The generated Dart files
+remain ignored by Git and are recreated by Flutter from `l10n.yaml`.
+The app selects German when the system provides no supported locale. The
+generator reports missing German messages and uses the English template for
+those messages.
+
+Preserve the ordered placeholder metadata for `dateTimeString`: its positional
+API takes day name, date, then time. Localization regression tests cover this
+ordering, plural/select messages, locale fallback, and implicit `intl` formatting.

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lanis/l10n/account_type_ui.dart';
 import 'package:lanis/widgets/error_view.dart';

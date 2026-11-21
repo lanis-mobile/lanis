@@ -1,7 +1,7 @@
 import 'package:lanis/widgets/error_view.dart';
 import 'dart:async';
 import 'package:lanis/widgets/offline_banner.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:liblanis/liblanis.dart';
@@ -124,7 +124,7 @@ void main() {
         container: scope,
         child: MaterialApp(
           localizationsDelegates: testLocalizationsDelegates,
-          supportedLocales: AppLocalizations.delegate.supportedLocales,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: GlobalOfflineShell(
             child: ParentTimetableView(openDrawerCb: openDrawerCb),
           ),

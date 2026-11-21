@@ -1,5 +1,6 @@
 import 'package:dart_date/dart_date.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' as legacy show Material, MaterialType;
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:lanis/utils/liblanis_ui.dart';
@@ -190,7 +191,7 @@ class _CalendarViewState extends ConsumerState<CalendarView> {
   }
 
   Widget _tableCalendar(BuildContext context) {
-    return TableCalendar<CalendarEvent>(
+    final calendar = TableCalendar<CalendarEvent>(
       locale: AppLocalizations.of(context).locale,
       firstDay: DateTime.utc(2020),
       lastDay: DateTime.utc(2030),
@@ -291,6 +292,11 @@ class _CalendarViewState extends ConsumerState<CalendarView> {
       onPageChanged: (focusedDay) {
         _focusedDay = focusedDay;
       },
+    );
+    // TableCalendar's header buttons still use Flutter's legacy InkWell.
+    return legacy.Material(
+      type: legacy.MaterialType.transparency,
+      child: calendar,
     );
   }
 

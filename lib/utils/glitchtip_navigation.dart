@@ -23,7 +23,7 @@ VoidCallback attachGlitchTipRouteTracking(GoRouter router) {
         type: 'navigation',
         category: 'navigation',
         data: {
-          if (from != null) 'from': from,
+          'from': ?from,
           'to': location,
           'state': 'go_router',
         },

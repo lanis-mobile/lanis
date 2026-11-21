@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:lanis/generated/l10n.dart';
@@ -222,105 +222,104 @@ class _NewConversationConfiguratorState
           if (ref.read(conversationsParserProvider).cachedCanChooseType ??
               false) ...[
             const Divider(),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.chat, color: Colors.orange),
-                        const SizedBox(width: 8),
-                        Text(
-                          AppLocalizations.of(context).conversationType,
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    ...ChatType.values.map((chatType) {
-                      return RadioListTile<ChatType>(
-                        dense: true,
-                        value: chatType,
-                        groupValue: selectedChatType,
-                        onChanged: (value) {
-                          setState(() {
-                            selectedChatType = value!;
-                          });
-                        },
-                        title: Row(
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(right: 8.0),
-                              child: Icon(chatType.icon),
-                            ),
-                            Flexible(
-                              child: Text(
-                                AppLocalizations.of(
-                                  context,
-                                ).conversationTypeName(chatType.name),
+            RadioGroup<ChatType>(
+              groupValue: selectedChatType,
+              onChanged: (value) {
+                if (value == null) return;
+                setState(() {
+                  selectedChatType = value;
+                });
+              },
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.chat, color: Colors.orange),
+                          const SizedBox(width: 8),
+                          Text(
+                            AppLocalizations.of(context).conversationType,
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      ...ChatType.values.map((chatType) {
+                        return RadioListTile<ChatType>(
+                          dense: true,
+                          value: chatType,
+                          title: Row(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(right: 8.0),
+                                child: Icon(chatType.icon),
                               ),
-                            ),
-                            if (chatType == ChatType.openChat) ...[
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.orange,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
+                              Flexible(
                                 child: Text(
-                                  AppLocalizations.of(
-                                    context,
-                                  ).experimental.toUpperCase(),
-                                  style: const TextStyle(
-                                    fontSize: 10.0,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                                  AppLocalizations.of(context)
+                                      .conversationTypeName(chatType.name),
+                                ),
+                              ),
+                              if (chatType == ChatType.openChat) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    AppLocalizations.of(context).experimental
+                                        .toUpperCase(),
+                                    style: const TextStyle(
+                                      fontSize: 10.0,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
-                            if (chatType == ChatType.groupOnly) ...[
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.green,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  AppLocalizations.of(
-                                    context,
-                                  ).recommended.toUpperCase(),
-                                  style: const TextStyle(
-                                    fontSize: 10.0,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                              ],
+                              if (chatType == ChatType.groupOnly) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    AppLocalizations.of(context).recommended
+                                        .toUpperCase(),
+                                    style: const TextStyle(
+                                      fontSize: 10.0,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
                                   ),
                                 ),
-                              ),
+                              ],
                             ],
-                          ],
-                        ),
-                        subtitle: Text(
-                          AppLocalizations.of(
-                            context,
-                          ).conversationTypeDescription(chatType.name),
-                          textAlign: TextAlign.start,
-                        ),
-                        isThreeLine: chatType == ChatType.openChat,
-                      );
-                    }),
-                  ],
+                          ),
+                          subtitle: Text(
+                            AppLocalizations.of(context)
+                                .conversationTypeDescription(chatType.name),
+                            textAlign: TextAlign.start,
+                          ),
+                          isThreeLine: chatType == ChatType.openChat,
+                        );
+                      }),
+                    ],
+                  ),
                 ),
               ),
             ),

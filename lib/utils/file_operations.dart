@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/utils/safe_launch.dart';
@@ -51,11 +51,10 @@ class DownloadableFile {
   DownloadableFile({this.name, this.size, this.url}) : localPath = null;
 
   /// Create a file info for a local file
-  DownloadableFile.local({String? name, String? size, required String filePath})
-    : this.name = name ?? filePath.split('/').last,
-      this.size = size,
-      this.localPath = filePath,
-      this.url = null;
+  DownloadableFile.local({String? name, this.size, required String filePath})
+    : name = name ?? filePath.split('/').last,
+      localPath = filePath,
+      url = null;
 
   /// Returns true if this represents a local file
   bool get isLocal => localPath != null;
@@ -285,9 +284,11 @@ void shareFile(BuildContext context, DownloadableFile file, Function callback) {
 
   if (file.isLocal) {
     // For local files, share directly
-    Share.shareXFiles([XFile(file.localPath!)]).then((_) {
-      callback();
-    });
+    SharePlus.instance.share(ShareParams(files: [XFile(file.localPath!)])).then(
+      (_) {
+        callback();
+      },
+    );
     return;
   }
 
@@ -308,7 +309,7 @@ void shareFile(BuildContext context, DownloadableFile file, Function callback) {
             builder: (context) => errorDialog(context),
           );
         } else {
-          await Share.shareXFiles([XFile(filepath)]);
+          await SharePlus.instance.share(ShareParams(files: [XFile(filepath)]));
           callback();
         }
       })

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:flutter/services.dart';
@@ -426,33 +426,34 @@ class _CalendarExportFileState
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (widget.customChild != null) ...[
-                widget.customChild!,
-                SizedBox(height: 24.0),
-              ],
-              for (var group in widget.entries) ...[
-                Text(
-                  group.groupTitle,
-                  style: Theme.of(context).textTheme.labelLarge!.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                ),
-                SizedBox(height: 8.0),
-                for (var entry in group.entries) ...[
-                  RadioListTile(
-                    value: (type: entry.type, link: entry.link),
-                    groupValue: selected,
-                    onChanged: onChanged,
-                    title: Text(entry.title),
-                    contentPadding: EdgeInsets.zero,
-                  ),
+          child: RadioGroup<({String type, String link})>(
+            groupValue: selected,
+            onChanged: onChanged,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (widget.customChild != null) ...[
+                  widget.customChild!,
+                  SizedBox(height: 24.0),
                 ],
-                SizedBox(height: 24.0),
+                for (var group in widget.entries) ...[
+                  Text(
+                    group.groupTitle,
+                    style: Theme.of(context).textTheme.labelLarge!
+                        .copyWith(color: Theme.of(context).colorScheme.primary),
+                  ),
+                  SizedBox(height: 8.0),
+                  for (var entry in group.entries) ...[
+                    RadioListTile(
+                      value: (type: entry.type, link: entry.link),
+                      title: Text(entry.title),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ],
+                  SizedBox(height: 24.0),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ],

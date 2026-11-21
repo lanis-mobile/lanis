@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:liblanis/liblanis.dart';
@@ -40,7 +40,7 @@ class _MoodleWebViewState extends ConsumerState<MoodleWebView> {
   bool isLoggedIn = false;
 
   Future<void> addWebViewCookies(
-    final List<dio_core.Cookie> cookies,
+    List<dio_core.Cookie> cookies,
     List<String> urls,
   ) async {
     for (int i = 0; i < cookies.length; i++) {

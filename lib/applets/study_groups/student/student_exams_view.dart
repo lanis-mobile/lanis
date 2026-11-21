@@ -1,5 +1,5 @@
 import 'package:dart_date/dart_date.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:intl/intl.dart';

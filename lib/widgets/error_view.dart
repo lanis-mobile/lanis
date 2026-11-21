@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/utils/safe_launch.dart';
 

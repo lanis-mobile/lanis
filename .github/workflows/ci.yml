@@ -11,9 +11,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: 3.50.0
           channel: stable
           cache: true
 
@@ -21,10 +28,13 @@ jobs:
         run: flutter pub get
 
       - name: Generate l10n
-        run: dart run intl_utils:generate
+        run: flutter gen-l10n
 
       - name: Analyze
         run: flutter analyze --no-fatal-infos
 
       - name: App unit and widget tests
         run: flutter test
+
+      - name: Android debug build
+        run: flutter build apk --debug --no-pub

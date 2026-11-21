@@ -17,6 +17,7 @@
   "userData": "Benutzerdaten",
   "appearance": "Aussehen",
   "notifications": "Benachrichtigungen",
+  "systemPermissionForNotificationsExplained": "Du musst die Berechtigung für Benachrichtigungen in den Systemeinstellungen der App ändern!",
   "clearCache": "Cache leeren",
   "appInformation": "App-Informationen",
 

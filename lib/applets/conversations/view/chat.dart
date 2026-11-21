@@ -1,5 +1,5 @@
 import 'package:custom_refresh_indicator/custom_refresh_indicator.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:dart_date/dart_date.dart';
@@ -213,7 +213,7 @@ class _ConversationsChatState extends ConsumerState<ConversationsChat>
     );
   }
 
-  void addAuthorTextStyles(final List<String> authors) {
+  void addAuthorTextStyles(List<String> authors) {
     final ThemeData theme = Theme.of(context);
     for (final String author in authors) {
       textStyles[author] = BubbleStyle.getAuthorTextStyle(theme, author);

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:lanis/utils/random_color.dart';
 

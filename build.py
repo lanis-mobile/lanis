@@ -390,7 +390,7 @@ def prepare_project(cfg: Config) -> None:
         input("Press enter to continue...")
 
     cfg.output_dir.mkdir(parents=True, exist_ok=True)
-    run(["dart", "run", "intl_utils:generate"])
+    run(["flutter", "gen-l10n"])
 
 
 def move_artifact(src: Path, dest: Path) -> None:

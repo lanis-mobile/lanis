@@ -22,10 +22,33 @@ void main() {
     expect(options.enableAutoPerformanceTracing, isFalse);
     expect(options.enableUserInteractionTracing, isFalse);
     expect(options.enableFramesTracking, isFalse);
-    expect(options.enableLogs, isFalse);
+    expect(options.beforeSendLog, isNotNull);
+    expect(options.beforeSendMetric, isNotNull);
     expect(options.replay.sessionSampleRate, 0);
     expect(options.replay.onErrorSampleRate, 0);
     expect(options.beforeSend, isNotNull);
+  });
+
+  test('logs and metrics are dropped even when reporting is enabled', () async {
+    final options = SentryFlutterOptions(dsn: glitchtipDsn);
+    configureGlitchTip(options);
+    setGlitchTipReportingEnabled(true);
+    final traceId = SentryId.newId();
+    final log = SentryLog(
+      timestamp: DateTime.now(),
+      traceId: traceId,
+      level: SentryLogLevel.info,
+      body: 'private content',
+      attributes: {},
+    );
+    final metric = SentryCounterMetric(
+      timestamp: DateTime.now(),
+      traceId: traceId,
+      name: 'test',
+      value: 1,
+    );
+    expect(await options.beforeSendLog!(log, Hint()), isNull);
+    expect(await options.beforeSendMetric!(metric, Hint()), isNull);
   });
 
   test('beforeSend drops events when reporting disabled', () async {

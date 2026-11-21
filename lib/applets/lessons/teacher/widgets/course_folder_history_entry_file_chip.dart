@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:liblanis/liblanis.dart';
@@ -249,11 +249,12 @@ class _CourseFolderHistoryEntryFileChipState
         if (result != null) {
           switch (result) {
             case 'open':
-              if (context.mounted)
+              if (context.mounted) {
                 showFileModal(
                   context,
                   DownloadableFile(name: widget.file.name, url: widget.file.url),
                 );
+              }
               break;
             case 'visibility':
               changeRemoteVisibility();

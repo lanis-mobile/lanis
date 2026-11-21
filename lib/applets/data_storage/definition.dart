@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:lanis/applets/data_storage/data_storage_root_view.dart';
 import 'package:lanis/applets/data_storage/routes.dart';
 import 'package:lanis/applets/definitions.dart';

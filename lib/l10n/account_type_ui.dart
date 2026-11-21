@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:liblanis/liblanis.dart' show AccountType, AccountTypeX;
 import 'package:lanis/generated/l10n.dart';
 

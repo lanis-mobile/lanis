@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../generated/l10n.dart';
@@ -44,7 +44,10 @@ void _maybeShowSnackBar(BuildContext? context) {
   final messenger = ScaffoldMessenger.maybeOf(context);
   if (messenger == null) return;
   final message =
-      AppLocalizations.maybeOf(context)?.couldNotOpenUrl ??
+      Localizations.of<AppLocalizations>(
+        context,
+        AppLocalizations,
+      )?.couldNotOpenUrl ??
       'Could not open this link.';
   messenger.showSnackBar(SnackBar(content: Text(message)));
 }

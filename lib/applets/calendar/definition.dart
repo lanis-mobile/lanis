@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:lanis/applets/calendar/calendar_view.dart';
 import 'package:lanis/applets/calendar/routes.dart';
 import 'package:lanis/applets/definitions.dart';

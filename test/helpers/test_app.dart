@@ -1,5 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
@@ -7,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:lanis/features/auth/auth_controller.dart';
 import 'package:lanis/generated/l10n.dart';
+import 'package:lanis/l10n/locale_resolution.dart';
 
 export 'fake_session_auth.dart';
 
@@ -15,9 +15,7 @@ List<Override> testLanisOverrides() => LanisClient.configure();
 
 List<LocalizationsDelegate<dynamic>> get testLocalizationsDelegates => [
   AppLocalizations.delegate,
-  GlobalMaterialLocalizations.delegate,
-  GlobalWidgetsLocalizations.delegate,
-  GlobalCupertinoLocalizations.delegate,
+  ...GlobalMaterialLocalizations.delegates,
 ];
 
 /// Pumps [child] under [ProviderScope] + MaterialApp with l10n.
@@ -36,9 +34,13 @@ Future<ProviderContainer> pumpTestApp(
         builder: (context) {
           container = ProviderScope.containerOf(context);
           return MaterialApp(
+            builder: (context, child) => MaterialUiCompatibilityBridge(
+              child: child ?? const SizedBox.shrink(),
+            ),
             locale: locale,
             localizationsDelegates: testLocalizationsDelegates,
-            supportedLocales: AppLocalizations.delegate.supportedLocales,
+            supportedLocales: AppLocalizations.supportedLocales,
+            localeListResolutionCallback: resolveAppLocale,
             home: child,
           );
         },
@@ -70,9 +72,13 @@ Future<ProviderContainer> pumpTestRouterApp(
         builder: (context) {
           container = ProviderScope.containerOf(context);
           return MaterialApp.router(
+            builder: (context, child) => MaterialUiCompatibilityBridge(
+              child: child ?? const SizedBox.shrink(),
+            ),
             locale: locale,
             localizationsDelegates: testLocalizationsDelegates,
-            supportedLocales: AppLocalizations.delegate.supportedLocales,
+            supportedLocales: AppLocalizations.supportedLocales,
+            localeListResolutionCallback: resolveAppLocale,
             routerConfig: router,
           );
         },
