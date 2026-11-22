@@ -127,24 +127,41 @@ class _AsyncSearchAnchorState extends ConsumerState<AsyncSearchAnchor> {
       },
       suggestionsBuilder:
           (BuildContext context, SearchController controller) async {
-            _searchingWithQuery = controller.text;
-            var options = await parser.searchFiles(_searchingWithQuery ?? '');
+            final query = controller.text;
+            _searchingWithQuery = query;
+            dynamic options;
+            try {
+              options = await parser.searchFiles(query);
+            } catch (_) {
+              if (_searchingWithQuery != controller.text) {
+                return _lastOptions;
+              }
+              return <Widget>[
+                ListTile(
+                  title: Text(
+                    context.mounted
+                        ? AppLocalizations.of(context).errorOccurred
+                        : 'Error',
+                  ),
+                ),
+              ];
+            }
 
-            if (_searchingWithQuery != controller.text) {
+            if (_searchingWithQuery != controller.text || !context.mounted) {
               return _lastOptions;
             }
 
-            _lastOptions = List<Widget>.generate(options?.length ?? 0, (
-              int index,
-            ) {
-              final Map item = options[index];
-              return SearchFileListTile(
-                context: context,
-                name: item["text"],
-                downloadUrl:
-                    "https://start.schulportal.hessen.de/dateispeicher.php?a=download&f=${item["id"]}",
-              );
-            });
+            final items = options is List ? options : const <dynamic>[];
+            _lastOptions = <Widget>[
+              for (final item in items)
+                if (item is Map)
+                  SearchFileListTile(
+                    context: context,
+                    name: '${item["text"] ?? ''}',
+                    downloadUrl:
+                        "https://start.schulportal.hessen.de/dateispeicher.php?a=download&f=${item["id"]}",
+                  ),
+            ];
 
             if (_lastOptions.isEmpty) {
               _lastOptions = <Widget>[
