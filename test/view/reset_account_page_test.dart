@@ -44,6 +44,33 @@ class _Auth extends AuthController {
 
 void main() {
   tearDown(LanisClient.reset);
+
+  testWidgets('password dialog shows the saved username as read-only', (
+    tester,
+  ) async {
+    await pumpTestApp(
+      tester,
+      child: const ResetAccountPage(),
+      overrides: [activeAccountProvider.overrideWith(_Active.new)],
+    );
+    await tester.tap(find.widgetWithIcon(ElevatedButton, Icons.password));
+    await tester.pumpAndSettle();
+
+    final fields = tester
+        .widgetList<EditableText>(
+          find.descendant(
+            of: find.byType(AlertDialog),
+            matching: find.byType(EditableText),
+          ),
+        )
+        .toList();
+    expect(fields, hasLength(2));
+    expect(fields.first.readOnly, isTrue);
+    expect(fields.first.controller.text, 'u');
+    expect(fields.last.obscureText, isTrue);
+    expect(fields.last.controller.text, isEmpty);
+  });
+
   for (final unmount in [true, false]) {
     testWidgets(
       'account removal ${unmount ? 'after page disposal' : 'while mounted'} still bootstraps',

@@ -22,17 +22,19 @@ Future<bool> safeLaunchUrl(
   Uri url, {
   BuildContext? context,
   LaunchMode mode = LaunchMode.platformDefault,
+  bool sensitive = false,
 }) async {
+  final logTarget = sensitive ? url.path : url.toString();
   try {
     final launched = await launchUrlImpl(url, mode: mode);
     if (launched) return true;
-    logger.w('Could not open URL: $url');
+    logger.w('Could not open URL: $logTarget');
     if (context != null && !context.mounted) return false;
     _maybeShowSnackBar(context);
     return false;
   } catch (e, s) {
-    logger.w('Could not open URL: $url');
-    logger.e(e, stackTrace: s);
+    logger.w('Could not open URL: $logTarget');
+    if (!sensitive) logger.e(e, stackTrace: s);
     if (context != null && !context.mounted) return false;
     _maybeShowSnackBar(context);
     return false;

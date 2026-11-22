@@ -4,19 +4,108 @@ import 'package:go_router/go_router.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/features/auth/auth_controller.dart';
+import 'package:lanis/features/auth/account_recovery.dart';
+import 'package:lanis/l10n/login_errors.dart';
 import 'package:lanis/widgets/large_appbar.dart';
 
 class ResetAccountPage extends ConsumerStatefulWidget {
-  const ResetAccountPage({super.key});
+  const ResetAccountPage({super.key, this.removalOnly = false});
+
+  final bool removalOnly;
 
   @override
   ConsumerState<ResetAccountPage> createState() => _ResetAccountPageState();
 }
 
 class _ResetAccountPageState extends ConsumerState<ResetAccountPage> {
+  Future<void> _updatePassword(ClearTextAccount account) async {
+    final newPassword = await _promptForPassword(account.username);
+    if (!mounted || newPassword == null) return;
+    try {
+      await verifyAccountLogin(
+        account.copyWith(password: newPassword),
+        ref.read(lanisConfigProvider),
+        ref.read(connectionCheckerProvider),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      final l10n = AppLocalizations.of(context);
+      final message = e is LanisException
+          ? localizedAccountLoginError(l10n, e) ?? e.cause
+          : l10n.unknownError;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+      return;
+    }
+    if (!mounted) return;
+
+    await ref.read(accountsProvider.notifier).updatePassword(
+      account.localId,
+      newPassword,
+    );
+    if (!mounted) return;
+    final ok = await ref
+        .read(authControllerProvider.notifier)
+        .loginWithAccount(account.localId);
+    if (mounted && ok) context.go('/startup');
+  }
+
+  Future<String?> _promptForPassword(String username) {
+    final l10n = AppLocalizations.of(context);
+    var password = '';
+    return showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        void submit() {
+          if (password.isNotEmpty) Navigator.of(dialogContext).pop(password);
+        }
+
+        return AlertDialog(
+          title: Text(l10n.changePassword),
+          scrollable: true,
+          content: AutofillGroup(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  initialValue: username,
+                  readOnly: true,
+                  decoration: InputDecoration(
+                    labelText: l10n.accountUsername,
+                    suffixIcon: const Icon(Icons.lock_outline),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  autofocus: true,
+                  autofillHints: const [AutofillHints.password],
+                  autocorrect: false,
+                  obscureText: true,
+                  textInputAction: TextInputAction.done,
+                  decoration: InputDecoration(labelText: l10n.authPasswordHint),
+                  onChanged: (value) => password = value,
+                  onFieldSubmitted: (_) => submit(),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(l10n.cancel),
+            ),
+            FilledButton(onPressed: submit, child: Text(l10n.changePassword)),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final account = ref.watch(activeAccountProvider);
+    final l10n = AppLocalizations.of(context);
     if (account == null) {
       return Scaffold(
         appBar: LargeAppBar(
@@ -76,34 +165,36 @@ class _ResetAccountPageState extends ConsumerState<ResetAccountPage> {
                       ),
                     ],
                   ),
-                  Divider(),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Icon(
-                        Icons.password,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSecondary.withRed(255),
-                      ),
-                      Text(
-                        '••••••••••••••••••••',
-                        style: TextStyle(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSecondary.withRed(255),
+                  if (!widget.removalOnly) ...[
+                    Divider(),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Icon(
+                          Icons.password,
+                          color: Theme.of(context).colorScheme.onSecondary
+                              .withRed(255),
                         ),
-                      ),
-                    ],
-                  ),
+                        Text(
+                          '••••••••••••••••••••',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSecondary
+                                .withRed(255),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
           ),
           ListTile(
-            leading: Icon(Icons.info),
-            title: Text(AppLocalizations.of(context).wrongPassword),
-            subtitle: Text(AppLocalizations.of(context).wrongPasswordHint),
+            leading: const Icon(Icons.info),
+            title: widget.removalOnly
+                ? Text(l10n.deleteAccountFromDevice)
+                : Text(l10n.wrongPassword),
+            subtitle: widget.removalOnly ? null : Text(l10n.wrongPasswordHint),
           ),
           Padding(
             padding: EdgeInsets.all(12.0),
@@ -111,85 +202,12 @@ class _ResetAccountPageState extends ConsumerState<ResetAccountPage> {
               spacing: 4.0,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    TextEditingController controller = TextEditingController();
-                    final String? newPassword = await showDialog<String>(
-                      context: context,
-                      builder: (context) => SimpleDialog(
-                        title: Text(
-                          AppLocalizations.of(context).changePassword,
-                        ),
-                        children: [
-                          Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: TextFormField(
-                              controller: controller,
-                              autofillHints: [AutofillHints.password],
-                              autocorrect: false,
-                              obscureText: true,
-                              decoration: InputDecoration(
-                                labelText: AppLocalizations.of(
-                                  context,
-                                ).authPasswordHint,
-                              ),
-                              autovalidateMode: AutovalidateMode.always,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return AppLocalizations.of(
-                                    context,
-                                  ).authValidationError;
-                                }
-                                return null;
-                              },
-                            ),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: ElevatedButton(
-                              onPressed: () {
-                                if (controller.text.isEmpty) return;
-                                Navigator.of(context).pop(controller.text);
-                              },
-                              child: Text(
-                                AppLocalizations.of(context).changePassword,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                    if (newPassword == null) return;
-                    final config = ref.read(lanisConfigProvider);
-                    try {
-                      await LanisSession.getLoginURL(
-                        account.copyWith(password: newPassword),
-                        config,
-                      );
-                    } catch (e) {
-                      if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            e is LanisException
-                                ? e.cause
-                                : AppLocalizations.of(context).unknownError,
-                          ),
-                        ),
-                      );
-                      return;
-                    }
-                    await ref
-                        .read(accountsProvider.notifier)
-                        .updatePassword(account.localId, newPassword);
-                    final ok = await ref
-                        .read(authControllerProvider.notifier)
-                        .loginWithAccount(account.localId);
-                    if (context.mounted && ok) context.go('/startup');
-                  },
-                  icon: Icon(Icons.password),
-                  label: Text(AppLocalizations.of(context).changePassword),
-                ),
+                if (!widget.removalOnly)
+                  ElevatedButton.icon(
+                    onPressed: () => _updatePassword(account),
+                    icon: Icon(Icons.password),
+                    label: Text(AppLocalizations.of(context).changePassword),
+                  ),
                 ElevatedButton.icon(
                   onPressed: () async {
                     final auth = ref.read(authControllerProvider.notifier);
@@ -200,7 +218,11 @@ class _ResetAccountPageState extends ConsumerState<ResetAccountPage> {
                     if (context.mounted) context.go('/startup');
                   },
                   icon: Icon(Icons.no_accounts),
-                  label: Text(AppLocalizations.of(context).removeAccount),
+                  label: Text(
+                    widget.removalOnly
+                        ? l10n.deleteAccount
+                        : l10n.removeAccount,
+                  ),
                 ),
               ],
             ),

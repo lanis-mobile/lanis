@@ -8,6 +8,8 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/features/auth/auth_controller.dart';
+import 'package:lanis/features/auth/account_recovery.dart';
+import 'package:lanis/l10n/login_errors.dart';
 import 'package:lanis/utils/privacy_policy.dart';
 import 'package:lanis/widgets/offline_available_applets_section.dart';
 import 'package:lanis/widgets/reset_account_page.dart';
@@ -59,6 +61,16 @@ class _StartupScreenState extends ConsumerState<StartupScreen> {
       isScrollControlled: true,
       builder: (sheetContext) => StartupAuthErrorContent(
         exception: exception,
+        onOpenPortal: () async {
+          final account = ref.read(activeAccountProvider);
+          if (account == null) return;
+          await openPortalPasswordChange(
+            sheetContext,
+            account,
+            ref.read(lanisConfigProvider),
+          );
+        },
+        onSwitchAccount: () => context.push('/accounts'),
         onRetry: () {
           Navigator.of(sheetContext).pop();
           ref.read(authControllerProvider.notifier).retry();
@@ -146,11 +158,15 @@ class _StartupScreenState extends ConsumerState<StartupScreen> {
 class StartupAuthErrorContent extends StatelessWidget {
   final LanisException exception;
   final VoidCallback onRetry;
+  final VoidCallback? onOpenPortal;
+  final VoidCallback? onSwitchAccount;
 
   const StartupAuthErrorContent({
     super.key,
     required this.exception,
     required this.onRetry,
+    this.onOpenPortal,
+    this.onSwitchAccount,
   });
 
   @override
@@ -158,12 +174,20 @@ class StartupAuthErrorContent extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final isDown = exception is LanisDownException;
     final isOffline = exception is NoConnectionException;
+    final accountError = localizedAccountLoginError(l10n, exception);
+    final passwordChange = exception is PasswordChangeRequiredException;
+    final removalOnly =
+        passwordChange ||
+        exception is ParentAccountWithoutLearnersException ||
+        exception is AccountDisabledException;
 
     final title = isDown
         ? l10n.lanisDownError
         : isOffline
         ? l10n.noInternetConnection2
-        : l10n.startupError;
+        : accountError == null
+        ? l10n.startupError
+        : l10n.error;
 
     return SafeArea(
       child: ConstrainedBox(
@@ -198,36 +222,48 @@ class StartupAuthErrorContent extends StatelessWidget {
             if (!isOffline && !isDown)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                child: Text.rich(
-                  TextSpan(
-                    text: l10n.startupErrorMessage,
-                    children: [
-                      TextSpan(
-                        text:
-                            '\n\n${exception.runtimeType}: ${exception.cause}',
-                        style: Theme.of(context).textTheme.labelLarge,
+                child: accountError != null
+                    ? Text(accountError, textAlign: TextAlign.center)
+                    : Text.rich(
+                        TextSpan(
+                          text: l10n.startupErrorMessage,
+                          children: [
+                            TextSpan(
+                              text:
+                                  '\n\n${exception.runtimeType}: ${exception.cause}',
+                              style: Theme.of(context).textTheme.labelLarge,
+                            ),
+                          ],
+                        ),
                       ),
-                    ],
-                  ),
-                ),
               ),
-            if (exception is WrongCredentialsException)
+            if (passwordChange && onOpenPortal != null)
+              FilledButton(
+                onPressed: onOpenPortal,
+                child: Text(l10n.openSchulportalHessen),
+              ),
+            if (removalOnly || exception is WrongCredentialsException)
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16.0,
                   vertical: 8.0,
                 ),
                 child: ElevatedButton.icon(
-                  icon: const Icon(Icons.lock_reset),
-                  label: Text(l10n.resetAccount),
+                  icon: Icon(removalOnly ? Icons.no_accounts : Icons.lock_reset),
+                  label: Text(removalOnly ? l10n.deleteAccount : l10n.resetAccount),
                   onPressed: () async {
                     await Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => const ResetAccountPage(),
+                        builder: (_) => ResetAccountPage(removalOnly: removalOnly),
                       ),
                     );
                   },
                 ),
+              ),
+            if (removalOnly && onSwitchAccount != null)
+              TextButton(
+                onPressed: onSwitchAccount,
+                child: Text(l10n.switchAccount),
               ),
             if (isDown)
               Padding(

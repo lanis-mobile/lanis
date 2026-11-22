@@ -1,4 +1,5 @@
 import 'package:flutter/gestures.dart';
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,6 +7,8 @@ import 'package:liblanis/liblanis.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/home_page.dart';
 import 'package:lanis/features/auth/auth_controller.dart';
+import 'package:lanis/features/auth/account_recovery.dart';
+import 'package:lanis/l10n/login_errors.dart';
 import 'package:lanis/utils/logger.dart';
 import 'package:lanis/utils/glitchtip.dart';
 import 'package:lanis/utils/privacy_policy.dart';
@@ -24,6 +27,8 @@ class LoginFormState extends ConsumerState<LoginForm> {
   static const double padding = 10.0;
 
   final _formKey = GlobalKey<FormState>();
+  int _schoolSelectorVersion = 0;
+  bool _passwordVisible = false;
 
   TextEditingController schoolIDController = TextEditingController();
   TextEditingController usernameController = TextEditingController();
@@ -46,6 +51,8 @@ class LoginFormState extends ConsumerState<LoginForm> {
   }
 
   void login(String username, String password, String schoolID) async {
+    ClearTextAccount? attemptedAccount;
+    if (_passwordVisible) setState(() => _passwordVisible = false);
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -66,22 +73,25 @@ class LoginFormState extends ConsumerState<LoginForm> {
         throw AccountAlreadyExistsException();
       }
 
-      // Login checkbox is the first-time privacy acceptance for new accounts.
+      final config = ref.read(lanisConfigProvider);
+      attemptedAccount = ClearTextAccount(
+        localId: -1,
+        schoolID: schoolId,
+        username: username,
+        password: password,
+        schoolName: selectedSchoolName,
+      );
+      await verifyAccountLogin(
+        attemptedAccount,
+        config,
+        ref.read(connectionCheckerProvider),
+      );
+      if (!mounted) return;
+
+      // Persist first-time choices only after Schulportal accepts the login.
       final shared = ref.read(sharedOverAccountSettingsProvider);
       acceptPrivacyPolicy(shared);
       setGlitchTipEnabled(shared, errorReportingAgree);
-
-      final config = ref.read(lanisConfigProvider);
-      await LanisSession.getLoginURL(
-        ClearTextAccount(
-          localId: -1,
-          schoolID: schoolId,
-          username: username,
-          password: password,
-          schoolName: "",
-        ),
-        config,
-      );
 
       final newID = await ref
           .read(accountsProvider.notifier)
@@ -97,56 +107,100 @@ class LoginFormState extends ConsumerState<LoginForm> {
       if (!mounted) return;
       Navigator.pop(context); // pop dialog
       if (ok) {
+        TextInput.finishAutofillContext();
         context.go(firstSupportedHomePath(ref));
         return;
       }
       if (!mounted) return;
-      final auth = ref.read(authControllerProvider);
-      final cause =
-          auth.exception?.cause ?? AppLocalizations.of(context).unknownError;
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(AppLocalizations.of(context).error),
-          content: Text(cause),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("OK"),
-            ),
-          ],
-        ),
+      await _showLoginError(
+        ref.read(authControllerProvider).exception,
+        attemptedAccount,
       );
     } catch (ex, s) {
-      logger.e(ex, stackTrace: s);
-
-      String cause = "";
-      if (ex is LanisException) {
-        cause = ex.cause;
-      } else {
-        if (mounted) {
-          cause = AppLocalizations.of(context).unknownError;
-        }
+      if (ex is! LanisException) {
+        logger.e('Login failed: ${ex.runtimeType}', stackTrace: s);
       }
-
       if (!mounted) return;
       Navigator.pop(context); // pop dialog
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(AppLocalizations.of(context).error),
-          content: Text(cause),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text("OK"),
+      await _showLoginError(ex is LanisException ? ex : null, attemptedAccount);
+    }
+  }
+
+  Future<void> _showLoginError(
+    LanisException? exception,
+    ClearTextAccount? attemptedAccount,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    final accountError = localizedAccountLoginError(l10n, exception);
+    final canOpenPortal =
+        exception is PasswordChangeRequiredException && attemptedAccount != null;
+    final openPortal = canOpenPortal
+        ? await _showFirstLoginSheet(l10n)
+        : await showDialog<bool>(
+            context: context,
+            builder: (dialogContext) => AlertDialog(
+              title: Text(l10n.error),
+              content: Text(accountError ?? exception?.cause ?? l10n.unknownError),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('OK'),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+    if (!mounted || accountError == null) return;
+    TextInput.finishAutofillContext(shouldSave: false);
+    _formKey.currentState?.reset();
+    setState(() {
+      schoolIDController.clear();
+      usernameController.clear();
+      passwordController.clear();
+      selectedSchoolName = '';
+      dseAgree = false;
+      errorReportingAgree = isGlitchTipEnabled(
+        ref.read(sharedOverAccountSettingsProvider),
+      );
+      _schoolSelectorVersion++;
+    });
+    if (openPortal == true && attemptedAccount != null) {
+      await openPortalPasswordChange(
+        context,
+        attemptedAccount,
+        ref.read(lanisConfigProvider),
       );
     }
+  }
+
+  Future<bool?> _showFirstLoginSheet(AppLocalizations l10n) {
+    return showModalBottomSheet<bool>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                l10n.firstLoginTitle,
+                style: Theme.of(sheetContext).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 12),
+              Text(l10n.firstLoginPasswordMessage),
+              const SizedBox(height: 20),
+              FilledButton.icon(
+                onPressed: () => Navigator.pop(sheetContext, true),
+                icon: const Icon(Icons.open_in_new),
+                label: Text(l10n.setInitialPassword),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -184,6 +238,7 @@ class LoginFormState extends ConsumerState<LoginForm> {
               child: Form(
                 key: _formKey,
                 child: AutofillGroup(
+                  onDisposeAction: AutofillContextAction.cancel,
                   child: Center(
                     child: SingleChildScrollView(
                       child: Column(
@@ -203,6 +258,7 @@ class LoginFormState extends ConsumerState<LoginForm> {
                           ),
                           const SizedBox(height: padding * 5),
                           SchoolSelector(
+                            key: ValueKey(_schoolSelectorVersion),
                             controller: schoolIDController,
                             outContext: context,
                             onSchoolSelected: (name) {
@@ -237,11 +293,28 @@ class LoginFormState extends ConsumerState<LoginForm> {
                             enabled: schoolIDController.text.isNotEmpty,
                             autofillHints: [AutofillHints.password],
                             autocorrect: false,
-                            obscureText: true,
+                            obscureText: !_passwordVisible,
+                            enableSuggestions: false,
+                            keyboardType: TextInputType.visiblePassword,
                             decoration: InputDecoration(
                               labelText: AppLocalizations.of(
                                 context,
                               ).authPasswordHint,
+                              suffixIcon: IconButton(
+                                tooltip: _passwordVisible
+                                    ? AppLocalizations.of(context).hidePassword
+                                    : AppLocalizations.of(context).showPassword,
+                                icon: Icon(
+                                  _passwordVisible
+                                      ? Icons.visibility
+                                      : Icons.visibility_off,
+                                ),
+                                onPressed: schoolIDController.text.isEmpty
+                                    ? null
+                                    : () => setState(() {
+                                        _passwordVisible = !_passwordVisible;
+                                      }),
+                              ),
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
