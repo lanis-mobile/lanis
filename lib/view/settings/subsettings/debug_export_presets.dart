@@ -1,9 +1,12 @@
 import 'package:dio/dio.dart';
+import 'package:html/parser.dart' show parse;
 import 'package:intl/intl.dart';
+import 'package:liblanis/liblanis.dart';
 
 import '../../../generated/l10n.dart';
 
 const sphBase = 'https://start.schulportal.hessen.de';
+final _sphBaseUri = Uri.parse('$sphBase/');
 
 const _xhrFormHeaders = <String, String>{
   'Accept': '*/*',
@@ -19,15 +22,12 @@ const _conversationsXhrHeaders = <String, String>{
 };
 
 enum DebugExportPresetId {
-  substitutionsMain,
+  substitutions,
   timetable,
-  calendarMain,
-  lessonsStudent,
-  lessonsTeacher,
+  calendar,
+  lessons,
   dataStorage,
   studyGroups,
-  substitutionsAjax,
-  calendarEvents,
   conversations,
 }
 
@@ -68,7 +68,7 @@ class DebugExportHttpRequest {
   }
 }
 
-/// One logged subsection produced by a preset (e.g. one AJAX date).
+/// One logged subsection produced by a preset (e.g. one AJAX date or subpage).
 class DebugExportSection {
   final String name;
   final DebugExportHttpRequest request;
@@ -81,29 +81,35 @@ class DebugExportSection {
   });
 }
 
-/// Shared state while expanding selected presets into HTTP sections.
-class DebugExportPresetContext {
-  String? substitutionsHtml;
-}
-
-typedef DebugExportSectionBuilder =
-    List<DebugExportSection> Function(DebugExportPresetContext ctx);
-
 class DebugExportPreset {
   final DebugExportPresetId id;
+  final String appletPhpUrl;
+  final List<AccountType> supportedAccountTypes;
   final String Function(AppLocalizations l10n) label;
-
-  /// Needs the substitutions main HTML (for `data-tag` date discovery).
-  final bool needsSubstitutionHtml;
-
-  final DebugExportSectionBuilder buildSections;
 
   const DebugExportPreset({
     required this.id,
+    required this.appletPhpUrl,
+    required this.supportedAccountTypes,
     required this.label,
-    required this.buildSections,
-    this.needsSubstitutionHtml = false,
   });
+}
+
+/// Whether [preset] is available to the active account based on the school's
+/// supported applets and the account's role.
+bool isDebugExportPresetAvailable(
+  DebugExportPreset preset, {
+  required Set<String> supportedAppletPhpUrls,
+  AccountType? accountType,
+}) {
+  if (!supportedAppletPhpUrls.contains(preset.appletPhpUrl)) {
+    return false;
+  }
+  if (accountType != null &&
+      !preset.supportedAccountTypes.contains(accountType)) {
+    return false;
+  }
+  return true;
 }
 
 DebugExportHttpRequest _get(String path) =>
@@ -123,6 +129,10 @@ DebugExportHttpRequest substitutionsAjaxRequest(String tag) =>
       contentType: Headers.formUrlEncodedContentType,
     );
 
+DebugExportHttpRequest timetableMainRequest() => _get('stundenplan.php');
+
+DebugExportHttpRequest calendarMainRequest() => _get('kalender.php');
+
 DebugExportHttpRequest calendarEventsRequest({
   required DateTime startDate,
   required DateTime endDate,
@@ -140,11 +150,34 @@ DebugExportHttpRequest calendarEventsRequest({
       'start': start,
       'end': end,
     },
-    data: 'f=getEvents&start=$start&end=$end&s=$searchQuery',
+    data: Uri(
+      queryParameters: {
+        'f': 'getEvents',
+        'start': start,
+        'end': end,
+        's': searchQuery,
+      },
+    ).query,
     headers: _xhrFormHeaders,
     contentType: Headers.formUrlEncodedContentType,
   );
 }
+
+DebugExportHttpRequest lessonsMainRequest() => _get('meinunterricht.php');
+
+DebugExportHttpRequest dataStorageRootRequest() =>
+    _get('dateispeicher.php?a=view&folder=0');
+
+DebugExportHttpRequest studyGroupsMainRequest() => _get('lerngruppen.php');
+
+DebugExportHttpRequest conversationsOverviewRequest() =>
+    const DebugExportHttpRequest(
+      method: 'POST',
+      url: '$sphBase/nachrichten.php',
+      data: {'a': 'headers', 'getType': 'All', 'last': '0'},
+      headers: _conversationsXhrHeaders,
+      contentType: Headers.formUrlEncodedContentType,
+    );
 
 /// Default calendar XHR range: first day of this month through last day of next.
 ({DateTime start, DateTime end}) defaultCalendarExportRange([DateTime? now]) {
@@ -173,118 +206,145 @@ List<String> parseSubstitutionPlanDates(String document) {
   return uniqueDates;
 }
 
-List<DebugExportSection> _single(
-  DebugExportPresetId id,
-  DebugExportHttpRequest request,
-) => [DebugExportSection(name: id.name, request: request)];
-
-List<DebugExportSection> _buildSubstitutionsAjax(DebugExportPresetContext ctx) {
-  final html = ctx.substitutionsHtml;
-  final dates = html != null ? parseSubstitutionPlanDates(html) : <String>[];
-  if (dates.isEmpty) {
-    final today = DateFormat('dd.MM.yyyy').format(DateTime.now());
-    return [
-      DebugExportSection(
-        name: '${DebugExportPresetId.substitutionsAjax.name}@$today',
-        request: substitutionsAjaxRequest(today),
-        note:
-            'No substitution dates found in main HTML; '
-            'using today ($today) for AJAX.',
-      ),
-    ];
+Uri? _resolveSameOriginSphUri(String? rawHref) {
+  final trimmed = rawHref?.trim();
+  if (trimmed == null || trimmed.isEmpty) return null;
+  final Uri resolved;
+  try {
+    resolved = _sphBaseUri.resolve(trimmed);
+  } on FormatException {
+    return null;
   }
-  return [
-    for (final date in dates)
-      DebugExportSection(
-        name: '${DebugExportPresetId.substitutionsAjax.name}@$date',
-        request: substitutionsAjaxRequest(date),
-        note: dates.first == date
-            ? 'Substitution dates: ${dates.join(', ')}'
-            : null,
-      ),
-  ];
+  if (resolved.scheme != _sphBaseUri.scheme ||
+      resolved.host != _sphBaseUri.host ||
+      resolved.port != _sphBaseUri.port) {
+    return null;
+  }
+  return resolved.removeFragment();
 }
 
-List<DebugExportSection> _buildCalendarEvents(DebugExportPresetContext ctx) {
-  final range = defaultCalendarExportRange();
-  return _single(
-    DebugExportPresetId.calendarEvents,
-    calendarEventsRequest(startDate: range.start, endDate: range.end),
-  );
+/// Extracts parent child-timetable detail URLs from `stundenplan.php` HTML.
+List<Uri> parseParentTimetableUrls(String html) {
+  final document = parse(html);
+  final seen = <String>{};
+  final urls = <Uri>[];
+  for (final link in document.querySelectorAll(
+    '#content #accordion a.list-group-item[href]',
+  )) {
+    final uri = _resolveSameOriginSphUri(link.attributes['href']);
+    if (uri == null || uri.path != '/stundenplan.php') continue;
+    final params = uri.queryParameters;
+    if (params['a'] != 'detail_klasse') continue;
+    if ((params['p'] ?? '').isEmpty) continue;
+    if (seen.add(uri.toString())) {
+      urls.add(uri);
+    }
+  }
+  return urls;
 }
 
-/// Ordered list used by the picker and the export runner.
+/// Extracts student and parent course detail URLs (`a=sus_view`) from
+/// `meinunterricht.php` HTML, preserving distinct pupils and semesters.
+List<Uri> parseLessonsCourseUrls(String html) {
+  final document = parse(html);
+  final seen = <String>{};
+  final urls = <Uri>[];
+  for (final link in document.querySelectorAll('a[href]')) {
+    final uri = _resolveSameOriginSphUri(link.attributes['href']);
+    if (uri == null || uri.path != '/meinunterricht.php') continue;
+    final params = uri.queryParameters;
+    if (params['a'] != 'sus_view') continue;
+    if ((params['id'] ?? '').isEmpty) continue;
+    if (seen.add(uri.toString())) {
+      urls.add(uri);
+    }
+  }
+  return urls;
+}
+
+/// Extracts 3rd-level student/parent submission upload URLs (`a=sus_abgabe`)
+/// from a course detail page.
+List<Uri> parseLessonsUploadUrls(String html) {
+  final document = parse(html);
+  final seen = <String>{};
+  final urls = <Uri>[];
+  for (final link in document.querySelectorAll('a[href]')) {
+    final uri = _resolveSameOriginSphUri(link.attributes['href']);
+    if (uri == null || uri.path != '/meinunterricht.php') continue;
+    if (uri.queryParameters['a'] != 'sus_abgabe') continue;
+    if (seen.add(uri.toString())) {
+      urls.add(uri);
+    }
+  }
+  return urls;
+}
+
+String formatParentTimetableSectionName(Uri uri) {
+  final pupil = uri.queryParameters['p'];
+  return pupil != null && pupil.isNotEmpty
+      ? 'timetable/pupil#$pupil'
+      : 'timetable/detail';
+}
+
+String formatLessonCourseSectionName(Uri uri) {
+  final params = uri.queryParameters;
+  final parts = <String>['course#${params['id'] ?? 'unknown'}'];
+  if ((params['p'] ?? '').isNotEmpty) parts.add('p=${params['p']}');
+  if ((params['halb'] ?? '').isNotEmpty) parts.add('halb=${params['halb']}');
+  return 'lessons/${parts.join('_')}';
+}
+
+String formatLessonUploadSectionName(Uri uri) {
+  final params = uri.queryParameters;
+  final parts = <String>['upload#${params['id'] ?? 'unknown'}'];
+  if ((params['b'] ?? '').isNotEmpty) parts.add('b=${params['b']}');
+  if ((params['e'] ?? '').isNotEmpty) parts.add('e=${params['e']}');
+  if ((params['p'] ?? '').isNotEmpty) parts.add('p=${params['p']}');
+  return 'lessons/${parts.join('_')}';
+}
+
+/// Ordered list of applets shown in the Debug Export picker.
 final debugExportPresets = <DebugExportPreset>[
   DebugExportPreset(
-    id: DebugExportPresetId.substitutionsMain,
-    label: (l) => l.debugExportPresetSubstitutionsMain,
-    needsSubstitutionHtml: true,
-    buildSections: (_) =>
-        _single(DebugExportPresetId.substitutionsMain, substitutionsMainRequest()),
+    id: DebugExportPresetId.substitutions,
+    appletPhpUrl: Applets.substitutions.appletPhpUrl,
+    supportedAccountTypes: Applets.substitutions.supportedAccountTypes,
+    label: (l) => l.substitutions,
   ),
   DebugExportPreset(
     id: DebugExportPresetId.timetable,
-    label: (l) => l.debugExportPresetTimetable,
-    buildSections: (_) =>
-        _single(DebugExportPresetId.timetable, _get('stundenplan.php')),
+    appletPhpUrl: Applets.timetable.appletPhpUrl,
+    supportedAccountTypes: Applets.timetable.supportedAccountTypes,
+    label: (l) => l.timeTable,
   ),
   DebugExportPreset(
-    id: DebugExportPresetId.calendarMain,
-    label: (l) => l.debugExportPresetCalendarMain,
-    buildSections: (_) =>
-        _single(DebugExportPresetId.calendarMain, _get('kalender.php')),
+    id: DebugExportPresetId.calendar,
+    appletPhpUrl: Applets.calendar.appletPhpUrl,
+    supportedAccountTypes: Applets.calendar.supportedAccountTypes,
+    label: (l) => l.calendar,
   ),
   DebugExportPreset(
-    id: DebugExportPresetId.lessonsStudent,
-    label: (l) => l.debugExportPresetLessonsStudent,
-    buildSections: (_) =>
-        _single(DebugExportPresetId.lessonsStudent, _get('meinunterricht.php')),
-  ),
-  DebugExportPreset(
-    id: DebugExportPresetId.lessonsTeacher,
-    label: (l) => l.debugExportPresetLessonsTeacher,
-    buildSections: (_) => _single(
-      DebugExportPresetId.lessonsTeacher,
-      _get('meinunterricht.php?jump=no'),
-    ),
+    id: DebugExportPresetId.lessons,
+    appletPhpUrl: Applets.lessons.appletPhpUrl,
+    supportedAccountTypes: const [AccountType.student, AccountType.parent],
+    label: (l) => l.lessons,
   ),
   DebugExportPreset(
     id: DebugExportPresetId.dataStorage,
-    label: (l) => l.debugExportPresetDataStorage,
-    buildSections: (_) => _single(
-      DebugExportPresetId.dataStorage,
-      _get('dateispeicher.php?a=view&folder=0'),
-    ),
+    appletPhpUrl: Applets.dataStorage.appletPhpUrl,
+    supportedAccountTypes: Applets.dataStorage.supportedAccountTypes,
+    label: (l) => l.storage,
   ),
   DebugExportPreset(
     id: DebugExportPresetId.studyGroups,
-    label: (l) => l.debugExportPresetStudyGroups,
-    buildSections: (_) =>
-        _single(DebugExportPresetId.studyGroups, _get('lerngruppen.php')),
-  ),
-  DebugExportPreset(
-    id: DebugExportPresetId.substitutionsAjax,
-    label: (l) => l.debugExportPresetSubstitutionsAjax,
-    needsSubstitutionHtml: true,
-    buildSections: _buildSubstitutionsAjax,
-  ),
-  DebugExportPreset(
-    id: DebugExportPresetId.calendarEvents,
-    label: (l) => l.debugExportPresetCalendarEvents,
-    buildSections: _buildCalendarEvents,
+    appletPhpUrl: Applets.studyGroups.appletPhpUrl,
+    supportedAccountTypes: Applets.studyGroups.supportedAccountTypes,
+    label: (l) => l.studyGroups,
   ),
   DebugExportPreset(
     id: DebugExportPresetId.conversations,
-    label: (l) => l.debugExportPresetConversations,
-    buildSections: (_) => _single(
-      DebugExportPresetId.conversations,
-      const DebugExportHttpRequest(
-        method: 'POST',
-        url: '$sphBase/nachrichten.php',
-        data: {'a': 'headers', 'getType': 'All', 'last': '0'},
-        headers: _conversationsXhrHeaders,
-        contentType: Headers.formUrlEncodedContentType,
-      ),
-    ),
+    appletPhpUrl: Applets.conversations.appletPhpUrl,
+    supportedAccountTypes: Applets.conversations.supportedAccountTypes,
+    label: (l) => l.messages,
   ),
 ];
