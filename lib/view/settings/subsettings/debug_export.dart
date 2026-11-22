@@ -83,6 +83,23 @@ class _DebugExportState extends ConsumerState<DebugExport> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final supportedApplets = ref.watch(supportedAppletPhpUrlsProvider);
+    final accountType =
+        ref.watch(activeAccountProvider)?.accountType ??
+        ref.watch(sessionProvider).asData?.value?.accountTypeOrNull;
+
+    final selectedPreset = _selected == null
+        ? null
+        : debugExportPresets.where((p) => p.id == _selected).firstOrNull;
+    final effectiveSelected =
+        selectedPreset != null &&
+            isDebugExportPresetAvailable(
+              selectedPreset,
+              supportedAppletPhpUrls: supportedApplets,
+              accountType: accountType,
+            )
+        ? selectedPreset.id
+        : null;
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.debugExport)),
@@ -111,7 +128,7 @@ class _DebugExportState extends ConsumerState<DebugExport> {
             ),
           ),
           RadioGroup<DebugExportPresetId>(
-            groupValue: _selected,
+            groupValue: effectiveSelected,
             onChanged: (value) {
               if (_exporting) return;
               setState(() => _selected = value);
@@ -121,7 +138,13 @@ class _DebugExportState extends ConsumerState<DebugExport> {
                 for (final preset in debugExportPresets)
                   RadioListTile<DebugExportPresetId>(
                     value: preset.id,
-                    enabled: !_exporting,
+                    enabled:
+                        !_exporting &&
+                        isDebugExportPresetAvailable(
+                          preset,
+                          supportedAppletPhpUrls: supportedApplets,
+                          accountType: accountType,
+                        ),
                     title: Text(preset.label(l10n)),
                   ),
               ],
@@ -130,7 +153,9 @@ class _DebugExportState extends ConsumerState<DebugExport> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: FilledButton.icon(
-              onPressed: _exporting ? null : _runExport,
+              onPressed: _exporting || effectiveSelected == null
+                  ? null
+                  : _runExport,
               icon: const Icon(Icons.download),
               label: Text(l10n.debugExportRun),
             ),

@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:liblanis/liblanis.dart';
 import 'package:lanis/utils/logger.dart';
 import 'package:lanis/view/settings/subsettings/debug_export.dart';
 import 'package:lanis/view/settings/subsettings/debug_export_presets.dart';
@@ -188,6 +189,60 @@ void main() {
       expect(
         debugExportPresets.map((p) => p.id).toList(),
         DebugExportPresetId.values,
+      );
+    });
+
+    test('isDebugExportPresetAvailable enforces supported applets and account types', () {
+      final lessons = debugExportPresets.firstWhere(
+        (p) => p.id == DebugExportPresetId.lessons,
+      );
+      final studyGroups = debugExportPresets.firstWhere(
+        (p) => p.id == DebugExportPresetId.studyGroups,
+      );
+      final supportedAll = {
+        Applets.lessons.appletPhpUrl,
+        Applets.studyGroups.appletPhpUrl,
+      };
+
+      expect(
+        isDebugExportPresetAvailable(
+          lessons,
+          supportedAppletPhpUrls: supportedAll,
+          accountType: AccountType.student,
+        ),
+        isTrue,
+      );
+      expect(
+        isDebugExportPresetAvailable(
+          lessons,
+          supportedAppletPhpUrls: supportedAll,
+          accountType: AccountType.parent,
+        ),
+        isTrue,
+      );
+      expect(
+        isDebugExportPresetAvailable(
+          lessons,
+          supportedAppletPhpUrls: supportedAll,
+          accountType: AccountType.teacher,
+        ),
+        isFalse,
+      );
+      expect(
+        isDebugExportPresetAvailable(
+          studyGroups,
+          supportedAppletPhpUrls: supportedAll,
+          accountType: AccountType.parent,
+        ),
+        isFalse,
+      );
+      expect(
+        isDebugExportPresetAvailable(
+          lessons,
+          supportedAppletPhpUrls: const {},
+          accountType: AccountType.student,
+        ),
+        isFalse,
       );
     });
   });

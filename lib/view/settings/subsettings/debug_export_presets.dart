@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:html/parser.dart' show parse;
 import 'package:intl/intl.dart';
+import 'package:liblanis/liblanis.dart';
 
 import '../../../generated/l10n.dart';
 
@@ -82,12 +83,33 @@ class DebugExportSection {
 
 class DebugExportPreset {
   final DebugExportPresetId id;
+  final String appletPhpUrl;
+  final List<AccountType> supportedAccountTypes;
   final String Function(AppLocalizations l10n) label;
 
   const DebugExportPreset({
     required this.id,
+    required this.appletPhpUrl,
+    required this.supportedAccountTypes,
     required this.label,
   });
+}
+
+/// Whether [preset] is available to the active account based on the school's
+/// supported applets and the account's role.
+bool isDebugExportPresetAvailable(
+  DebugExportPreset preset, {
+  required Set<String> supportedAppletPhpUrls,
+  AccountType? accountType,
+}) {
+  if (!supportedAppletPhpUrls.contains(preset.appletPhpUrl)) {
+    return false;
+  }
+  if (accountType != null &&
+      !preset.supportedAccountTypes.contains(accountType)) {
+    return false;
+  }
+  return true;
 }
 
 DebugExportHttpRequest _get(String path) =>
@@ -285,30 +307,44 @@ String formatLessonUploadSectionName(Uri uri) {
 final debugExportPresets = <DebugExportPreset>[
   DebugExportPreset(
     id: DebugExportPresetId.substitutions,
+    appletPhpUrl: Applets.substitutions.appletPhpUrl,
+    supportedAccountTypes: Applets.substitutions.supportedAccountTypes,
     label: (l) => l.substitutions,
   ),
   DebugExportPreset(
     id: DebugExportPresetId.timetable,
+    appletPhpUrl: Applets.timetable.appletPhpUrl,
+    supportedAccountTypes: Applets.timetable.supportedAccountTypes,
     label: (l) => l.timeTable,
   ),
   DebugExportPreset(
     id: DebugExportPresetId.calendar,
+    appletPhpUrl: Applets.calendar.appletPhpUrl,
+    supportedAccountTypes: Applets.calendar.supportedAccountTypes,
     label: (l) => l.calendar,
   ),
   DebugExportPreset(
     id: DebugExportPresetId.lessons,
+    appletPhpUrl: Applets.lessons.appletPhpUrl,
+    supportedAccountTypes: const [AccountType.student, AccountType.parent],
     label: (l) => l.lessons,
   ),
   DebugExportPreset(
     id: DebugExportPresetId.dataStorage,
+    appletPhpUrl: Applets.dataStorage.appletPhpUrl,
+    supportedAccountTypes: Applets.dataStorage.supportedAccountTypes,
     label: (l) => l.storage,
   ),
   DebugExportPreset(
     id: DebugExportPresetId.studyGroups,
+    appletPhpUrl: Applets.studyGroups.appletPhpUrl,
+    supportedAccountTypes: Applets.studyGroups.supportedAccountTypes,
     label: (l) => l.studyGroups,
   ),
   DebugExportPreset(
     id: DebugExportPresetId.conversations,
+    appletPhpUrl: Applets.conversations.appletPhpUrl,
+    supportedAccountTypes: Applets.conversations.supportedAccountTypes,
     label: (l) => l.messages,
   ),
 ];
