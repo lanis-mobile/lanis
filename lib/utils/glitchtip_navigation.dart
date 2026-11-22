@@ -2,6 +2,11 @@ import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
+import 'glitchtip.dart';
+
+/// Non-PII UI-state query parameters allowed in GlitchTip route context.
+const allowedGlitchTipQueryParameters = {'tab', 'status', 'type'};
+
 /// Keeps GlitchTip/Sentry error context aligned with GoRouter's real location.
 ///
 /// [SentryNavigatorObserver] alone often records an empty `to` on GoRouter
@@ -12,6 +17,7 @@ VoidCallback attachGlitchTipRouteTracking(GoRouter router) {
   String? lastLocation;
 
   void sync() {
+    if (!glitchTipReportingEnabled) return;
     final location = currentGoRouterLocation(router);
     if (location == null || location == lastLocation) return;
 
@@ -41,13 +47,28 @@ VoidCallback attachGlitchTipRouteTracking(GoRouter router) {
   return () => router.routerDelegate.removeListener(sync);
 }
 
-/// Full path (+ query) currently shown by [router], or null if unavailable.
+/// Sanitizes [uri] for GlitchTip by keeping only its path and allowlisted
+/// non-PII query parameters.
+String sanitizeGlitchTipLocation(Uri uri) {
+  final path = uri.path.isEmpty ? '/' : uri.path;
+  if (!uri.hasQuery) return path;
+  final filtered = <String, List<String>>{};
+  uri.queryParametersAll.forEach((key, values) {
+    if (allowedGlitchTipQueryParameters.contains(key)) {
+      filtered[key] = values;
+    }
+  });
+  if (filtered.isEmpty) return path;
+  return Uri(path: path, queryParameters: filtered).toString();
+}
+
+/// Sanitized path (+ allowlisted query params) currently shown by [router],
+/// or null if unavailable.
 String? currentGoRouterLocation(GoRouter router) {
   try {
-    final uri = router.routerDelegate.currentConfiguration.uri;
-    final path = uri.path.isEmpty ? '/' : uri.path;
-    if (uri.hasQuery) return '$path?${uri.query}';
-    return path;
+    return sanitizeGlitchTipLocation(
+      router.routerDelegate.currentConfiguration.uri,
+    );
   } catch (_) {
     return null;
   }

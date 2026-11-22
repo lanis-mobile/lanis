@@ -177,6 +177,49 @@ Future<void> writeDebugExportHeader({
   report.log('INSTALL STORE: ${packageInfo.installerStore}');
 }
 
+const _redactedDebugHeaders = {
+  'set-cookie',
+  'cookie',
+  'authorization',
+  'proxy-authorization',
+};
+
+const _crossHostSensitiveHeaders = {
+  'cookie',
+  'authorization',
+  'proxy-authorization',
+};
+
+/// Returns a copy of [headers] with sensitive auth/cookie values redacted.
+Map<String, String> redactDebugExportHeaders(Map<String, String> headers) {
+  return {
+    for (final entry in headers.entries)
+      entry.key: _redactedDebugHeaders.contains(entry.key.toLowerCase())
+          ? '<redacted>'
+          : entry.value,
+  };
+}
+
+/// Drops only sensitive auth/cookie headers when following a redirect across
+/// hosts, preserving custom headers required by SPH endpoints.
+Map<String, String> stripSensitiveCrossHostHeaders(
+  Map<String, String> headers, {
+  required String fromUrl,
+  required String toUrl,
+}) {
+  if (headers.isEmpty) return headers;
+  final fromHost = Uri.tryParse(fromUrl)?.host.toLowerCase();
+  final toHost = Uri.tryParse(toUrl)?.host.toLowerCase();
+  if (fromHost != null && fromHost == toHost) {
+    return headers;
+  }
+  return {
+    for (final entry in headers.entries)
+      if (!_crossHostSensitiveHeaders.contains(entry.key.toLowerCase()))
+        entry.key: entry.value,
+  };
+}
+
 void _writeRequestDescription(
   MemoryLogger report,
   DebugExportHttpRequest request,
@@ -185,7 +228,7 @@ void _writeRequestDescription(
   report.log('URL: ${request.url}');
   report.log('Method: ${request.method}');
   report.log('Query Params:\n${request.queryParameters}');
-  report.log('Headers:\n${request.headers}');
+  report.log('Headers:\n${redactDebugExportHeaders(request.headers)}');
   report.log('Content-Type: ${request.contentType}');
   report.log('Body:\n${request.data}');
   report.write('------------- END REQUEST DESCRIPTION -------------');
@@ -198,7 +241,10 @@ void _writeResponse(MemoryLogger report, Response<dynamic> response) {
   );
   report.write('-------- BEGIN HEADER --------');
   for (final key in response.headers.map.keys) {
-    report.write('$key: ${response.headers.value(key)}');
+    final value = _redactedDebugHeaders.contains(key.toLowerCase())
+        ? '<redacted>'
+        : response.headers.value(key);
+    report.write('$key: $value');
   }
   report.write('-------- END HEADER --------');
   report.write('-------- BEGIN BODY --------');
@@ -305,7 +351,11 @@ Future<String?> appendRequestSection({
       current = DebugExportHttpRequest(
         method: 'GET',
         url: nextUrl,
-        headers: current.headers,
+        headers: stripSensitiveCrossHostHeaders(
+          current.headers,
+          fromUrl: current.url,
+          toUrl: nextUrl,
+        ),
       );
     }
   } catch (e, stackTrace) {
@@ -544,31 +594,46 @@ Future<String> createCustomDebugExport({
   await writeDebugExportHeader(report: report, ref: ref);
 
   final session = ref.read(sessionProvider).asData?.value;
-  final headers = headersJson.isNotEmpty
-      ? Map<String, dynamic>.from(jsonDecode(headersJson))
-          .map((k, v) => MapEntry(k, v.toString()))
-      : <String, String>{};
-  final query = queryJson.isNotEmpty
-      ? Map<String, dynamic>.from(jsonDecode(queryJson))
-      : null;
+  final Map<String, String> headers;
+  final Map<String, dynamic>? query;
   Object? data;
-  if (body.isNotEmpty) {
-    data = jsonDecode(body);
+  try {
+    headers = headersJson.isNotEmpty
+        ? Map<String, dynamic>.from(
+            jsonDecode(headersJson) as Map,
+          ).map((k, v) => MapEntry(k, v.toString()))
+        : <String, String>{};
+    query = queryJson.isNotEmpty
+        ? Map<String, dynamic>.from(jsonDecode(queryJson) as Map)
+        : null;
+    if (body.isNotEmpty) {
+      data = jsonDecode(body);
+    }
+  } catch (e) {
+    report.log('----- INVALID CUSTOM REQUEST JSON -----');
+    report.write(e.toString());
+    report.log('END: Debug Export');
+    return report.logs.toString();
   }
 
-  await appendRequestSection(
-    report: report,
-    sectionName: 'customRequest',
-    dio: authenticated && session != null ? session.dio : Dio(),
-    request: DebugExportHttpRequest(
-      method: httpMethod,
-      url: url,
-      queryParameters: query,
-      data: data,
-      headers: headers,
-      contentType: 'application/json',
-    ),
-  );
+  final tempDio = authenticated && session != null ? null : Dio();
+  try {
+    await appendRequestSection(
+      report: report,
+      sectionName: 'customRequest',
+      dio: tempDio ?? session!.dio,
+      request: DebugExportHttpRequest(
+        method: httpMethod,
+        url: url,
+        queryParameters: query,
+        data: data,
+        headers: headers,
+        contentType: 'application/json',
+      ),
+    );
+  } finally {
+    tempDio?.close();
+  }
 
   report.log('END: Debug Export');
   return report.logs.toString();

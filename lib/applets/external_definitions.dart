@@ -21,7 +21,7 @@ final openLanisDefinition = ExternalDefinition(
     LanisSession.getLoginURL(account, config)
         .then((response) {
           if (!context.mounted) return;
-          safeLaunchUrl(Uri.parse(response), context: context);
+          safeLaunchUrl(Uri.parse(response), context: context, sensitive: true);
         })
         .catchError((Object error, StackTrace stackTrace) {
           debugPrint('Failed to open Lanis login URL: $error');

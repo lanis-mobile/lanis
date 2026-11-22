@@ -27,10 +27,22 @@ const trustedDomains = [
   'gesetze-im-internet.de',
 ];
 
+/// Returns true only for HTTPS URLs whose host matches or is a subdomain of
+/// an entry in [trustedDomains].
+bool isTrustedExternalUrl(Uri uri) {
+  if (uri.scheme.toLowerCase() != 'https' || uri.host.isEmpty) {
+    return false;
+  }
+  final host = uri.host.toLowerCase();
+  return trustedDomains.any(
+    (domain) => host == domain || host.endsWith('.$domain'),
+  );
+}
+
 Future<UrlModalResponse> openUrlModal(BuildContext context, Uri uri) async {
   bool? open;
 
-  if (trustedDomains.any((domain) => uri.host.endsWith(domain))) {
+  if (isTrustedExternalUrl(uri)) {
     open = true;
   } else {
     logger.w('Untrusted URL: $uri');
