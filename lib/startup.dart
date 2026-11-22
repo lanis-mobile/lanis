@@ -9,6 +9,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/features/auth/auth_controller.dart';
 import 'package:lanis/features/auth/account_recovery.dart';
+import 'package:lanis/home_page.dart';
 import 'package:lanis/l10n/login_errors.dart';
 import 'package:lanis/utils/privacy_policy.dart';
 import 'package:lanis/widgets/offline_available_applets_section.dart';
@@ -23,6 +24,8 @@ class StartupScreen extends ConsumerStatefulWidget {
   @override
   ConsumerState<StartupScreen> createState() => _StartupScreenState();
 }
+
+enum _RecoveryAction { retry, switchAccount, deleteAccount }
 
 class _StartupScreenState extends ConsumerState<StartupScreen> {
   bool _errorSheetOpen = false;
@@ -53,31 +56,69 @@ class _StartupScreenState extends ConsumerState<StartupScreen> {
 
   Future<void> _showErrorSheet(LanisException exception) async {
     if (_errorSheetOpen || !mounted) return;
+    final account = ref.read(activeAccountProvider);
     _errorSheetOpen = true;
-    await showModalBottomSheet<void>(
-      context: context,
-      isDismissible: false,
-      enableDrag: false,
-      isScrollControlled: true,
-      builder: (sheetContext) => StartupAuthErrorContent(
-        exception: exception,
-        onOpenPortal: () async {
-          final account = ref.read(activeAccountProvider);
-          if (account == null) return;
-          await openPortalPasswordChange(
-            sheetContext,
-            account,
-            ref.read(lanisConfigProvider),
+    try {
+      final action = await showModalBottomSheet<_RecoveryAction>(
+        context: context,
+        isDismissible: false,
+        enableDrag: false,
+        isScrollControlled: true,
+        builder: (sheetContext) {
+          void finish(_RecoveryAction action) {
+            if (ModalRoute.of(sheetContext)?.isCurrent == true) {
+              Navigator.pop(sheetContext, action);
+            }
+          }
+
+          return StartupAuthErrorContent(
+            exception: exception,
+            account: account,
+            onOpenPortal: account == null
+                ? null
+                : () => openPortalPasswordChange(
+                    sheetContext,
+                    account,
+                    ref.read(lanisConfigProvider),
+                  ),
+            onSwitchAccount: () => finish(_RecoveryAction.switchAccount),
+            onDeleteAccount: () => finish(_RecoveryAction.deleteAccount),
+            onRetry: () => finish(_RecoveryAction.retry),
           );
         },
-        onSwitchAccount: () => context.push('/accounts'),
-        onRetry: () {
-          Navigator.of(sheetContext).pop();
-          ref.read(authControllerProvider.notifier).retry();
-        },
-      ),
-    );
-    if (mounted) _errorSheetOpen = false;
+      );
+      if (!mounted || action == null) return;
+      final auth = ref.read(authControllerProvider.notifier);
+      switch (action) {
+        case _RecoveryAction.retry:
+          await auth.retry();
+        case _RecoveryAction.switchAccount:
+          await context.push('/accounts');
+          if (mounted &&
+              ref.read(authControllerProvider).phase ==
+                  AuthPhase.authenticated) {
+            context.go(firstSupportedHomePath(ref));
+          }
+        case _RecoveryAction.deleteAccount:
+          if (account != null) {
+            await auth.removeAccountAndContinue(account.localId);
+          }
+      }
+    } finally {
+      _errorSheetOpen = false;
+    }
+    if (mounted) _scheduleErrorSheet();
+  }
+
+  void _scheduleErrorSheet() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final auth = ref.read(authControllerProvider);
+      if (auth.phase == AuthPhase.error && auth.exception != null) {
+        _showErrorSheet(auth.exception!);
+      }
+    });
+    WidgetsBinding.instance.ensureVisualUpdate();
   }
 
   void requestPermissions() async {
@@ -144,9 +185,7 @@ class _StartupScreenState extends ConsumerState<StartupScreen> {
             previous?.exception == next.exception) {
           return;
         }
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _showErrorSheet(next.exception!);
-        });
+        _scheduleErrorSheet();
       }
     });
 
@@ -157,16 +196,20 @@ class _StartupScreenState extends ConsumerState<StartupScreen> {
 /// Main-parity auth error chrome for the startup bottom sheet.
 class StartupAuthErrorContent extends StatelessWidget {
   final LanisException exception;
+  final ClearTextAccount? account;
   final VoidCallback onRetry;
   final VoidCallback? onOpenPortal;
   final VoidCallback? onSwitchAccount;
+  final VoidCallback? onDeleteAccount;
 
   const StartupAuthErrorContent({
     super.key,
     required this.exception,
     required this.onRetry,
+    this.account,
     this.onOpenPortal,
     this.onSwitchAccount,
+    this.onDeleteAccount,
   });
 
   @override
@@ -242,7 +285,8 @@ class StartupAuthErrorContent extends StatelessWidget {
                 onPressed: onOpenPortal,
                 child: Text(l10n.openSchulportalHessen),
               ),
-            if (removalOnly || exception is WrongCredentialsException)
+            if (account != null &&
+                (removalOnly || exception is WrongCredentialsException))
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16.0,
@@ -252,11 +296,17 @@ class StartupAuthErrorContent extends StatelessWidget {
                   icon: Icon(removalOnly ? Icons.no_accounts : Icons.lock_reset),
                   label: Text(removalOnly ? l10n.deleteAccount : l10n.resetAccount),
                   onPressed: () async {
-                    await Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => ResetAccountPage(removalOnly: removalOnly),
+                    final delete = await Navigator.of(context).push<bool>(
+                      MaterialPageRoute<bool>(
+                        builder: (_) => ResetAccountPage(
+                          account: account!,
+                          removalOnly: removalOnly,
+                        ),
                       ),
                     );
+                    if (context.mounted && delete == true) {
+                      onDeleteAccount?.call();
+                    }
                   },
                 ),
               ),

@@ -9,8 +9,13 @@ import 'package:lanis/l10n/login_errors.dart';
 import 'package:lanis/widgets/large_appbar.dart';
 
 class ResetAccountPage extends ConsumerStatefulWidget {
-  const ResetAccountPage({super.key, this.removalOnly = false});
+  const ResetAccountPage({
+    super.key,
+    required this.account,
+    this.removalOnly = false,
+  });
 
+  final ClearTextAccount account;
   final bool removalOnly;
 
   @override
@@ -104,16 +109,8 @@ class _ResetAccountPageState extends ConsumerState<ResetAccountPage> {
 
   @override
   Widget build(BuildContext context) {
-    final account = ref.watch(activeAccountProvider);
+    final account = widget.account;
     final l10n = AppLocalizations.of(context);
-    if (account == null) {
-      return Scaffold(
-        appBar: LargeAppBar(
-          title: Text(AppLocalizations.of(context).resetAccount),
-        ),
-        body: const Center(child: CircularProgressIndicator()),
-      );
-    }
 
     return Scaffold(
       appBar: LargeAppBar(
@@ -209,13 +206,10 @@ class _ResetAccountPageState extends ConsumerState<ResetAccountPage> {
                     label: Text(AppLocalizations.of(context).changePassword),
                   ),
                 ElevatedButton.icon(
-                  onPressed: () async {
-                    final auth = ref.read(authControllerProvider.notifier);
-                    await ref
-                        .read(accountsProvider.notifier)
-                        .remove(account.localId);
-                    await auth.bootstrap();
-                    if (context.mounted) context.go('/startup');
+                  onPressed: () {
+                    if (ModalRoute.of(context)?.isCurrent == true) {
+                      Navigator.pop(context, true);
+                    }
                   },
                   icon: Icon(Icons.no_accounts),
                   label: Text(
