@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:liblanis/liblanis.dart';
@@ -20,22 +21,13 @@ class DebugExport extends ConsumerStatefulWidget {
 }
 
 class _DebugExportState extends ConsumerState<DebugExport> {
-  final Set<DebugExportPresetId> _selected = {};
+  DebugExportPresetId? _selected;
   bool _exporting = false;
-
-  void _toggle(DebugExportPresetId id, bool? checked) {
-    setState(() {
-      if (checked ?? false) {
-        _selected.add(id);
-      } else {
-        _selected.remove(id);
-      }
-    });
-  }
 
   Future<void> _runExport() async {
     final l10n = AppLocalizations.of(context);
-    if (_selected.isEmpty) {
+    final selected = _selected;
+    if (selected == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.debugExportSelectAtLeastOne)),
       );
@@ -61,9 +53,9 @@ class _DebugExportState extends ConsumerState<DebugExport> {
     );
 
     try {
-      final report = await runDebugExportPresets(
+      final report = await runDebugExportApplet(
         ref: ref,
-        selected: _selected,
+        presetId: selected,
         dio: session.dio,
       );
       if (!mounted) return;
@@ -118,15 +110,23 @@ class _DebugExportState extends ConsumerState<DebugExport> {
               style: Theme.of(context).textTheme.titleMedium,
             ),
           ),
-          for (final preset in debugExportPresets)
-            CheckboxListTile(
-              value: _selected.contains(preset.id),
-              onChanged: _exporting
-                  ? null
-                  : (value) => _toggle(preset.id, value),
-              title: Text(preset.label(l10n)),
-              controlAffinity: ListTileControlAffinity.leading,
+          RadioGroup<DebugExportPresetId>(
+            groupValue: _selected,
+            onChanged: (value) {
+              if (_exporting) return;
+              setState(() => _selected = value);
+            },
+            child: Column(
+              children: [
+                for (final preset in debugExportPresets)
+                  RadioListTile<DebugExportPresetId>(
+                    value: preset.id,
+                    enabled: !_exporting,
+                    title: Text(preset.label(l10n)),
+                  ),
+              ],
             ),
+          ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: FilledButton.icon(
@@ -368,61 +368,155 @@ Future<String?> appendRequestSection({
   return finalBody;
 }
 
-Future<String> runDebugExportPresets({
+/// Runs all level-1, level-2, and (for lessons) level-3 requests for [presetId].
+Future<void> appendDebugExportAppletSections({
+  required MemoryLogger report,
+  required DebugExportPresetId presetId,
+  required Dio dio,
+}) async {
+  switch (presetId) {
+    case DebugExportPresetId.substitutions:
+      final html = await appendRequestSection(
+        report: report,
+        sectionName: 'substitutions',
+        dio: dio,
+        request: substitutionsMainRequest(),
+      );
+      final dates = html != null ? parseSubstitutionPlanDates(html) : <String>[];
+      if (dates.isEmpty) {
+        final today = DateFormat('dd.MM.yyyy').format(DateTime.now());
+        await appendRequestSection(
+          report: report,
+          sectionName: 'substitutions/ajax@$today',
+          dio: dio,
+          request: substitutionsAjaxRequest(today),
+          note:
+              'No substitution dates found in main HTML; '
+              'using today ($today) for AJAX.',
+        );
+      } else {
+        for (final date in dates) {
+          await appendRequestSection(
+            report: report,
+            sectionName: 'substitutions/ajax@$date',
+            dio: dio,
+            request: substitutionsAjaxRequest(date),
+            note: dates.first == date
+                ? 'Substitution dates: ${dates.join(', ')}'
+                : null,
+          );
+        }
+      }
+    case DebugExportPresetId.timetable:
+      final html = await appendRequestSection(
+        report: report,
+        sectionName: 'timetable',
+        dio: dio,
+        request: timetableMainRequest(),
+      );
+      final childUrls = html != null ? parseParentTimetableUrls(html) : <Uri>[];
+      for (final childUrl in childUrls) {
+        await appendRequestSection(
+          report: report,
+          sectionName: formatParentTimetableSectionName(childUrl),
+          dio: dio,
+          request: DebugExportHttpRequest(
+            method: 'GET',
+            url: childUrl.toString(),
+          ),
+        );
+      }
+    case DebugExportPresetId.calendar:
+      await appendRequestSection(
+        report: report,
+        sectionName: 'calendar',
+        dio: dio,
+        request: calendarMainRequest(),
+      );
+      final range = defaultCalendarExportRange();
+      await appendRequestSection(
+        report: report,
+        sectionName: 'calendar/events',
+        dio: dio,
+        request: calendarEventsRequest(
+          startDate: range.start,
+          endDate: range.end,
+        ),
+      );
+    case DebugExportPresetId.lessons:
+      final mainHtml = await appendRequestSection(
+        report: report,
+        sectionName: 'lessons',
+        dio: dio,
+        request: lessonsMainRequest(),
+      );
+      final courseUrls = mainHtml != null
+          ? parseLessonsCourseUrls(mainHtml)
+          : <Uri>[];
+      final seenUploadUrls = <String>{};
+      for (final courseUrl in courseUrls) {
+        final courseHtml = await appendRequestSection(
+          report: report,
+          sectionName: formatLessonCourseSectionName(courseUrl),
+          dio: dio,
+          request: DebugExportHttpRequest(
+            method: 'GET',
+            url: courseUrl.toString(),
+          ),
+        );
+        if (courseHtml == null) continue;
+        for (final uploadUrl in parseLessonsUploadUrls(courseHtml)) {
+          if (!seenUploadUrls.add(uploadUrl.toString())) continue;
+          await appendRequestSection(
+            report: report,
+            sectionName: formatLessonUploadSectionName(uploadUrl),
+            dio: dio,
+            request: DebugExportHttpRequest(
+              method: 'GET',
+              url: uploadUrl.toString(),
+            ),
+          );
+        }
+      }
+    case DebugExportPresetId.dataStorage:
+      await appendRequestSection(
+        report: report,
+        sectionName: 'dataStorage',
+        dio: dio,
+        request: dataStorageRootRequest(),
+      );
+    case DebugExportPresetId.studyGroups:
+      await appendRequestSection(
+        report: report,
+        sectionName: 'studyGroups',
+        dio: dio,
+        request: studyGroupsMainRequest(),
+      );
+    case DebugExportPresetId.conversations:
+      await appendRequestSection(
+        report: report,
+        sectionName: 'conversations',
+        dio: dio,
+        request: conversationsOverviewRequest(),
+      );
+  }
+}
+
+Future<String> runDebugExportApplet({
   required WidgetRef ref,
-  required Set<DebugExportPresetId> selected,
+  required DebugExportPresetId presetId,
   required Dio dio,
 }) async {
   final report = MemoryLogger();
   await writeDebugExportHeader(report: report, ref: ref);
-  report.log('SELECTED PRESETS: ${selected.map((e) => e.name).join(', ')}');
+  report.log('SELECTED APPLET: ${presetId.name}');
   report.write('');
 
-  final selectedPresets = [
-    for (final preset in debugExportPresets)
-      if (selected.contains(preset.id)) preset,
-  ];
-
-  final ctx = DebugExportPresetContext();
-  final needsSubstitutionHtml = selectedPresets.any(
-    (p) => p.needsSubstitutionHtml,
+  await appendDebugExportAppletSections(
+    report: report,
+    presetId: presetId,
+    dio: dio,
   );
-  final wantsSubstMain = selected.contains(
-    DebugExportPresetId.substitutionsMain,
-  );
-
-  // Fetch substitutions main once when any selected preset needs its HTML.
-  if (needsSubstitutionHtml) {
-    final sectionName = wantsSubstMain
-        ? DebugExportPresetId.substitutionsMain.name
-        : '${DebugExportPresetId.substitutionsMain.name} (for AJAX dates)';
-    final note = wantsSubstMain
-        ? null
-        : 'Fetched substitutions main page to discover plan dates '
-              '(main-page preset was not selected).';
-    ctx.substitutionsHtml = await appendRequestSection(
-      report: report,
-      sectionName: sectionName,
-      dio: dio,
-      request: substitutionsMainRequest(),
-      note: note,
-    );
-  }
-
-  for (final preset in selectedPresets) {
-    // Already executed above when needsSubstitutionHtml is true.
-    if (preset.id == DebugExportPresetId.substitutionsMain) continue;
-
-    for (final section in preset.buildSections(ctx)) {
-      await appendRequestSection(
-        report: report,
-        sectionName: section.name,
-        dio: dio,
-        request: section.request,
-        note: section.note,
-      );
-    }
-  }
 
   report.log('END: Debug Export');
   return report.logs.toString();
