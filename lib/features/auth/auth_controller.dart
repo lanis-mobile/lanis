@@ -128,11 +128,20 @@ class AuthController extends Notifier<AuthState> {
   Future<bool> loginWithAccount(
     int accountId, {
     bool removeAccountOnFailure = false,
+  }) async => (await loginWithAccountResult(
+    accountId,
+    removeAccountOnFailure: removeAccountOnFailure,
+  )).succeeded;
+
+  /// Returns the attempted account's failure even if another session is restored.
+  Future<({bool succeeded, LanisException? failure})> loginWithAccountResult(
+    int accountId, {
+    bool removeAccountOnFailure = false,
   }) async {
     final shared = ref.read(sharedOverAccountSettingsProvider);
     if (!isPrivacyPolicyAccepted(shared)) {
       state = const AuthState.unauthenticated();
-      return false;
+      return (succeeded: false, failure: null);
     }
 
     _authDrivenExternally = true;
@@ -144,8 +153,9 @@ class AuthController extends Notifier<AuthState> {
       await ref.read(activeAccountProvider.notifier).select(accountId);
       await _authenticate();
       state = const AuthState.authenticated();
-      return true;
+      return (succeeded: true, failure: null);
     } catch (e) {
+      final failure = _asLanisException(e);
       if (removeAccountOnFailure) {
         try {
           await ref.read(accountsProvider.notifier).remove(accountId);
@@ -158,31 +168,24 @@ class AuthController extends Notifier<AuthState> {
           await ref.read(activeAccountProvider.notifier).select(previousId);
           await _authenticate();
           state = const AuthState.authenticated();
-        } catch (_) {
-          // Fall through to surface the original failure below.
+          return (succeeded: false, failure: failure);
+        } catch (restoreError) {
+          final restoredAccountSelected =
+              ref.read(activeAccountProvider)?.localId == previousId;
+          state = AuthState.error(
+            restoredAccountSelected ? _asLanisException(restoreError) : failure,
+          );
+          return (succeeded: false, failure: failure);
         }
       }
 
-      if (e is WrongCredentialsException ||
-          e is CredentialsIncompleteException) {
-        if (state.phase != AuthPhase.authenticated) {
-          // Keep the selected account so ResetAccount / retry stay usable.
-          state = AuthState.error(e as LanisException);
-        }
-        return false;
-      }
-      if (e is LanisException) {
-        if (state.phase != AuthPhase.authenticated) {
-          state = AuthState.error(e);
-        }
-        return false;
-      }
-      if (state.phase != AuthPhase.authenticated) {
-        state = AuthState.error(UnknownException(e.toString()));
-      }
-      return false;
+      state = AuthState.error(failure);
+      return (succeeded: false, failure: failure);
     }
   }
+
+  LanisException _asLanisException(Object error) =>
+      error is LanisException ? error : UnknownException(error.toString());
 
   Future<void> logout() async {
     await _deauthenticate();

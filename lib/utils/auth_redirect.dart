@@ -45,7 +45,7 @@ String? resolveAuthRedirect({
       }
       return '/welcome';
     case AuthPhase.error:
-      if (onPrivacyPolicy || loc == '/login') return null;
+      if (onPrivacyPolicy || loc == '/login' || loc == '/accounts') return null;
       return onStartup ? null : '/startup';
     case AuthPhase.authenticated:
       if (onPrivacyPolicy) {

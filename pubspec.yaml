@@ -24,11 +24,7 @@ dependencies:
   connectivity_plus: ^7.3.2
   flutter:
     sdk: flutter
-  # Temporary pin until liblanis 0.3.0 is published (liblanis PR #11).
-  liblanis:
-    git:
-      url: https://github.com/lanis-mobile/liblanis.git
-      ref: 98eb506aa46b3ca0ff88cc106744f74a8c0511b4
+  liblanis: ^0.3.1
   flutter_riverpod: ^3.5.0
   go_router: ^18.1.4
   dio_cookie_manager: ^3.5.0

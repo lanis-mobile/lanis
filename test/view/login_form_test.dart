@@ -55,6 +55,42 @@ void main() {
     }
   });
 
+  testWidgets('password starts hidden and can be revealed and hidden again', (
+    tester,
+  ) async {
+    await pumpTestApp(
+      tester,
+      child: const Scaffold(body: LoginForm(showBackButton: false)),
+    );
+
+    final school = tester.widget<SchoolSelector>(find.byType(SchoolSelector));
+    school.controller.text = '1';
+    school.onSchoolSelected('Example School');
+    await tester.pump();
+
+    final context = tester.element(find.byType(LoginForm));
+    final l10n = AppLocalizations.of(context);
+    final state = tester.state<LoginFormState>(find.byType(LoginForm));
+    final field = find.byWidgetPredicate(
+      (widget) =>
+          widget is EditableText && widget.controller == state.passwordController,
+    );
+    await tester.enterText(field, 'example-password');
+    expect(tester.widget<EditableText>(field).obscureText, isTrue);
+    expect(find.byIcon(Icons.visibility_off), findsOneWidget);
+
+    await tester.tap(find.byTooltip(l10n.showPassword));
+    await tester.pump();
+    expect(tester.widget<EditableText>(field).obscureText, isFalse);
+    expect(find.byIcon(Icons.visibility), findsOneWidget);
+
+    await tester.tap(find.byTooltip(l10n.hidePassword));
+    await tester.pump();
+    expect(tester.widget<EditableText>(field).obscureText, isTrue);
+    expect(find.byIcon(Icons.visibility_off), findsOneWidget);
+    expect(state.passwordController.text, 'example-password');
+  });
+
   testWidgets('error reporting checkbox mirrors shared device setting', (
     tester,
   ) async {
