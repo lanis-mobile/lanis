@@ -112,7 +112,11 @@ class HomePageState extends ConsumerState<HomePage> {
     try {
       final url = await LanisSession.getLoginURL(account, config);
       if (!mounted) return;
-      await safeLaunchUrl(Uri.parse(url), context: context);
+      await safeLaunchUrl(
+        Uri.parse(url),
+        context: context,
+        sensitive: true,
+      );
     } on LanisException catch (ex) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

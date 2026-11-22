@@ -92,4 +92,30 @@ void main() {
     final observer = glitchTipNavigatorObserver();
     expect(observer, isA<SentryNavigatorObserver>());
   });
+
+  test('sanitizeGlitchTipLocation strips PII query params and keeps allowlist', () {
+    expect(
+      sanitizeGlitchTipLocation(
+        Uri.parse(
+          '/conversations/create?subject=Secret&receivers=alice&type=group',
+        ),
+      ),
+      '/conversations/create?type=group',
+    );
+    expect(
+      sanitizeGlitchTipLocation(
+        Uri.parse(
+          '/lessons/course/42?title=Math&pupilName=Max&tab=homework&status=open',
+        ),
+      ),
+      '/lessons/course/42?tab=homework&status=open',
+    );
+    expect(
+      sanitizeGlitchTipLocation(
+        Uri.parse('/lessons/parent?pupil=101&topic=Private'),
+      ),
+      '/lessons/parent',
+    );
+    expect(sanitizeGlitchTipLocation(Uri.parse('')), '/');
+  });
 }
