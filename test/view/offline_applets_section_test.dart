@@ -141,4 +141,92 @@ void main() {
       expect(find.byType(OfflineAvailableAppletsSection), findsOneWidget);
     },
   );
+
+  testWidgets('recovery actions and offline applets scroll on a short screen', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(320, 568);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    final container = createAuthTestContainer();
+    addTearDown(container.dispose);
+    for (final (schoolId, username) in [(1, 'first'), (2, 'second')]) {
+      final id = await addTestAccount(
+        container,
+        schoolId: schoolId,
+        schoolName: 'Example School',
+        username: username,
+      );
+      final cache = container.read(cacheServiceProvider);
+      await cache.execute(
+        accountId: id,
+        request: SubstitutionsParserCacheRequests.getHome(),
+        load: () async => SubstitutionPlan(days: []),
+      );
+      await cache.execute(
+        accountId: id,
+        request: TimetableStudentParserCacheRequests.getHome(),
+        load: () async => TimeTable(planForAll: [[], [], [], [], []], hours: []),
+      );
+    }
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          locale: const Locale('en'),
+          localizationsDelegates: testLocalizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => TextButton(
+                onPressed: () => showModalBottomSheet<void>(
+                  context: context,
+                  isScrollControlled: true,
+                  enableDrag: false,
+                  builder: (_) => StartupAuthErrorContent(
+                    exception: PasswordChangeRequiredException(),
+                    account: const ClearTextAccount(
+                      localId: 1,
+                      schoolID: 1,
+                      username: 'first',
+                      password: 'test',
+                      schoolName: 'Example School',
+                    ),
+                    onRetry: () {},
+                    onOpenPortal: () {},
+                    onSwitchAccount: () {},
+                  ),
+                ),
+                child: const Text('Show recovery'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Show recovery'));
+    await tester.pumpAndSettle();
+
+    final content = find.byType(StartupAuthErrorContent);
+    final l10n = AppLocalizations.of(tester.element(content));
+    final scrollView = find.descendant(
+      of: content,
+      matching: find.byType(SingleChildScrollView),
+    );
+    final lastApplet = find.widgetWithText(ListTile, 'Example School (second)')
+        .last;
+    expect(tester.takeException(), isNull);
+    expect(find.text(l10n.openSchulportalHessen).hitTestable(), findsOneWidget);
+    expect(lastApplet.hitTestable(), findsNothing);
+
+    await tester.drag(scrollView, const Offset(0, -330));
+    await tester.pumpAndSettle();
+    expect(lastApplet.hitTestable(), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
 }

@@ -237,102 +237,97 @@ class StartupAuthErrorContent extends StatelessWidget {
         constraints: BoxConstraints(
           maxHeight: MediaQuery.sizeOf(context).height * 0.75,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.wifi_find_outlined),
-                  onPressed: () => safeLaunchUrl(
-                    Uri.parse(serverStatusUrl),
-                    context: context,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.wifi_find_outlined),
+                    onPressed: () => safeLaunchUrl(
+                      Uri.parse(serverStatusUrl),
+                      context: context,
+                    ),
+                    tooltip: l10n.checkStatus,
                   ),
-                  tooltip: l10n.checkStatus,
-                ),
-                Icon(isOffline ? Icons.wifi_off : Icons.error, size: 48),
-                IconButton(
-                  icon: const Icon(Icons.refresh),
-                  onPressed: onRetry,
-                  tooltip: l10n.tryAgain,
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Center(child: Text(title)),
-            if (!isOffline && !isDown)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                child: accountError != null
-                    ? Text(accountError, textAlign: TextAlign.center)
-                    : Text.rich(
-                        TextSpan(
-                          text: l10n.startupErrorMessage,
-                          children: [
-                            TextSpan(
-                              text:
-                                  '\n\n${exception.runtimeType}: ${exception.cause}',
-                              style: Theme.of(context).textTheme.labelLarge,
-                            ),
-                          ],
+                  Icon(isOffline ? Icons.wifi_off : Icons.error, size: 48),
+                  IconButton(
+                    icon: const Icon(Icons.refresh),
+                    onPressed: onRetry,
+                    tooltip: l10n.tryAgain,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Center(child: Text(title)),
+              if (!isOffline && !isDown)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                  child: accountError != null
+                      ? Text(accountError, textAlign: TextAlign.center)
+                      : Text.rich(
+                          TextSpan(
+                            text: l10n.startupErrorMessage,
+                            children: [
+                              TextSpan(
+                                text:
+                                    '\n\n${exception.runtimeType}: ${exception.cause}',
+                                style: Theme.of(context).textTheme.labelLarge,
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-              ),
-            if (passwordChange && onOpenPortal != null)
-              FilledButton(
-                onPressed: onOpenPortal,
-                child: Text(l10n.openSchulportalHessen),
-              ),
-            if (account != null &&
-                (removalOnly || exception is WrongCredentialsException))
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 8.0,
                 ),
-                child: ElevatedButton.icon(
-                  icon: Icon(removalOnly ? Icons.no_accounts : Icons.lock_reset),
-                  label: Text(removalOnly ? l10n.deleteAccount : l10n.resetAccount),
-                  onPressed: () async {
-                    final delete = await Navigator.of(context).push<bool>(
-                      MaterialPageRoute<bool>(
-                        builder: (_) => ResetAccountPage(
-                          account: account!,
-                          removalOnly: removalOnly,
+              if (passwordChange && onOpenPortal != null)
+                FilledButton(
+                  onPressed: onOpenPortal,
+                  child: Text(l10n.openSchulportalHessen),
+                ),
+              if (account != null &&
+                  (removalOnly || exception is WrongCredentialsException))
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 8.0,
+                  ),
+                  child: ElevatedButton.icon(
+                    icon: Icon(removalOnly ? Icons.no_accounts : Icons.lock_reset),
+                    label: Text(removalOnly ? l10n.deleteAccount : l10n.resetAccount),
+                    onPressed: () async {
+                      final delete = await Navigator.of(context).push<bool>(
+                        MaterialPageRoute<bool>(
+                          builder: (_) => ResetAccountPage(
+                            account: account!,
+                            removalOnly: removalOnly,
+                          ),
                         ),
-                      ),
-                    );
-                    if (context.mounted && delete == true) {
-                      onDeleteAccount?.call();
-                    }
-                  },
+                      );
+                      if (context.mounted && delete == true) {
+                        onDeleteAccount?.call();
+                      }
+                    },
+                  ),
                 ),
-              ),
-            if (removalOnly && onSwitchAccount != null)
-              TextButton(
-                onPressed: onSwitchAccount,
-                child: Text(l10n.switchAccount),
-              ),
-            if (isDown)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                child: Text(
-                  l10n.lanisDownErrorMessage,
-                  style: Theme.of(context).textTheme.labelLarge,
-                  textAlign: TextAlign.center,
+              if (removalOnly && onSwitchAccount != null)
+                TextButton(
+                  onPressed: onSwitchAccount,
+                  child: Text(l10n.switchAccount),
                 ),
-              ),
-            ConstrainedBox(
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.sizeOf(context).height * 0.45,
-              ),
-              child: const SingleChildScrollView(
-                child: OfflineAvailableAppletsSection(),
-              ),
-            ),
-          ],
+              if (isDown)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                  child: Text(
+                    l10n.lanisDownErrorMessage,
+                    style: Theme.of(context).textTheme.labelLarge,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              const OfflineAvailableAppletsSection(),
+            ],
+          ),
         ),
       ),
     );
