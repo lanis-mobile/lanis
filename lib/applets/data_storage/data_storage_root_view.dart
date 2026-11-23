@@ -104,7 +104,7 @@ class AsyncSearchAnchor extends ConsumerStatefulWidget {
 }
 
 class _AsyncSearchAnchorState extends ConsumerState<AsyncSearchAnchor> {
-  String? _searchingWithQuery;
+  int _searchRequestId = 0;
   late Iterable<Widget> _lastOptions = <Widget>[];
 
   @override
@@ -127,16 +127,16 @@ class _AsyncSearchAnchorState extends ConsumerState<AsyncSearchAnchor> {
       },
       suggestionsBuilder:
           (BuildContext context, SearchController controller) async {
+            final requestId = ++_searchRequestId;
             final query = controller.text;
-            _searchingWithQuery = query;
             dynamic options;
             try {
               options = await parser.searchFiles(query);
             } catch (_) {
-              if (_searchingWithQuery != controller.text) {
+              if (requestId != _searchRequestId) {
                 return _lastOptions;
               }
-              return <Widget>[
+              _lastOptions = <Widget>[
                 ListTile(
                   title: Text(
                     context.mounted
@@ -145,9 +145,10 @@ class _AsyncSearchAnchorState extends ConsumerState<AsyncSearchAnchor> {
                   ),
                 ),
               ];
+              return _lastOptions;
             }
 
-            if (_searchingWithQuery != controller.text || !context.mounted) {
+            if (requestId != _searchRequestId || !context.mounted) {
               return _lastOptions;
             }
 
