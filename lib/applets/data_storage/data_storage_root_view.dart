@@ -104,7 +104,7 @@ class AsyncSearchAnchor extends ConsumerStatefulWidget {
 }
 
 class _AsyncSearchAnchorState extends ConsumerState<AsyncSearchAnchor> {
-  String? _searchingWithQuery;
+  int _searchRequestId = 0;
   late Iterable<Widget> _lastOptions = <Widget>[];
 
   @override
@@ -127,24 +127,42 @@ class _AsyncSearchAnchorState extends ConsumerState<AsyncSearchAnchor> {
       },
       suggestionsBuilder:
           (BuildContext context, SearchController controller) async {
-            _searchingWithQuery = controller.text;
-            var options = await parser.searchFiles(_searchingWithQuery ?? '');
-
-            if (_searchingWithQuery != controller.text) {
+            final requestId = ++_searchRequestId;
+            final query = controller.text;
+            dynamic options;
+            try {
+              options = await parser.searchFiles(query);
+            } catch (_) {
+              if (requestId != _searchRequestId) {
+                return _lastOptions;
+              }
+              _lastOptions = <Widget>[
+                ListTile(
+                  title: Text(
+                    context.mounted
+                        ? AppLocalizations.of(context).errorOccurred
+                        : 'Error',
+                  ),
+                ),
+              ];
               return _lastOptions;
             }
 
-            _lastOptions = List<Widget>.generate(options?.length ?? 0, (
-              int index,
-            ) {
-              final Map item = options[index];
-              return SearchFileListTile(
-                context: context,
-                name: item["text"],
-                downloadUrl:
-                    "https://start.schulportal.hessen.de/dateispeicher.php?a=download&f=${item["id"]}",
-              );
-            });
+            if (requestId != _searchRequestId || !context.mounted) {
+              return _lastOptions;
+            }
+
+            final items = options is List ? options : const <dynamic>[];
+            _lastOptions = <Widget>[
+              for (final item in items)
+                if (item is Map)
+                  SearchFileListTile(
+                    context: context,
+                    name: '${item["text"] ?? ''}',
+                    downloadUrl:
+                        "https://start.schulportal.hessen.de/dateispeicher.php?a=download&f=${item["id"]}",
+                  ),
+            ];
 
             if (_lastOptions.isEmpty) {
               _lastOptions = <Widget>[

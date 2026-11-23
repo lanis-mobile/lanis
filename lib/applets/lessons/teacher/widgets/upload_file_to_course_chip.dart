@@ -119,8 +119,6 @@ class UploadFileToCourseChip extends ConsumerWidget {
             backgroundColor: Colors.red,
           ),
         );
-      } else {
-        rethrow;
       }
     } finally {
       if (context.mounted) Navigator.of(context).pop();

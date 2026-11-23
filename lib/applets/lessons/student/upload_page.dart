@@ -225,8 +225,6 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                                       },
                                     ),
                                   );
-                                } else {
-                                  rethrow;
                                 }
                                 return;
                               }
@@ -794,8 +792,6 @@ class _UploadScreenState extends ConsumerState<UploadScreen> {
                                                       },
                                                     ),
                                                   );
-                                                } else {
-                                                  rethrow;
                                                 }
                                                 return;
                                               }
