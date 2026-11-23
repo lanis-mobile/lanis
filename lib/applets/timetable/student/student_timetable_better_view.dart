@@ -460,30 +460,39 @@ class TimeTableView extends StatelessWidget {
                           spacing: 4.0,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: days.map((e) {
-                            return Expanded(
-                              child: Stack(
-                                children: [
-                                  e,
-                                  TimeMarkerWidget(
-                                    data: data,
-                                    weekStart: weekStart,
-                                    timetable: timetable,
-                                    settings: settings,
-                                    day: days.indexOf(e),
-                                  ),
-                                ],
+                          children: [
+                            for (final (i, dayWidget) in days.indexed)
+                              Expanded(
+                                child: Stack(
+                                  children: [
+                                    dayWidget,
+                                    TimeMarkerWidget(
+                                      data: data,
+                                      weekStart: weekStart,
+                                      timetable: timetable,
+                                      settings: settings,
+                                      day: data.weekdayIndices[i],
+                                    ),
+                                  ],
+                                ),
                               ),
-                            );
-                          }).toList(),
+                          ],
                         );
                       } else {
                         if (days.isEmpty) {
                           return const SizedBox.shrink();
                         }
-                        var initialIndex = (DateTime.now().weekday - 1) % 7;
-                        if (initialIndex >= days.length) {
-                          initialIndex = 0;
+                        final todayWeekday = (DateTime.now().weekday - 1) % 7;
+                        var initialIndex = data.weekdayIndices.indexOf(
+                          todayWeekday,
+                        );
+                        if (initialIndex == -1) {
+                          initialIndex = data.weekdayIndices.indexWhere(
+                            (d) => d > todayWeekday,
+                          );
+                          if (initialIndex == -1) {
+                            initialIndex = 0;
+                          }
                         }
                         return SizedBox(
                           height: calculateColumnHeight(data.hours) + 48,
@@ -491,26 +500,27 @@ class TimeTableView extends StatelessWidget {
                             length: days.length,
                             initialIndex: initialIndex,
                             child: TabBarView(
-                              children: days.map((e) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(
-                                    left: 4.0,
-                                    right: 8.0,
+                              children: [
+                                for (final (i, dayWidget) in days.indexed)
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                      left: 4.0,
+                                      right: 8.0,
+                                    ),
+                                    child: Stack(
+                                      children: [
+                                        dayWidget,
+                                        TimeMarkerWidget(
+                                          data: data,
+                                          weekStart: weekStart,
+                                          timetable: timetable,
+                                          settings: settings,
+                                          day: data.weekdayIndices[i],
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  child: Stack(
-                                    children: [
-                                      e,
-                                      TimeMarkerWidget(
-                                        data: data,
-                                        weekStart: weekStart,
-                                        timetable: timetable,
-                                        settings: settings,
-                                        day: days.indexOf(e),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
+                              ],
                             ),
                           ),
                         );
@@ -541,10 +551,11 @@ class TimeTableView extends StatelessWidget {
               child: Builder(
                 builder: (context) {
                   // Calendar construction keeps local midnight across DST changes.
+                  final weekdayIndex = data.weekdayIndices[i];
                   final date = DateTime(
                     weekStart.year,
                     weekStart.month,
-                    weekStart.day + i,
+                    weekStart.day + weekdayIndex,
                   );
 
                   return Column(

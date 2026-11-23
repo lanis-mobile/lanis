@@ -127,4 +127,121 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
     });
   }
+
+  group('empty weekday and weekend column mapping', () {
+    TimetableSubject makeLesson(
+      String id,
+      String name,
+      TimeTableRow hour,
+    ) => TimetableSubject(
+      id: id,
+      name: name,
+      raum: 'R-$id',
+      lehrer: 'L',
+      badge: null,
+      duration: 1,
+      startTime: hour.startTime,
+      endTime: hour.endTime,
+      stunde: 1,
+    );
+
+    testWidgets(
+      'keeps empty Wednesday and preserves Thu/Fri headers and lessons',
+      (tester) async {
+        final hour = TimeTableRow(
+          TimeTableRowType.lesson,
+          const SphTimeOfDay(hour: 8, minute: 0),
+          const SphTimeOfDay(hour: 8, minute: 45),
+          '1',
+          1,
+        );
+        final plan = [
+          [makeLesson('mo', 'MO-Mathe', hour)],
+          [makeLesson('di', 'DI-Physik', hour)],
+          <TimetableSubject>[],
+          [makeLesson('do', 'DO-Deutsch', hour)],
+          [makeLesson('fr', 'FR-Englisch', hour)],
+        ];
+        final timetable = TimeTable(hours: [hour], planForAll: plan);
+
+        await pumpTestApp(
+          tester,
+          child: Scaffold(
+            body: TimeTableView(
+              data: TimeTableData(plan, timetable, const {}, null),
+              timetable: timetable,
+              weekStart: DateTime(2026, 11, 23),
+              settings: const {},
+              updateSettings: (_, _) {},
+            ),
+          ),
+        );
+
+        for (final date in ['23.11.', '24.11.', '25.11.', '26.11.', '27.11.']) {
+          expect(find.text(date), findsOneWidget);
+        }
+        for (final subject in [
+          'MO-Mathe',
+          'DI-Physik',
+          'DO-Deutsch',
+          'FR-Englisch',
+        ]) {
+          expect(find.text(subject), findsOneWidget);
+        }
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox.shrink());
+      },
+    );
+
+    testWidgets(
+      'hides empty Saturday while keeping non-empty Sunday on 29.11.',
+      (tester) async {
+        final hour = TimeTableRow(
+          TimeTableRowType.lesson,
+          const SphTimeOfDay(hour: 8, minute: 0),
+          const SphTimeOfDay(hour: 8, minute: 45),
+          '1',
+          1,
+        );
+        final plan = [
+          [makeLesson('mo', 'MO-Mathe', hour)],
+          [makeLesson('di', 'DI-Physik', hour)],
+          [makeLesson('mi', 'MI-Bio', hour)],
+          [makeLesson('do', 'DO-Deutsch', hour)],
+          [makeLesson('fr', 'FR-Englisch', hour)],
+          <TimetableSubject>[],
+          [makeLesson('so', 'SO-Sport', hour)],
+        ];
+        final timetable = TimeTable(hours: [hour], planForAll: plan);
+
+        await pumpTestApp(
+          tester,
+          child: Scaffold(
+            body: TimeTableView(
+              data: TimeTableData(plan, timetable, const {}, null),
+              timetable: timetable,
+              weekStart: DateTime(2026, 11, 23),
+              settings: const {},
+              updateSettings: (_, _) {},
+            ),
+          ),
+        );
+
+        for (final date in [
+          '23.11.',
+          '24.11.',
+          '25.11.',
+          '26.11.',
+          '27.11.',
+          '29.11.',
+        ]) {
+          expect(find.text(date), findsOneWidget);
+        }
+        expect(find.text('28.11.'), findsNothing);
+        expect(find.text('SO-Sport'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox.shrink());
+      },
+    );
+  });
 }
