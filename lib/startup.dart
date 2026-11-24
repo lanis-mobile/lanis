@@ -11,6 +11,7 @@ import 'package:lanis/features/auth/auth_controller.dart';
 import 'package:lanis/features/auth/account_recovery.dart';
 import 'package:lanis/home_page.dart';
 import 'package:lanis/l10n/login_errors.dart';
+import 'package:lanis/utils/notification_navigation.dart';
 import 'package:lanis/utils/privacy_policy.dart';
 import 'package:lanis/widgets/offline_available_applets_section.dart';
 import 'package:lanis/widgets/reset_account_page.dart';
@@ -49,8 +50,14 @@ class _StartupScreenState extends ConsumerState<StartupScreen> {
         context.go('/privacy-policy');
         return;
       }
+      final preferredAccountId = resolvePendingNotificationAccountId(
+        ref.read(notificationNavigationProvider),
+        accounts,
+      );
       // Skip if loginWithAccount already drives auth — must not selectPreferred.
-      await ref.read(authControllerProvider.notifier).bootstrapIfNeeded();
+      await ref
+          .read(authControllerProvider.notifier)
+          .bootstrapIfNeeded(preferredAccountId: preferredAccountId);
     });
   }
 

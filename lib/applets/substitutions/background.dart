@@ -1,6 +1,7 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:lanis/applets/substitutions/definition.dart';
 import 'package:liblanis/liblanis.dart';
 
 import '../../background_service.dart';
@@ -43,6 +44,7 @@ Future<void> substitutionsBackgroundTask(
     id: 0,
     importance: Importance.defaultImportance,
     avoidDuplicateSending: true,
+    redirectUri: substitutionDefinition.homePath(),
   );
 }
 

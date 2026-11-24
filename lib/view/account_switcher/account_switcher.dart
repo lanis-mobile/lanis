@@ -6,6 +6,7 @@ import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/home_page.dart';
 import 'package:lanis/features/auth/auth_controller.dart';
 import 'package:lanis/l10n/login_errors.dart';
+import 'package:lanis/utils/notification_navigation.dart';
 import 'account_tile.dart';
 
 class AccountSwitcher extends ConsumerStatefulWidget {
@@ -20,6 +21,7 @@ class _AccountSwitcherState extends ConsumerState<AccountSwitcher> {
 
   Future<void> _switchAccount(int accountId) async {
     if (_switching) return;
+    ref.read(notificationNavigationProvider).clearPending();
     if (ref.read(activeAccountProvider)?.localId == accountId &&
         ref.read(authControllerProvider).phase == AuthPhase.authenticated) {
       context.pop();

@@ -10,7 +10,9 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:lanis/applets/definitions.dart';
 import 'package:lanis/bridge/lanis_bootstrap.dart';
 import 'package:lanis/bridge/legacy_storage_cleanup.dart';
+import 'package:lanis/shell_navigation.dart';
 import 'package:lanis/utils/logger.dart';
+import 'package:lanis/utils/notification_navigation.dart';
 import 'package:lanis/utils/privacy_policy.dart';
 
 const _oneShotTaskId = 'com.transistorsoft.notftask';
@@ -121,7 +123,7 @@ Future<void> setupBackgroundService() async {
 
 Future<void> initializeNotifications() async {
   try {
-    FlutterLocalNotificationsPlugin().initialize(
+    await FlutterLocalNotificationsPlugin().initialize(
       settings: const InitializationSettings(
         android: AndroidInitializationSettings('@drawable/ic_launcher'),
         iOS: DarwinInitializationSettings(
@@ -130,7 +132,27 @@ Future<void> initializeNotifications() async {
           requestSoundPermission: true,
         ),
       ),
+      onDidReceiveNotificationResponse:
+          NotificationNavigationCoordinator.instance.handleNotificationResponse,
     );
+  } catch (e, s) {
+    backgroundLogger.e(e, stackTrace: s);
+  }
+}
+
+Future<void> captureNotificationLaunchDetails() async {
+  try {
+    final launchDetails = await FlutterLocalNotificationsPlugin()
+        .getNotificationAppLaunchDetails();
+    logger.d(
+      'Notification launch details: launched=${launchDetails?.didNotificationLaunchApp}, '
+      'hasPayload=${launchDetails?.notificationResponse?.payload?.isNotEmpty ?? false}',
+    );
+    if (launchDetails?.didNotificationLaunchApp == true) {
+      NotificationNavigationCoordinator.instance.handleNotificationResponse(
+        launchDetails?.notificationResponse,
+      );
+    }
   } catch (e, s) {
     backgroundLogger.e(e, stackTrace: s);
   }
@@ -222,6 +244,7 @@ Future<void> callbackDispatcher() async {
               settings: settings,
               appletId: applet.appletPhpUrl,
               multiAccount: accounts.length > 1,
+              defaultRedirectUri: appletHomePath(applet, accountType),
             ),
           );
         }
@@ -247,6 +270,7 @@ class BackgroundTaskToolkit {
   final TypedSettings settings;
   final String appletId;
   final bool multiAccount;
+  final String? defaultRedirectUri;
 
   BackgroundTaskToolkit({
     required this.accountId,
@@ -255,6 +279,7 @@ class BackgroundTaskToolkit {
     required this.settings,
     required this.appletId,
     this.multiAccount = false,
+    this.defaultRedirectUri,
   });
 
   /// Platform notification id: account + applet + local slot (0–9999).
@@ -270,6 +295,7 @@ class BackgroundTaskToolkit {
     bool avoidDuplicateSending = false,
     Importance importance = Importance.high,
     Priority priority = Priority.high,
+    String? redirectUri,
   }) async {
     if (id > 10000 || id < 0) {
       throw ArgumentError('id must be between 0 and 10000');
@@ -286,6 +312,15 @@ class BackgroundTaskToolkit {
       }
       settings.setString(key, hash);
     }
+    final effectiveRedirectUri = normalizeNotificationRedirectUri(
+      redirectUri ?? defaultRedirectUri,
+    );
+    final payload = effectiveRedirectUri == null
+        ? null
+        : NotificationNavigationPayload(
+            redirectUri: effectiveRedirectUri,
+            accountId: accountId,
+          ).encode();
     try {
       final androidDetails = AndroidNotificationDetails(
         'io.github.alessioc42.sphplan',
@@ -308,6 +343,7 @@ class BackgroundTaskToolkit {
           android: androidDetails,
           iOS: iOSDetails,
         ),
+        payload: payload,
       );
     } catch (e, s) {
       backgroundLogger.e(e, stackTrace: s);

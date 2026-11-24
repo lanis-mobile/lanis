@@ -4,6 +4,16 @@ import 'package:lanis/utils/responsive.dart';
 
 const conversationsHomePath = '/common/conversations/home';
 
+/// Canonical deep-link location for a conversation chat view.
+String conversationChatPath({required String id, required String title}) {
+  final encodedId = Uri.encodeComponent(id);
+  if (title.isEmpty) {
+    return '/common/conversations/chat/$encodedId';
+  }
+  final encodedTitle = Uri.encodeComponent(title);
+  return '/common/conversations/chat/$encodedId?title=$encodedTitle';
+}
+
 /// Opens a conversation: [go] on tablet (detail pane), [push] on phone.
 void openConversationRoute(
   BuildContext context, {
@@ -11,8 +21,7 @@ void openConversationRoute(
   required String title,
   Object? extra,
 }) {
-  final encoded = Uri.encodeComponent(title);
-  final path = '/common/conversations/chat/$id?title=$encoded';
+  final path = conversationChatPath(id: id, title: title);
   if (Responsive.isSplitView(context)) {
     context.go(path, extra: extra);
   } else {

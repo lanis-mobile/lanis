@@ -1,5 +1,6 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lanis/applets/conversations/conversations_nav.dart';
 import 'package:lanis/background_service.dart';
 import 'package:liblanis/liblanis.dart';
 
@@ -17,6 +18,12 @@ Future<void> conversationsBackgroundTask(
       message: unreadMessage.title,
       avoidDuplicateSending: true,
       importance: Importance.high,
+      redirectUri: unreadMessage.id.isNotEmpty
+          ? conversationChatPath(
+              id: unreadMessage.id,
+              title: unreadMessage.title,
+            )
+          : conversationsHomePath,
     );
   }
 }

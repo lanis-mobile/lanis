@@ -5,6 +5,7 @@ import 'package:liblanis/liblanis.dart';
 import 'package:lanis/features/auth/auth_controller.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/home_page.dart';
+import 'package:lanis/utils/notification_navigation.dart';
 import 'package:lanis/utils/privacy_policy.dart';
 import 'package:lanis/utils/safe_launch.dart';
 
@@ -27,13 +28,20 @@ class _PrivacyPolicyScreenState extends ConsumerState<PrivacyPolicyScreen> {
       final shared = ref.read(sharedOverAccountSettingsProvider);
       acceptPrivacyPolicy(shared);
 
-      // Bootstrap first so empty-account installs leave AuthPhase.unauthenticated
-      // (otherwise /welcome is bounced back to /startup while still authenticating).
-      await ref.read(authControllerProvider.notifier).bootstrapIfNeeded();
-      if (!mounted) return;
-
       final accounts = await ref.read(accountsProvider.future);
       if (!mounted) return;
+      final preferredAccountId = resolvePendingNotificationAccountId(
+        ref.read(notificationNavigationProvider),
+        accounts,
+      );
+
+      // Bootstrap first so empty-account installs leave AuthPhase.unauthenticated
+      // (otherwise /welcome is bounced back to /startup while still authenticating).
+      await ref
+          .read(authControllerProvider.notifier)
+          .bootstrapIfNeeded(preferredAccountId: preferredAccountId);
+      if (!mounted) return;
+
       if (accounts.isEmpty) {
         context.go('/welcome');
         return;
@@ -41,7 +49,14 @@ class _PrivacyPolicyScreenState extends ConsumerState<PrivacyPolicyScreen> {
 
       final auth = ref.read(authControllerProvider);
       if (auth.phase == AuthPhase.authenticated) {
-        context.go(firstSupportedHomePath(ref));
+        final coordinator = ref.read(notificationNavigationProvider);
+        final pending = coordinator.peekPending(
+          activeAccountId: ref.read(activeAccountProvider)?.localId,
+        );
+        if (pending != null) {
+          coordinator.markDispatched(pending);
+        }
+        context.go(pending?.redirectUri ?? firstSupportedHomePath(ref));
       } else {
         context.go('/startup');
       }
