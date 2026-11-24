@@ -8,6 +8,7 @@ import 'package:lanis/startup.dart';
 import 'package:lanis/features/auth/auth_controller.dart';
 import 'package:lanis/utils/auth_redirect.dart';
 import 'package:lanis/utils/deep_link.dart';
+import 'package:lanis/utils/notification_navigation.dart';
 import 'package:lanis/utils/responsive.dart';
 import 'package:lanis/view/account_switcher/account_switcher.dart';
 import 'package:lanis/utils/privacy_policy.dart';
@@ -181,7 +182,17 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         isShellPath: onShell,
         shellSupported: onShell ? _isSupportedShellPath(ref, loc) : true,
         deepLinkErrorPath: deepErr,
-        homePath: () => firstSupportedHomePathFromRef(ref),
+        homePath: () {
+          final coordinator = ref.read(notificationNavigationProvider);
+          final pending = coordinator.peekPending(
+            activeAccountId: ref.read(activeAccountProvider)?.localId,
+          );
+          if (pending != null) {
+            coordinator.markDispatched(pending);
+            return pending.redirectUri;
+          }
+          return firstSupportedHomePathFromRef(ref);
+        },
       );
     },
     routes: [

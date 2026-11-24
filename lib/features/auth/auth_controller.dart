@@ -74,15 +74,15 @@ class AuthController extends Notifier<AuthState> {
   }
 
   /// Cold-start entry from [StartupScreen] only.
-  Future<void> bootstrapIfNeeded() async {
+  Future<void> bootstrapIfNeeded({int? preferredAccountId}) async {
     if (state.phase == AuthPhase.authenticated) return;
     if (state.phase == AuthPhase.error) return;
     if (_authDrivenExternally) return;
-    await bootstrap();
+    await bootstrap(preferredAccountId: preferredAccountId);
   }
 
   /// Select preferred account (if any) and authenticate.
-  Future<void> bootstrap() async {
+  Future<void> bootstrap({int? preferredAccountId}) async {
     _authDrivenExternally = true;
     state = const AuthState.authenticating();
     try {
@@ -101,7 +101,12 @@ class AuthController extends Notifier<AuthState> {
         return;
       }
 
-      await ref.read(activeAccountProvider.notifier).selectPreferred();
+      if (preferredAccountId != null &&
+          accounts.any((a) => a.localId == preferredAccountId)) {
+        await ref.read(activeAccountProvider.notifier).select(preferredAccountId);
+      } else {
+        await ref.read(activeAccountProvider.notifier).selectPreferred();
+      }
       if (ref.read(activeAccountProvider) == null) {
         state = const AuthState.unauthenticated();
         return;
