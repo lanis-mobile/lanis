@@ -31,6 +31,7 @@ class AuthController extends Notifier<AuthState> {
   /// Prevents [StartupScreen] from calling [bootstrap] while a login/switch
   /// is already in flight (redirect to `/startup` would otherwise race).
   bool _authDrivenExternally = false;
+  Future<void> _accountSwitchTail = Future<void>.value();
 
   /// Test-only: when set, replaces [sessionProvider.notifier.authenticate].
   @visibleForTesting
@@ -150,6 +151,21 @@ class AuthController extends Notifier<AuthState> {
     }
 
     _authDrivenExternally = true;
+    // Finish switching and any recovery before starting the next request.
+    final result = _accountSwitchTail.then(
+      (_) => _loginWithAccountResult(
+        accountId,
+        removeAccountOnFailure: removeAccountOnFailure,
+      ),
+    );
+    _accountSwitchTail = result.then<void>((_) {}, onError: (Object _) {});
+    return result;
+  }
+
+  Future<({bool succeeded, LanisException? failure})> _loginWithAccountResult(
+    int accountId, {
+    required bool removeAccountOnFailure,
+  }) async {
     final previousId = ref.read(activeAccountProvider)?.localId;
     state = const AuthState.authenticating();
     try {
@@ -218,7 +234,8 @@ class AuthController extends Notifier<AuthState> {
     await bootstrap();
   }
 
-  Future<void> retry() => bootstrap();
+  Future<void> retry() =>
+      bootstrap(preferredAccountId: ref.read(activeAccountProvider)?.localId);
 }
 
 final authControllerProvider = NotifierProvider<AuthController, AuthState>(

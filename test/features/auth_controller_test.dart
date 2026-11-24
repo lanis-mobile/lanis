@@ -111,31 +111,26 @@ void main() {
   });
 
   test('bootstrapIfNeeded no-ops while externally driven', () async {
-    installFakeSessionAuth();
     final container = createAuthTestContainer();
     addTearDown(container.dispose);
     acceptPrivacy(container);
+    final startupId = await addTestAccount(container, username: 'startup');
     final id = await addTestAccount(container);
 
-    // Start loginWithAccount without awaiting bootstrapIfNeeded race:
-    // login sets _authDrivenExternally before authenticate completes.
-    var gate = false;
+    final authenticatedIds = <int?>[];
     installFakeSessionAuth(
       nextResult: () {
-        if (!gate) {
-          gate = true;
-          // Still "in flight" from bootstrapIfNeeded's perspective after login started.
-        }
+        authenticatedIds.add(container.read(activeAccountProvider)?.localId);
         return FakeAuthResult.success;
       },
     );
 
-    final loginFuture = container
-        .read(authControllerProvider.notifier)
-        .loginWithAccount(id);
-    // After login starts, bootstrapIfNeeded should skip.
-    await container.read(authControllerProvider.notifier).bootstrapIfNeeded();
-    await loginFuture;
+    final auth = container.read(authControllerProvider.notifier);
+    final loginFuture = auth.loginWithAccount(id);
+    await auth.bootstrapIfNeeded(preferredAccountId: startupId);
+    expect(await loginFuture, isTrue);
+    expect(authenticatedIds, [id]);
+    expect(container.read(activeAccountProvider)?.localId, id);
     expect(container.read(authControllerProvider).phase, AuthPhase.authenticated);
   });
 
