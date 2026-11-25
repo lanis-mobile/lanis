@@ -4,6 +4,7 @@ import 'package:liblanis/liblanis.dart';
 import 'package:lanis/applets/definitions.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/utils/applet_navigation_order.dart';
+import 'package:lanis/utils/responsive.dart';
 import 'package:lanis/view/settings/settings.dart';
 import 'package:lanis/view/settings/settings_page_builder.dart';
 
@@ -27,7 +28,7 @@ class _NavigationSettingsState
       visibleBottomBar: nextBottom,
       visibleDrawer: nextDrawer,
     );
-    saveAppletNavigationLayout(ref, updated);
+    ref.read(appletNavigationLayoutProvider.notifier).save(updated);
   }
 
   Widget _buildSectionHeader(
@@ -124,7 +125,7 @@ class _NavigationSettingsState
                   tooltip: inBottomBar
                       ? l10n.navigationMoveToSidebar
                       : (bottomBarFull
-                            ? l10n.navigationBottomBarFull
+                            ? l10n.navigationBottomBarFull(maxBottomBarApplets)
                             : l10n.navigationMoveToBottomBar),
                   icon: Icon(
                     inBottomBar
@@ -181,9 +182,11 @@ class _NavigationSettingsState
 
     final String? bottomHint;
     if (bottomDefs.isEmpty) {
-      bottomHint = l10n.navigationBottomBarEmptyHint;
+      bottomHint = l10n.navigationBottomBarEmptyHint(maxBottomBarApplets);
     } else if (bottomDefs.length < minBottomBarAppletsForDisplay) {
-      bottomHint = l10n.navigationBottomBarMinHint;
+      bottomHint = l10n.navigationBottomBarMinHint(
+        minBottomBarAppletsForDisplay,
+      );
     } else {
       bottomHint = null;
     }
@@ -277,7 +280,9 @@ class _NavigationSettingsState
                 OutlinedButton.icon(
                   onPressed: isDefault
                       ? null
-                      : () => resetAppletNavigationLayout(ref),
+                      : () => ref
+                            .read(appletNavigationLayoutProvider.notifier)
+                            .reset(),
                   icon: const Icon(Icons.restore_rounded),
                   label: Text(l10n.navigationResetOrder),
                 ),
@@ -289,7 +294,9 @@ class _NavigationSettingsState
                 ),
                 const SizedBox(height: 8.0),
                 Text(
-                  l10n.navigationSettingsInfo,
+                  Responsive.isTablet(context)
+                      ? '${l10n.navigationSettingsInfo}\n\n${l10n.navigationSettingsTabletInfo}'
+                      : l10n.navigationSettingsInfo,
                   style: Theme.of(context).textTheme.bodySmall!.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),

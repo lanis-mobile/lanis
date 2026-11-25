@@ -544,11 +544,33 @@
       }
     }
   },
-  "navigationBottomBarMinHint": "Add at least 2 applets to display the bottom bar on phones.",
-  "navigationBottomBarEmptyHint": "Drag applets here to pin them to the bottom bar (max 5).",
+  "navigationBottomBarMinHint": "Add at least {min} applets to display the bottom bar on phones.",
+  "@navigationBottomBarMinHint": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      }
+    }
+  },
+  "navigationBottomBarEmptyHint": "Drag applets here to pin them to the bottom bar (max {max}).",
+  "@navigationBottomBarEmptyHint": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
   "navigationMoveToBottomBar": "Move to bottom bar",
   "navigationMoveToSidebar": "Move to sidebar",
-  "navigationBottomBarFull": "Bottom bar is full (max 5)",
+  "navigationBottomBarFull": "Bottom bar is full (max {max})",
+  "@navigationBottomBarFull": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
   "navigationResetOrder": "Reset to default",
-  "navigationSettingsInfo": "Drag applets to reorder them or move them between the bottom bar and sidebar. Changes are saved per account and the first applet opens when starting the app."
+  "navigationSettingsInfo": "Drag applets to reorder them or move them between the bottom bar and sidebar. Changes are saved per account and the first applet opens when starting the app.",
+  "navigationSettingsTabletInfo": "On tablets, the navigation rail shows all applets in this combined order. The bottom bar split applies on phones."
 }

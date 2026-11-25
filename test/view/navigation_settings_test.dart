@@ -212,19 +212,21 @@ void main() {
       await container.read(activeAccountProvider.notifier).select(id);
 
       // Put Data Storage first and Calendar second in bottom bar; rest in drawer.
-      final settings = container.read(accountSpecificSettingsProvider)!;
-      settings.setJsonMap(appletNavigationOrderSettingsKey, {
-        'bottomBar': ['storage', 'calendar'],
-        'drawer': [
-          'substitutions',
-          'timetable',
-          'conversations',
-          'lessons',
-          'file-distribution',
-          'study-groups',
-        ],
-      });
-      container.read(appletNavigationOrderRevisionProvider.notifier).bump();
+      container
+          .read(appletNavigationLayoutProvider.notifier)
+          .save(
+            AppletNavigationLayout.fromJson({
+              'bottomBar': ['storage', 'calendar'],
+              'drawer': [
+                'substitutions',
+                'timetable',
+                'conversations',
+                'lessons',
+                'file-distribution',
+                'study-groups',
+              ],
+            }),
+          );
       await tester.pumpAndSettle();
 
       // Phone bottom bar renders Storage first, Calendar second, with Storage selected.
@@ -309,6 +311,94 @@ void main() {
         ),
         0,
       );
+    },
+  );
+
+  testWidgets(
+    'opening a sidebar-only applet via deep link hides phone bottom bar and system back returns to bottom-bar applet',
+    (tester) async {
+      tester.view.physicalSize = const Size(420, 840);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final branches = <StatefulShellBranch>[
+        for (final def in [
+          ...AppDefinitions.homeApplets,
+          ...AppDefinitions.navigationApplets,
+        ])
+          StatefulShellBranch(
+            routes: [
+              appletHomeShell(
+                homePath: def.homePath(AccountType.student),
+                homeBuilder: (context, state) => Scaffold(
+                  appBar: AppBar(title: Text('Page:${def.pathSegment}')),
+                  body: Center(child: Text('Body:${def.pathSegment}')),
+                ),
+              ),
+            ],
+          ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/common/settings/home',
+              builder: (context, state) => const Scaffold(
+                body: Center(child: Text('Settings')),
+              ),
+            ),
+          ],
+        ),
+      ];
+
+      // Cold-open directly into Substitutions (simulating a notification tap).
+      final container = await pumpTestRouterApp(
+        tester,
+        initialLocation: '/common/substitutions/home',
+        overrides: [
+          supportedAppletPhpUrlsProvider.overrideWith(
+            (ref) => _allStudentPhpUrls,
+          ),
+        ],
+        routes: [
+          StatefulShellRoute.indexedStack(
+            builder: (context, state, shell) =>
+                HomePage(navigationShell: shell),
+            branches: branches,
+          ),
+        ],
+      );
+
+      final id = await addTestAccount(
+        container,
+        accountType: AccountType.student,
+      );
+      await container.read(activeAccountProvider.notifier).select(id);
+      container
+          .read(appletNavigationLayoutProvider.notifier)
+          .save(
+            AppletNavigationLayout.fromJson({
+              'bottomBar': ['storage', 'calendar'],
+              'drawer': [
+                'substitutions',
+                'timetable',
+                'conversations',
+                'lessons',
+                'file-distribution',
+                'study-groups',
+              ],
+            }),
+          );
+      await tester.pumpAndSettle();
+
+      // Substitutions is in the sidebar, so no bottom bar is shown.
+      expect(find.text('Body:substitutions'), findsOneWidget);
+      expect(find.byType(NavigationBar), findsNothing);
+
+      // System back navigates to the first bottom-bar applet (Datastorage).
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.text('Body:storage'), findsOneWidget);
+      expect(find.byType(NavigationBar), findsOneWidget);
     },
   );
 }

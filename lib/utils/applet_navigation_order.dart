@@ -12,6 +12,9 @@ const int minBottomBarAppletsForDisplay = 2;
 /// Account-scoped [TypedSettings] key for per-account applet navigation layout.
 const String appletNavigationOrderSettingsKey = 'applet-navigation-order';
 
+/// Current schema version for serialized [AppletNavigationLayout] JSON.
+const int appletNavigationLayoutSchemaVersion = 1;
+
 /// Per-account layout partitioning Lanis applets into the phone bottom bar
 /// section and the sidebar/drawer section, in display order.
 class AppletNavigationLayout {
@@ -35,10 +38,15 @@ class AppletNavigationLayout {
 
   /// Normalizes persisted JSON against the current [AppDefinitions.applets].
   ///
-  /// Unknown/removed segments and duplicates are ignored. Any overflow beyond
-  /// [maxBottomBarApplets] is moved to the start of [drawer]. Newly added
-  /// applets not present in [raw] are appended to their default section
-  /// (falling back to [drawer] if [bottomBar] is already full).
+  /// Unknown/removed segments and duplicates are ignored. Newly added applets
+  /// not present in [raw] are appended to their default section (nested applets
+  /// join [bottomBar] only if it has fewer than [maxBottomBarApplets] entries;
+  /// otherwise they are appended to [drawer]).
+  ///
+  /// Note: [bottomBar] is not hard-truncated to [maxBottomBarApplets] during
+  /// deserialization so that hidden/unsupported applets preserved in their
+  /// original section do not evict supported bottom-bar applets. Display
+  /// consumers always cap visible bottom-bar items via [supportedBottomBar].
   factory AppletNavigationLayout.fromJson(Map<String, dynamic>? raw) {
     if (raw == null) return AppletNavigationLayout.defaults();
     final rawBottom = raw['bottomBar'];
@@ -52,7 +60,6 @@ class AppletNavigationLayout {
     };
     final seen = <String>{};
     final bottom = <AppletDefinition>[];
-    final overflow = <AppletDefinition>[];
     final side = <AppletDefinition>[];
 
     if (rawBottom is List) {
@@ -60,15 +67,9 @@ class AppletNavigationLayout {
         if (item is! String) continue;
         final def = bySegment[item];
         if (def == null || !seen.add(def.pathSegment)) continue;
-        if (bottom.length < maxBottomBarApplets) {
-          bottom.add(def);
-        } else {
-          overflow.add(def);
-        }
+        bottom.add(def);
       }
     }
-
-    side.addAll(overflow);
 
     if (rawDrawer is List) {
       for (final item in rawDrawer) {
@@ -190,32 +191,62 @@ class AppletNavigationLayout {
   }
 
   /// Returns a new layout combining updated visible (account-supported)
-  /// sections with any hidden/unsupported applets preserved at the end of
-  /// [drawer] so they never occupy bottom-bar slots.
+  /// sections while keeping any currently hidden/unsupported applets in their
+  /// original section and relative position.
+  ///
+  /// This ensures that saving while the supported applet set is temporarily
+  /// incomplete (e.g. offline or a module temporarily disabled) never causes
+  /// hidden applets to lose their bottom-bar slot permanently.
   AppletNavigationLayout withVisibleSections({
     required List<AppletDefinition> visibleBottomBar,
     required List<AppletDefinition> visibleDrawer,
   }) {
-    final seen = <String>{};
-    final nextBottom = <AppletDefinition>[];
-    final nextDrawer = <AppletDefinition>[];
+    final seenVisible = <String>{};
+    final clampedBottom = <AppletDefinition>[];
+    final clampedDrawer = <AppletDefinition>[];
 
     for (final def in visibleBottomBar) {
-      if (!seen.add(def.pathSegment)) continue;
-      if (nextBottom.length < maxBottomBarApplets) {
-        nextBottom.add(def);
+      if (!seenVisible.add(def.pathSegment)) continue;
+      if (clampedBottom.length < maxBottomBarApplets) {
+        clampedBottom.add(def);
       } else {
-        nextDrawer.add(def);
+        clampedDrawer.add(def);
       }
     }
-
     for (final def in visibleDrawer) {
-      if (!seen.add(def.pathSegment)) continue;
-      nextDrawer.add(def);
+      if (!seenVisible.add(def.pathSegment)) continue;
+      clampedDrawer.add(def);
     }
 
-    for (final def in all) {
-      if (seen.add(def.pathSegment)) {
+    List<AppletDefinition> mergeSection(
+      List<AppletDefinition> previousSection,
+      List<AppletDefinition> nextVisibleSection,
+    ) {
+      final result = <AppletDefinition>[];
+      var visibleCursor = 0;
+      for (final item in previousSection) {
+        if (!seenVisible.contains(item.pathSegment)) {
+          // Hidden/unsupported item: keep its original section & slot.
+          result.add(item);
+        } else if (visibleCursor < nextVisibleSection.length) {
+          result.add(nextVisibleSection[visibleCursor++]);
+        }
+      }
+      while (visibleCursor < nextVisibleSection.length) {
+        result.add(nextVisibleSection[visibleCursor++]);
+      }
+      return result;
+    }
+
+    final nextBottom = mergeSection(bottomBar, clampedBottom);
+    final nextDrawer = mergeSection(drawer, clampedDrawer);
+
+    final accounted = {
+      for (final def in nextBottom) def.pathSegment,
+      for (final def in nextDrawer) def.pathSegment,
+    };
+    for (final def in AppDefinitions.applets) {
+      if (accounted.add(def.pathSegment)) {
         nextDrawer.add(def);
       }
     }
@@ -255,6 +286,7 @@ class AppletNavigationLayout {
   }
 
   Map<String, dynamic> toJson() => {
+    'v': appletNavigationLayoutSchemaVersion,
     'bottomBar': bottomBar.map((a) => a.pathSegment).toList(),
     'drawer': drawer.map((a) => a.pathSegment).toList(),
   };
@@ -339,9 +371,7 @@ reorderAppletSections({
 
   AppletDefinition? bumped;
   if (nextBottom.length > maxBottomBarApplets) {
-    if (identical(nextBottom.last, dragged) &&
-        nextBottom.length >= 2 &&
-        nextBottom.length - 2 >= 0) {
+    if (identical(nextBottom.last, dragged)) {
       bumped = nextBottom.removeAt(nextBottom.length - 2);
     } else {
       bumped = nextBottom.removeLast();
@@ -392,39 +422,35 @@ moveAppletToDrawer({
   );
 }
 
-class AppletNavigationOrderRevision extends Notifier<int> {
+/// Manages per-account read/write access to [AppletNavigationLayout] in one
+/// notifier so UI consumers update immediately without a separate revision key.
+class AppletNavigationLayoutNotifier extends Notifier<AppletNavigationLayout> {
   @override
-  int build() => 0;
-
-  void bump() => state++;
-}
-
-final appletNavigationOrderRevisionProvider =
-    NotifierProvider<AppletNavigationOrderRevision, int>(
-      AppletNavigationOrderRevision.new,
+  AppletNavigationLayout build() {
+    ref.watch(activeAccountProvider.select((a) => a?.localId));
+    final settings = ref.watch(accountSpecificSettingsProvider);
+    return AppletNavigationLayout.fromJson(
+      settings?.getJsonMap(appletNavigationOrderSettingsKey),
     );
+  }
+
+  void save(AppletNavigationLayout layout) {
+    final settings = ref.read(accountSpecificSettingsProvider);
+    if (settings == null) return;
+    settings.setJsonMap(appletNavigationOrderSettingsKey, layout.toJson());
+    state = layout;
+  }
+
+  void reset() {
+    final settings = ref.read(accountSpecificSettingsProvider);
+    if (settings == null) return;
+    settings.remove(appletNavigationOrderSettingsKey);
+    state = AppletNavigationLayout.defaults();
+  }
+}
 
 /// Active account's applet navigation layout (bottom bar + drawer ordering).
-final appletNavigationLayoutProvider = Provider<AppletNavigationLayout>((ref) {
-  ref.watch(appletNavigationOrderRevisionProvider);
-  ref.watch(activeAccountProvider.select((a) => a?.localId));
-  final settings = ref.watch(accountSpecificSettingsProvider);
-  final raw = settings?.getJsonMap(appletNavigationOrderSettingsKey);
-  return AppletNavigationLayout.fromJson(raw);
-});
-
-/// Persists [layout] for the active account and refreshes dependents.
-void saveAppletNavigationLayout(WidgetRef ref, AppletNavigationLayout layout) {
-  final settings = ref.read(accountSpecificSettingsProvider);
-  if (settings == null) return;
-  settings.setJsonMap(appletNavigationOrderSettingsKey, layout.toJson());
-  ref.read(appletNavigationOrderRevisionProvider.notifier).bump();
-}
-
-/// Resets the active account's navigation layout back to defaults.
-void resetAppletNavigationLayout(WidgetRef ref) {
-  final settings = ref.read(accountSpecificSettingsProvider);
-  if (settings == null) return;
-  settings.remove(appletNavigationOrderSettingsKey);
-  ref.read(appletNavigationOrderRevisionProvider.notifier).bump();
-}
+final appletNavigationLayoutProvider =
+    NotifierProvider<AppletNavigationLayoutNotifier, AppletNavigationLayout>(
+      AppletNavigationLayoutNotifier.new,
+    );

@@ -27,8 +27,9 @@ void main() {
       );
     });
 
-    test('fromJson drops unknown/duplicate segments and caps bottomBar at 5', () {
+    test('fromJson drops unknown/duplicate segments and caps visible bottomBar at 5', () {
       final layout = AppletNavigationLayout.fromJson({
+        'v': appletNavigationLayoutSchemaVersion,
         'bottomBar': [
           'storage',
           'unknown-applet',
@@ -42,20 +43,32 @@ void main() {
         'drawer': ['file-distribution', 'calendar', 'nope'],
       });
 
-      expect(layout.bottomBar.map((a) => a.pathSegment).toList(), [
-        'storage',
-        'calendar',
-        'timetable',
-        'conversations',
-        'lessons',
-      ]);
-      // Excess bottomBar item ('substitutions') goes to top of drawer;
+      final allStudentUrls = AppDefinitions.applets
+          .map((a) => a.appletPhpUrl)
+          .toSet();
+      expect(
+        layout
+            .supportedBottomBar(
+              supportedPhpUrls: allStudentUrls,
+              accountType: AccountType.student,
+            )
+            .map((a) => a.pathSegment)
+            .toList(),
+        ['storage', 'calendar', 'timetable', 'conversations', 'lessons'],
+      );
+      // Excess bottomBar item ('substitutions') spills into supportedDrawer;
       // missing applet ('study-groups') is appended.
-      expect(layout.drawer.map((a) => a.pathSegment).toList(), [
-        'substitutions',
-        'file-distribution',
-        'study-groups',
-      ]);
+      expect(
+        layout
+            .supportedDrawer(
+              supportedPhpUrls: allStudentUrls,
+              accountType: AccountType.student,
+            )
+            .map((a) => a.pathSegment)
+            .toList(),
+        ['substitutions', 'file-distribution', 'study-groups'],
+      );
+      expect(layout.toJson()['v'], appletNavigationLayoutSchemaVersion);
     });
 
     test('fromJson preserves intentionally empty bottomBar', () {
@@ -103,9 +116,12 @@ void main() {
           visibleBottomBar: [...visibleBottom, ...visibleDrawer],
           visibleDrawer: const [],
         );
+        // Round-trip through JSON to verify deserialization does not evict
+        // the 5th supported applet when hidden applets remain in bottomBar.
+        final reloaded = AppletNavigationLayout.fromJson(updated.toJson());
 
         expect(
-          updated
+          reloaded
               .supportedBottomBar(
                 supportedPhpUrls: teacherSupported,
                 accountType: AccountType.teacher,
@@ -120,11 +136,61 @@ void main() {
             'file-distribution',
           ],
         );
-        // Unsupported applets remain preserved in drawer without taking bottom slots.
-        expect(updated.all.length, AppDefinitions.applets.length);
+        // Hidden applets keep their original sections without losing slots.
+        expect(reloaded.all.length, AppDefinitions.applets.length);
         expect(
-          updated.drawer.map((a) => a.pathSegment).toSet(),
-          {'timetable', 'lessons', 'study-groups'},
+          reloaded.bottomBar.map((a) => a.pathSegment),
+          containsAll(['timetable', 'lessons']),
+        );
+        expect(
+          reloaded.drawer.map((a) => a.pathSegment),
+          contains('study-groups'),
+        );
+      },
+    );
+
+    test(
+      'withVisibleSections preserves temporarily hidden bottom-bar applet slot when it returns',
+      () {
+        final fullStudentUrls = AppDefinitions.applets
+            .map((a) => a.appletPhpUrl)
+            .toSet();
+        // Temporarily drop Calendar (e.g. module disabled or offline startup).
+        final partialUrls = Set<String>.from(fullStudentUrls)
+          ..remove('kalender.php');
+
+        final initial = AppletNavigationLayout.defaults();
+        final visibleBottom = initial.supportedBottomBar(
+          supportedPhpUrls: partialUrls,
+          accountType: AccountType.student,
+        );
+        final visibleDrawer = initial.supportedDrawer(
+          supportedPhpUrls: partialUrls,
+          accountType: AccountType.student,
+        );
+
+        // User swaps Substitutions and Timetable while Calendar is missing.
+        final swappedBottom = [
+          visibleBottom[1], // timetable
+          visibleBottom[0], // substitutions
+          ...visibleBottom.sublist(2),
+        ];
+        final saved = initial.withVisibleSections(
+          visibleBottomBar: swappedBottom,
+          visibleDrawer: visibleDrawer,
+        );
+        final reloaded = AppletNavigationLayout.fromJson(saved.toJson());
+
+        // When Calendar reappears, it is still in its bottom-bar slot (index 1).
+        expect(
+          reloaded
+              .supportedBottomBar(
+                supportedPhpUrls: fullStudentUrls,
+                accountType: AccountType.student,
+              )
+              .map((a) => a.pathSegment)
+              .toList(),
+          ['timetable', 'calendar', 'substitutions', 'conversations', 'lessons'],
         );
       },
     );
@@ -293,9 +359,8 @@ void main() {
         accountType: AccountType.student,
       );
 
-      // Customize Account A.
+      // Customize Account A via notifier.
       await container.read(activeAccountProvider.notifier).select(accountA);
-      final settingsA = container.read(accountSpecificSettingsProvider)!;
       final customA = AppletNavigationLayout.fromJson({
         'bottomBar': ['storage', 'conversations', 'calendar'],
         'drawer': [
@@ -306,8 +371,7 @@ void main() {
           'study-groups',
         ],
       });
-      settingsA.setJsonMap(appletNavigationOrderSettingsKey, customA.toJson());
-      container.read(appletNavigationOrderRevisionProvider.notifier).bump();
+      container.read(appletNavigationLayoutProvider.notifier).save(customA);
 
       expect(
         container
