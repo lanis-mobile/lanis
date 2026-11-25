@@ -8,6 +8,7 @@ import 'package:lanis/applets/conversations/view/shared.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/applets/conversations/definition.dart';
 import 'package:lanis/utils/responsive.dart';
+import 'package:lanis/utils/root_nav.dart';
 import 'package:lanis/widgets/combined_applet_builder.dart';
 import '../../../utils/keyboard_observer.dart';
 import 'conversation_tile.dart';
@@ -480,7 +481,8 @@ class _ConversationsViewState extends ConsumerState<ConversationsView> {
         '/common/conversations/compose',
       );
       if (!mounted || chatData == null) return;
-      final text = await Navigator.of(context).push<String>(
+      final text = await pushInShell<String>(
+        context,
         MaterialPageRoute(
           builder: (context) =>
               FullScreenConversationsMessageInput(creationData: chatData),

@@ -6,6 +6,7 @@ import 'package:lanis/applets/definitions.dart';
 import 'package:lanis/home_page.dart';
 import 'package:lanis/shell_navigation.dart';
 import 'package:lanis/utils/applet_navigation_order.dart';
+import 'package:lanis/utils/root_nav.dart';
 import 'package:lanis/view/settings/subsettings/navigation.dart';
 import 'package:lanis/widgets/applet_home_shell.dart';
 
@@ -398,6 +399,93 @@ void main() {
       await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
       expect(find.text('Body:storage'), findsOneWidget);
+      expect(find.byType(NavigationBar), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'pushInShell from inside appletHomeShell covers the phone bottom bar',
+    (tester) async {
+      tester.view.physicalSize = const Size(420, 840);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final branches = <StatefulShellBranch>[
+        for (final def in [
+          ...AppDefinitions.homeApplets,
+          ...AppDefinitions.navigationApplets,
+        ])
+          StatefulShellBranch(
+            routes: [
+              appletHomeShell(
+                homePath: def.homePath(AccountType.student),
+                homeBuilder: (context, state) => Scaffold(
+                  body: Center(
+                    child: ElevatedButton(
+                      onPressed: () => pushInShell<void>(
+                        context,
+                        MaterialPageRoute(
+                          builder: (ctx) => Scaffold(
+                            appBar: AppBar(title: const Text('Composer')),
+                            body: const Center(child: Text('FullScreenInput')),
+                          ),
+                        ),
+                      ),
+                      child: Text('Open:${def.pathSegment}'),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/common/settings/home',
+              builder: (context, state) => const Scaffold(),
+            ),
+          ],
+        ),
+      ];
+
+      final container = await pumpTestRouterApp(
+        tester,
+        initialLocation: '/common/conversations/home',
+        overrides: [
+          supportedAppletPhpUrlsProvider.overrideWith(
+            (ref) => _allStudentPhpUrls,
+          ),
+        ],
+        routes: [
+          StatefulShellRoute.indexedStack(
+            builder: (context, state, shell) =>
+                HomePage(navigationShell: shell),
+            branches: branches,
+          ),
+        ],
+      );
+
+      final id = await addTestAccount(
+        container,
+        accountType: AccountType.student,
+      );
+      await container.read(activeAccountProvider.notifier).select(id);
+      await tester.pumpAndSettle();
+
+      // Bottom bar is visible on the home route.
+      expect(find.byType(NavigationBar), findsOneWidget);
+
+      // Pushing an imperative page via pushInShell covers the bottom bar.
+      await tester.tap(find.text('Open:conversations'));
+      await tester.pumpAndSettle();
+      expect(find.text('FullScreenInput'), findsOneWidget);
+      expect(find.byType(NavigationBar), findsNothing);
+
+      // Popping restores the home route and bottom bar.
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.text('Open:conversations'), findsOneWidget);
       expect(find.byType(NavigationBar), findsOneWidget);
     },
   );

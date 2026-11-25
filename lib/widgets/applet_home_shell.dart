@@ -41,6 +41,31 @@ class HomeChrome extends InheritedWidget {
   }
 }
 
+/// Exposes the shell branch [NavigatorState] above [appletHomeShell] so
+/// imperative pushes from `…/home` views (via [pushInShell]) cover the phone
+/// bottom bar without escaping to the root navigator.
+class _AppletHomeShellNavigator extends InheritedWidget {
+  final NavigatorState parentNavigator;
+
+  const _AppletHomeShellNavigator({
+    required this.parentNavigator,
+    required super.child,
+  });
+
+  @override
+  bool updateShouldNotify(_AppletHomeShellNavigator oldWidget) {
+    return parentNavigator != oldWidget.parentNavigator;
+  }
+}
+
+/// Returns the parent shell branch [NavigatorState] above [appletHomeShell],
+/// or `null` if [context] is not inside an [appletHomeShell].
+NavigatorState? appletHomeParentNavigatorOf(BuildContext context) {
+  return context
+      .dependOnInheritedWidgetOfExactType<_AppletHomeShellNavigator>()
+      ?.parentNavigator;
+}
+
 /// Wraps an applet list root (`…/home`) so the phone bottom bar sits under the
 /// home page and is covered when sibling detail routes are pushed.
 ///
@@ -51,8 +76,13 @@ RouteBase appletHomeShell({
 }) {
   return ShellRoute(
     builder: (context, state, child) {
-      if (Responsive.isTablet(context)) return child;
-      return _PhoneAppletBottomNav(child: child);
+      final parentNavigator = Navigator.of(context);
+      final wrapped = _AppletHomeShellNavigator(
+        parentNavigator: parentNavigator,
+        child: child,
+      );
+      if (Responsive.isTablet(context)) return wrapped;
+      return _PhoneAppletBottomNav(child: wrapped);
     },
     routes: [GoRoute(path: homePath, builder: homeBuilder)],
   );
