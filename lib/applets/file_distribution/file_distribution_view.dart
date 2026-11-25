@@ -380,6 +380,9 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
           if (item.infoLink != null) ...[
             const SizedBox(height: 10),
             FilledButton.tonalIcon(
+              style: FilledButton.styleFrom(
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
               onPressed: () => openUrlModal(context, item.infoLink!.url),
               icon: const Icon(Icons.open_in_new, size: 16),
               label: Text(item.infoLink!.title),
@@ -601,18 +604,24 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
     }
 
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SizedBox(
           width: 320,
-          child: refresh != null
-              ? RefreshIndicator(onRefresh: refresh, child: masterList)
-              : masterList,
+          child: Scaffold(
+            appBar: _buildAppBar(context),
+            body: refresh != null
+                ? RefreshIndicator(onRefresh: refresh, child: masterList)
+                : masterList,
+          ),
         ),
         const VerticalDivider(width: 1),
         Expanded(
-          child: selected == null
-              ? _buildEmptyState(context, scrollable: false)
-              : _buildTabletDetail(context, selected, parser, isOffline),
+          child: SafeArea(
+            child: selected == null
+                ? const SizedBox.shrink()
+                : _buildTabletDetail(context, selected, parser, isOffline),
+          ),
         ),
       ],
     );
@@ -625,7 +634,6 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
     bool isOffline,
   ) {
     final colorScheme = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context);
     final unread = _isUnread(item);
     final canAutoRead = unread && item.canMarkAsRead && !isOffline;
     final images = _imageAttachments(item);
@@ -678,55 +686,35 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
               ],
               if (item.description != null && item.description!.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                Card(
-                  elevation: 0,
-                  margin: EdgeInsets.zero,
-                  color: colorScheme.surfaceContainerLow,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    side: BorderSide(color: colorScheme.outlineVariant),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(14),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.fileDistributionNotice.toUpperCase(),
-                          style: Theme.of(context).textTheme.labelSmall
-                              ?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                                letterSpacing: 0.6,
-                              ),
-                        ),
-                        const SizedBox(height: 6),
-                        SelectableText(
-                          item.description!,
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                      ],
+                SizedBox(
+                  width: double.infinity,
+                  child: Card(
+                    elevation: 0,
+                    margin: EdgeInsets.zero,
+                    color: colorScheme.surfaceContainerLow,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      side: BorderSide(color: colorScheme.outlineVariant),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: SelectableText(
+                        item.description!,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
                     ),
                   ),
                 ),
               ],
               if (item.errorMessage != null &&
                   item.errorMessage!.isNotEmpty) ...[
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
                 _buildErrorBanner(context, item.errorMessage!),
               ],
               if (otherFiles.isNotEmpty) ...[
-                const SizedBox(height: 18),
-                Text(
-                  '${l10n.files.toUpperCase()} (${otherFiles.length})',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                    letterSpacing: 0.6,
-                  ),
-                ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 16),
                 Wrap(
                   spacing: 8,
-                  runSpacing: 6,
                   children: [
                     for (final file in otherFiles)
                       FileChip(
@@ -741,8 +729,11 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
                 ),
               ],
               if (item.infoLink != null) ...[
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
                 FilledButton.tonalIcon(
+                  style: FilledButton.styleFrom(
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
                   onPressed: () => openUrlModal(context, item.infoLink!.url),
                   icon: const Icon(Icons.open_in_new, size: 18),
                   label: Text(item.infoLink!.title),
@@ -777,9 +768,11 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
         final isOffline =
             offline != null ||
             parser.latestResponse?.contentStatus == ContentStatus.offline;
+        final isSplitView =
+            Responsive.isSplitView(context) && data.items.isNotEmpty;
         return Scaffold(
-          appBar: _buildAppBar(context),
-          body: Responsive.isSplitView(context)
+          appBar: isSplitView ? null : _buildAppBar(context),
+          body: isSplitView
               ? _buildTabletBody(context, data, parser, refresh, isOffline)
               : _buildPhoneBody(context, data, parser, refresh, isOffline),
         );
