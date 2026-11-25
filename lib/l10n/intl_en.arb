@@ -572,5 +572,8 @@
   },
   "navigationResetOrder": "Reset to default",
   "navigationSettingsInfo": "Drag applets to reorder them or move them between the bottom bar and sidebar. Changes are saved per account and the first applet opens when starting the app.",
-  "navigationSettingsTabletInfo": "On tablets, the navigation rail shows all applets in this combined order. The bottom bar split applies on phones."
+  "navigationSettingsTabletInfo": "On tablets, the navigation rail shows all applets in this combined order. The bottom bar split applies on phones.",
+  "calendarFilterAll": "All",
+  "calendarFilterUncategorized": "Uncategorized",
+  "calendarFilterTitle": "Filter categories"
 }

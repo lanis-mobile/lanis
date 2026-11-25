@@ -560,5 +560,8 @@
   },
   "navigationResetOrder": "Auf Standard zurücksetzen",
   "navigationSettingsInfo": "Ziehe Applets, um ihre Reihenfolge anzupassen oder sie zwischen unterer Leiste und Seitenleiste zu verschieben. Änderungen werden pro Konto gespeichert und das erste Applet öffnet beim App-Start.",
-  "navigationSettingsTabletInfo": "Auf Tablets zeigt die Navigationsleiste alle Applets in dieser kombinierten Reihenfolge an. Die Aufteilung für die untere Leiste gilt auf Smartphones."
+  "navigationSettingsTabletInfo": "Auf Tablets zeigt die Navigationsleiste alle Applets in dieser kombinierten Reihenfolge an. Die Aufteilung für die untere Leiste gilt auf Smartphones.",
+  "calendarFilterAll": "Alle",
+  "calendarFilterUncategorized": "Ohne Kategorie",
+  "calendarFilterTitle": "Kategorien filtern"
 }
