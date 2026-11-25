@@ -50,11 +50,14 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
 
   _DistributionFilter _filter = _DistributionFilter.all;
   int? _selectedId;
-  int? _appliedDeepLinkId;
+  String? _lastDeepLinkUri;
   int? _pendingScrollId;
+  GoRouterDelegate? _routerDelegate;
+  final ScrollController _phoneScrollController = ScrollController();
   final Map<int, GlobalKey> _phoneCardKeys = {};
   final Set<int> _expandedIds = {};
   final Set<int> _locallyReadIds = {};
+  final Set<int> _pinnedInUnreadFilter = {};
   final Set<int> _markingReadIds = {};
   final ValueNotifier<int> _scrollTick = ValueNotifier<int>(0);
 
@@ -65,6 +68,7 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
       ValueNotifier<List<AdminFileDistributionSummary>>(const []);
   int _adminRefreshVersion = 0;
   bool _loadingAdmin = false;
+  bool _openingComposer = false;
   String? _adminError;
   int? _selectedAdminId;
   bool _composingAdmin = false;
@@ -79,23 +83,49 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
   }
 
   @override
+  void didUpdateWidget(covariant FileDistributionView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialItemId != null &&
+        widget.initialItemId != oldWidget.initialItemId) {
+      _applyDeepLinkId(widget.initialItemId!);
+    }
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final routeId = int.tryParse(
-      GoRouter.maybeOf(context)?.state.uri.queryParameters['id'] ?? '',
-    );
-    final targetId = routeId ?? widget.initialItemId;
-    if (targetId != null && targetId != _appliedDeepLinkId) {
-      _applyDeepLinkId(targetId);
+    final delegate = GoRouter.maybeOf(context)?.routerDelegate;
+    if (delegate != _routerDelegate) {
+      _routerDelegate?.removeListener(_onRouteChanged);
+      _routerDelegate = delegate;
+      _routerDelegate?.addListener(_onRouteChanged);
+    }
+    _syncDeepLinkFromRouter();
+  }
+
+  void _onRouteChanged() {
+    if (!mounted) return;
+    _syncDeepLinkFromRouter();
+  }
+
+  void _syncDeepLinkFromRouter() {
+    final uri = GoRouter.maybeOf(context)?.state.uri;
+    if (uri == null) return;
+    final uriKey = uri.toString();
+    if (uriKey == _lastDeepLinkUri) return;
+    _lastDeepLinkUri = uriKey;
+    final routeId = int.tryParse(uri.queryParameters['id'] ?? '');
+    if (routeId != null) {
+      setState(() => _applyDeepLinkId(routeId));
     }
   }
 
   void _applyDeepLinkId(int id) {
-    _appliedDeepLinkId = id;
     _selectedId = id;
     _pendingScrollId = id;
     _expandedIds.add(id);
     _filter = _DistributionFilter.all;
+    _pinnedInUnreadFilter.clear();
     _adminTab = false;
     _composingAdmin = false;
     _editingAdminDetail = null;
@@ -103,7 +133,9 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
 
   void _scheduleScrollToTarget(List<FileDistributionItem> visible) {
     final targetId = _pendingScrollId;
-    if (targetId == null || !visible.any((e) => e.id == targetId)) return;
+    if (targetId == null) return;
+    final targetIndex = visible.indexWhere((e) => e.id == targetId);
+    if (targetIndex < 0) return;
     _pendingScrollId = null;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -114,12 +146,32 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
         );
+        return;
       }
+      if (!_phoneScrollController.hasClients) return;
+      final estimatedOffset = (targetIndex * 160.0).clamp(
+        0.0,
+        _phoneScrollController.position.maxScrollExtent,
+      );
+      _phoneScrollController.jumpTo(estimatedOffset);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final builtCtx = _phoneCardKeys[targetId]?.currentContext;
+        if (builtCtx != null) {
+          Scrollable.ensureVisible(
+            builtCtx,
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOut,
+          );
+        }
+      });
     });
   }
 
   @override
   void dispose() {
+    _routerDelegate?.removeListener(_onRouteChanged);
+    _phoneScrollController.dispose();
     _scrollTick.dispose();
     _adminItemsNotifier.dispose();
     super.dispose();
@@ -131,7 +183,10 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
   List<FileDistributionItem> _filteredItems(List<FileDistributionItem> items) {
     return switch (_filter) {
       _DistributionFilter.all => items,
-      _DistributionFilter.unread => items.where(_isUnread).toList(),
+      _DistributionFilter.unread => items
+          .where((item) =>
+              _isUnread(item) || _pinnedInUnreadFilter.contains(item.id))
+          .toList(),
       _DistributionFilter.files =>
         items.where((item) => item.files.isNotEmpty).toList(),
     };
@@ -159,6 +214,9 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
     setState(() {
       _markingReadIds.add(item.id);
       _locallyReadIds.add(item.id);
+      if (_filter == _DistributionFilter.unread) {
+        _pinnedInUnreadFilter.add(item.id);
+      }
     });
     try {
       final ok = await parser.markAsRead(item.id);
@@ -213,20 +271,26 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
           FilterChip(
             label: Text(l10n.fileDistributionFilterAll(allItems.length)),
             selected: _filter == _DistributionFilter.all,
-            onSelected: (_) =>
-                setState(() => _filter = _DistributionFilter.all),
+            onSelected: (_) => setState(() {
+              _filter = _DistributionFilter.all;
+              _pinnedInUnreadFilter.clear();
+            }),
           ),
           FilterChip(
             label: Text(l10n.fileDistributionFilterUnread(unreadCount)),
             selected: _filter == _DistributionFilter.unread,
-            onSelected: (_) =>
-                setState(() => _filter = _DistributionFilter.unread),
+            onSelected: (_) => setState(() {
+              _filter = _DistributionFilter.unread;
+              _pinnedInUnreadFilter.clear();
+            }),
           ),
           FilterChip(
             label: Text(l10n.fileDistributionFilterFiles(filesCount)),
             selected: _filter == _DistributionFilter.files,
-            onSelected: (_) =>
-                setState(() => _filter = _DistributionFilter.files),
+            onSelected: (_) => setState(() {
+              _filter = _DistributionFilter.files;
+              _pinnedInUnreadFilter.clear();
+            }),
           ),
         ],
       ),
@@ -517,6 +581,7 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
           return false;
         },
         child: ListView.separated(
+          controller: _phoneScrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
           itemCount: visible.length + 1,
@@ -553,6 +618,7 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
     final l10n = AppLocalizations.of(context);
     final visible = _filteredItems(data.items);
     final hasAnyItems = data.items.isNotEmpty;
+    _pendingScrollId = null;
 
     FileDistributionItem? selected;
     if (visible.isNotEmpty) {
@@ -939,42 +1005,52 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
     AdminFileDistributionSummary? editSummary,
     required bool splitView,
   }) async {
-    AdminFileDistributionDetail? detail;
-    if (editSummary != null) {
-      try {
-        detail = await parser.getAdminDistributionDetail(editSummary.id);
-      } catch (e) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+    if (_openingComposer) return;
+    _openingComposer = true;
+    try {
+      AdminFileDistributionDetail? detail;
+      if (editSummary != null) {
+        try {
+          detail = await parser.getAdminDistributionDetail(editSummary.id);
+        } catch (e) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(e.toString())));
+          return;
+        }
+      }
+      if (!mounted) return;
+
+      if (splitView) {
+        setState(() {
+          _composingAdmin = true;
+          _editingAdminDetail = detail;
+        });
         return;
       }
-    }
-    if (!mounted) return;
 
-    if (splitView) {
-      setState(() {
-        _composingAdmin = true;
-        _editingAdminDetail = detail;
-      });
-      return;
-    }
-
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute(
-        builder: (ctx) => AdminComposerPane(
-          parser: parser,
-          initialDetail: detail,
-          onCancel: () => Navigator.of(ctx).pop(),
-          onSaved: (id) {
-            Navigator.of(ctx).pop();
-            setState(() => _selectedAdminId = id);
-            _loadAdminItems(parser);
-          },
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute(
+          builder: (ctx) => AdminComposerPane(
+            parser: parser,
+            initialDetail: detail,
+            onCancel: () => Navigator.of(ctx).pop(),
+            onDirtyCancel: () {
+              Navigator.of(ctx).pop();
+              _loadAdminItems(parser);
+            },
+            onSaved: (id) {
+              Navigator.of(ctx).pop();
+              setState(() => _selectedAdminId = id);
+              _loadAdminItems(parser);
+            },
+          ),
         ),
-      ),
-    );
+      );
+    } finally {
+      _openingComposer = false;
+    }
   }
 
   Widget _buildAdminModeSwitch(
@@ -1427,6 +1503,13 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
                       _composingAdmin = false;
                       _editingAdminDetail = null;
                     }),
+                    onDirtyCancel: () {
+                      setState(() {
+                        _composingAdmin = false;
+                        _editingAdminDetail = null;
+                      });
+                      _loadAdminItems(parser);
+                    },
                     onSaved: (id) {
                       setState(() {
                         _composingAdmin = false;
@@ -2006,6 +2089,7 @@ class _StorageCachedImageState extends ConsumerState<_StorageCachedImage> {
   }
 
   Future<void> _load() async {
+    if (!mounted) return;
     final gen = ++_loadGen;
     final url = widget.file.downloadUrl.toString();
     final name = widget.file.name;

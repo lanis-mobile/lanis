@@ -11,6 +11,7 @@ class AdminComposerPane extends StatefulWidget {
   final AdminFileDistributionDetail? initialDetail;
   final bool embeddedInSplitView;
   final VoidCallback onCancel;
+  final VoidCallback? onDirtyCancel;
   final ValueChanged<int> onSaved;
 
   const AdminComposerPane({
@@ -19,6 +20,7 @@ class AdminComposerPane extends StatefulWidget {
     this.initialDetail,
     this.embeddedInSplitView = false,
     required this.onCancel,
+    this.onDirtyCancel,
     required this.onSaved,
   });
 
@@ -83,7 +85,7 @@ class _AdminComposerPaneState extends State<AdminComposerPane> {
       firstDate: DateTime(2020),
       lastDate: DateTime(2100),
     );
-    if (picked == null) return;
+    if (picked == null || !mounted) return;
     setState(() {
       if (isFrom) {
         _validFrom = picked;
@@ -101,10 +103,18 @@ class _AdminComposerPaneState extends State<AdminComposerPane> {
 
   Future<void> _pickFiles() async {
     final files = await FilePicker.pickFiles();
-    if (files.isEmpty) return;
+    if (files.isEmpty || !mounted) return;
     setState(() {
       _pendingFiles.addAll(files.where((f) => f.path != null));
     });
+  }
+
+  void _handleCancel() {
+    if (_savedId != null && widget.onDirtyCancel != null) {
+      widget.onDirtyCancel!();
+    } else {
+      widget.onCancel();
+    }
   }
 
   Future<void> _submit() async {
@@ -141,28 +151,32 @@ class _AdminComposerPaneState extends State<AdminComposerPane> {
       _savedId = id;
 
       final failedFiles = <String>[];
-      while (_pendingFiles.isNotEmpty) {
-        final file = _pendingFiles.first;
-        final path = file.path;
-        if (path == null) {
-          _pendingFiles.removeAt(0);
-          continue;
-        }
-        final bytes = await File(path).readAsBytes();
-        final ok = await widget.parser.uploadFile(
-          id,
-          fileName: file.name,
-          bytes: bytes,
-        );
-        if (ok) {
-          if (mounted) {
-            setState(() => _pendingFiles.removeAt(0));
-          } else {
+      if (_mode == DistributionMode.textOnly) {
+        _pendingFiles.clear();
+      } else {
+        while (_pendingFiles.isNotEmpty) {
+          final file = _pendingFiles.first;
+          final path = file.path;
+          if (path == null) {
             _pendingFiles.removeAt(0);
+            continue;
           }
-        } else {
-          failedFiles.add(file.name);
-          break;
+          final bytes = await File(path).readAsBytes();
+          final ok = await widget.parser.uploadFile(
+            id,
+            fileName: file.name,
+            bytes: bytes,
+          );
+          if (ok) {
+            if (mounted) {
+              setState(() => _pendingFiles.removeAt(0));
+            } else {
+              _pendingFiles.removeAt(0);
+            }
+          } else {
+            failedFiles.add(file.name);
+            break;
+          }
         }
       }
 
@@ -287,7 +301,14 @@ class _AdminComposerPaneState extends State<AdminComposerPane> {
           ),
       ],
       onChanged: (value) {
-        if (value != null) setState(() => _mode = value);
+        if (value != null) {
+          setState(() {
+            _mode = value;
+            if (_mode == DistributionMode.textOnly) {
+              _pendingFiles.clear();
+            }
+          });
+        }
       },
     );
 
@@ -339,7 +360,7 @@ class _AdminComposerPaneState extends State<AdminComposerPane> {
                     ),
                   ),
                   TextButton(
-                    onPressed: _saving ? null : widget.onCancel,
+                    onPressed: _saving ? null : _handleCancel,
                     child: Text(l10n.cancel),
                   ),
                   const SizedBox(width: 8),
@@ -469,7 +490,7 @@ class _AdminComposerPaneState extends State<AdminComposerPane> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.close),
-          onPressed: _saving ? null : widget.onCancel,
+          onPressed: _saving ? null : _handleCancel,
         ),
         title: Text(
           _isEditing

@@ -30,6 +30,7 @@ class FileChip extends ConsumerStatefulWidget {
 class _FileChipState extends ConsumerState<FileChip> {
   bool _isLocal = false;
   String? _offlineCachedPath;
+  int _checkGen = 0;
 
   @override
   void initState() {
@@ -42,15 +43,19 @@ class _FileChipState extends ConsumerState<FileChip> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.file.url != widget.file.url ||
         oldWidget.file.name != widget.file.name) {
+      _isLocal = false;
+      _offlineCachedPath = null;
       Future.microtask(_checkLocalStatus);
     }
   }
 
   void _checkLocalStatus() {
+    if (!mounted) return;
+    final gen = ++_checkGen;
     final url = widget.file.url?.toString();
     final name = widget.file.name;
     if (url == null || name == null) {
-      if (mounted && (_isLocal || _offlineCachedPath != null)) {
+      if (_isLocal || _offlineCachedPath != null) {
         setState(() {
           _isLocal = false;
           _offlineCachedPath = null;
@@ -62,7 +67,7 @@ class _FileChipState extends ConsumerState<FileChip> {
     final offlineContext = ref.read(offlineCacheContextProvider);
     if (offlineContext != null) {
       final path = offlineContext.cachedDocument(url, name);
-      if (mounted) {
+      if (mounted && _checkGen == gen) {
         setState(() {
           _offlineCachedPath = path;
           _isLocal = path != null;
@@ -74,7 +79,7 @@ class _FileChipState extends ConsumerState<FileChip> {
     final storage = ref.read(storageManagerProvider);
     if (storage == null) return;
     storage.doesFileExist(url, name).then((exists) {
-      if (mounted && exists != _isLocal) {
+      if (mounted && _checkGen == gen && exists != _isLocal) {
         setState(() => _isLocal = exists);
       }
     });

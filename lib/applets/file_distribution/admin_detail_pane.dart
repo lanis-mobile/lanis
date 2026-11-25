@@ -155,6 +155,7 @@ class _AdminDetailPaneState extends State<AdminDetailPane> {
 
   Future<void> _uploadFile() async {
     if (_uploading) return;
+    final targetId = widget.summary.id;
     final files = await FilePicker.pickFiles();
     if (files.isEmpty || !mounted) return;
 
@@ -169,7 +170,7 @@ class _AdminDetailPaneState extends State<AdminDetailPane> {
         if (path == null) continue;
         final bytes = await File(path).readAsBytes();
         final ok = await widget.parser.uploadFile(
-          widget.summary.id,
+          targetId,
           fileName: file.name,
           bytes: bytes,
         );
@@ -515,6 +516,15 @@ class _AdminDetailPaneState extends State<AdminDetailPane> {
                             child: Text(l10n.tryAgain),
                           ),
                         ],
+                      )
+                    else if (_stats != null && _stats!.groups.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Text(
+                          '–',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: colorScheme.onSurfaceVariant),
+                        ),
                       )
                     else if (_stats != null && _stats!.groups.isNotEmpty)
                       Table(
