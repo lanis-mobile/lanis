@@ -134,4 +134,42 @@ void main() {
       expect(find.text('1.-3. Std. (135 Min.)'), findsOneWidget);
     },
   );
+
+  testWidgets(
+    'StudyGroupsModePage hides switcher and PageView when there are no exams',
+    (tester) async {
+      final noExamsData = StudentStudyGroups(
+        groups: [
+          StudentStudyGroup(
+            id: '4840',
+            semester: '2026/27 (1. Hj.)',
+            courseName: 'Sport GK',
+            courseSysId: 'SPO-GK-1',
+            teachers: [
+              StudentStudyGroupTeacher(
+                krz: 'KLE',
+                firstName: 'Tom',
+                lastName: 'Klein',
+                email: null,
+              ),
+            ],
+            exams: const [],
+          ),
+        ],
+        exams: const [],
+      );
+      final source = _FakeStudyGroupsSource(noExamsData);
+      addTearDown(source.dispose);
+
+      await pumpTestApp(
+        tester,
+        child: StudyGroupsModePage(dataSource: source),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SegmentedButton<int>), findsNothing);
+      expect(find.byType(PageView), findsNothing);
+      expect(find.text('SPO-GK-1'), findsOneWidget);
+    },
+  );
 }

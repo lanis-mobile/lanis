@@ -136,6 +136,8 @@ class _StudyGroupsModePageState extends ConsumerState<StudyGroupsModePage> {
             : null,
       ),
       builder: (context, data, accountType, settings, updateSetting, refresh) {
+        final exams = data.sortedExams;
+        final hasExams = exams.isNotEmpty;
         return Scaffold(
           appBar: AppBar(
             title: Text(l10n.studyGroups),
@@ -146,48 +148,53 @@ class _StudyGroupsModePageState extends ConsumerState<StudyGroupsModePage> {
                   )
                 : null,
           ),
-          body: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: SegmentedButton<int>(
-                    showSelectedIcon: false,
-                    segments: [
-                      ButtonSegment<int>(
-                        value: 0,
-                        icon: const Icon(Icons.groups_outlined, size: 16),
-                        label: Text(l10n.studyGroups),
-                      ),
-                      ButtonSegment<int>(
-                        value: 1,
-                        icon: const Icon(Icons.article_outlined, size: 16),
-                        label: Text(l10n.exams),
-                      ),
-                    ],
-                    selected: {_currentPage},
-                    onSelectionChanged: (selection) =>
-                        _selectPage(selection.first),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: PageView(
-                  controller: _pageController,
-                  onPageChanged: (index) {
-                    if (index != _currentPage) {
-                      setState(() => _currentPage = index);
-                    }
-                  },
+          body: !hasExams
+              ? StudentCourseView(studyGroup: data.groups)
+              : Column(
                   children: [
-                    StudentCourseView(studyGroup: data.groups),
-                    StudentExamsView(exams: data.sortedExams),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: SegmentedButton<int>(
+                          showSelectedIcon: false,
+                          segments: [
+                            ButtonSegment<int>(
+                              value: 0,
+                              icon: const Icon(Icons.groups_outlined, size: 16),
+                              label: Text(l10n.studyGroups),
+                            ),
+                            ButtonSegment<int>(
+                              value: 1,
+                              icon: const Icon(
+                                Icons.article_outlined,
+                                size: 16,
+                              ),
+                              label: Text(l10n.exams),
+                            ),
+                          ],
+                          selected: {_currentPage},
+                          onSelectionChanged: (selection) =>
+                              _selectPage(selection.first),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: PageView(
+                        controller: _pageController,
+                        onPageChanged: (index) {
+                          if (index != _currentPage) {
+                            setState(() => _currentPage = index);
+                          }
+                        },
+                        children: [
+                          StudentCourseView(studyGroup: data.groups),
+                          StudentExamsView(exams: exams),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
-              ),
-            ],
-          ),
         );
       },
     );
