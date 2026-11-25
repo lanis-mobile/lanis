@@ -7,6 +7,7 @@ import 'package:lanis/bridge/login_telemetry.dart';
 import 'package:lanis/generated/l10n.dart';
 
 import '../../../utils/file_operations.dart' as fo;
+import '../../../widgets/file_chip.dart';
 import '../../../widgets/format_text.dart';
 import 'homework_box.dart';
 
@@ -185,26 +186,17 @@ class _CourseOverviewAnsichtState extends ConsumerState<CourseOverviewAnsicht> {
                     );
                   }
 
-                  List<GestureDetector> files = [];
-                  for (FileInfo file in data!.history[index].files) {
-                    final foFile = fo.DownloadableFile(
-                      name: file.name,
-                      size: file.size,
-                      url: file.url,
-                    );
-                    files.add(
-                      GestureDetector(
-                        onLongPress: () {
-                          fo.showFileModal(context, foFile);
-                        },
-                        child: ActionChip(
-                          label: Text(file.name ?? "..."),
-                          onPressed: () =>
-                              fo.launchFile(context, foFile, () {}),
+                  final List<Widget> files = [
+                    for (final FileInfo file in data!.history[index].files)
+                      FileChip(
+                        file: fo.DownloadableFile(
+                          name: file.name,
+                          size: file.size,
+                          url: file.url,
                         ),
+                        fileExtension: file.extension,
                       ),
-                    );
-                  }
+                  ];
 
                   List<Widget> uploads = [];
                   for (var upload in data!.history[index].uploads.where(

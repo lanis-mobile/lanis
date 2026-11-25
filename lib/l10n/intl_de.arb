@@ -444,5 +444,34 @@
   "addFile": "Datei hinzufügen",
   "offlineDataUnavailable": "Offline nicht verfügbar",
   "evenCalendarWeeks": "Gerade KW",
-  "oddCalendarWeeks": "Ungerade KW"
+  "oddCalendarWeeks": "Ungerade KW",
+  "fileDistribution": "Dateiverteilung",
+  "fileDistributionEmpty": "Derzeit stehen keine Dateien zum Download zur Verfügung.",
+  "fileDistributionFilterAll": "Alle ({count})",
+  "@fileDistributionFilterAll": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "fileDistributionFilterUnread": "Neu ({count})",
+  "@fileDistributionFilterUnread": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "fileDistributionFilterFiles": "Dateien ({count})",
+  "@fileDistributionFilterFiles": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "fileDistributionNewBadge": "Neu",
+  "fileDistributionMarkAsRead": "Als gelesen markieren",
+  "fileDistributionMarkedAsRead": "Als gelesen markiert",
+  "fileDistributionMarkAsReadFailed": "Konnte nicht als gelesen markiert werden",
+  "fileDistributionNotice": "Hinweis",
+  "fileDistributionOnlyNotice": "Nur Mitteilung",
+  "fileDistributionErrorBadge": "Fehlerhinweis",
+  "fileDistributionOpenFile": "Öffnen",
+  "fileDistributionDownloadFile": "Laden"
 }

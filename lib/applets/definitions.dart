@@ -5,6 +5,7 @@ import 'package:lanis/applets/calendar/definition.dart';
 import 'package:lanis/applets/conversations/definition.dart';
 import 'package:lanis/applets/data_storage/definition.dart';
 import 'package:lanis/applets/external_definitions.dart';
+import 'package:lanis/applets/file_distribution/definition.dart';
 import 'package:lanis/applets/lessons/definition.dart';
 import 'package:lanis/applets/study_groups/definition.dart';
 import 'package:lanis/applets/substitutions/definition.dart';
@@ -152,6 +153,7 @@ class AppDefinitions {
     conversationsDefinition,
     lessonsDefinition,
     dataStorageDefinition,
+    fileDistributionDefinition,
     studyGroupsDefinition,
   ];
 
