@@ -444,5 +444,77 @@
   "addFile": "Datei hinzufügen",
   "offlineDataUnavailable": "Offline nicht verfügbar",
   "evenCalendarWeeks": "Gerade KW",
-  "oddCalendarWeeks": "Ungerade KW"
+  "oddCalendarWeeks": "Ungerade KW",
+  "fileDistribution": "Dateiverteilung",
+  "fileDistributionEmpty": "Derzeit stehen keine Dateien zum Download zur Verfügung.",
+  "fileDistributionFilterAll": "Alle ({count})",
+  "@fileDistributionFilterAll": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "fileDistributionFilterUnread": "Neu ({count})",
+  "@fileDistributionFilterUnread": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "fileDistributionFilterFiles": "Dateien ({count})",
+  "@fileDistributionFilterFiles": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "fileDistributionNewBadge": "Neu",
+  "fileDistributionOnlyNotice": "Nur Mitteilung",
+  "fileDistributionErrorBadge": "Fehlerhinweis",
+  "fileDistributionTabInbox": "Eingang",
+  "fileDistributionTabAdmin": "Verwaltung",
+  "fileDistributionAdminNew": "Neu",
+  "fileDistributionAdminNewTitle": "Neue Verteilung",
+  "fileDistributionAdminEditTitle": "Verteilung bearbeiten",
+  "fileDistributionAdminFilterActive": "Aktiv",
+  "fileDistributionAdminFilterScheduled": "Geplant",
+  "fileDistributionAdminFilterExpired": "Abgelaufen",
+  "fileDistributionAdminEmpty": "Noch keine Verteilungen vorhanden.",
+  "fileDistributionAdminReadProgress": "{retrieved} / {total} abgerufen",
+  "@fileDistributionAdminReadProgress": {
+    "placeholders": {
+      "retrieved": {},
+      "total": {}
+    }
+  },
+  "fileDistributionAdminStatistics": "Abrufstatistik",
+  "fileDistributionAdminGroup": "Gruppe",
+  "fileDistributionAdminRetrieved": "Abgerufen",
+  "fileDistributionAdminPending": "Offen",
+  "fileDistributionAdminDeleteTitle": "Verteilung löschen?",
+  "fileDistributionAdminDeleteConfirm": "Möchtest du „{title}“ einschließlich aller Dateien und Statistiken dauerhaft löschen?",
+  "@fileDistributionAdminDeleteConfirm": {
+    "placeholders": {
+      "title": {}
+    }
+  },
+  "fileDistributionAdminDeleted": "Verteilung gelöscht",
+  "fileDistributionAdminSaved": "Verteilung gespeichert",
+  "fileDistributionAdminFieldTitle": "Titel",
+  "fileDistributionAdminFieldTitleRequired": "Bitte gib einen Titel ein",
+  "fileDistributionAdminFieldNotice": "Hinweis / Beschreibung",
+  "fileDistributionAdminFieldAudience": "Zielgruppe",
+  "fileDistributionAdminAudienceStudents": "Lernende",
+  "fileDistributionAdminAudienceParents": "Eltern",
+  "fileDistributionAdminAudienceStudentsAndParents": "Lernende & Eltern",
+  "fileDistributionAdminAudienceTeachers": "Lehrkräfte",
+  "fileDistributionAdminValidFrom": "Von",
+  "fileDistributionAdminValidUntil": "Bis",
+  "fileDistributionAdminFieldMode": "Verteilungsmodus",
+  "fileDistributionAdminModeShared": "Gemeinsame Dateien",
+  "fileDistributionAdminModeRandom": "Zufällige Einzeldatei",
+  "fileDistributionAdminModeTextOnly": "Nur Mitteilung",
+  "fileDistributionAdminModePlaceholder": "Platzhalter-Dateien",
+  "fileDistributionAdminAddFiles": "Dateien hinzufügen",
+  "fileDistributionAdminFieldLinkUrl": "Info-Link URL (optional)",
+  "fileDistributionAdminFieldLinkTitle": "Link-Titel (optional)",
+  "fileDistributionAdminUploadFile": "Datei hochladen",
+  "fileDistributionAdminUploadSuccess": "Datei hochgeladen"
 }

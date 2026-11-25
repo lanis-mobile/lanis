@@ -2,6 +2,7 @@ import 'package:lanis/widgets/offline_banner.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:liblanis/liblanis.dart';
+import 'package:lanis/applets/file_distribution/file_distribution_view.dart';
 import 'package:lanis/applets/substitutions/substitutions_view.dart';
 import 'package:lanis/applets/timetable/parent/parent_timetable_view.dart';
 import 'package:lanis/applets/timetable/student/student_timetable_better_view.dart';
@@ -24,6 +25,7 @@ class OfflineAppletPage extends StatefulWidget {
 class _OfflineAppletPageState extends State<OfflineAppletPage> {
   CachedDataSource<TimeTable>? _timetable;
   CachedDataSource<SubstitutionPlan>? _substitutions;
+  CachedDataSource<FileDistributionHome>? _fileDistribution;
   @override
   void initState() {
     super.initState();
@@ -54,6 +56,12 @@ class _OfflineAppletPageState extends State<OfflineAppletPage> {
           );
         },
       );
+    } else if (widget.home.applet.appletPhpUrl ==
+        Applets.fileDistribution.appletPhpUrl) {
+      _fileDistribution = CachedDataSource(
+        cacheOnly: true,
+        read: () => cache.read(FileDistributionParserCacheRequests.getHome()),
+      );
     }
   }
 
@@ -61,6 +69,7 @@ class _OfflineAppletPageState extends State<OfflineAppletPage> {
   void dispose() {
     _timetable?.dispose();
     _substitutions?.dispose();
+    _fileDistribution?.dispose();
     super.dispose();
   }
 
@@ -79,6 +88,12 @@ class _OfflineAppletPageState extends State<OfflineAppletPage> {
             : _substitutions != null
             ? SubstitutionsView(
                 dataSource: _substitutions,
+                settings: offline.settings,
+                accountType: offline.account.accountType,
+              )
+            : _fileDistribution != null
+            ? FileDistributionView(
+                dataSource: _fileDistribution,
                 settings: offline.settings,
                 accountType: offline.account.accountType,
               )

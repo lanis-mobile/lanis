@@ -456,5 +456,77 @@
   "addFile": "Add file",
   "offlineDataUnavailable": "Not available offline",
   "evenCalendarWeeks": "Even calendar weeks",
-  "oddCalendarWeeks": "Odd calendar weeks"
+  "oddCalendarWeeks": "Odd calendar weeks",
+  "fileDistribution": "File Distribution",
+  "fileDistributionEmpty": "No files are currently available for download.",
+  "fileDistributionFilterAll": "All ({count})",
+  "@fileDistributionFilterAll": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "fileDistributionFilterUnread": "New ({count})",
+  "@fileDistributionFilterUnread": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "fileDistributionFilterFiles": "Files ({count})",
+  "@fileDistributionFilterFiles": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "fileDistributionNewBadge": "New",
+  "fileDistributionOnlyNotice": "Notice only",
+  "fileDistributionErrorBadge": "Error notice",
+  "fileDistributionTabInbox": "Inbox",
+  "fileDistributionTabAdmin": "Manage",
+  "fileDistributionAdminNew": "New",
+  "fileDistributionAdminNewTitle": "New distribution",
+  "fileDistributionAdminEditTitle": "Edit distribution",
+  "fileDistributionAdminFilterActive": "Active",
+  "fileDistributionAdminFilterScheduled": "Scheduled",
+  "fileDistributionAdminFilterExpired": "Expired",
+  "fileDistributionAdminEmpty": "No distributions created yet.",
+  "fileDistributionAdminReadProgress": "{retrieved} / {total} retrieved",
+  "@fileDistributionAdminReadProgress": {
+    "placeholders": {
+      "retrieved": {},
+      "total": {}
+    }
+  },
+  "fileDistributionAdminStatistics": "Retrieval statistics",
+  "fileDistributionAdminGroup": "Group",
+  "fileDistributionAdminRetrieved": "Retrieved",
+  "fileDistributionAdminPending": "Pending",
+  "fileDistributionAdminDeleteTitle": "Delete distribution?",
+  "fileDistributionAdminDeleteConfirm": "Permanently delete \"{title}\" including all files and statistics?",
+  "@fileDistributionAdminDeleteConfirm": {
+    "placeholders": {
+      "title": {}
+    }
+  },
+  "fileDistributionAdminDeleted": "Distribution deleted",
+  "fileDistributionAdminSaved": "Distribution saved",
+  "fileDistributionAdminFieldTitle": "Title",
+  "fileDistributionAdminFieldTitleRequired": "Please enter a title",
+  "fileDistributionAdminFieldNotice": "Notice / Description",
+  "fileDistributionAdminFieldAudience": "Target audience",
+  "fileDistributionAdminAudienceStudents": "Students",
+  "fileDistributionAdminAudienceParents": "Parents",
+  "fileDistributionAdminAudienceStudentsAndParents": "Students & Parents",
+  "fileDistributionAdminAudienceTeachers": "Teachers",
+  "fileDistributionAdminValidFrom": "From",
+  "fileDistributionAdminValidUntil": "Until",
+  "fileDistributionAdminFieldMode": "Distribution mode",
+  "fileDistributionAdminModeShared": "Shared files",
+  "fileDistributionAdminModeRandom": "Random single file",
+  "fileDistributionAdminModeTextOnly": "Notice only",
+  "fileDistributionAdminModePlaceholder": "Placeholder files",
+  "fileDistributionAdminAddFiles": "Add files",
+  "fileDistributionAdminFieldLinkUrl": "Info link URL (optional)",
+  "fileDistributionAdminFieldLinkTitle": "Link title (optional)",
+  "fileDistributionAdminUploadFile": "Upload file",
+  "fileDistributionAdminUploadSuccess": "File uploaded"
 }
