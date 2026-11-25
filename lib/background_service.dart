@@ -17,6 +17,37 @@ import 'package:lanis/utils/privacy_policy.dart';
 
 const _oneShotTaskId = 'com.transistorsoft.notftask';
 
+String? resolveAccountNotificationLabel(
+  AccountSummary current,
+  List<AccountSummary> allAccounts,
+) {
+  if (allAccounts.length <= 1) return null;
+
+  final currentName = current.username.trim();
+  final currentNameNorm = currentName.toLowerCase();
+  final currentSchoolNorm = current.schoolName.trim().toLowerCase();
+
+  final sameNameCount = allAccounts
+      .where((a) => a.username.trim().toLowerCase() == currentNameNorm)
+      .length;
+  if (sameNameCount <= 1) {
+    return currentName;
+  }
+
+  final sameNameAndSchoolCount = allAccounts
+      .where(
+        (a) =>
+            a.username.trim().toLowerCase() == currentNameNorm &&
+            a.schoolName.trim().toLowerCase() == currentSchoolNorm,
+      )
+      .length;
+  if (sameNameAndSchoolCount <= 1) {
+    return current.schoolName.trim();
+  }
+
+  return '${current.username.toLowerCase()}@${current.schoolName}';
+}
+
 /// Android headless entry (app swiped away). iOS ignores this registration.
 @pragma('vm:entry-point')
 void backgroundFetchHeadlessTask(HeadlessEvent event) async {
@@ -204,6 +235,8 @@ Future<void> callbackDispatcher() async {
         final account = container.read(activeAccountProvider);
         if (account == null) continue;
 
+        final accountLabel = resolveAccountNotificationLabel(summary, accounts);
+
         var authenticated = false;
 
         for (final applet in AppDefinitions.applets.where(
@@ -244,6 +277,7 @@ Future<void> callbackDispatcher() async {
               settings: settings,
               appletId: applet.appletPhpUrl,
               multiAccount: accounts.length > 1,
+              accountLabel: accountLabel,
               defaultRedirectUri: appletHomePath(applet, accountType),
             ),
           );
@@ -270,6 +304,7 @@ class BackgroundTaskToolkit {
   final TypedSettings settings;
   final String appletId;
   final bool multiAccount;
+  final String? accountLabel;
   final String? defaultRedirectUri;
 
   BackgroundTaskToolkit({
@@ -279,6 +314,7 @@ class BackgroundTaskToolkit {
     required this.settings,
     required this.appletId,
     this.multiAccount = false,
+    this.accountLabel,
     this.defaultRedirectUri,
   });
 
@@ -301,9 +337,9 @@ class BackgroundTaskToolkit {
       throw ArgumentError('id must be between 0 and 10000');
     }
     id = _seedId(id);
-    message = multiAccount
-        ? '${username.toLowerCase()}@$schoolName\n$message'
-        : message;
+    final effectiveAccountLabel =
+        accountLabel ??
+        (multiAccount ? '${username.toLowerCase()}@$schoolName' : null);
     if (avoidDuplicateSending) {
       final hash = hashString(message);
       final key = 'notif-dupe/$appletId/$id';
@@ -326,12 +362,14 @@ class BackgroundTaskToolkit {
         'io.github.alessioc42.sphplan',
         'lanis-mobile',
         channelDescription: 'Applet notifications',
+        subText: effectiveAccountLabel,
         importance: Importance.high,
         priority: Priority.high,
         styleInformation: BigTextStyleInformation(message),
         ongoing: false,
       );
-      const iOSDetails = DarwinNotificationDetails(
+      final iOSDetails = DarwinNotificationDetails(
+        subtitle: effectiveAccountLabel,
         presentAlert: false,
         presentBadge: true,
       );

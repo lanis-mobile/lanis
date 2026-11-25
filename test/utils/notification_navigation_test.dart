@@ -400,6 +400,149 @@ void main() {
         }),
       );
     });
+
+    test('sets Android subText and keeps body clean when accountLabel is set', () async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      AndroidFlutterLocalNotificationsPlugin.registerWith();
+
+      final calls = <MethodCall>[];
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(flnChannel, (call) async {
+            calls.add(call);
+            return null;
+          });
+
+      final db = LanisDatabase.open();
+      addTearDown(db.dispose);
+      final toolkit = BackgroundTaskToolkit(
+        accountId: 1,
+        username: 'max.mustermann',
+        schoolName: 'Goethe-Gymnasium',
+        settings: TypedSettings.account(db, 1),
+        appletId: 'nachrichten.php',
+        multiAccount: true,
+        accountLabel: 'Max Mustermann',
+      );
+
+      await toolkit.sendMessage(title: 'Chat', message: 'Hallo Welt', id: 1);
+
+      expect(calls, hasLength(1));
+      final args = Map<String, dynamic>.from(calls.single.arguments as Map);
+      final platformDetails = Map<String, dynamic>.from(
+        args['platformSpecifics'] as Map,
+      );
+      expect(args['body'], 'Hallo Welt');
+      expect(platformDetails['subText'], 'Max Mustermann');
+    });
+
+    test('sets iOS subtitle and keeps body clean when accountLabel is set', () async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      IOSFlutterLocalNotificationsPlugin.registerWith();
+
+      final calls = <MethodCall>[];
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(flnChannel, (call) async {
+            calls.add(call);
+            return null;
+          });
+
+      final db = LanisDatabase.open();
+      addTearDown(db.dispose);
+      final toolkit = BackgroundTaskToolkit(
+        accountId: 1,
+        username: 'max.mustermann',
+        schoolName: 'Goethe-Gymnasium',
+        settings: TypedSettings.account(db, 1),
+        appletId: 'nachrichten.php',
+        multiAccount: true,
+        accountLabel: 'Goethe-Gymnasium',
+      );
+
+      await toolkit.sendMessage(title: 'Chat', message: 'Hallo Welt', id: 1);
+
+      expect(calls, hasLength(1));
+      final args = Map<String, dynamic>.from(calls.single.arguments as Map);
+      final platformDetails = Map<String, dynamic>.from(
+        args['platformSpecifics'] as Map,
+      );
+      expect(args['body'], 'Hallo Welt');
+      expect(platformDetails['subtitle'], 'Goethe-Gymnasium');
+    });
+  });
+
+  group('resolveAccountNotificationLabel', () {
+    AccountSummary summary({
+      required int id,
+      required String username,
+      required String schoolName,
+    }) => AccountSummary(
+      localId: id,
+      schoolID: id,
+      username: username,
+      schoolName: schoolName,
+      creationDate: DateTime(2026),
+    );
+
+    test('returns null for single account', () {
+      final a = summary(
+        id: 1,
+        username: 'max.mustermann',
+        schoolName: 'Goethe-Gymnasium',
+      );
+      expect(resolveAccountNotificationLabel(a, [a]), isNull);
+    });
+
+    test('uses username when usernames differ', () {
+      final a = summary(
+        id: 1,
+        username: 'max.mustermann',
+        schoolName: 'Goethe-Gymnasium',
+      );
+      final b = summary(
+        id: 2,
+        username: 'lisa.mustermann',
+        schoolName: 'Goethe-Gymnasium',
+      );
+      expect(resolveAccountNotificationLabel(a, [a, b]), 'max.mustermann');
+      expect(resolveAccountNotificationLabel(b, [a, b]), 'lisa.mustermann');
+    });
+
+    test('uses schoolName when usernames match but schools differ', () {
+      final a = summary(
+        id: 1,
+        username: 'mus',
+        schoolName: 'Goethe-Gymnasium',
+      );
+      final b = summary(
+        id: 2,
+        username: 'mus',
+        schoolName: 'Schiller-Schule',
+      );
+      expect(resolveAccountNotificationLabel(a, [a, b]), 'Goethe-Gymnasium');
+      expect(resolveAccountNotificationLabel(b, [a, b]), 'Schiller-Schule');
+    });
+
+    test('disambiguates per account with mixed usernames and schools', () {
+      final a = summary(
+        id: 1,
+        username: 'max.m',
+        schoolName: 'Goethe-Gymnasium',
+      );
+      final b = summary(
+        id: 2,
+        username: 'max.m',
+        schoolName: 'Schiller-Schule',
+      );
+      final c = summary(
+        id: 3,
+        username: 'lisa.m',
+        schoolName: 'Goethe-Gymnasium',
+      );
+      final all = [a, b, c];
+      expect(resolveAccountNotificationLabel(a, all), 'Goethe-Gymnasium');
+      expect(resolveAccountNotificationLabel(b, all), 'Schiller-Schule');
+      expect(resolveAccountNotificationLabel(c, all), 'lisa.m');
+    });
   });
 
   group('End-to-end router + auth + NotificationNavigationDriver', () {
