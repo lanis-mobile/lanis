@@ -206,20 +206,129 @@ class _AdminComposerPaneState extends State<AdminComposerPane> {
           l10n.fileDistributionAdminModePlaceholder,
       };
 
+  Widget _buildDateField({
+    required String label,
+    required DateTime value,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(4),
+      onTap: onTap,
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: label,
+          isDense: true,
+          border: const OutlineInputBorder(),
+          prefixIcon: Icon(icon, size: 18),
+          prefixIconConstraints: const BoxConstraints(
+            minWidth: 38,
+            minHeight: 0,
+          ),
+        ),
+        child: Text(
+          _dateFormat.format(value),
+          maxLines: 1,
+          softWrap: false,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
+    );
+  }
+
   Widget _buildFormBody(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final titleText = _isEditing
         ? l10n.fileDistributionAdminEditTitle
         : l10n.fileDistributionAdminNewTitle;
+    final wide = widget.embeddedInSplitView;
+
+    final audienceField = DropdownButtonFormField<DistributionAudience>(
+      initialValue: _audience,
+      isExpanded: true,
+      decoration: InputDecoration(
+        labelText: l10n.fileDistributionAdminFieldAudience,
+        isDense: true,
+        border: const OutlineInputBorder(),
+      ),
+      items: [
+        for (final a in DistributionAudience.values)
+          DropdownMenuItem(
+            value: a,
+            child: Text(
+              _audienceLabel(l10n, a),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+      ],
+      onChanged: (value) {
+        if (value != null) setState(() => _audience = value);
+      },
+    );
+
+    final modeField = DropdownButtonFormField<DistributionMode>(
+      initialValue: _mode,
+      isExpanded: true,
+      decoration: InputDecoration(
+        labelText: l10n.fileDistributionAdminFieldMode,
+        isDense: true,
+        border: const OutlineInputBorder(),
+      ),
+      items: [
+        for (final m in DistributionMode.values)
+          DropdownMenuItem(
+            value: m,
+            child: Text(
+              _modeLabel(l10n, m),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+      ],
+      onChanged: (value) {
+        if (value != null) setState(() => _mode = value);
+      },
+    );
+
+    final linkUrlField = TextFormField(
+      controller: _linkUrlController,
+      keyboardType: TextInputType.url,
+      decoration: InputDecoration(
+        labelText: l10n.fileDistributionAdminFieldLinkUrl,
+        isDense: true,
+        border: const OutlineInputBorder(),
+      ),
+      validator: (v) {
+        final text = v?.trim() ?? '';
+        if (text.isEmpty) return null;
+        final uri = Uri.tryParse(text);
+        if (uri == null ||
+            !(uri.scheme == 'http' || uri.scheme == 'https') ||
+            uri.host.isEmpty) {
+          return l10n.error;
+        }
+        return null;
+      },
+    );
+
+    final linkTitleField = TextFormField(
+      controller: _linkTitleController,
+      decoration: InputDecoration(
+        labelText: l10n.fileDistributionAdminFieldLinkTitle,
+        isDense: true,
+        border: const OutlineInputBorder(),
+      ),
+    );
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(wide ? 20 : 16),
       child: Form(
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (widget.embeddedInSplitView) ...[
+            if (wide) ...[
               Row(
                 children: [
                   Expanded(
@@ -246,110 +355,82 @@ class _AdminComposerPaneState extends State<AdminComposerPane> {
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
             ],
             TextFormField(
               controller: _titleController,
               decoration: InputDecoration(
                 labelText: l10n.fileDistributionAdminFieldTitle,
+                isDense: true,
                 border: const OutlineInputBorder(),
               ),
               validator: (v) => v == null || v.trim().isEmpty
                   ? l10n.fileDistributionAdminFieldTitleRequired
                   : null,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             TextFormField(
               controller: _noticeController,
-              maxLines: 4,
+              minLines: 3,
+              maxLines: 5,
               decoration: InputDecoration(
                 labelText: l10n.fileDistributionAdminFieldNotice,
                 alignLabelWithHint: true,
+                isDense: true,
                 border: const OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 16),
-            Text(
-              l10n.fileDistributionAdminFieldAudience,
-              style: Theme.of(context).textTheme.labelLarge,
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              children: [
-                for (final a in DistributionAudience.values)
-                  ChoiceChip(
-                    label: Text(_audienceLabel(l10n, a)),
-                    selected: _audience == a,
-                    onSelected: (_) => setState(() => _audience = a),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              l10n.fileDistributionAdminFieldValidity,
-              style: Theme.of(context).textTheme.labelLarge,
-            ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
+            if (wide)
+              Row(
+                children: [
+                  Expanded(child: audienceField),
+                  const SizedBox(width: 12),
+                  Expanded(child: modeField),
+                ],
+              )
+            else ...[
+              audienceField,
+              const SizedBox(height: 12),
+              modeField,
+            ],
+            const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => _pickDate(isFrom: true),
-                    icon: const Icon(Icons.calendar_today_outlined, size: 16),
-                    label: Text(
-                      '${l10n.fileDistributionAdminValidFrom}: ${_dateFormat.format(_validFrom)}',
-                    ),
+                  child: _buildDateField(
+                    label: l10n.fileDistributionAdminValidFrom,
+                    value: _validFrom,
+                    icon: Icons.calendar_today_outlined,
+                    onTap: () => _pickDate(isFrom: true),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => _pickDate(isFrom: false),
-                    icon: const Icon(Icons.event_outlined, size: 16),
-                    label: Text(
-                      '${l10n.fileDistributionAdminValidUntil}: ${_dateFormat.format(_validUntil)}',
-                    ),
+                  child: _buildDateField(
+                    label: l10n.fileDistributionAdminValidUntil,
+                    value: _validUntil,
+                    icon: Icons.event_outlined,
+                    onTap: () => _pickDate(isFrom: false),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            Text(
-              l10n.fileDistributionAdminFieldMode,
-              style: Theme.of(context).textTheme.labelLarge,
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              children: [
-                for (final m in DistributionMode.values)
-                  ChoiceChip(
-                    label: Text(_modeLabel(l10n, m)),
-                    selected: _mode == m,
-                    onSelected: (_) => setState(() => _mode = m),
-                  ),
-              ],
-            ),
             if (_mode != DistributionMode.textOnly) ...[
-              const SizedBox(height: 16),
-              Text(
-                l10n.fileDistributionAdminFieldFiles,
-                style: Theme.of(context).textTheme.labelLarge,
-              ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               Wrap(
                 spacing: 8,
                 runSpacing: 6,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   for (var i = 0; i < _pendingFiles.length; i++)
                     InputChip(
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       label: Text(_pendingFiles[i].name),
                       onDeleted: () => setState(() => _pendingFiles.removeAt(i)),
                     ),
                   ActionChip(
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     avatar: const Icon(Icons.attach_file, size: 18),
                     label: Text(l10n.fileDistributionAdminAddFiles),
                     onPressed: _pickFiles,
@@ -357,34 +438,21 @@ class _AdminComposerPaneState extends State<AdminComposerPane> {
                 ],
               ),
             ],
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _linkUrlController,
-              keyboardType: TextInputType.url,
-              decoration: InputDecoration(
-                labelText: l10n.fileDistributionAdminFieldLinkUrl,
-                border: const OutlineInputBorder(),
-              ),
-              validator: (v) {
-                final text = v?.trim() ?? '';
-                if (text.isEmpty) return null;
-                final uri = Uri.tryParse(text);
-                if (uri == null ||
-                    !(uri.scheme == 'http' || uri.scheme == 'https') ||
-                    uri.host.isEmpty) {
-                  return l10n.error;
-                }
-                return null;
-              },
-            ),
             const SizedBox(height: 12),
-            TextFormField(
-              controller: _linkTitleController,
-              decoration: InputDecoration(
-                labelText: l10n.fileDistributionAdminFieldLinkTitle,
-                border: const OutlineInputBorder(),
-              ),
-            ),
+            if (wide)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: linkUrlField),
+                  const SizedBox(width: 12),
+                  Expanded(child: linkTitleField),
+                ],
+              )
+            else ...[
+              linkUrlField,
+              const SizedBox(height: 12),
+              linkTitleField,
+            ],
           ],
         ),
       ),
