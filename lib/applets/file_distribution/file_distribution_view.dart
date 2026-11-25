@@ -630,24 +630,32 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
       children: [
         SizedBox(
           width: 320,
-          child: Scaffold(
-            appBar: _buildAppBar(context),
-            body: Column(
-              children: [
-                if (data.isAdmin && !isOffline && parser is FileDistributionParser)
-                  _buildAdminModeSwitch(context, parser),
-                Expanded(
-                  child: refresh != null
-                      ? RefreshIndicator(onRefresh: refresh, child: masterList)
-                      : masterList,
-                ),
-              ],
+          child: MediaQuery.removePadding(
+            context: context,
+            removeLeft: true,
+            removeRight: true,
+            child: Scaffold(
+              appBar: _buildAppBar(context),
+              body: Column(
+                children: [
+                  if (data.isAdmin &&
+                      !isOffline &&
+                      parser is FileDistributionParser)
+                    _buildAdminModeSwitch(context, parser),
+                  Expanded(
+                    child: refresh != null
+                        ? RefreshIndicator(onRefresh: refresh, child: masterList)
+                        : masterList,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
         const VerticalDivider(width: 1),
         Expanded(
           child: SafeArea(
+            left: false,
             child: selected == null
                 ? const SizedBox.shrink()
                 : _buildTabletDetail(context, selected, parser, isOffline),
@@ -1325,29 +1333,35 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
       children: [
         SizedBox(
           width: 320,
-          child: Scaffold(
-            appBar: _buildAppBar(context),
-            floatingActionButton: FloatingActionButton.extended(
-              onPressed: () => _openAdminComposer(parser, splitView: true),
-              icon: const Icon(Icons.add),
-              label: Text(l10n.fileDistributionAdminNew),
-            ),
-            body: Column(
-              children: [
-                _buildAdminModeSwitch(context, parser),
-                Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: () => _loadAdminItems(parser),
-                    child: sidebarList,
+          child: MediaQuery.removePadding(
+            context: context,
+            removeLeft: true,
+            removeRight: true,
+            child: Scaffold(
+              appBar: _buildAppBar(context),
+              floatingActionButton: FloatingActionButton.extended(
+                onPressed: () => _openAdminComposer(parser, splitView: true),
+                icon: const Icon(Icons.add),
+                label: Text(l10n.fileDistributionAdminNew),
+              ),
+              body: Column(
+                children: [
+                  _buildAdminModeSwitch(context, parser),
+                  Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: () => _loadAdminItems(parser),
+                      child: sidebarList,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
         const VerticalDivider(width: 1),
         Expanded(
           child: SafeArea(
+            left: false,
             child: _composingAdmin
                 ? AdminComposerPane(
                     key: ValueKey('composer-${_editingAdminDetail?.id ?? 0}'),
