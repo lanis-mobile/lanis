@@ -100,23 +100,28 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
       _routerDelegate = delegate;
       _routerDelegate?.addListener(_onRouteChanged);
     }
-    _syncDeepLinkFromRouter();
+    _syncDeepLinkFromRouter(notify: false);
   }
 
   void _onRouteChanged() {
     if (!mounted) return;
-    _syncDeepLinkFromRouter();
+    _syncDeepLinkFromRouter(notify: true);
   }
 
-  void _syncDeepLinkFromRouter() {
+  void _syncDeepLinkFromRouter({required bool notify}) {
     final uri = GoRouter.maybeOf(context)?.state.uri;
     if (uri == null) return;
     final uriKey = uri.toString();
     if (uriKey == _lastDeepLinkUri) return;
     _lastDeepLinkUri = uriKey;
+    if (!fileDistributionDefinition.matchesLocation(uri.path)) return;
     final routeId = int.tryParse(uri.queryParameters['id'] ?? '');
     if (routeId != null) {
-      setState(() => _applyDeepLinkId(routeId));
+      if (notify) {
+        setState(() => _applyDeepLinkId(routeId));
+      } else {
+        _applyDeepLinkId(routeId);
+      }
     }
   }
 
@@ -1036,10 +1041,7 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
             parser: parser,
             initialDetail: detail,
             onCancel: () => Navigator.of(ctx).pop(),
-            onDirtyCancel: () {
-              Navigator.of(ctx).pop();
-              _loadAdminItems(parser);
-            },
+            onDirtyCancel: () => _loadAdminItems(parser),
             onSaved: (id) {
               Navigator.of(ctx).pop();
               setState(() => _selectedAdminId = id);

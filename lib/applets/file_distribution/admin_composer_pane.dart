@@ -43,6 +43,7 @@ class _AdminComposerPaneState extends State<AdminComposerPane> {
   late DateTime _validUntil;
   final List<PlatformFile> _pendingFiles = [];
   int? _savedId;
+  bool _completed = false;
   bool _saving = false;
 
   bool get _isEditing => widget.initialDetail != null || _savedId != null;
@@ -110,7 +111,9 @@ class _AdminComposerPaneState extends State<AdminComposerPane> {
   }
 
   void _handleCancel() {
-    if (_savedId != null && widget.onDirtyCancel != null) {
+    if (widget.embeddedInSplitView &&
+        _savedId != null &&
+        widget.onDirtyCancel != null) {
       widget.onDirtyCancel!();
     } else {
       widget.onCancel();
@@ -187,6 +190,7 @@ class _AdminComposerPaneState extends State<AdminComposerPane> {
         );
         return;
       }
+      _completed = true;
       messenger.showSnackBar(
         SnackBar(content: Text(l10n.fileDistributionAdminSaved)),
       );
@@ -486,34 +490,41 @@ class _AdminComposerPaneState extends State<AdminComposerPane> {
       return _buildFormBody(context);
     }
     final l10n = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: _saving ? null : _handleCancel,
-        ),
-        title: Text(
-          _isEditing
-              ? l10n.fileDistributionAdminEditTitle
-              : l10n.fileDistributionAdminNewTitle,
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: FilledButton(
-              onPressed: _saving ? null : _submit,
-              child: _saving
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Text(l10n.save),
-            ),
+    return PopScope(
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop && _savedId != null && !_completed) {
+          widget.onDirtyCancel?.call();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: _saving ? null : _handleCancel,
           ),
-        ],
+          title: Text(
+            _isEditing
+                ? l10n.fileDistributionAdminEditTitle
+                : l10n.fileDistributionAdminNewTitle,
+          ),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: FilledButton(
+                onPressed: _saving ? null : _submit,
+                child: _saving
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(l10n.save),
+              ),
+            ),
+          ],
+        ),
+        body: _buildFormBody(context),
       ),
-      body: _buildFormBody(context),
     );
   }
 }
