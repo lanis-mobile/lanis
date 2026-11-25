@@ -473,5 +473,57 @@
   "fileDistributionOnlyNotice": "Nur Mitteilung",
   "fileDistributionErrorBadge": "Fehlerhinweis",
   "fileDistributionOpenFile": "Öffnen",
-  "fileDistributionDownloadFile": "Laden"
+  "fileDistributionDownloadFile": "Laden",
+  "fileDistributionTabInbox": "Eingang",
+  "fileDistributionTabAdmin": "Verwaltung",
+  "fileDistributionAdminNew": "Neu",
+  "fileDistributionAdminNewTitle": "Neue Verteilung",
+  "fileDistributionAdminEditTitle": "Verteilung bearbeiten",
+  "fileDistributionAdminFilterActive": "Aktiv",
+  "fileDistributionAdminFilterScheduled": "Geplant",
+  "fileDistributionAdminFilterExpired": "Abgelaufen",
+  "fileDistributionAdminEmpty": "Noch keine Verteilungen vorhanden.",
+  "fileDistributionAdminReadProgress": "{retrieved} / {total} abgerufen",
+  "@fileDistributionAdminReadProgress": {
+    "placeholders": {
+      "retrieved": {},
+      "total": {}
+    }
+  },
+  "fileDistributionAdminStatistics": "Abrufstatistik",
+  "fileDistributionAdminGroup": "Gruppe",
+  "fileDistributionAdminRetrieved": "Abgerufen",
+  "fileDistributionAdminPending": "Offen",
+  "fileDistributionAdminDeleteTitle": "Verteilung löschen?",
+  "fileDistributionAdminDeleteConfirm": "Möchtest du „{title}“ einschließlich aller Dateien und Statistiken dauerhaft löschen?",
+  "@fileDistributionAdminDeleteConfirm": {
+    "placeholders": {
+      "title": {}
+    }
+  },
+  "fileDistributionAdminDeleted": "Verteilung gelöscht",
+  "fileDistributionAdminSaved": "Verteilung gespeichert",
+  "fileDistributionAdminFieldTitle": "Titel",
+  "fileDistributionAdminFieldTitleRequired": "Bitte gib einen Titel ein",
+  "fileDistributionAdminFieldNotice": "Hinweis / Beschreibung",
+  "fileDistributionAdminFieldAudience": "Zielgruppe",
+  "fileDistributionAdminAudienceStudents": "Lernende",
+  "fileDistributionAdminAudienceParents": "Eltern",
+  "fileDistributionAdminAudienceStudentsAndParents": "Lernende & Eltern",
+  "fileDistributionAdminAudienceTeachers": "Lehrkräfte",
+  "fileDistributionAdminFieldValidity": "Gültigkeitszeitraum",
+  "fileDistributionAdminValidFrom": "Von",
+  "fileDistributionAdminValidUntil": "Bis",
+  "fileDistributionAdminFieldMode": "Verteilungsmodus",
+  "fileDistributionAdminModeShared": "Gemeinsame Dateien",
+  "fileDistributionAdminModeRandom": "Zufällige Einzeldatei",
+  "fileDistributionAdminModeTextOnly": "Nur Mitteilung",
+  "fileDistributionAdminModePlaceholder": "Platzhalter-Dateien",
+  "fileDistributionAdminFieldFiles": "Dateien",
+  "fileDistributionAdminAddFiles": "Dateien hinzufügen",
+  "fileDistributionAdminFieldLinkUrl": "Info-Link URL (optional)",
+  "fileDistributionAdminFieldLinkTitle": "Link-Titel (optional)",
+  "fileDistributionAdminUploadFile": "Datei hochladen",
+  "fileDistributionAdminUploadSuccess": "Datei hochgeladen",
+  "fileDistributionAdminOfflineNotice": "Verwaltung ist im Offline-Modus nicht verfügbar."
 }

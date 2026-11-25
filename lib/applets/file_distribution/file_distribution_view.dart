@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:lanis/applets/file_distribution/admin_composer_pane.dart';
+import 'package:lanis/applets/file_distribution/admin_detail_pane.dart';
 import 'package:lanis/applets/file_distribution/definition.dart';
 import 'package:lanis/features/offline/cache_context.dart';
 import 'package:lanis/generated/l10n.dart';
@@ -16,6 +18,8 @@ import 'package:liblanis/liblanis.dart';
 import 'package:material_ui/material_ui.dart';
 
 enum _DistributionFilter { all, unread, files }
+
+enum _AdminFilter { all, active, scheduled, expired }
 
 class FileDistributionView extends ConsumerStatefulWidget {
   final Function? openDrawerCb;
@@ -46,6 +50,15 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
   final Set<int> _locallyReadIds = {};
   final Set<int> _markingReadIds = {};
   final ValueNotifier<int> _scrollTick = ValueNotifier<int>(0);
+
+  bool _adminTab = false;
+  _AdminFilter _adminFilter = _AdminFilter.all;
+  List<AdminFileDistributionSummary>? _adminItems;
+  bool _loadingAdmin = false;
+  String? _adminError;
+  int? _selectedAdminId;
+  bool _composingAdmin = false;
+  AdminFileDistributionDetail? _editingAdminDetail;
 
   @override
   void dispose() {
@@ -610,9 +623,17 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
           width: 320,
           child: Scaffold(
             appBar: _buildAppBar(context),
-            body: refresh != null
-                ? RefreshIndicator(onRefresh: refresh, child: masterList)
-                : masterList,
+            body: Column(
+              children: [
+                if (data.isAdmin && !isOffline && parser is FileDistributionParser)
+                  _buildAdminModeSwitch(context, parser),
+                Expanded(
+                  child: refresh != null
+                      ? RefreshIndicator(onRefresh: refresh, child: masterList)
+                      : masterList,
+                ),
+              ],
+            ),
           ),
         ),
         const VerticalDivider(width: 1),
@@ -746,6 +767,573 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
     );
   }
 
+  Future<void> _loadAdminItems(FileDistributionParser parser) async {
+    if (_loadingAdmin) return;
+    setState(() {
+      _loadingAdmin = true;
+      _adminError = null;
+    });
+    try {
+      final items = await parser.getAdminDistributions();
+      if (!mounted) return;
+      setState(() {
+        _adminItems = items;
+        _loadingAdmin = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _adminError = e.toString();
+        _loadingAdmin = false;
+      });
+    }
+  }
+
+  List<AdminFileDistributionSummary> _filteredAdminItems(
+    List<AdminFileDistributionSummary> items,
+  ) {
+    return switch (_adminFilter) {
+      _AdminFilter.all => items,
+      _AdminFilter.active =>
+        items
+            .where((i) => adminStatusOf(i) == AdminDistributionStatus.active)
+            .toList(),
+      _AdminFilter.scheduled =>
+        items
+            .where((i) => adminStatusOf(i) == AdminDistributionStatus.scheduled)
+            .toList(),
+      _AdminFilter.expired =>
+        items
+            .where((i) => adminStatusOf(i) == AdminDistributionStatus.expired)
+            .toList(),
+    };
+  }
+
+  Future<void> _deleteAdminItem(
+    AdminFileDistributionSummary item,
+    FileDistributionParser parser, {
+    bool popAfter = false,
+  }) async {
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.fileDistributionAdminDeleteTitle),
+        content: Text(l10n.fileDistributionAdminDeleteConfirm(item.title)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+              foregroundColor: Theme.of(ctx).colorScheme.onError,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.delete),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final ok = await parser.deleteDistribution(item.id);
+      if (!mounted) return;
+      if (ok) {
+        if (popAfter) Navigator.of(context).pop();
+        messenger.showSnackBar(
+          SnackBar(content: Text(l10n.fileDistributionAdminDeleted)),
+        );
+        if (_selectedAdminId == item.id) {
+          setState(() => _selectedAdminId = null);
+        }
+        await _loadAdminItems(parser);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+  }
+
+  Future<void> _openAdminComposer(
+    FileDistributionParser parser, {
+    AdminFileDistributionSummary? editSummary,
+    required bool splitView,
+  }) async {
+    AdminFileDistributionDetail? detail;
+    if (editSummary != null) {
+      try {
+        detail = await parser.getAdminDistributionDetail(editSummary.id);
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.toString())));
+        return;
+      }
+    }
+    if (!mounted) return;
+
+    if (splitView) {
+      setState(() {
+        _composingAdmin = true;
+        _editingAdminDetail = detail;
+      });
+      return;
+    }
+
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (ctx) => AdminComposerPane(
+          parser: parser,
+          initialDetail: detail,
+          onCancel: () => Navigator.of(ctx).pop(),
+          onSaved: (id) {
+            Navigator.of(ctx).pop();
+            setState(() => _selectedAdminId = id);
+            _loadAdminItems(parser);
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAdminModeSwitch(
+    BuildContext context,
+    FileDistributionParser parser,
+  ) {
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+      child: SizedBox(
+        width: double.infinity,
+        child: SegmentedButton<bool>(
+          showSelectedIcon: false,
+          segments: [
+            ButtonSegment<bool>(
+              value: false,
+              icon: const Icon(Icons.inbox_outlined, size: 16),
+              label: Text(l10n.fileDistributionTabInbox),
+            ),
+            ButtonSegment<bool>(
+              value: true,
+              icon: const Icon(Icons.admin_panel_settings_outlined, size: 16),
+              label: Text(l10n.fileDistributionTabAdmin),
+            ),
+          ],
+          selected: {_adminTab},
+          onSelectionChanged: (selection) {
+            final next = selection.first;
+            setState(() {
+              _adminTab = next;
+              if (!next) {
+                _composingAdmin = false;
+                _editingAdminDetail = null;
+              }
+            });
+            if (next && _adminItems == null) {
+              _loadAdminItems(parser);
+            }
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAdminStatusChips(
+    BuildContext context,
+    List<AdminFileDistributionSummary> items, {
+    EdgeInsets padding = const EdgeInsets.only(bottom: 8),
+  }) {
+    final l10n = AppLocalizations.of(context);
+    final activeCount = items
+        .where((i) => adminStatusOf(i) == AdminDistributionStatus.active)
+        .length;
+    final scheduledCount = items
+        .where((i) => adminStatusOf(i) == AdminDistributionStatus.scheduled)
+        .length;
+    final expiredCount = items
+        .where((i) => adminStatusOf(i) == AdminDistributionStatus.expired)
+        .length;
+
+    return Padding(
+      padding: padding,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            FilterChip(
+              label: Text(l10n.fileDistributionFilterAll(items.length)),
+              selected: _adminFilter == _AdminFilter.all,
+              onSelected: (_) =>
+                  setState(() => _adminFilter = _AdminFilter.all),
+            ),
+            const SizedBox(width: 8),
+            FilterChip(
+              label: Text(
+                '${l10n.fileDistributionAdminFilterActive} ($activeCount)',
+              ),
+              selected: _adminFilter == _AdminFilter.active,
+              onSelected: (_) =>
+                  setState(() => _adminFilter = _AdminFilter.active),
+            ),
+            const SizedBox(width: 8),
+            FilterChip(
+              label: Text(
+                '${l10n.fileDistributionAdminFilterScheduled} ($scheduledCount)',
+              ),
+              selected: _adminFilter == _AdminFilter.scheduled,
+              onSelected: (_) =>
+                  setState(() => _adminFilter = _AdminFilter.scheduled),
+            ),
+            const SizedBox(width: 8),
+            FilterChip(
+              label: Text(
+                '${l10n.fileDistributionAdminFilterExpired} ($expiredCount)',
+              ),
+              selected: _adminFilter == _AdminFilter.expired,
+              onSelected: (_) =>
+                  setState(() => _adminFilter = _AdminFilter.expired),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAdminPhoneBody(
+    BuildContext context,
+    FileDistributionParser parser,
+  ) {
+    final l10n = AppLocalizations.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
+    final items = _adminItems;
+
+    if (items == null && _loadingAdmin) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (items == null && _adminError != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(_adminError!, textAlign: TextAlign.center),
+              const SizedBox(height: 12),
+              FilledButton.tonal(
+                onPressed: () => _loadAdminItems(parser),
+                child: Text(l10n.tryAgain),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final allItems = items ?? const <AdminFileDistributionSummary>[];
+    final visible = _filteredAdminItems(allItems);
+
+    return RefreshIndicator(
+      onRefresh: () => _loadAdminItems(parser),
+      child: visible.isEmpty
+          ? ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 88),
+              children: [
+                if (allItems.isNotEmpty)
+                  _buildAdminStatusChips(context, allItems),
+                const SizedBox(height: 48),
+                Center(
+                  child: Text(
+                    l10n.fileDistributionAdminEmpty,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
+            )
+          : ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 88),
+              itemCount: visible.length + 1,
+              separatorBuilder: (_, index) =>
+                  SizedBox(height: index == 0 ? 4 : 10),
+              itemBuilder: (context, index) {
+                if (index == 0) {
+                  return _buildAdminStatusChips(context, allItems);
+                }
+                final item = visible[index - 1];
+                final progress = item.totalRecipients > 0
+                    ? (item.distributedCount / item.totalRecipients).clamp(
+                        0.0,
+                        1.0,
+                      )
+                    : 0.0;
+                return Card(
+                  elevation: 0,
+                  margin: EdgeInsets.zero,
+                  color: colorScheme.surfaceContainerLow,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    side: BorderSide(color: colorScheme.outlineVariant),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    onTap: () => Navigator.of(context).push<void>(
+                      MaterialPageRoute(
+                        builder: (ctx) => Scaffold(
+                          appBar: AppBar(title: Text(item.title)),
+                          body: AdminDetailPane(
+                            summary: item,
+                            parser: parser,
+                            onEdit: () => _openAdminComposer(
+                              parser,
+                              editSummary: item,
+                              splitView: false,
+                            ),
+                            onDelete: () =>
+                                _deleteAdminItem(item, parser, popAfter: true),
+                            onRefresh: () => _loadAdminItems(parser),
+                          ),
+                        ),
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.title,
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            [
+                              if (item.audienceLabel.isNotEmpty)
+                                item.audienceLabel,
+                              if (item.validUntil != null)
+                                _dateFormat.format(item.validUntil!),
+                            ].join(' · '),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: colorScheme.onSurfaceVariant),
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(999),
+                                  child: LinearProgressIndicator(
+                                    value: progress,
+                                    minHeight: 5,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                '${item.distributedCount}/${item.totalRecipients}',
+                                style: Theme.of(context).textTheme.labelSmall
+                                    ?.copyWith(
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+    );
+  }
+
+  Widget _buildAdminTabletBody(
+    BuildContext context,
+    FileDistributionParser parser,
+  ) {
+    final l10n = AppLocalizations.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
+    final allItems = _adminItems ?? const <AdminFileDistributionSummary>[];
+    final visible = _filteredAdminItems(allItems);
+
+    AdminFileDistributionSummary? selected;
+    if (!_composingAdmin && visible.isNotEmpty) {
+      selected = visible.firstWhere(
+        (i) => i.id == _selectedAdminId,
+        orElse: () => visible.first,
+      );
+    }
+
+    Widget sidebarList;
+    if (_adminItems == null && _loadingAdmin) {
+      sidebarList = const Center(child: CircularProgressIndicator());
+    } else if (visible.isEmpty) {
+      sidebarList = ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(8, 0, 8, 80),
+        children: [
+          if (allItems.isNotEmpty) _buildAdminStatusChips(context, allItems),
+          const SizedBox(height: 32),
+          Center(
+            child: Text(
+              l10n.fileDistributionAdminEmpty,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
+      );
+    } else {
+      sidebarList = ListView.separated(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(8, 0, 8, 80),
+        itemCount: visible.length + 1,
+        separatorBuilder: (_, _) => const SizedBox(height: 4),
+        itemBuilder: (context, index) {
+          if (index == 0) {
+            return _buildAdminStatusChips(
+              context,
+              allItems,
+              padding: const EdgeInsets.only(bottom: 4),
+            );
+          }
+          final item = visible[index - 1];
+          final isSelected = !_composingAdmin && selected?.id == item.id;
+          return Material(
+            color: isSelected
+                ? colorScheme.secondaryContainer
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: () => setState(() {
+                _composingAdmin = false;
+                _editingAdminDetail = null;
+                _selectedAdminId = item.id;
+              }),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: isSelected
+                            ? FontWeight.w600
+                            : FontWeight.w500,
+                        color: isSelected
+                            ? colorScheme.onSecondaryContainer
+                            : colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      [
+                        '${item.distributedCount}/${item.totalRecipients}',
+                        if (item.audienceLabel.isNotEmpty) item.audienceLabel,
+                        if (item.validUntil != null)
+                          _dateFormat.format(item.validUntil!),
+                      ].join(' · '),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: isSelected
+                            ? colorScheme.onSecondaryContainer
+                            : colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          width: 320,
+          child: Scaffold(
+            appBar: _buildAppBar(context),
+            floatingActionButton: FloatingActionButton.extended(
+              onPressed: () => _openAdminComposer(parser, splitView: true),
+              icon: const Icon(Icons.add),
+              label: Text(l10n.fileDistributionAdminNew),
+            ),
+            body: Column(
+              children: [
+                _buildAdminModeSwitch(context, parser),
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: () => _loadAdminItems(parser),
+                    child: sidebarList,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const VerticalDivider(width: 1),
+        Expanded(
+          child: SafeArea(
+            child: _composingAdmin
+                ? AdminComposerPane(
+                    key: ValueKey('composer-${_editingAdminDetail?.id ?? 0}'),
+                    parser: parser,
+                    initialDetail: _editingAdminDetail,
+                    embeddedInSplitView: true,
+                    onCancel: () => setState(() {
+                      _composingAdmin = false;
+                      _editingAdminDetail = null;
+                    }),
+                    onSaved: (id) {
+                      setState(() {
+                        _composingAdmin = false;
+                        _editingAdminDetail = null;
+                        _selectedAdminId = id;
+                      });
+                      _loadAdminItems(parser);
+                    },
+                  )
+                : selected == null
+                ? const SizedBox.shrink()
+                : AdminDetailPane(
+                    summary: selected,
+                    parser: parser,
+                    onEdit: () => _openAdminComposer(
+                      parser,
+                      editSummary: selected,
+                      splitView: true,
+                    ),
+                    onDelete: () => _deleteAdminItem(selected!, parser),
+                    onRefresh: () => _loadAdminItems(parser),
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final offline = ref.watch(offlineCacheContextProvider);
@@ -768,12 +1356,56 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
         final isOffline =
             offline != null ||
             parser.latestResponse?.contentStatus == ContentStatus.offline;
-        final isSplitView =
-            Responsive.isSplitView(context) && data.items.isNotEmpty;
+        final canAdmin =
+            data.isAdmin && !isOffline && parser is FileDistributionParser;
+        final inAdminTab = canAdmin && _adminTab;
+        final isTablet = Responsive.isSplitView(context);
+        final isSplitView = isTablet && (data.items.isNotEmpty || canAdmin);
+        final l10n = AppLocalizations.of(context);
+
+        if (isSplitView) {
+          return Scaffold(
+            body: inAdminTab
+                ? _buildAdminTabletBody(context, parser)
+                : _buildTabletBody(context, data, parser, refresh, isOffline),
+          );
+        }
+
         return Scaffold(
-          appBar: isSplitView ? null : _buildAppBar(context),
-          body: isSplitView
-              ? _buildTabletBody(context, data, parser, refresh, isOffline)
+          appBar: _buildAppBar(context),
+          bottomNavigationBar: canAdmin
+              ? NavigationBar(
+                  selectedIndex: inAdminTab ? 1 : 0,
+                  onDestinationSelected: (index) {
+                    final next = index == 1;
+                    setState(() => _adminTab = next);
+                    if (next && _adminItems == null) {
+                      _loadAdminItems(parser);
+                    }
+                  },
+                  destinations: [
+                    NavigationDestination(
+                      icon: const Icon(Icons.inbox_outlined),
+                      selectedIcon: const Icon(Icons.inbox),
+                      label: l10n.fileDistributionTabInbox,
+                    ),
+                    NavigationDestination(
+                      icon: const Icon(Icons.admin_panel_settings_outlined),
+                      selectedIcon: const Icon(Icons.admin_panel_settings),
+                      label: l10n.fileDistributionTabAdmin,
+                    ),
+                  ],
+                )
+              : null,
+          floatingActionButton: inAdminTab
+              ? FloatingActionButton.extended(
+                  onPressed: () => _openAdminComposer(parser, splitView: false),
+                  icon: const Icon(Icons.add),
+                  label: Text(l10n.fileDistributionAdminNew),
+                )
+              : null,
+          body: inAdminTab
+              ? _buildAdminPhoneBody(context, parser)
               : _buildPhoneBody(context, data, parser, refresh, isOffline),
         );
       },
