@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lanis/applets/file_distribution/admin_composer_pane.dart';
 import 'package:lanis/applets/file_distribution/admin_detail_pane.dart';
@@ -27,6 +28,7 @@ class FileDistributionView extends ConsumerStatefulWidget {
   final AppletDataSource<FileDistributionHome>? dataSource;
   final TypedSettings? settings;
   final AccountType? accountType;
+  final int? initialItemId;
 
   const FileDistributionView({
     super.key,
@@ -34,6 +36,7 @@ class FileDistributionView extends ConsumerStatefulWidget {
     this.dataSource,
     this.settings,
     this.accountType,
+    this.initialItemId,
   });
 
   @override
@@ -47,6 +50,9 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
 
   _DistributionFilter _filter = _DistributionFilter.all;
   int? _selectedId;
+  int? _appliedDeepLinkId;
+  int? _pendingScrollId;
+  final Map<int, GlobalKey> _phoneCardKeys = {};
   final Set<int> _expandedIds = {};
   final Set<int> _locallyReadIds = {};
   final Set<int> _markingReadIds = {};
@@ -63,6 +69,54 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
   int? _selectedAdminId;
   bool _composingAdmin = false;
   AdminFileDistributionDetail? _editingAdminDetail;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialItemId != null) {
+      _applyDeepLinkId(widget.initialItemId!);
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final routeId = int.tryParse(
+      GoRouter.maybeOf(context)?.state.uri.queryParameters['id'] ?? '',
+    );
+    final targetId = routeId ?? widget.initialItemId;
+    if (targetId != null && targetId != _appliedDeepLinkId) {
+      _applyDeepLinkId(targetId);
+    }
+  }
+
+  void _applyDeepLinkId(int id) {
+    _appliedDeepLinkId = id;
+    _selectedId = id;
+    _pendingScrollId = id;
+    _expandedIds.add(id);
+    _filter = _DistributionFilter.all;
+    _adminTab = false;
+    _composingAdmin = false;
+    _editingAdminDetail = null;
+  }
+
+  void _scheduleScrollToTarget(List<FileDistributionItem> visible) {
+    final targetId = _pendingScrollId;
+    if (targetId == null || !visible.any((e) => e.id == targetId)) return;
+    _pendingScrollId = null;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final ctx = _phoneCardKeys[targetId]?.currentContext;
+      if (ctx != null) {
+        Scrollable.ensureVisible(
+          ctx,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -415,7 +469,7 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
     );
 
     return _CollapsiblePhoneCard(
-      key: ValueKey('phone-card-${item.id}'),
+      key: _phoneCardKeys.putIfAbsent(item.id, () => GlobalKey()),
       cardColor: cardColor,
       borderColor: unread ? colorScheme.primary : colorScheme.outlineVariant,
       maxHeightFactor: images.isNotEmpty ? (0.5 + 2 / 3) : (2 / 3),
@@ -456,6 +510,7 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
         ],
       );
     } else {
+      _scheduleScrollToTarget(visible);
       list = NotificationListener<ScrollNotification>(
         onNotification: (notification) {
           _scrollTick.value++;

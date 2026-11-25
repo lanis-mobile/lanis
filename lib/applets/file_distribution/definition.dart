@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:lanis/applets/definitions.dart';
+import 'package:lanis/applets/file_distribution/background.dart';
 import 'package:lanis/applets/file_distribution/file_distribution_view.dart';
 import 'package:lanis/applets/file_distribution/routes.dart';
 import 'package:lanis/generated/l10n.dart';
@@ -21,6 +22,7 @@ final fileDistributionDefinition = AppletDefinition(
   showInNavigationRail: true,
   settingsDefaults: {},
   refreshInterval: Applets.fileDistribution.refreshInterval,
+  notificationTask: fileDistributionBackgroundTask,
   bodyBuilder: (context, accountType, openDrawerCb) {
     return FileDistributionView(
       openDrawerCb: openDrawerCb,
