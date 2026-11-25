@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:lanis/widgets/applet_home_shell.dart';
 
 /// Pops a dialog/modal that was shown with [useRootNavigator] (the default
 /// for [showDialog]). Using the nearest navigator would pop a shell route.
@@ -7,16 +8,17 @@ void popRootDialog(BuildContext context) {
   if (nav.canPop()) nav.pop();
 }
 
-/// Pushes an in-applet page onto the nearest (shell branch) navigator.
+/// Pushes an in-applet page onto the shell branch navigator (above
+/// [appletHomeShell] when called from an applet `…/home` view).
 ///
-/// The phone bottom bar only wraps applet `…/home` routes, so branch pushes
-/// cover it. Never uses the root navigator — avoids orphan stacks after a
-/// phone ↔ tablet resize.
+/// Covers the phone bottom bar without using the root navigator — avoids
+/// orphan stacks after a phone ↔ tablet resize.
 Future<T?> pushInShell<T extends Object?>(
   BuildContext context,
   Route<T> route,
 ) {
-  return Navigator.of(context).push<T>(route);
+  final nav = appletHomeParentNavigatorOf(context) ?? Navigator.of(context);
+  return nav.push<T>(route);
 }
 
 /// Pushes an immersive overlay onto the root navigator (covers rail + bar).

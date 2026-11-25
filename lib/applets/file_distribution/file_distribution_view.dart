@@ -12,6 +12,7 @@ import 'package:lanis/features/offline/cache_context.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/utils/file_operations.dart';
 import 'package:lanis/utils/responsive.dart';
+import 'package:lanis/utils/root_nav.dart';
 import 'package:lanis/utils/url_modal.dart';
 import 'package:lanis/widgets/combined_applet_builder.dart';
 import 'package:lanis/widgets/file_chip.dart';
@@ -1035,7 +1036,8 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
         return;
       }
 
-      await Navigator.of(context).push<void>(
+      await pushInShell<void>(
+        context,
         MaterialPageRoute(
           builder: (ctx) => AdminComposerPane(
             parser: parser,
@@ -1238,7 +1240,8 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: InkWell(
-                    onTap: () => Navigator.of(context).push<void>(
+                    onTap: () => pushInShell<void>(
+                      context,
                       MaterialPageRoute(
                         builder: (ctx) =>
                             ValueListenableBuilder<
@@ -1580,30 +1583,6 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
 
         return Scaffold(
           appBar: _buildAppBar(context),
-          bottomNavigationBar: canAdmin
-              ? NavigationBar(
-                  selectedIndex: inAdminTab ? 1 : 0,
-                  onDestinationSelected: (index) {
-                    final next = index == 1;
-                    setState(() => _adminTab = next);
-                    if (next && _adminItems == null) {
-                      _loadAdminItems(parser);
-                    }
-                  },
-                  destinations: [
-                    NavigationDestination(
-                      icon: const Icon(Icons.inbox_outlined),
-                      selectedIcon: const Icon(Icons.inbox),
-                      label: l10n.fileDistributionTabInbox,
-                    ),
-                    NavigationDestination(
-                      icon: const Icon(Icons.admin_panel_settings_outlined),
-                      selectedIcon: const Icon(Icons.admin_panel_settings),
-                      label: l10n.fileDistributionTabAdmin,
-                    ),
-                  ],
-                )
-              : null,
           floatingActionButton: inAdminTab
               ? FloatingActionButton.extended(
                   onPressed: () => _openAdminComposer(parser, splitView: false),
@@ -1611,9 +1590,16 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
                   label: Text(l10n.fileDistributionAdminNew),
                 )
               : null,
-          body: inAdminTab
-              ? _buildAdminPhoneBody(context, parser)
-              : _buildPhoneBody(context, data, parser, refresh, isOffline),
+          body: Column(
+            children: [
+              if (canAdmin) _buildAdminModeSwitch(context, parser),
+              Expanded(
+                child: inAdminTab
+                    ? _buildAdminPhoneBody(context, parser)
+                    : _buildPhoneBody(context, data, parser, refresh, isOffline),
+              ),
+            ],
+          ),
         );
       },
     );
