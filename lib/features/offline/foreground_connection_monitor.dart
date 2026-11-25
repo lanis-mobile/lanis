@@ -53,6 +53,10 @@ class _ForegroundConnectionMonitor with WidgetsBindingObserver {
     serverSubscription = checker.statusStream.listen((status) {
       if (status == ConnectionStatus.connected) {
         retry?.cancel();
+        if (hadInterface == false) {
+          hadInterface = true;
+          onAvailability(true);
+        }
       } else {
         _scheduleRetry();
       }
