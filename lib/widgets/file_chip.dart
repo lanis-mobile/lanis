@@ -49,7 +49,15 @@ class _FileChipState extends ConsumerState<FileChip> {
   void _checkLocalStatus() {
     final url = widget.file.url?.toString();
     final name = widget.file.name;
-    if (url == null || name == null) return;
+    if (url == null || name == null) {
+      if (mounted && (_isLocal || _offlineCachedPath != null)) {
+        setState(() {
+          _isLocal = false;
+          _offlineCachedPath = null;
+        });
+      }
+      return;
+    }
 
     final offlineContext = ref.read(offlineCacheContextProvider);
     if (offlineContext != null) {

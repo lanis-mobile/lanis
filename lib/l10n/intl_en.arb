@@ -478,14 +478,8 @@
     }
   },
   "fileDistributionNewBadge": "New",
-  "fileDistributionMarkAsRead": "Mark as read",
-  "fileDistributionMarkedAsRead": "Marked as read",
-  "fileDistributionMarkAsReadFailed": "Could not mark as read",
-  "fileDistributionNotice": "Notice",
   "fileDistributionOnlyNotice": "Notice only",
   "fileDistributionErrorBadge": "Error notice",
-  "fileDistributionOpenFile": "Open",
-  "fileDistributionDownloadFile": "Download",
   "fileDistributionTabInbox": "Inbox",
   "fileDistributionTabAdmin": "Manage",
   "fileDistributionAdminNew": "New",
@@ -536,6 +530,5 @@
   "fileDistributionAdminFieldLinkUrl": "Info link URL (optional)",
   "fileDistributionAdminFieldLinkTitle": "Link title (optional)",
   "fileDistributionAdminUploadFile": "Upload file",
-  "fileDistributionAdminUploadSuccess": "File uploaded",
-  "fileDistributionAdminOfflineNotice": "Administration is unavailable while offline."
+  "fileDistributionAdminUploadSuccess": "File uploaded"
 }

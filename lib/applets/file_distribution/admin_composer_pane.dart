@@ -40,9 +40,10 @@ class _AdminComposerPaneState extends State<AdminComposerPane> {
   late DateTime _validFrom;
   late DateTime _validUntil;
   final List<PlatformFile> _pendingFiles = [];
+  int? _savedId;
   bool _saving = false;
 
-  bool get _isEditing => widget.initialDetail != null;
+  bool get _isEditing => widget.initialDetail != null || _savedId != null;
 
   @override
   void initState() {
@@ -116,32 +117,62 @@ class _AdminComposerPaneState extends State<AdminComposerPane> {
       final rawUrl = _linkUrlController.text.trim();
       final linkUrl = rawUrl.isNotEmpty ? Uri.tryParse(rawUrl) : null;
       final linkTitle = _linkTitleController.text.trim();
+      final initial = widget.initialDetail;
 
       final draft = FileDistributionDraft(
-        id: widget.initialDetail?.id,
+        id: initial?.id ?? _savedId,
         title: _titleController.text.trim(),
         audience: _audience,
+        gradeFrom: initial?.gradeFrom,
+        gradeUntil: initial?.gradeUntil,
         description: _noticeController.text.trim(),
         validFrom: _validFrom,
         validUntil: _validUntil,
         mode: _mode,
+        fileNameTemplate: initial != null && initial.fileNameTemplates.isNotEmpty
+            ? initial.fileNameTemplates.first
+            : null,
+        startNumber: initial?.startNumber,
         linkUrl: linkUrl,
-        linkTitle: linkTitle.isNotEmpty ? linkTitle : null,
+        linkTitle: linkUrl != null && linkTitle.isNotEmpty ? linkTitle : null,
       );
 
       final id = await widget.parser.saveDistribution(draft);
-      for (final file in _pendingFiles) {
+      _savedId = id;
+
+      final failedFiles = <String>[];
+      while (_pendingFiles.isNotEmpty) {
+        final file = _pendingFiles.first;
         final path = file.path;
-        if (path == null) continue;
+        if (path == null) {
+          _pendingFiles.removeAt(0);
+          continue;
+        }
         final bytes = await File(path).readAsBytes();
-        await widget.parser.uploadFile(
+        final ok = await widget.parser.uploadFile(
           id,
           fileName: file.name,
           bytes: bytes,
         );
+        if (ok) {
+          if (mounted) {
+            setState(() => _pendingFiles.removeAt(0));
+          } else {
+            _pendingFiles.removeAt(0);
+          }
+        } else {
+          failedFiles.add(file.name);
+          break;
+        }
       }
 
       if (!mounted) return;
+      if (failedFiles.isNotEmpty) {
+        messenger.showSnackBar(
+          SnackBar(content: Text('${l10n.error}: ${failedFiles.first}')),
+        );
+        return;
+      }
       messenger.showSnackBar(
         SnackBar(content: Text(l10n.fileDistributionAdminSaved)),
       );
@@ -334,6 +365,17 @@ class _AdminComposerPaneState extends State<AdminComposerPane> {
                 labelText: l10n.fileDistributionAdminFieldLinkUrl,
                 border: const OutlineInputBorder(),
               ),
+              validator: (v) {
+                final text = v?.trim() ?? '';
+                if (text.isEmpty) return null;
+                final uri = Uri.tryParse(text);
+                if (uri == null ||
+                    !(uri.scheme == 'http' || uri.scheme == 'https') ||
+                    uri.host.isEmpty) {
+                  return l10n.error;
+                }
+                return null;
+              },
             ),
             const SizedBox(height: 12),
             TextFormField(

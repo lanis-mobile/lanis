@@ -466,14 +466,8 @@
     }
   },
   "fileDistributionNewBadge": "Neu",
-  "fileDistributionMarkAsRead": "Als gelesen markieren",
-  "fileDistributionMarkedAsRead": "Als gelesen markiert",
-  "fileDistributionMarkAsReadFailed": "Konnte nicht als gelesen markiert werden",
-  "fileDistributionNotice": "Hinweis",
   "fileDistributionOnlyNotice": "Nur Mitteilung",
   "fileDistributionErrorBadge": "Fehlerhinweis",
-  "fileDistributionOpenFile": "Öffnen",
-  "fileDistributionDownloadFile": "Laden",
   "fileDistributionTabInbox": "Eingang",
   "fileDistributionTabAdmin": "Verwaltung",
   "fileDistributionAdminNew": "Neu",
@@ -524,6 +518,5 @@
   "fileDistributionAdminFieldLinkUrl": "Info-Link URL (optional)",
   "fileDistributionAdminFieldLinkTitle": "Link-Titel (optional)",
   "fileDistributionAdminUploadFile": "Datei hochladen",
-  "fileDistributionAdminUploadSuccess": "Datei hochgeladen",
-  "fileDistributionAdminOfflineNotice": "Verwaltung ist im Offline-Modus nicht verfügbar."
+  "fileDistributionAdminUploadSuccess": "Datei hochgeladen"
 }

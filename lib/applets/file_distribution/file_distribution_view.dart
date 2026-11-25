@@ -16,6 +16,7 @@ import 'package:lanis/widgets/combined_applet_builder.dart';
 import 'package:lanis/widgets/file_chip.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:open_file/open_file.dart';
 
 enum _DistributionFilter { all, unread, files }
 
@@ -54,6 +55,9 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
   bool _adminTab = false;
   _AdminFilter _adminFilter = _AdminFilter.all;
   List<AdminFileDistributionSummary>? _adminItems;
+  final ValueNotifier<List<AdminFileDistributionSummary>> _adminItemsNotifier =
+      ValueNotifier<List<AdminFileDistributionSummary>>(const []);
+  int _adminRefreshVersion = 0;
   bool _loadingAdmin = false;
   String? _adminError;
   int? _selectedAdminId;
@@ -63,6 +67,7 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
   @override
   void dispose() {
     _scrollTick.dispose();
+    _adminItemsNotifier.dispose();
     super.dispose();
   }
 
@@ -105,7 +110,11 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
       final ok = await parser.markAsRead(item.id);
       if (!mounted) return;
       if (ok) {
-        await parser.fetchData(forceRefresh: true);
+        try {
+          await parser.fetchData(forceRefresh: true);
+        } catch (_) {
+          // Keep optimistic read state if follow-up refresh fails.
+        }
       } else {
         setState(() => _locallyReadIds.remove(item.id));
       }
@@ -776,6 +785,8 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
     try {
       final items = await parser.getAdminDistributions();
       if (!mounted) return;
+      _adminRefreshVersion++;
+      _adminItemsNotifier.value = items;
       setState(() {
         _adminItems = items;
         _loadingAdmin = false;
@@ -851,6 +862,8 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
           setState(() => _selectedAdminId = null);
         }
         await _loadAdminItems(parser);
+      } else {
+        messenger.showSnackBar(SnackBar(content: Text(l10n.error)));
       }
     } catch (e) {
       if (!mounted) return;
@@ -1086,21 +1099,37 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
                   child: InkWell(
                     onTap: () => Navigator.of(context).push<void>(
                       MaterialPageRoute(
-                        builder: (ctx) => Scaffold(
-                          appBar: AppBar(title: Text(item.title)),
-                          body: AdminDetailPane(
-                            summary: item,
-                            parser: parser,
-                            onEdit: () => _openAdminComposer(
-                              parser,
-                              editSummary: item,
-                              splitView: false,
+                        builder: (ctx) =>
+                            ValueListenableBuilder<
+                              List<AdminFileDistributionSummary>
+                            >(
+                              valueListenable: _adminItemsNotifier,
+                              builder: (ctx, latestItems, _) {
+                                final current = latestItems.firstWhere(
+                                  (e) => e.id == item.id,
+                                  orElse: () => item,
+                                );
+                                return Scaffold(
+                                  appBar: AppBar(title: Text(current.title)),
+                                  body: AdminDetailPane(
+                                    summary: current,
+                                    parser: parser,
+                                    refreshVersion: _adminRefreshVersion,
+                                    onEdit: () => _openAdminComposer(
+                                      parser,
+                                      editSummary: current,
+                                      splitView: false,
+                                    ),
+                                    onDelete: () => _deleteAdminItem(
+                                      current,
+                                      parser,
+                                      popAfter: true,
+                                    ),
+                                    onRefresh: () => _loadAdminItems(parser),
+                                  ),
+                                );
+                              },
                             ),
-                            onDelete: () =>
-                                _deleteAdminItem(item, parser, popAfter: true),
-                            onRefresh: () => _loadAdminItems(parser),
-                          ),
-                        ),
                       ),
                     ),
                     child: Padding(
@@ -1176,6 +1205,29 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
     Widget sidebarList;
     if (_adminItems == null && _loadingAdmin) {
       sidebarList = const Center(child: CircularProgressIndicator());
+    } else if (_adminItems == null && _adminError != null) {
+      sidebarList = Center(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                _adminError!,
+                textAlign: TextAlign.center,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: colorScheme.error),
+              ),
+              const SizedBox(height: 12),
+              FilledButton.tonal(
+                onPressed: () => _loadAdminItems(parser),
+                child: Text(l10n.tryAgain),
+              ),
+            ],
+          ),
+        ),
+      );
     } else if (visible.isEmpty) {
       sidebarList = ListView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -1320,6 +1372,7 @@ class _FileDistributionViewState extends ConsumerState<FileDistributionView> {
                 : AdminDetailPane(
                     summary: selected,
                     parser: parser,
+                    refreshVersion: _adminRefreshVersion,
                     onEdit: () => _openAdminComposer(
                       parser,
                       editSummary: selected,
@@ -1784,11 +1837,6 @@ class _ImageAttachmentCarouselState extends State<_ImageAttachmentCarousel> {
               return _StorageCachedImage(
                 file: file,
                 offline: widget.offline,
-                onTap: () => launchFile(
-                  context,
-                  DownloadableFile(name: file.name, url: file.downloadUrl),
-                  () {},
-                ),
               );
             },
           ),
@@ -1851,13 +1899,8 @@ class _ImageAttachmentCarouselState extends State<_ImageAttachmentCarousel> {
 class _StorageCachedImage extends ConsumerStatefulWidget {
   final FileDistributionFile file;
   final bool offline;
-  final VoidCallback onTap;
 
-  const _StorageCachedImage({
-    required this.file,
-    required this.offline,
-    required this.onTap,
-  });
+  const _StorageCachedImage({required this.file, required this.offline});
 
   @override
   ConsumerState<_StorageCachedImage> createState() =>
@@ -1868,6 +1911,7 @@ class _StorageCachedImageState extends ConsumerState<_StorageCachedImage> {
   String? _localPath;
   bool _loading = true;
   bool _failed = false;
+  int _loadGen = 0;
 
   @override
   void initState() {
@@ -1878,41 +1922,87 @@ class _StorageCachedImageState extends ConsumerState<_StorageCachedImage> {
   @override
   void didUpdateWidget(covariant _StorageCachedImage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.file.downloadUrl != widget.file.downloadUrl ||
-        oldWidget.file.name != widget.file.name) {
+    final fileChanged =
+        oldWidget.file.downloadUrl != widget.file.downloadUrl ||
+        oldWidget.file.name != widget.file.name;
+    final backOnline = oldWidget.offline && !widget.offline && _failed;
+    if (fileChanged || backOnline) {
+      setState(() {
+        _localPath = null;
+        _loading = true;
+        _failed = false;
+      });
       Future.microtask(_load);
     }
   }
 
   Future<void> _load() async {
-    final storage = ref.read(storageManagerProvider);
-    if (storage == null) {
-      if (mounted) setState(() { _loading = false; _failed = true; });
-      return;
-    }
+    final gen = ++_loadGen;
     final url = widget.file.downloadUrl.toString();
     final name = widget.file.name;
+
+    final offlineContext = ref.read(offlineCacheContextProvider);
+    if (offlineContext != null) {
+      final path = offlineContext.cachedDocument(url, name);
+      if (!mounted || _loadGen != gen) return;
+      setState(() {
+        _localPath = path;
+        _loading = false;
+        _failed = path == null;
+      });
+      return;
+    }
+
+    final storage = ref.read(storageManagerProvider);
+    if (storage == null) {
+      if (mounted && _loadGen == gen) {
+        setState(() {
+          _loading = false;
+          _failed = true;
+        });
+      }
+      return;
+    }
     try {
       final exists = await storage.doesFileExist(url, name);
+      if (!mounted || _loadGen != gen) return;
       if (exists) {
         final path = storage.resolvePath(url, name);
-        if (mounted) setState(() { _localPath = path; _loading = false; });
+        setState(() {
+          _localPath = path;
+          _loading = false;
+          _failed = false;
+        });
         return;
       }
       if (widget.offline) {
-        if (mounted) setState(() { _loading = false; _failed = true; });
+        setState(() {
+          _loading = false;
+          _failed = true;
+        });
         return;
       }
       final path = await storage.downloadFile(url, name);
-      if (mounted) setState(() { _localPath = path; _loading = false; });
+      if (!mounted || _loadGen != gen) return;
+      setState(() {
+        _localPath = path;
+        _loading = false;
+        _failed = false;
+      });
     } catch (_) {
-      if (mounted) setState(() { _loading = false; _failed = true; });
+      if (mounted && _loadGen == gen) {
+        setState(() {
+          _loading = false;
+          _failed = true;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final offlineContext = ref.watch(offlineCacheContextProvider);
 
     if (_loading) {
       return Container(
@@ -1936,11 +2026,12 @@ class _StorageCachedImageState extends ConsumerState<_StorageCachedImage> {
       );
     }
 
+    final localPath = _localPath!;
     return Stack(
       fit: StackFit.expand,
       children: [
         Image.file(
-          File(_localPath!),
+          File(localPath),
           fit: BoxFit.cover,
           width: double.infinity,
           height: double.infinity,
@@ -1948,14 +2039,29 @@ class _StorageCachedImageState extends ConsumerState<_StorageCachedImage> {
         Material(
           type: MaterialType.transparency,
           child: InkWell(
-            onTap: widget.onTap,
-            onLongPress: () => showFileModal(
-              context,
-              DownloadableFile(
-                name: widget.file.name,
-                url: widget.file.downloadUrl,
-              ),
-            ),
+            onTap: () {
+              if (offlineContext != null) {
+                OpenFile.open(localPath);
+              } else {
+                launchFile(
+                  context,
+                  DownloadableFile.local(
+                    filePath: localPath,
+                    name: widget.file.name,
+                  ),
+                  () {},
+                );
+              }
+            },
+            onLongPress: offlineContext != null
+                ? null
+                : () => showFileModal(
+                    context,
+                    DownloadableFile(
+                      name: widget.file.name,
+                      url: widget.file.downloadUrl,
+                    ),
+                  ),
           ),
         ),
       ],

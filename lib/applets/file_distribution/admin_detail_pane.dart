@@ -26,6 +26,7 @@ AdminDistributionStatus adminStatusOf(AdminFileDistributionSummary item) {
 class AdminDetailPane extends StatefulWidget {
   final AdminFileDistributionSummary summary;
   final FileDistributionParser parser;
+  final int refreshVersion;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final VoidCallback onRefresh;
@@ -34,6 +35,7 @@ class AdminDetailPane extends StatefulWidget {
     super.key,
     required this.summary,
     required this.parser,
+    this.refreshVersion = 0,
     required this.onEdit,
     required this.onDelete,
     required this.onRefresh,
@@ -51,8 +53,12 @@ class _AdminDetailPaneState extends State<AdminDetailPane> {
   FileDistributionStats? _stats;
   bool _loadingDetail = false;
   bool _loadingStats = false;
+  String? _detailError;
+  String? _statsError;
   bool _showStats = false;
   bool _uploading = false;
+  int _detailGen = 0;
+  int _statsGen = 0;
 
   @override
   void initState() {
@@ -63,28 +69,50 @@ class _AdminDetailPaneState extends State<AdminDetailPane> {
   @override
   void didUpdateWidget(covariant AdminDetailPane oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.summary.id != widget.summary.id) {
-      _detail = null;
+    final idChanged = oldWidget.summary.id != widget.summary.id;
+    final refreshed = oldWidget.refreshVersion != widget.refreshVersion;
+    if (idChanged || refreshed) {
+      _detailGen++;
+      _statsGen++;
+      _detail = idChanged ? null : _detail;
       _stats = null;
-      _showStats = false;
+      _detailError = null;
+      _statsError = null;
+      _loadingStats = false;
+      if (idChanged) _showStats = false;
       _loadDetail();
+      if (!idChanged && _showStats) {
+        _fetchStats();
+      }
     }
   }
 
   Future<void> _loadDetail() async {
-    setState(() => _loadingDetail = true);
+    final requestedId = widget.summary.id;
+    final gen = ++_detailGen;
+    setState(() {
+      _loadingDetail = true;
+      _detailError = null;
+    });
     try {
       final detail = await widget.parser.getAdminDistributionDetail(
-        widget.summary.id,
+        requestedId,
       );
-      if (!mounted) return;
+      if (!mounted || widget.summary.id != requestedId || _detailGen != gen) {
+        return;
+      }
       setState(() {
         _detail = detail;
         _loadingDetail = false;
       });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _loadingDetail = false);
+    } catch (e) {
+      if (!mounted || widget.summary.id != requestedId || _detailGen != gen) {
+        return;
+      }
+      setState(() {
+        _detailError = e.toString();
+        _loadingDetail = false;
+      });
     }
   }
 
@@ -95,17 +123,33 @@ class _AdminDetailPaneState extends State<AdminDetailPane> {
     }
     setState(() => _showStats = true);
     if (_stats != null || _loadingStats) return;
-    setState(() => _loadingStats = true);
+    await _fetchStats();
+  }
+
+  Future<void> _fetchStats() async {
+    final requestedId = widget.summary.id;
+    final gen = ++_statsGen;
+    setState(() {
+      _loadingStats = true;
+      _statsError = null;
+    });
     try {
-      final stats = await widget.parser.getStatistics(widget.summary.id);
-      if (!mounted) return;
+      final stats = await widget.parser.getStatistics(requestedId);
+      if (!mounted || widget.summary.id != requestedId || _statsGen != gen) {
+        return;
+      }
       setState(() {
         _stats = stats;
         _loadingStats = false;
       });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _loadingStats = false);
+    } catch (e) {
+      if (!mounted || widget.summary.id != requestedId || _statsGen != gen) {
+        return;
+      }
+      setState(() {
+        _statsError = e.toString();
+        _loadingStats = false;
+      });
     }
   }
 
@@ -118,6 +162,7 @@ class _AdminDetailPaneState extends State<AdminDetailPane> {
     final messenger = ScaffoldMessenger.of(context);
     final l10n = AppLocalizations.of(context);
     var uploadedAny = false;
+    final failedNames = <String>[];
     try {
       for (final file in files) {
         final path = file.path;
@@ -128,13 +173,23 @@ class _AdminDetailPaneState extends State<AdminDetailPane> {
           fileName: file.name,
           bytes: bytes,
         );
-        if (ok) uploadedAny = true;
+        if (ok) {
+          uploadedAny = true;
+        } else {
+          failedNames.add(file.name);
+        }
       }
       if (!mounted) return;
-      if (uploadedAny) {
+      if (failedNames.isNotEmpty) {
+        messenger.showSnackBar(
+          SnackBar(content: Text('${l10n.error}: ${failedNames.join(', ')}')),
+        );
+      } else if (uploadedAny) {
         messenger.showSnackBar(
           SnackBar(content: Text(l10n.fileDistributionAdminUploadSuccess)),
         );
+      }
+      if (uploadedAny) {
         widget.onRefresh();
       }
     } catch (e) {
@@ -311,6 +366,24 @@ class _AdminDetailPaneState extends State<AdminDetailPane> {
           if (_loadingDetail) ...[
             const SizedBox(height: 16),
             const LinearProgressIndicator(),
+          ] else if (_detailError != null) ...[
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _detailError!,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: colorScheme.error),
+                  ),
+                ),
+                TextButton(
+                  onPressed: _loadDetail,
+                  child: Text(l10n.tryAgain),
+                ),
+              ],
+            ),
           ],
           if (detail != null && detail.description.isNotEmpty) ...[
             const SizedBox(height: 16),
@@ -426,6 +499,22 @@ class _AdminDetailPaneState extends State<AdminDetailPane> {
                       const Padding(
                         padding: EdgeInsets.symmetric(vertical: 12),
                         child: Center(child: CircularProgressIndicator()),
+                      )
+                    else if (_statsError != null)
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _statsError!,
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(color: colorScheme.error),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: _fetchStats,
+                            child: Text(l10n.tryAgain),
+                          ),
+                        ],
                       )
                     else if (_stats != null && _stats!.groups.isNotEmpty)
                       Table(
