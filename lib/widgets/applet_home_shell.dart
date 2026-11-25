@@ -2,7 +2,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:liblanis/liblanis.dart';
-import 'package:lanis/applets/definitions.dart';
+import 'package:lanis/shell_navigation.dart';
+import 'package:lanis/utils/applet_navigation_order.dart';
 import 'package:lanis/utils/responsive.dart';
 
 /// Chrome owned by [HomePage]: drawer + branch switching for nested applets.
@@ -64,26 +65,24 @@ class _PhoneAppletBottomNav extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final chrome = HomeChrome.of(context);
+    final chrome = HomeChrome.maybeOf(context);
+    if (chrome == null) return child;
     final supported = ref.watch(supportedAppletPhpUrlsProvider);
     final accountType = ref.watch(
       activeAccountProvider.select((account) => account?.accountType),
     );
-    final nested = AppDefinitions.homeApplets;
-    final indexes = <int>[];
-    final defs = <AppletDefinition>[];
-    for (var i = 0; i < nested.length; i++) {
-      if (accountType != null &&
-          nested[i].supportedAccountTypes.contains(accountType) &&
-          supported.contains(nested[i].appletPhpUrl)) {
-        indexes.add(i);
-        defs.add(nested[i]);
-      }
-    }
-    if (defs.isEmpty) return child;
+    final layout = ref.watch(appletNavigationLayoutProvider);
+    final defs = layout.supportedBottomBar(
+      supportedPhpUrls: supported,
+      accountType: accountType,
+    );
+    if (defs.length < minBottomBarAppletsForDisplay) return child;
 
+    final indexes = defs.map(shellBranchIndexForApplet).toList(growable: false);
     final current = chrome.navigationShell.currentIndex;
     final selectedInBar = indexes.indexOf(current);
+    // Only show the bottom bar while on a branch assigned to the bottom bar.
+    if (selectedInBar < 0) return child;
 
     // Mimic Scaffold.bottomNavigationBar MediaQuery contract:
     // - Body/FAB: bottom padding removed so FABs are not lifted by a second
@@ -111,7 +110,7 @@ class _PhoneAppletBottomNav extends ConsumerWidget {
                   selectedIcon: def.selectedIcon,
                 ),
             ],
-            selectedIndex: selectedInBar < 0 ? 0 : selectedInBar,
+            selectedIndex: selectedInBar,
             onDestinationSelected: (int index) =>
                 chrome.goBranch(indexes[index]),
             labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,

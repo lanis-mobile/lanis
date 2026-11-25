@@ -151,6 +151,7 @@ abstract final class SettingsDeepLinks {
   static const base = '/common/settings';
   static const home = '$base/home';
   static const appearance = '$base/appearance';
+  static const navigation = '$base/navigation';
   static const notifications = '$base/notifications';
   static const cache = '$base/cache';
   static const userdata = '$base/userdata';

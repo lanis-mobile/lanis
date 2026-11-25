@@ -72,6 +72,16 @@ class _SettingsScreenState extends ConsumerSettingsColoursState<SettingsScreen> 
                 context.push(SettingsDeepLinks.appearance),
           ),
           SettingsTile(
+            title: (context) => AppLocalizations.of(context).navigation,
+            subtitle: (context) async {
+              return AppLocalizations.of(context).navigationSettingsSubtitle;
+            },
+            icon: Icons.reorder_rounded,
+            routePath: SettingsDeepLinks.navigation,
+            screen: (context) async =>
+                context.push(SettingsDeepLinks.navigation),
+          ),
+          SettingsTile(
             title: (context) => AppLocalizations.of(context).language,
             subtitle: (context) async {
               String code = Localizations.localeOf(context).languageCode;

@@ -12,6 +12,7 @@ import 'package:lanis/l10n/account_type_ui.dart';
 import 'package:lanis/features/auth/auth_controller.dart';
 import 'package:lanis/shell_navigation.dart';
 import 'package:lanis/features/offline/foreground_connection_monitor.dart';
+import 'package:lanis/utils/applet_navigation_order.dart';
 import 'package:lanis/utils/cached_network_image.dart';
 import 'package:lanis/utils/deep_link.dart';
 import 'package:lanis/utils/responsive.dart';
@@ -30,18 +31,22 @@ List<String> homeAppletPathsFor(AccountType accountType) => AppDefinitions
 List<String> get homeAppletPhpUrls =>
     AppDefinitions.homeApplets.map((a) => a.appletPhpUrl).toList();
 
-/// First home tab path for [accountType] given supported PHP applet URLs.
+/// First home tab path for [accountType] given supported PHP applet URLs
+/// and optional per-account [layout].
 String firstSupportedHomePathFor({
   required Set<String> supported,
   required AccountType accountType,
+  AppletNavigationLayout? layout,
 }) {
-  for (final def in AppDefinitions.homeApplets) {
-    if (supported.contains(def.appletPhpUrl) &&
-        def.supportedAccountTypes.contains(accountType)) {
-      return appletHomePath(def, accountType);
-    }
+  final effectiveLayout = layout ?? AppletNavigationLayout.defaults();
+  final orderedSupported = effectiveLayout.supportedAll(
+    supportedPhpUrls: supported,
+    accountType: accountType,
+  );
+  if (orderedSupported.isNotEmpty) {
+    return appletHomePath(orderedSupported.first, accountType);
   }
-  return appletHomePath(AppDefinitions.homeApplets.first, accountType);
+  return appletHomePath(effectiveLayout.all.first, accountType);
 }
 
 /// First home tab path supported by the current session's feature set.
@@ -50,6 +55,7 @@ String firstSupportedHomePath(WidgetRef ref) {
     supported: ref.read(supportedAppletPhpUrlsProvider),
     accountType:
         ref.read(activeAccountProvider)?.accountType ?? AccountType.student,
+    layout: ref.read(appletNavigationLayoutProvider),
   );
 }
 
@@ -59,6 +65,7 @@ String firstSupportedHomePathFromRef(Ref ref) {
     supported: ref.read(supportedAppletPhpUrlsProvider),
     accountType:
         ref.read(activeAccountProvider)?.accountType ?? AccountType.student,
+    layout: ref.read(appletNavigationLayoutProvider),
   );
 }
 
@@ -81,8 +88,13 @@ class HomePageState extends ConsumerState<HomePage> {
   void initState() {
     super.initState();
     final current = widget.navigationShell.currentIndex;
-    if (current < AppDefinitions.homeApplets.length) {
+    if (_isHomeBranch(current)) {
       _lastHomeBranchIndex = current;
+    } else {
+      final dest = _supportedHomeDestinations();
+      if (dest.indexes.isNotEmpty) {
+        _lastHomeBranchIndex = dest.indexes.first;
+      }
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) showUpdateInfoIfRequired(context);
@@ -93,17 +105,23 @@ class HomePageState extends ConsumerState<HomePage> {
 
   ClearTextAccount? get _account => ref.read(activeAccountProvider);
 
-  bool _supports(AppletDefinition definition) {
-    final accountType = _account?.accountType;
-    return accountType != null &&
-        definition.supportedAccountTypes.contains(accountType) &&
-        ref
-            .read(supportedAppletPhpUrlsProvider)
-            .contains(definition.appletPhpUrl);
+  AppletNavigationLayout get _layout =>
+      ref.read(appletNavigationLayoutProvider);
+
+  bool _isHomeBranch(int branchIndex) {
+    if (branchIndex == settingsShellBranchIndex) return false;
+    final bottomIndexes = _layout.supportedBottomBarBranchIndexes(
+      supportedPhpUrls: ref.read(supportedAppletPhpUrlsProvider),
+      accountType: _account?.accountType,
+    );
+    if (bottomIndexes.length < minBottomBarAppletsForDisplay) {
+      // When no phone bottom bar is active, every applet branch is top-level.
+      return true;
+    }
+    return bottomIndexes.contains(branchIndex);
   }
 
-  bool get _onHomeBranch =>
-      widget.navigationShell.currentIndex < AppDefinitions.homeApplets.length;
+  bool get _onHomeBranch => _isHomeBranch(widget.navigationShell.currentIndex);
 
   Future<void> _openLanisInBrowser() async {
     final account = _account;
@@ -145,7 +163,7 @@ class HomePageState extends ConsumerState<HomePage> {
   }
 
   void _goBranch(int index) {
-    if (index < AppDefinitions.homeApplets.length) {
+    if (_isHomeBranch(index)) {
       _lastHomeBranchIndex = index;
     }
     widget.navigationShell.goBranch(
@@ -191,33 +209,55 @@ class HomePageState extends ConsumerState<HomePage> {
     );
   }
 
-  /// Supported home-tab destinations shared by bottom bar and rail.
+  /// Supported home-tab destinations (bottom bar if active, else all
+  /// supported applets in custom order).
   ({List<int> indexes, List<AppletDefinition> defs})
   _supportedHomeDestinations() {
-    final nestedDefs = AppDefinitions.homeApplets;
-    final indexes = <int>[];
-    final defs = <AppletDefinition>[];
-    for (var i = 0; i < nestedDefs.length; i++) {
-      if (_supports(nestedDefs[i])) {
-        indexes.add(i);
-        defs.add(nestedDefs[i]);
-      }
-    }
-    return (indexes: indexes, defs: defs);
+    final supported = ref.read(supportedAppletPhpUrlsProvider);
+    final accountType = _account?.accountType;
+    final bottomDefs = _layout.supportedBottomBar(
+      supportedPhpUrls: supported,
+      accountType: accountType,
+    );
+    final defs = bottomDefs.length >= minBottomBarAppletsForDisplay
+        ? bottomDefs
+        : _layout.supportedAll(
+            supportedPhpUrls: supported,
+            accountType: accountType,
+          );
+    return (
+      indexes: defs.map(shellBranchIndexForApplet).toList(growable: false),
+      defs: defs,
+    );
   }
 
   /// Drawer rows that participate in [NavigationDrawer.selectedIndex].
-  List<
-    ({
-      String label,
-      Icon icon,
-      Icon selectedIcon,
-      bool enabled,
-      int? branchIndex,
-      VoidCallback onTap,
-    })
-  >
-  _drawerDestinations(BuildContext context) {
+  ({
+    List<
+      ({
+        String label,
+        Icon icon,
+        Icon selectedIcon,
+        bool enabled,
+        int? branchIndex,
+        VoidCallback onTap,
+      })
+    >
+    items,
+    int? appletSectionDividerIndex,
+  })
+  _drawerDestinations(BuildContext context, AppletNavigationLayout layout) {
+    final supported = ref.read(supportedAppletPhpUrlsProvider);
+    final accountType = _account?.accountType;
+    final bottomDefs = layout.supportedBottomBar(
+      supportedPhpUrls: supported,
+      accountType: accountType,
+    );
+    final drawerDefs = layout.supportedDrawer(
+      supportedPhpUrls: supported,
+      accountType: accountType,
+    );
+
     final items =
         <
           ({
@@ -230,19 +270,7 @@ class HomePageState extends ConsumerState<HomePage> {
           })
         >[];
 
-    for (final def in AppDefinitions.homeApplets) {
-      items.add((
-        label: def.label(context),
-        icon: def.icon,
-        selectedIcon: def.selectedIcon,
-        enabled: _supports(def),
-        branchIndex: shellBranchIndexForApplet(def),
-        onTap: () => _goBranch(shellBranchIndexForApplet(def)),
-      ));
-    }
-
-    for (final def in AppDefinitions.navigationApplets) {
-      if (!_supports(def)) continue;
+    for (final def in bottomDefs) {
       items.add((
         label: def.label(context),
         icon: def.icon,
@@ -252,6 +280,21 @@ class HomePageState extends ConsumerState<HomePage> {
         onTap: () => _goBranch(shellBranchIndexForApplet(def)),
       ));
     }
+
+    for (final def in drawerDefs) {
+      items.add((
+        label: def.label(context),
+        icon: def.icon,
+        selectedIcon: def.selectedIcon,
+        enabled: true,
+        branchIndex: shellBranchIndexForApplet(def),
+        onTap: () => _goBranch(shellBranchIndexForApplet(def)),
+      ));
+    }
+
+    final int? dividerIndex = bottomDefs.isNotEmpty
+        ? bottomDefs.length
+        : (drawerDefs.isNotEmpty ? drawerDefs.length : null);
 
     items.add((
       label: AppLocalizations.of(context).openMoodle,
@@ -298,14 +341,18 @@ class HomePageState extends ConsumerState<HomePage> {
       ),
     ));
 
-    return items;
+    return (items: items, appletSectionDividerIndex: dividerIndex);
   }
 
-  NavigationDrawer navDrawer(BuildContext context) {
+  NavigationDrawer navDrawer(
+    BuildContext context,
+    AppletNavigationLayout layout,
+  ) {
     final account = _account;
     final session = _session;
-    final homeCount = AppDefinitions.homeApplets.length;
-    final destinations = _drawerDestinations(context);
+    final drawerData = _drawerDestinations(context, layout);
+    final destinations = drawerData.items;
+    final sectionDividerIndex = drawerData.appletSectionDividerIndex;
 
     final Color imageColor = Theme.of(
       context,
@@ -411,7 +458,8 @@ class HomePageState extends ConsumerState<HomePage> {
           ),
         ),
         for (var i = 0; i < destinations.length; i++) ...[
-          if (i == homeCount || i == destinations.length - 1) const Divider(),
+          if (i == sectionDividerIndex || i == destinations.length - 1)
+            const Divider(),
           NavigationDrawerDestination(
             label: Text(destinations[i].label),
             icon: destinations[i].icon,
@@ -423,7 +471,7 @@ class HomePageState extends ConsumerState<HomePage> {
     );
   }
 
-  Widget? navRail(BuildContext context) {
+  Widget? navRail(BuildContext context, AppletNavigationLayout layout) {
     final destinations = <NavigationRailDestination>[];
     final onSelected = <VoidCallback>[];
     final branchIndexes = <int>[];
@@ -445,17 +493,12 @@ class HomePageState extends ConsumerState<HomePage> {
       onSelected.add(() => _goBranch(branchIndex));
     }
 
-    for (final def in AppDefinitions.homeApplets) {
-      if (!_supports(def)) continue;
-      addBranch(
-        label: def.label(context),
-        icon: def.icon,
-        selectedIcon: def.selectedIcon,
-        branchIndex: shellBranchIndexForApplet(def),
-      );
-    }
-    for (final def in AppDefinitions.navigationApplets) {
-      if (!_supports(def)) continue;
+    final supported = ref.read(supportedAppletPhpUrlsProvider);
+    final accountType = _account?.accountType;
+    for (final def in layout.supportedAll(
+      supportedPhpUrls: supported,
+      accountType: accountType,
+    )) {
       addBranch(
         label: def.label(context),
         icon: def.icon,
@@ -525,13 +568,19 @@ class HomePageState extends ConsumerState<HomePage> {
   @override
   Widget build(BuildContext context) {
     ref.watch(foregroundConnectionMonitorProvider);
-    ref.watch(supportedAppletPhpUrlsProvider);
-    ref.watch(activeAccountProvider);
+    final supported = ref.watch(supportedAppletPhpUrlsProvider);
+    final account = ref.watch(activeAccountProvider);
+    final layout = ref.watch(appletNavigationLayoutProvider);
 
-    final anySupported = AppDefinitions.homeApplets.any(_supports);
+    final anySupported = layout
+        .supportedAll(
+          supportedPhpUrls: supported,
+          accountType: account?.accountType,
+        )
+        .isNotEmpty;
     final isTablet = Responsive.isTablet(context);
     final onHomeBranch = _onHomeBranch;
-    final rail = isTablet ? navRail(context) : null;
+    final rail = isTablet ? navRail(context, layout) : null;
     final content = anySupported ? widget.navigationShell : noAppsSupported();
 
     // Outer chrome: tablet rail + drawer only. Phone bottom bar is nested in
@@ -569,7 +618,7 @@ class HomePageState extends ConsumerState<HomePage> {
                   )
                 : content,
           ),
-          drawer: navDrawer(context),
+          drawer: navDrawer(context, layout),
         ),
       ),
     );

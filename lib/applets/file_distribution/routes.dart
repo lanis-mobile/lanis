@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 import 'package:lanis/applets/definitions.dart';
 import 'package:lanis/applets/file_distribution/definition.dart';
+import 'package:lanis/widgets/applet_home_shell.dart';
 
 const String fileDistributionHomePath = '/common/file-distribution/home';
 
@@ -16,9 +17,8 @@ List<RouteBase> buildFileDistributionRoutes(AppletRouteContext ctx) {
         return null;
       },
       routes: [
-        GoRoute(
-          path: 'home',
-          builder: (context, state) =>
+        appletHomeShell(
+          homeBuilder: (context, state) =>
               ctx.homeBody(fileDistributionDefinition),
         ),
         GoRoute(

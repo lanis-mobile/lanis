@@ -3,6 +3,7 @@ import 'package:lanis/applets/data_storage/definition.dart';
 import 'package:lanis/applets/data_storage/node_view.dart';
 import 'package:lanis/applets/definitions.dart';
 import 'package:lanis/utils/deep_link.dart';
+import 'package:lanis/widgets/applet_home_shell.dart';
 
 List<RouteBase> buildDataStorageRoutes(AppletRouteContext ctx) {
   final home = dataStorageDefinition.homePath();
@@ -14,9 +15,8 @@ List<RouteBase> buildDataStorageRoutes(AppletRouteContext ctx) {
         return null;
       },
       routes: [
-        GoRoute(
-          path: 'home',
-          builder: (context, state) => ctx.homeBody(dataStorageDefinition),
+        appletHomeShell(
+          homeBuilder: (context, state) => ctx.homeBody(dataStorageDefinition),
         ),
         GoRoute(
           path: 'folder/:nodeId',

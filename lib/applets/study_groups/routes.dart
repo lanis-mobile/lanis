@@ -8,6 +8,7 @@ import 'package:lanis/applets/study_groups/student/student_exams_view.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/utils/deep_link.dart';
 import 'package:lanis/utils/responsive.dart';
+import 'package:lanis/widgets/applet_home_shell.dart';
 import 'package:lanis/widgets/combined_applet_builder.dart';
 import 'package:liblanis/liblanis.dart';
 
@@ -22,9 +23,8 @@ List<RouteBase> buildStudyGroupsRoutes(AppletRouteContext ctx) {
         return null;
       },
       routes: [
-        GoRoute(
-          path: 'home',
-          builder: (context, state) =>
+        appletHomeShell(
+          homeBuilder: (context, state) =>
               const StudyGroupsModePage(showExams: false),
         ),
         GoRoute(

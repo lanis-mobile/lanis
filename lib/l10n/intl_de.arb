@@ -516,5 +516,27 @@
   "fileDistributionAdminFieldLinkUrl": "Info-Link URL (optional)",
   "fileDistributionAdminFieldLinkTitle": "Link-Titel (optional)",
   "fileDistributionAdminUploadFile": "Datei hochladen",
-  "fileDistributionAdminUploadSuccess": "Datei hochgeladen"
+  "fileDistributionAdminUploadSuccess": "Datei hochgeladen",
+  "navigation": "Navigation",
+  "navigationSettingsSubtitle": "Untere Leiste, Seitenleiste",
+  "navigationBottomBarSection": "Untere Leiste",
+  "navigationSidebarSection": "Seitenleiste",
+  "navigationBottomBarCount": "{count}/{max}",
+  "@navigationBottomBarCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "navigationBottomBarMinHint": "Füge mindestens 2 Applets hinzu, um die untere Leiste auf Smartphones anzuzeigen.",
+  "navigationBottomBarEmptyHint": "Ziehe Applets hierher, um sie in der unteren Leiste anzuheften (max. 5).",
+  "navigationMoveToBottomBar": "In untere Leiste verschieben",
+  "navigationMoveToSidebar": "In Seitenleiste verschieben",
+  "navigationBottomBarFull": "Untere Leiste ist voll (max. 5)",
+  "navigationResetOrder": "Auf Standard zurücksetzen",
+  "navigationSettingsInfo": "Ziehe Applets, um ihre Reihenfolge anzupassen oder sie zwischen unterer Leiste und Seitenleiste zu verschieben. Änderungen werden pro Konto gespeichert und das erste Applet öffnet beim App-Start."
 }
