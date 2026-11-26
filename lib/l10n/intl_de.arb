@@ -590,5 +590,9 @@
   "dataStorageSortSizeAsc": "Kleinste zuerst",
   "calendarFilterAll": "Alle",
   "calendarFilterUncategorized": "Ohne Kategorie",
-  "calendarFilterTitle": "Kategorien filtern"
+  "calendarFilterTitle": "Kategorien filtern",
+  "sendMessage": "Nachricht senden",
+  "sendEmail": "E-Mail senden",
+  "openInConversations": "In Unterhaltungen öffnen",
+  "contactTeacher": "Lehrkraft kontaktieren"
 }

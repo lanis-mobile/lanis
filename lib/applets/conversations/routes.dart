@@ -15,6 +15,7 @@ import 'package:lanis/applets/definitions.dart';
 import 'package:lanis/applets/conversations/definition.dart';
 import 'package:lanis/utils/deep_link.dart';
 import 'package:lanis/utils/responsive.dart';
+import 'package:lanis/utils/root_nav.dart';
 import 'package:lanis/widgets/applet_home_shell.dart';
 import 'package:lanis/widgets/error_view.dart';
 import 'package:liblanis/liblanis.dart';
@@ -65,17 +66,31 @@ List<RouteBase> buildConversationsRoutes(AppletRouteContext ctx) {
             ),
             GoRoute(
               path: 'compose',
-              builder: (context, state) => DeepLinkPopScope(
-                fallbackPath: home,
-                child: ConversationComposePage(
-                  subject: state.uri.queryParameters['subject'],
-                  typeName: state.uri.queryParameters['type'],
-                  receivers: state.uri.queryParameters['receivers']
-                      ?.split(',')
-                      .where((e) => e.isNotEmpty)
-                      .toList(),
-                ),
-              ),
+              builder: (context, state) {
+                final extra = state.extra is ConversationComposeExtra
+                    ? state.extra as ConversationComposeExtra
+                    : null;
+                final queryReceivers = state.uri.queryParameters['receivers']
+                    ?.split(',')
+                    .where((e) => e.isNotEmpty)
+                    .toList();
+                final hasQueryReceivers =
+                    queryReceivers != null && queryReceivers.isNotEmpty;
+                return DeepLinkPopScope(
+                  fallbackPath: home,
+                  popGoRouterIfPossible: !Responsive.isSplitView(context),
+                  child: ConversationComposePage(
+                    subject:
+                        extra?.initialSubject ??
+                        state.uri.queryParameters['subject'],
+                    typeName: state.uri.queryParameters['type'],
+                    receivers: queryReceivers,
+                    initialReceivers: extra?.initialReceivers ?? const [],
+                    handleSubmission:
+                        extra?.handleSubmission ?? hasQueryReceivers,
+                  ),
+                );
+              },
             ),
             GoRoute(
               path: 'chat/:id',
@@ -85,6 +100,7 @@ List<RouteBase> buildConversationsRoutes(AppletRouteContext ctx) {
                 final extra = state.extra;
                 return DeepLinkPopScope(
                   fallbackPath: home,
+                  popGoRouterIfPossible: !Responsive.isSplitView(context),
                   child: ConversationChatPage(
                     id: id,
                     title: title,
@@ -200,12 +216,16 @@ class ConversationComposePage extends ConsumerStatefulWidget {
   final String? subject;
   final String? typeName;
   final List<String>? receivers;
+  final List<ReceiverEntry> initialReceivers;
+  final bool handleSubmission;
 
   const ConversationComposePage({
     super.key,
     this.subject,
     this.typeName,
     this.receivers,
+    this.initialReceivers = const [],
+    this.handleSubmission = false,
   });
 
   @override
@@ -215,13 +235,29 @@ class ConversationComposePage extends ConsumerStatefulWidget {
 
 class _ConversationComposePageState
     extends ConsumerState<ConversationComposePage> {
+  bool _submitting = false;
+
+  bool get _hasFullQueryPrefill =>
+      widget.initialReceivers.isEmpty &&
+      (widget.subject != null && widget.subject!.isNotEmpty) &&
+      (widget.receivers != null && widget.receivers!.isNotEmpty);
+
+  List<ReceiverEntry> get _resolvedInitialReceivers {
+    if (widget.initialReceivers.isNotEmpty) {
+      return widget.initialReceivers;
+    }
+    if (widget.receivers != null && widget.receivers!.isNotEmpty) {
+      return [
+        for (final id in widget.receivers!) ReceiverEntry(id, id, true),
+      ];
+    }
+    return const [];
+  }
+
   @override
   void initState() {
     super.initState();
-    final hasPrefill =
-        (widget.subject != null && widget.subject!.isNotEmpty) &&
-        (widget.receivers != null && widget.receivers!.isNotEmpty);
-    if (hasPrefill) {
+    if (_hasFullQueryPrefill) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _openPrefill());
     }
   }
@@ -257,12 +293,39 @@ class _ConversationComposePageState
     );
   }
 
+  Future<void> _handleConfiguratorSubmit(ChatCreationData chatData) async {
+    if (_submitting) return;
+    final text = await pushInShell<String>(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            FullScreenConversationsMessageInput(creationData: chatData),
+      ),
+    );
+    if (!mounted || text == null || text.trim().isEmpty) return;
+    setState(() {
+      _submitting = true;
+    });
+    try {
+      await createAndOpenConversation(
+        context,
+        ref,
+        text: text,
+        creationData: chatData,
+        replaceRoute: true,
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _submitting = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final hasPrefill =
-        (widget.subject != null && widget.subject!.isNotEmpty) &&
-        (widget.receivers != null && widget.receivers!.isNotEmpty);
-    if (hasPrefill) {
+    if (_hasFullQueryPrefill) {
       return Scaffold(
         appBar: AppBar(
           title: Text(AppLocalizations.of(context).createNewConversation),
@@ -270,7 +333,17 @@ class _ConversationComposePageState
         body: const Center(child: CircularProgressIndicator()),
       );
     }
-    return const NewConversationConfigurator();
+    final resolvedReceivers = _resolvedInitialReceivers;
+    final configuratorKey = ValueKey(
+      '${widget.subject ?? ''}|${resolvedReceivers.map((e) => e.id).join(',')}',
+    );
+    return NewConversationConfigurator(
+      key: configuratorKey,
+      initialReceivers: resolvedReceivers,
+      initialSubject: widget.subject,
+      isSubmitting: _submitting,
+      onSubmit: widget.handleSubmission ? _handleConfiguratorSubmit : null,
+    );
   }
 }
 

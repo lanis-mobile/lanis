@@ -25,10 +25,15 @@ class ConversationsChatAppBar extends StatelessWidget {
 
   void _leaveChat(BuildContext context) {
     // Tablet opens chat via go_router.go, so there is often nothing to pop.
-    // Prefer the local navigator; otherwise return to the list home.
+    // On phone, a chat may have been pushed across a ShellRoute boundary (e.g.
+    // via pushReplacement after deep-linked compose), so check GoRouter.canPop
+    // before falling back to the list home.
     final nav = Navigator.of(context);
     if (nav.canPop()) {
       nav.pop();
+    } else if (!Responsive.isSplitView(context) &&
+        (GoRouter.maybeOf(context)?.canPop() ?? false)) {
+      context.pop();
     } else {
       context.go(conversationsHomePath);
     }

@@ -12,6 +12,11 @@ class _Context implements AppletContext {
 
 class _Session implements LanisSession {
   @override
+  bool doesSupportFeature(
+    AppletMeta applet, {
+    AccountType? overrideAccountType,
+  }) => false;
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 

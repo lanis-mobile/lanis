@@ -24,7 +24,7 @@ dependencies:
   connectivity_plus: ^7.3.2
   flutter:
     sdk: flutter
-  liblanis: ^0.3.5
+  liblanis: ^0.3.6
   flutter_riverpod: ^3.5.0
   go_router: ^18.1.4
   dio_cookie_manager: ^3.5.0

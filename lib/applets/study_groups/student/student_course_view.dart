@@ -1,8 +1,8 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:intl/intl.dart';
-import 'package:lanis/utils/safe_launch.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:lanis/widgets/teacher_contact_sheet.dart';
 
 class StudentCourseView extends StatelessWidget {
   final List<StudentStudyGroup> studyGroup;
@@ -128,32 +128,34 @@ class StudentCourseView extends StatelessWidget {
   }
 }
 
-class TeacherChip extends StatefulWidget {
+class TeacherChip extends ConsumerWidget {
   final StudentStudyGroupTeacher teacher;
 
   const TeacherChip({super.key, required this.teacher});
 
   @override
-  State<TeacherChip> createState() => _TeacherChipState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final allowConversations = doesSessionSupportConversations(ref);
+    final contact = TeacherContact.fromStudyGroupTeacher(teacher);
+    final canMessage = allowConversations && contact.hasConversation;
+    final canEmail = contact.hasEmail;
 
-class _TeacherChipState extends State<TeacherChip> {
-  @override
-  Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        if (widget.teacher.email == null) return;
-
-        final Uri emailLaunchUri = Uri(
-          scheme: 'mailto',
-          path: widget.teacher.email,
-        );
-        safeLaunchUrl(
-          emailLaunchUri,
-          context: context,
-          mode: LaunchMode.externalApplication,
-        );
-      },
+      onTap: !canMessage && !canEmail
+          ? null
+          : () {
+              if (canMessage && canEmail) {
+                showTeacherContactSheet(
+                  context,
+                  teachers: [contact],
+                  allowConversations: true,
+                );
+              } else if (canMessage) {
+                openTeacherMessage(context, contact);
+              } else if (canEmail) {
+                launchTeacherEmail(context, contact.email!);
+              }
+            },
       behavior: HitTestBehavior.deferToChild,
       child: Chip(
         visualDensity: VisualDensity.compact,
@@ -161,11 +163,17 @@ class _TeacherChipState extends State<TeacherChip> {
           mainAxisSize: MainAxisSize.min,
           spacing: 4.0,
           children: [
-            Icon(Icons.person, size: 16),
+            const Icon(Icons.person, size: 16),
             Text(
-              "${widget.teacher.lastName}, ${widget.teacher.firstName} (${widget.teacher.krz})",
+              "${teacher.lastName}, ${teacher.firstName} (${teacher.krz})",
             ),
-            if (widget.teacher.email != null)
+            if (canMessage)
+              Icon(
+                Icons.chat_bubble_outline,
+                size: 16,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            if (canEmail)
               Icon(
                 Icons.email,
                 size: 16,
