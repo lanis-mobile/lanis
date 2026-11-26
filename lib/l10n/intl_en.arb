@@ -572,5 +572,32 @@
   },
   "navigationResetOrder": "Reset to default",
   "navigationSettingsInfo": "Drag applets to reorder them or move them between the bottom bar and sidebar. Changes are saved per account and the first applet opens when starting the app.",
-  "navigationSettingsTabletInfo": "On tablets, the navigation rail shows all applets in this combined order. The bottom bar split applies on phones."
+  "navigationSettingsTabletInfo": "On tablets, the navigation rail shows all applets in this combined order. The bottom bar split applies on phones.",
+  "dataStorageAll": "All",
+  "dataStorageNewFiles": "New files",
+  "dataStorageEmptyFolder": "This folder is empty.",
+  "dataStoragePathTitle": "Path",
+  "dataStorageSubfolderCount": "{count, plural, =1{1 folder} other{{count} folders}}",
+  "@dataStorageSubfolderCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dataStorageFileCount": "{count, plural, =1{1 file} other{{count} files}}",
+  "@dataStorageFileCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dataStorageSort": "Sort",
+  "dataStorageSortNameAsc": "Name (A–Z)",
+  "dataStorageSortNameDesc": "Name (Z–A)",
+  "dataStorageSortDateDesc": "Newest first",
+  "dataStorageSortDateAsc": "Oldest first",
+  "dataStorageSortSizeDesc": "Largest first",
+  "dataStorageSortSizeAsc": "Smallest first"
 }

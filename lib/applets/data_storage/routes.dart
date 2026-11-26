@@ -30,9 +30,15 @@ List<RouteBase> buildDataStorageRoutes(AppletRouteContext ctx) {
               );
             }
             final title = state.uri.queryParameters['title'] ?? '';
+            final initialPath =
+                state.uri.queryParametersAll['p'] ?? const <String>[];
             return DeepLinkPopScope(
               fallbackPath: home,
-              child: DataStorageNodeView(nodeID: nodeId, title: title),
+              child: DataStorageNodeView(
+                nodeID: nodeId,
+                title: title,
+                initialPath: initialPath,
+              ),
             );
           },
         ),
