@@ -200,6 +200,7 @@ class TeacherTimetableGrid extends StatelessWidget {
       child: Column(
         children: [
           _SingleDayTabStrip(
+            dayCount: filteredDays.length,
             weekdayIndices: plan.weekdayIndices,
             weekStart: weekStart,
             todayWeekday: todayWeekday,
@@ -210,7 +211,6 @@ class TeacherTimetableGrid extends StatelessWidget {
                 for (var dayCol = 0; dayCol < filteredDays.length; dayCol++)
                   _SingleDayAgendaList(
                     plan: plan,
-                    rows: rows,
                     entries: filteredDays[dayCol],
                     dayColumnIndex: dayCol,
                     selectedEntry: selectedEntry,
@@ -227,11 +227,13 @@ class TeacherTimetableGrid extends StatelessWidget {
 }
 
 class _SingleDayTabStrip extends StatelessWidget {
+  final int dayCount;
   final List<int> weekdayIndices;
   final DateTime weekStart;
   final int todayWeekday;
 
   const _SingleDayTabStrip({
+    required this.dayCount,
     required this.weekdayIndices,
     required this.weekStart,
     required this.todayWeekday,
@@ -254,9 +256,12 @@ class _SingleDayTabStrip extends StatelessWidget {
         indicatorSize: TabBarIndicatorSize.tab,
         labelPadding: const EdgeInsets.symmetric(horizontal: 4),
         tabs: [
-          for (final weekdayIdx in weekdayIndices)
+          for (var dayCol = 0; dayCol < dayCount; dayCol++)
             Builder(
               builder: (context) {
+                final weekdayIdx = dayCol < weekdayIndices.length
+                    ? weekdayIndices[dayCol]
+                    : dayCol;
                 final date = DateTime(
                   weekStart.year,
                   weekStart.month,
@@ -291,7 +296,6 @@ class _SingleDayTabStrip extends StatelessWidget {
 
 class _SingleDayAgendaList extends StatelessWidget {
   final TeacherTimetablePlan plan;
-  final List<TeacherGridRow> rows;
   final List<TeacherTimetableEntry> entries;
   final int dayColumnIndex;
   final TeacherEntrySelection? selectedEntry;
@@ -301,7 +305,6 @@ class _SingleDayAgendaList extends StatelessWidget {
 
   const _SingleDayAgendaList({
     required this.plan,
-    required this.rows,
     required this.entries,
     required this.dayColumnIndex,
     required this.selectedEntry,
@@ -358,6 +361,8 @@ class _SingleDayAgendaList extends StatelessWidget {
             fallbackLesson: l10n.unknownLesson,
             fallbackBooking: l10n.teacherTimetableRoomBooking,
             fallbackSubstitution: l10n.teacherTimetableSubstitutionAdded,
+            fallbackSubstitutionChanged:
+                l10n.teacherTimetableSubstitutionChanged,
             weekBadgeLabel: l10n.timetableWeek,
           );
           final hourRow = _findLessonRow(plan.hours, entry.hourIndex);
@@ -400,7 +405,7 @@ class _SingleDayAgendaList extends StatelessWidget {
                       ),
                       if (entry.isBreakSupervision && hourRow != null)
                         Text(
-                          'vor ${hourRow.label}',
+                          l10n.teacherTimetablePauseBefore(hourRow.label),
                           style: Theme.of(context).textTheme.labelSmall
                               ?.copyWith(color: cs.onSurfaceVariant),
                           textAlign: TextAlign.center,
@@ -583,7 +588,11 @@ class _HourRailColumn extends StatelessWidget {
                 ),
                 alignment: Alignment.center,
                 child: Text(
-                  compact ? 'P' : l10n.teacherTimetablePause,
+                  compact
+                      ? (l10n.teacherTimetablePause.isNotEmpty
+                            ? l10n.teacherTimetablePause[0]
+                            : 'P')
+                      : l10n.teacherTimetablePause,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     fontSize: compact ? 9.5 : 10,
                     color: cs.onSurfaceVariant,
@@ -726,29 +735,36 @@ class _DayColumn extends StatelessWidget {
             color: isToday ? cs.primary : cs.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                DateFormat.E(locale).format(date),
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: compact ? 11 : 12.5,
-                  fontWeight: FontWeight.w700,
-                  color: isToday ? cs.onPrimary : cs.onSurface,
-                ),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    DateFormat.E(locale).format(date),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: compact ? 11 : 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: isToday ? cs.onPrimary : cs.onSurface,
+                    ),
+                  ),
+                  Text(
+                    date.format('dd.MM.'),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: compact ? 9 : 10,
+                      color: isToday
+                          ? cs.onPrimary.withValues(alpha: 0.9)
+                          : cs.onSurfaceVariant,
+                    ),
+                  ),
+                ],
               ),
-              Text(
-                date.format('dd.MM.'),
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: compact ? 9 : 10,
-                  color: isToday
-                      ? cs.onPrimary.withValues(alpha: 0.9)
-                      : cs.onSurfaceVariant,
-                ),
-              ),
-            ],
+            ),
           ),
         ),
         const SizedBox(height: _teacherRowGap),
@@ -804,32 +820,66 @@ class _DayColumn extends StatelessWidget {
                 }
               }
 
-              // 2. Lesson, substitution, and R&M blocks
-              for (var rIdx = 0; rIdx < rows.length; rIdx++) {
-                final row = rows[rIdx];
-                if (row.kind != TeacherGridRowKind.lesson) continue;
-                final hourIndex = row.lessonRow!.lessonIndex;
-                final startingHere = [
-                  for (final e in lessonEntries)
-                    if (e.hourIndex == hourIndex) e,
-                ];
-                if (startingHere.isEmpty) continue;
+              // 2. Lesson, substitution, and R&M blocks with overlap-aware lane layout
+              final lessonRowIndices = <int, int>{
+                for (var rIdx = 0; rIdx < rows.length; rIdx++)
+                  if (rows[rIdx].kind == TeacherGridRowKind.lesson)
+                    rows[rIdx].lessonRow!.lessonIndex: rIdx,
+              };
+              final placed =
+                  <({TeacherTimetableEntry entry, int startRow, int endRow})>[];
+              for (final e in lessonEntries) {
+                final rIdx = e.hourIndex == null
+                    ? null
+                    : lessonRowIndices[e.hourIndex!];
+                if (rIdx == null) continue;
+                final dur = max(1, e.duration);
+                var endRow = rIdx;
+                var lessonsCounted = 0;
+                for (var i = rIdx; i < rows.length; i++) {
+                  endRow = i + 1;
+                  if (rows[i].kind == TeacherGridRowKind.lesson) {
+                    lessonsCounted++;
+                    if (lessonsCounted >= dur) break;
+                  }
+                }
+                placed.add((entry: e, startRow: rIdx, endRow: endRow));
+              }
+              placed.sort((a, b) {
+                final s = a.startRow.compareTo(b.startRow);
+                if (s != 0) return s;
+                return b.endRow.compareTo(a.endRow);
+              });
 
-                final top = _offsetForRowIndex(rIdx);
-                final slotCount = startingHere.length;
+              // Group into connected overlap clusters so multi-period lessons
+              // overlapping later single-period substitutions never obscure each other.
+              var cursor = 0;
+              while (cursor < placed.length) {
+                final cluster = [placed[cursor]];
+                var clusterEnd = placed[cursor].endRow;
+                cursor++;
+                while (cursor < placed.length &&
+                    placed[cursor].startRow < clusterEnd) {
+                  cluster.add(placed[cursor]);
+                  if (placed[cursor].endRow > clusterEnd) {
+                    clusterEnd = placed[cursor].endRow;
+                  }
+                  cursor++;
+                }
 
-                // When multiple entries start in the same period (e.g. regular
-                // lesson + embedded substitution), stack them cleanly vertically
-                // if height permits, or split horizontally when > 2 or compact.
+                // Compact 2-way vertical stack when two single-period entries
+                // occupy the exact same narrow slot.
                 final useVerticalStack =
-                    slotCount == 2 &&
-                    startingHere.every((e) => e.duration <= 1) &&
+                    cluster.length == 2 &&
+                    cluster[0].startRow == cluster[1].startRow &&
+                    cluster.every((item) => item.entry.duration <= 1) &&
                     colWidth < 110;
 
                 if (useVerticalStack) {
+                  final top = _offsetForRowIndex(cluster[0].startRow);
                   final eachHeight = (rowHeight - 2) / 2;
-                  for (var idx = 0; idx < slotCount; idx++) {
-                    final entry = startingHere[idx];
+                  for (var idx = 0; idx < cluster.length; idx++) {
+                    final entry = cluster[idx].entry;
                     children.add(
                       Positioned(
                         top: top + idx * (eachHeight + 2),
@@ -850,28 +900,52 @@ class _DayColumn extends StatelessWidget {
                     );
                   }
                 } else {
+                  final laneEnds = <int>[];
+                  final assignedLanes = <int>[];
+                  for (final item in cluster) {
+                    var lane = -1;
+                    for (var l = 0; l < laneEnds.length; l++) {
+                      if (laneEnds[l] <= item.startRow) {
+                        lane = l;
+                        laneEnds[l] = item.endRow;
+                        break;
+                      }
+                    }
+                    if (lane < 0) {
+                      lane = laneEnds.length;
+                      laneEnds.add(item.endRow);
+                    }
+                    assignedLanes.add(lane);
+                  }
+                  final laneCount = laneEnds.length;
                   final eachWidth = max(
                     1.0,
-                    (colWidth - (slotCount - 1) * 2) / slotCount,
+                    (colWidth - (laneCount - 1) * 2) / laneCount,
                   );
-                  for (var idx = 0; idx < slotCount; idx++) {
-                    final entry = startingHere[idx];
-                    final blockHeight = _spanHeight(rIdx, entry.duration);
+                  for (var idx = 0; idx < cluster.length; idx++) {
+                    final item = cluster[idx];
+                    final lane = assignedLanes[idx];
+                    final top = _offsetForRowIndex(item.startRow);
+                    final blockHeight = _spanHeight(
+                      item.startRow,
+                      item.entry.duration,
+                    );
                     children.add(
                       Positioned(
                         top: top,
-                        left: idx * (eachWidth + 2),
+                        left: lane * (eachWidth + 2),
                         width: eachWidth,
                         height: blockHeight,
                         child: _TeacherLessonBlock(
                           plan: plan,
-                          entry: entry,
-                          compact: compact || slotCount > 1,
+                          entry: item.entry,
+                          compact: compact || laneCount > 1,
                           veryCompact: false,
                           isSelected:
                               selectedEntry?.dayColumnIndex == dayColumnIndex &&
-                              selectedEntry?.entry.id == entry.id,
-                          onTap: () => onSelectEntry(dayColumnIndex, entry),
+                              selectedEntry?.entry.id == item.entry.id,
+                          onTap: () =>
+                              onSelectEntry(dayColumnIndex, item.entry),
                         ),
                       ),
                     );
@@ -1017,6 +1091,7 @@ class _TeacherLessonBlock extends StatelessWidget {
       fallbackLesson: l10n.unknownLesson,
       fallbackBooking: l10n.teacherTimetableRoomBooking,
       fallbackSubstitution: l10n.teacherTimetableSubstitutionAdded,
+      fallbackSubstitutionChanged: l10n.teacherTimetableSubstitutionChanged,
       weekBadgeLabel: l10n.timetableWeek,
     );
     final style = _entryColors(context, entry);
@@ -1038,46 +1113,56 @@ class _TeacherLessonBlock extends StatelessWidget {
             horizontal: compact ? 4 : 6,
             vertical: veryCompact ? 1.5 : (compact ? 3 : 4),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (cell.eyebrow != null && !veryCompact)
-                Text(
-                  cell.eyebrow!,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: compact ? 8 : 8.5,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.1,
-                    color: style.eyebrowColor,
-                    height: 1.1,
-                  ),
-                ),
-              Text(
-                cell.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: veryCompact ? 9.5 : (compact ? 10.5 : 11.5),
-                  fontWeight: FontWeight.w700,
-                  color: style.foreground,
-                  height: 1.15,
+          child: LayoutBuilder(
+            builder: (context, constraints) => FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: constraints.maxWidth),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (cell.eyebrow != null && !veryCompact)
+                      Text(
+                        cell.eyebrow!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: compact ? 8 : 8.5,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.1,
+                          color: style.eyebrowColor,
+                          height: 1.1,
+                        ),
+                      ),
+                    Text(
+                      cell.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: veryCompact ? 9.5 : (compact ? 10.5 : 11.5),
+                        fontWeight: FontWeight.w700,
+                        color: style.foreground,
+                        height: 1.15,
+                      ),
+                    ),
+                    if (cell.subtitle.isNotEmpty && !veryCompact)
+                      Text(
+                        cell.subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: compact ? 8.5 : 9.5,
+                          color: style.subtitleColor,
+                          height: 1.15,
+                        ),
+                      ),
+                  ],
                 ),
               ),
-              if (cell.subtitle.isNotEmpty && !veryCompact)
-                Text(
-                  cell.subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: compact ? 8.5 : 9.5,
-                    color: style.subtitleColor,
-                    height: 1.15,
-                  ),
-                ),
-            ],
+            ),
           ),
         ),
       ),
@@ -1109,7 +1194,8 @@ class _TeacherTimeMarkerState extends State<_TeacherTimeMarker> {
     final now = DateTime.now();
     final ms = (60 - now.second) * 1000 - now.millisecond;
     _timer = Timer(Duration(milliseconds: max(250, ms)), () {
-      if (mounted) setState(() {});
+      if (!mounted) return;
+      setState(() {});
       _timer = Timer.periodic(const Duration(minutes: 1), (_) {
         if (mounted) setState(() {});
       });
@@ -1159,6 +1245,8 @@ class _TeacherTimeMarkerState extends State<_TeacherTimeMarker> {
           break;
         } else if (nowTod > end) {
           offset += h + _teacherRowGap;
+        } else if (nowTod < start) {
+          break;
         }
       } else {
         offset += h + _teacherRowGap;
@@ -1216,7 +1304,7 @@ _EntryVisualStyle _entryColors(
         subtitleColor: cs.onSurfaceVariant,
         eyebrowColor: accent,
         badgeBg: accent,
-        badgeFg: Colors.white,
+        badgeFg: isDark ? const Color(0xFF06290B) : Colors.white,
       );
     case TeacherTimetableEntryKind.substitutionChanged:
       return _EntryVisualStyle(
@@ -1243,7 +1331,7 @@ _EntryVisualStyle _entryColors(
         subtitleColor: cs.onSurfaceVariant,
         eyebrowColor: accent,
         badgeBg: accent,
-        badgeFg: Colors.white,
+        badgeFg: isDark ? const Color(0xFF052242) : Colors.white,
       );
     case TeacherTimetableEntryKind.breakSupervision:
       return _EntryVisualStyle(

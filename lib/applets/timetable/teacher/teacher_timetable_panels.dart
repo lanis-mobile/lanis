@@ -710,8 +710,11 @@ class _HighlightedText extends StatelessWidget {
         style: style,
       );
     }
-    final matchIdx = text.toLowerCase().indexOf(q.toLowerCase());
-    if (matchIdx < 0) {
+    final match = RegExp(
+      RegExp.escape(q),
+      caseSensitive: false,
+    ).firstMatch(text);
+    if (match == null) {
       return Text(
         text,
         maxLines: 1,
@@ -719,20 +722,19 @@ class _HighlightedText extends StatelessWidget {
         style: style,
       );
     }
-    final endIdx = matchIdx + q.length;
     return Text.rich(
       TextSpan(
         style: style,
         children: [
-          if (matchIdx > 0) TextSpan(text: text.substring(0, matchIdx)),
+          if (match.start > 0) TextSpan(text: text.substring(0, match.start)),
           TextSpan(
-            text: text.substring(matchIdx, endIdx),
+            text: text.substring(match.start, match.end),
             style: style?.copyWith(
               fontWeight: FontWeight.w700,
               backgroundColor: highlightBg,
             ),
           ),
-          if (endIdx < text.length) TextSpan(text: text.substring(endIdx)),
+          if (match.end < text.length) TextSpan(text: text.substring(match.end)),
         ],
       ),
       maxLines: 1,
@@ -774,6 +776,7 @@ class TeacherEntryInspectorPanel extends StatelessWidget {
       fallbackLesson: l10n.unknownLesson,
       fallbackBooking: l10n.teacherTimetableRoomBooking,
       fallbackSubstitution: l10n.teacherTimetableSubstitutionAdded,
+      fallbackSubstitutionChanged: l10n.teacherTimetableSubstitutionChanged,
       weekBadgeLabel: l10n.timetableWeek,
     );
 
@@ -1167,7 +1170,7 @@ class TeacherEntryInspectorPanel extends StatelessWidget {
           ),
           border: accent.withValues(alpha: 0.65),
           tagBg: accent,
-          tagFg: Colors.white,
+          tagFg: isDark ? const Color(0xFF06290B) : Colors.white,
         );
       case TeacherTimetableEntryKind.substitutionChanged:
         return (
@@ -1190,7 +1193,7 @@ class TeacherEntryInspectorPanel extends StatelessWidget {
           ),
           border: accent.withValues(alpha: 0.65),
           tagBg: accent,
-          tagFg: Colors.white,
+          tagFg: isDark ? const Color(0xFF052242) : Colors.white,
         );
       case TeacherTimetableEntryKind.breakSupervision:
         return (

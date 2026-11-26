@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lanis/applets/timetable/definition.dart';
@@ -73,7 +74,7 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
   bool _freeRoomsLoading = false;
   Object? _freeRoomsError;
   int _freeRoomsRevision = 0;
-  StateSetter? _freeRoomsSheetSetState;
+  final ValueNotifier<int> _freeRoomsNotifier = ValueNotifier<int>(0);
 
   @override
   void initState() {
@@ -194,9 +195,7 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
           reference,
           cachePolicy: isOfflineNet
               ? CacheReadPolicy.cacheOnly
-              : (forceRefresh
-                    ? CacheReadPolicy.networkFirst
-                    : CacheReadPolicy.networkFirst),
+              : CacheReadPolicy.networkFirst,
         );
   }
 
@@ -229,6 +228,10 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
         TickerMode.valuesOf(context).enabled) {
       _overviewSource.startAutoRefresh();
       unawaited(_overviewSource.fetchData(forceRefresh: true));
+      final target = _activeTarget;
+      if (target != null && widget.offline == null) {
+        unawaited(_selectTarget(target, forceRefresh: true));
+      }
     } else {
       _overviewSource.stopAutoRefresh();
     }
@@ -237,6 +240,7 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _freeRoomsNotifier.dispose();
     _overviewSource.dispose();
     super.dispose();
   }
@@ -315,7 +319,14 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
         _tabletRightMode = _TabletRightMode.none;
       }
       _planLoading = alreadyLoaded == null || forceRefresh;
+      if (alreadyLoaded != null) {
+        _validateWeekSelectionFor(alreadyLoaded);
+      }
     });
+
+    if (alreadyLoaded != null && !forceRefresh) {
+      return;
+    }
 
     if (alreadyLoaded == null && !forceRefresh) {
       final cached = await _tryReadCachedPlan(target.reference);
@@ -343,6 +354,7 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
         if (target.isOwn && result.data.targetId.isNotEmpty) {
           _ownTeacherId = result.data.targetId;
         }
+        _validateWeekSelectionFor(result.data);
         _planLoading = false;
         _planError = null;
       });
@@ -430,9 +442,20 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
     }
   }
 
+  void _validateWeekSelectionFor(TeacherTimetablePlan plan) {
+    if (_weekSelection.mode == TimetableWeekMode.badge) {
+      final badges = collectTeacherWeekBadges(plan);
+      final selected = _weekSelection.resolveBadge(plan.weekBadge);
+      if (selected == null || !badges.contains(selected)) {
+        _weekSelection = const TimetableWeekSelection.all();
+      }
+    }
+  }
+
   void _updateFreeRoomsState(VoidCallback fn) {
+    if (!mounted) return;
     setState(fn);
-    _freeRoomsSheetSetState?.call(() {});
+    _freeRoomsNotifier.value++;
   }
 
   void _onSelectFreeRoomWeekday(int day) {
@@ -442,7 +465,8 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
   void _onToggleFreeRoomHour(int hour) {
     final next = List<int>.from(_freeRoomsHours);
     if (next.contains(hour)) {
-      if (next.length > 1) next.remove(hour);
+      if (next.length <= 1) return;
+      next.remove(hour);
     } else {
       next.add(hour);
       next.sort();
@@ -463,8 +487,10 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
         return StatefulBuilder(
           builder: (context, setSheetState) {
             final viewInsets = MediaQuery.viewInsetsOf(context).bottom;
-            final maxHeight =
-                (MediaQuery.sizeOf(context).height - viewInsets) * 0.78;
+            final maxHeight = math.max(
+              160.0,
+              (MediaQuery.sizeOf(context).height - viewInsets) * 0.78,
+            );
             return Padding(
               padding: EdgeInsets.only(bottom: viewInsets),
               child: ConstrainedBox(
@@ -502,12 +528,15 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
       showDragHandle: true,
       isScrollControlled: true,
       builder: (sheetCtx) {
-        return StatefulBuilder(
-          builder: (context, setSheetState) {
-            _freeRoomsSheetSetState = setSheetState;
+        return ListenableBuilder(
+          listenable: _freeRoomsNotifier,
+          builder: (context, _) {
             return ConstrainedBox(
               constraints: BoxConstraints(
-                maxHeight: MediaQuery.sizeOf(context).height * 0.78,
+                maxHeight: math.max(
+                  160.0,
+                  MediaQuery.sizeOf(context).height * 0.78,
+                ),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -558,7 +587,7 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
           },
         );
       },
-    ).whenComplete(() => _freeRoomsSheetSetState = null);
+    );
   }
 
   void _openPhoneEntrySheet(
@@ -634,6 +663,7 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
   }
 
   void _toggleTabletFreeRooms() {
+    var shouldLoad = false;
     setState(() {
       if (_tabletRightMode == _TabletRightMode.freeRooms) {
         _tabletRightMode = _TabletRightMode.none;
@@ -641,11 +671,12 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
         _tabletRightMode = _TabletRightMode.freeRooms;
         _lastRightMode = _TabletRightMode.freeRooms;
         _selectedEntry = null;
-        if (!_freeRoomsInitialized && !_freeRoomsLoading) {
-          unawaited(_loadFreeRooms(useServerDefaults: true));
-        }
+        shouldLoad = !_freeRoomsInitialized && !_freeRoomsLoading;
       }
     });
+    if (shouldLoad) {
+      unawaited(_loadFreeRooms(useServerDefaults: true));
+    }
   }
 
   Widget _buildWeekBadgeAction(
@@ -722,6 +753,37 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
     }
 
     if (plan == null) {
+      final hasAnyTarget =
+          _defaultTargetFor(
+            overview,
+            AppLocalizations.of(context).teacherTimetableOwnPlan,
+          ) !=
+          null;
+      if (target == null && !hasAnyTarget) {
+        return RefreshIndicator(
+          onRefresh: _refreshAll,
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              SliverFillRemaining(
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.event_busy_outlined, size: 52),
+                      const SizedBox(height: 12),
+                      Text(
+                        AppLocalizations.of(context).noEntries,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
       return const Center(child: CircularProgressIndicator());
     }
 
@@ -791,16 +853,23 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
   Widget build(BuildContext context) {
     if (widget.offline == null) {
       ref.listen(connectionStatusProvider, (previous, next) {
+        if (!mounted ||
+            !TickerMode.valuesOf(context).enabled ||
+            previous?.asData?.value != ConnectionStatus.disconnected ||
+            next.asData?.value != ConnectionStatus.connected) {
+          return;
+        }
         final failure = _overviewSource.latestResponse.error?.exception;
-        if (mounted &&
-            TickerMode.valuesOf(context).enabled &&
-            previous?.asData?.value == ConnectionStatus.disconnected &&
-            next.asData?.value == ConnectionStatus.connected &&
-            _overviewSource.latestResponse.status == FetcherStatus.error &&
+        if (_overviewSource.latestResponse.status == FetcherStatus.error &&
             failure != null &&
             (failure is CacheUnavailableException ||
                 CacheService.isTransportFailure(failure))) {
           unawaited(_overviewSource.fetchData(forceRefresh: true));
+        }
+        final target = _activeTarget;
+        if (target != null &&
+            (_planError != null || !_loadedPlans.containsKey(target.key))) {
+          unawaited(_selectTarget(target, forceRefresh: true));
         }
       });
     }
@@ -1001,7 +1070,9 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
               ? _tabletRightMode
               : _lastRightMode;
           final displayedSelection = _selectedEntry ?? _lastSelectedEntry;
-          final displayedPlan = activePlan ?? _lastSelectedPlan;
+          final displayedPlan = _selectedEntry != null
+              ? activePlan
+              : _lastSelectedPlan;
 
           Widget rightContent;
           if (displayedRightMode == _TabletRightMode.freeRooms) {

@@ -597,7 +597,6 @@
   "contactTeacher": "Lehrkraft kontaktieren",
   "teacherTimetableOwnPlan": "Mein Plan",
   "teacherTimetablePlans": "Pläne",
-  "teacherTimetableSwitchPlan": "Plan wechseln",
   "teacherTimetableFilterPlans": "Plan filtern…",
   "teacherTimetableTeachers": "Lehrkräfte",
   "teacherTimetableClasses": "Klassen",
@@ -619,7 +618,6 @@
   "teacherTimetableLessonDetails": "Stunden-Details",
   "teacherTimetableRoomBooking": "Räume & Medien",
   "teacherTimetableOpenInRumbs": "In Räume & Medien öffnen",
-  "teacherTimetableBookableInRumbs": "In Räume & Medien buchbar",
   "teacherTimetableLinkedPlans": "Verknüpfte Pläne",
   "teacherTimetableOpenRoomPlan": "Raumplan öffnen",
   "teacherTimetableParallelInSlot": "Parallel in dieser Stunde",
@@ -632,22 +630,6 @@
     }
   },
   "teacherTimetablePause": "Pause",
-  "teacherTimetableValidFrom": "Gültig {label}",
-  "@teacherTimetableValidFrom": {
-    "placeholders": {
-      "label": {
-        "type": "String"
-      }
-    }
-  },
-  "teacherTimetableRoomContact": "Kontakt: {contacts}",
-  "@teacherTimetableRoomContact": {
-    "placeholders": {
-      "contacts": {
-        "type": "String"
-      }
-    }
-  },
   "teacherTimetableNoMatches": "Keine Treffer",
   "teacherTimetableSelectHourPrompt": "Mindestens eine Stunde auswählen.",
   "teacherTimetableSubstitutionAdded": "Vertretung",

@@ -96,18 +96,20 @@ List<TeacherGridRow> buildTeacherGridRows(TeacherTimetablePlan plan) {
   final rows = <TeacherGridRow>[];
   TimeTableRow? prev;
   for (final row in plan.hours) {
-    final hasTimeGap =
+    final gapMinutes =
         !plan.timesHidden &&
-        prev != null &&
-        _hasRealTime(prev.endTime) &&
-        _hasRealTime(row.startTime) &&
-        row.startTime > prev.endTime;
+            prev != null &&
+            _hasRealTime(prev.endTime) &&
+            _hasRealTime(row.startTime)
+        ? prev.endTime.differenceInMinutes(row.startTime)
+        : 0;
+    final hasTimeGap = gapMinutes > 10;
     final hasSupervisionBefore = pauseBeforeIndices.contains(row.lessonIndex);
     if (hasTimeGap || hasSupervisionBefore) {
       rows.add(
         TeacherGridRow.pause(
           beforeHourIndex: row.lessonIndex,
-          startTime: hasTimeGap ? prev.endTime : null,
+          startTime: hasTimeGap ? prev!.endTime : null,
           endTime: hasTimeGap ? row.startTime : null,
         ),
       );
@@ -142,6 +144,7 @@ TeacherCellPresentation formatTeacherCell(
   required String fallbackLesson,
   required String fallbackBooking,
   required String fallbackSubstitution,
+  String? fallbackSubstitutionChanged,
   String Function(String badge)? weekBadgeLabel,
 }) {
   if (entry.isBreakSupervision) {
@@ -204,7 +207,9 @@ TeacherCellPresentation formatTeacherCell(
       eyebrow: eyebrow,
       title: (entry.subject?.trim().isNotEmpty ?? false)
           ? entry.subject!.trim()
-          : fallbackSubstitution,
+          : (isAdded
+                ? fallbackSubstitution
+                : (fallbackSubstitutionChanged ?? fallbackSubstitution)),
       subtitle: subParts.join(' · '),
     );
   }
@@ -225,7 +230,7 @@ TeacherCellPresentation formatTeacherCell(
   }
   final badge = entry.badge?.trim();
   final eyebrow = (badge != null && badge.isNotEmpty)
-      ? (weekBadgeLabel != null ? weekBadgeLabel(badge) : '$badge-Woche')
+      ? (weekBadgeLabel != null ? weekBadgeLabel(badge) : badge)
       : null;
 
   return TeacherCellPresentation(
@@ -412,8 +417,11 @@ bool isRedundantLanisTooltip(String? tooltip) {
   if (tooltip == null) return true;
   final trimmed = tooltip.trim();
   if (trimmed.isEmpty) return true;
-  return trimmed.contains(' bei der Klasse/Stufe/Lerngruppe ') ||
-      trimmed.contains(' im Raum ');
+  if (trimmed.contains(' bei der Klasse/Stufe/Lerngruppe ')) return true;
+  // Standard Lanis teacher-plan boilerplate: "<Fach> im Raum <Raum> (<Kurs>)"
+  return RegExp(
+    r'^[^.\n!?]+ im Raum [^.\n!?]+(\s*\([^)]+\))?$',
+  ).hasMatch(trimmed);
 }
 
 /// Strips HTML tags cleanly for inline notice banners.
@@ -432,7 +440,12 @@ List<TeacherTimetableEntry> filterTeacherDayByBadge(
   final target = selectedBadge.trim();
   return [
     for (final e in entries)
-      if (e.badge == null || e.badge!.trim().isEmpty || e.badge!.trim() == target)
+      if (e.isBreakSupervision ||
+          e.isEmbeddedSubstitution ||
+          e.isRoomBooking ||
+          e.badge == null ||
+          e.badge!.trim().isEmpty ||
+          e.badge!.trim() == target)
         e,
   ];
 }

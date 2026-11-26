@@ -609,7 +609,6 @@
   "contactTeacher": "Contact teacher",
   "teacherTimetableOwnPlan": "My timetable",
   "teacherTimetablePlans": "Timetables",
-  "teacherTimetableSwitchPlan": "Switch timetable",
   "teacherTimetableFilterPlans": "Filter timetables…",
   "teacherTimetableTeachers": "Teachers",
   "teacherTimetableClasses": "Classes",
@@ -631,7 +630,6 @@
   "teacherTimetableLessonDetails": "Lesson details",
   "teacherTimetableRoomBooking": "Rooms & Media",
   "teacherTimetableOpenInRumbs": "Open in Rooms & Media",
-  "teacherTimetableBookableInRumbs": "Bookable in Rooms & Media",
   "teacherTimetableLinkedPlans": "Linked timetables",
   "teacherTimetableOpenRoomPlan": "Open room timetable",
   "teacherTimetableParallelInSlot": "Parallel in this period",
@@ -644,22 +642,6 @@
     }
   },
   "teacherTimetablePause": "Break",
-  "teacherTimetableValidFrom": "Valid {label}",
-  "@teacherTimetableValidFrom": {
-    "placeholders": {
-      "label": {
-        "type": "String"
-      }
-    }
-  },
-  "teacherTimetableRoomContact": "Contact: {contacts}",
-  "@teacherTimetableRoomContact": {
-    "placeholders": {
-      "contacts": {
-        "type": "String"
-      }
-    }
-  },
   "teacherTimetableNoMatches": "No matches",
   "teacherTimetableSelectHourPrompt": "Select at least one period.",
   "teacherTimetableSubstitutionAdded": "Substitution",
