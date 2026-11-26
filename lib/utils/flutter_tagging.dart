@@ -39,6 +39,7 @@ class FlutterTagging<T extends Taggable> extends StatefulWidget {
   final WidgetBuilder? loadingBuilder;
   final WidgetBuilder? emptyBuilder;
   final T Function(T) onAdded;
+  final ValueChanged<T>? onRemoved;
   final Future<List<T>> Function(String) findSuggestions;
 
   const FlutterTagging({
@@ -50,6 +51,7 @@ class FlutterTagging<T extends Taggable> extends StatefulWidget {
     this.loadingBuilder,
     this.emptyBuilder,
     required this.onAdded,
+    this.onRemoved,
     required this.findSuggestions,
   });
 
@@ -152,6 +154,7 @@ class _FlutterTaggingState<T extends Taggable>
         (selected) => _arePropsEqual(item.props, selected.props),
       );
     });
+    widget.onRemoved?.call(item);
   }
 
   @override

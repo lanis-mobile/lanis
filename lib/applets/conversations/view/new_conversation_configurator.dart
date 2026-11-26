@@ -1,12 +1,24 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/applets/conversations/view/shared.dart';
 import '../../../utils/flutter_tagging.dart';
 
 class NewConversationConfigurator extends ConsumerStatefulWidget {
-  const NewConversationConfigurator({super.key});
+  final List<ReceiverEntry> initialReceivers;
+  final String? initialSubject;
+  final bool isSubmitting;
+  final ValueChanged<ChatCreationData>? onSubmit;
+
+  const NewConversationConfigurator({
+    super.key,
+    this.initialReceivers = const [],
+    this.initialSubject,
+    this.isSubmitting = false,
+    this.onSubmit,
+  });
 
   @override
   ConsumerState<NewConversationConfigurator> createState() =>
@@ -25,9 +37,53 @@ class _NewConversationConfiguratorState
   final List<TagReceiverEntry> receivers = [];
   final TriggerRebuild rebuildSearch = TriggerRebuild();
   ChatType selectedChatType = ChatType.values[2];
+  bool? _canChooseType;
+  bool _loadingCanChooseType = false;
 
   bool get isFormValid =>
-      subjectController.text.trim().isNotEmpty && receivers.isNotEmpty;
+      !_loadingCanChooseType &&
+      !widget.isSubmitting &&
+      subjectController.text.trim().isNotEmpty &&
+      receivers.isNotEmpty;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialSubject != null && widget.initialSubject!.isNotEmpty) {
+      subjectController.text = widget.initialSubject!;
+    }
+    final seenIds = <String>{};
+    for (final entry in widget.initialReceivers) {
+      if (entry.id.isEmpty || !seenIds.add(entry.id)) continue;
+      receivers.add(TagReceiverEntry.from(entry));
+    }
+
+    final parser = ref.read(conversationsParserProvider);
+    _canChooseType = parser.cachedCanChooseType;
+    if (_canChooseType == null) {
+      _loadingCanChooseType = true;
+      _loadCanChooseType();
+    }
+  }
+
+  Future<void> _loadCanChooseType() async {
+    try {
+      final result = await ref
+          .read(conversationsParserProvider)
+          .canChooseType();
+      if (!mounted) return;
+      setState(() {
+        _canChooseType = result;
+        _loadingCanChooseType = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _canChooseType = false;
+        _loadingCanChooseType = false;
+      });
+    }
+  }
 
   void _clearAll() {
     setState(() {
@@ -41,15 +97,21 @@ class _NewConversationConfiguratorState
   void _createChat() {
     if (!isFormValid) return;
 
+    final canChoose =
+        _canChooseType ??
+        ref.read(conversationsParserProvider).cachedCanChooseType ??
+        false;
     final chatData = ChatCreationData(
-      type: ref.read(conversationsParserProvider).cachedCanChooseType!
-          ? selectedChatType
-          : null,
+      type: canChoose ? selectedChatType : null,
       subject: subjectController.text.trim(),
       receivers: receivers.map((entry) => entry.id).toList(),
     );
 
-    Navigator.pop(context, chatData);
+    if (widget.onSubmit != null) {
+      widget.onSubmit!(chatData);
+    } else {
+      Navigator.pop(context, chatData);
+    }
   }
 
   @override
@@ -63,12 +125,23 @@ class _NewConversationConfiguratorState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading:
+            !Navigator.of(context).canPop() &&
+                (GoRouter.maybeOf(context)?.canPop() ?? false)
+            ? BackButton(onPressed: () => context.pop())
+            : null,
         title: Text(AppLocalizations.of(context).createNewConversation),
       ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: null,
         onPressed: isFormValid ? _createChat : null,
-        icon: const Icon(Icons.create),
+        icon: widget.isSubmitting
+            ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Icon(Icons.create),
         label: Text(AppLocalizations.of(context).create),
         backgroundColor: isFormValid
             ? Theme.of(context).floatingActionButtonTheme.backgroundColor
@@ -204,6 +277,7 @@ class _NewConversationConfiguratorState
                         setState(() {});
                         return receiverEntry;
                       },
+                      onRemoved: (_) => setState(() {}),
                       findSuggestions: (query) async {
                         query = query.trim();
                         if (query.isEmpty) return <TagReceiverEntry>[];
@@ -219,8 +293,12 @@ class _NewConversationConfiguratorState
               ],
             ),
           ),
-          if (ref.read(conversationsParserProvider).cachedCanChooseType ??
-              false) ...[
+          if (_loadingCanChooseType)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16.0),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (_canChooseType ?? false) ...[
             const Divider(),
             RadioGroup<ChatType>(
               groupValue: selectedChatType,

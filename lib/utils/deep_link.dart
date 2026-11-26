@@ -117,11 +117,13 @@ class DeepLinkErrorPage extends StatelessWidget {
 /// Ensures cold-opened detail routes (e.g. filter) do not exit the app.
 class DeepLinkPopScope extends StatelessWidget {
   final String fallbackPath;
+  final bool popGoRouterIfPossible;
   final Widget child;
 
   const DeepLinkPopScope({
     super.key,
     required this.fallbackPath,
+    this.popGoRouterIfPossible = false,
     required this.child,
   });
 
@@ -131,12 +133,15 @@ class DeepLinkPopScope extends StatelessWidget {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
-        // Use the local [Navigator] — go_router's [canPop] can be true for
-        // shell chrome even when this detail was opened with [GoRouter.go]
-        // and has no page underneath.
+        // Prefer the local [Navigator] first. When [popGoRouterIfPossible] is
+        // true (e.g. a phone route pushed across a ShellRoute boundary), pop
+        // the enclosing GoRouter before falling back to [fallbackPath].
         final nav = Navigator.of(context);
         if (nav.canPop()) {
           nav.pop(result);
+        } else if (popGoRouterIfPossible &&
+            (GoRouter.maybeOf(context)?.canPop() ?? false)) {
+          context.pop(result);
         } else {
           context.go(fallbackPath);
         }

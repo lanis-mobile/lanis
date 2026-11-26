@@ -14,6 +14,11 @@ class _Session implements LanisSession {
   @override
   AccountType get accountTypeOrNull => AccountType.student;
   @override
+  bool doesSupportFeature(
+    AppletMeta applet, {
+    AccountType? overrideAccountType,
+  }) => false;
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 

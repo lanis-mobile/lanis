@@ -602,5 +602,9 @@
   "dataStorageSortSizeAsc": "Smallest first",
   "calendarFilterAll": "All",
   "calendarFilterUncategorized": "Uncategorized",
-  "calendarFilterTitle": "Filter categories"
+  "calendarFilterTitle": "Filter categories",
+  "sendMessage": "Send message",
+  "sendEmail": "Send email",
+  "openInConversations": "Open in Conversations",
+  "contactTeacher": "Contact teacher"
 }

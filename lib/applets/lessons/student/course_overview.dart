@@ -9,6 +9,7 @@ import 'package:lanis/generated/l10n.dart';
 import '../../../utils/file_operations.dart' as fo;
 import '../../../widgets/file_chip.dart';
 import '../../../widgets/format_text.dart';
+import '../../../widgets/teacher_contact_sheet.dart';
 import 'homework_box.dart';
 
 class CourseOverviewAnsicht extends ConsumerStatefulWidget {
@@ -608,6 +609,16 @@ class _CourseOverviewAnsichtState extends ConsumerState<CourseOverviewAnsicht> {
       );
     }
 
+    final allowConversations = doesSessionSupportConversations(ref);
+    final teacherContacts =
+        data?.teachers.map(TeacherContact.fromLessonTeacher).toList() ??
+        const <TeacherContact>[];
+    final hasConversationAction =
+        allowConversations && teacherContacts.any((c) => c.hasConversation);
+    final hasContactActions = teacherContacts.any(
+      (c) => c.hasAnyAction(allowConversations: allowConversations),
+    );
+
     return Scaffold(
       body: RefreshIndicator(
         key: _refreshIndicatorKey,
@@ -617,6 +628,21 @@ class _CourseOverviewAnsichtState extends ConsumerState<CourseOverviewAnsicht> {
       appBar: AppBar(
         title: _appBarTitle(),
         actions: [
+          if (hasContactActions)
+            IconButton(
+              icon: Icon(
+                hasConversationAction
+                    ? Icons.chat_bubble_outline
+                    : Icons.email_outlined,
+              ),
+              tooltip: AppLocalizations.of(context).contactTeacher,
+              onPressed: () => showTeacherContactSheet(
+                context,
+                courseTitle: widget.title,
+                teachers: teacherContacts,
+                allowConversations: allowConversations,
+              ),
+            ),
           if (data?.semester1URL != null)
             IconButton(
               icon: const Icon(Icons.looks_one_outlined),

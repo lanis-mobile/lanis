@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:lanis/applets/conversations/conversations_nav.dart';
 import 'package:lanis/applets/conversations/view/send.dart';
-import 'package:lanis/applets/conversations/view/shared.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/applets/conversations/definition.dart';
 import 'package:lanis/utils/responsive.dart';
@@ -499,121 +498,18 @@ class _ConversationsViewState extends ConsumerState<ConversationsView> {
     String text,
     ChatCreationData creationData,
   ) async {
-    final bool status = await ref.read(connectionCheckerProvider).connected;
-    if (!status) {
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              icon: const Icon(Icons.wifi_off),
-              title: Text(AppLocalizations.of(context).noInternetConnection2),
-              actions: [
-                FilledButton(
-                  onPressed: () async {
-                    Navigator.pop(context);
-                  },
-                  child: const Text("Ok"),
-                ),
-              ],
-            );
-          },
-        );
-      }
-      return;
-    }
-
-    final textMessage = Message(
+    await createAndOpenConversation(
+      context,
+      ref,
       text: text,
-      own: true,
-      date: DateTime.now(),
-      author: null,
-      state: MessageState.first,
-      status: MessageStatus.sent,
-    );
-
-    final CreationResponse response;
-    try {
-      response = await ref
-          .read(conversationsParserProvider)
-          .createConversation(
-            creationData.receivers,
-            creationData.type?.name,
-            creationData.subject,
-            text,
-          );
-    } catch (_) {
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              icon: const Icon(Icons.error),
-              title: Text(
-                AppLocalizations.of(context).errorCreatingConversation,
-              ),
-              actions: [
-                FilledButton(
-                  onPressed: () async {
-                    Navigator.pop(context);
-                  },
-                  child: const Text("Ok"),
-                ),
-              ],
-            );
-          },
-        );
-      }
-      return;
-    }
-
-    if (response.success) {
-      ref.read(conversationsParserProvider).fetchData(forceRefresh: true);
-
-      if (mounted) {
+      creationData: creationData,
+      onCreated: (id) {
+        if (!mounted) return;
         setState(() {
-          noBadgeConversations.add(response.id!);
+          noBadgeConversations.add(id);
         });
-        openConversationRoute(
-          context,
-          id: response.id!,
-          title: creationData.subject,
-          extra: NewConversationSettings(
-            firstMessage: textMessage,
-            settings: ConversationSettings(
-              id: response.id!,
-              groupChat: creationData.type == ChatType.groupOnly,
-              onlyPrivateAnswers:
-                  creationData.type == ChatType.privateAnswerOnly,
-              noReply: creationData.type == ChatType.noAnswerAllowed,
-              own: true,
-            ),
-          ),
-        );
-      }
-    } else {
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              icon: const Icon(Icons.error),
-              title: Text(
-                AppLocalizations.of(context).errorCreatingConversation,
-              ),
-              actions: [
-                FilledButton(
-                  onPressed: () async {
-                    Navigator.pop(context);
-                  },
-                  child: const Text("Ok"),
-                ),
-              ],
-            );
-          },
-        );
-      }
-    }
+      },
+    );
   }
 
   @override

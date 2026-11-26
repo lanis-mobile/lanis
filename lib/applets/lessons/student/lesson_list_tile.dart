@@ -1,12 +1,14 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lanis/generated/l10n.dart';
+import 'package:lanis/widgets/teacher_contact_sheet.dart';
 import 'package:liblanis/liblanis.dart';
 
 import 'homework_box.dart';
 
-class LessonListTile extends StatefulWidget {
+class LessonListTile extends ConsumerStatefulWidget {
   final Lesson lesson;
   final AccountType accountType;
   final String? pupilName;
@@ -19,10 +21,10 @@ class LessonListTile extends StatefulWidget {
   });
 
   @override
-  State<LessonListTile> createState() => _LessonListTileState();
+  ConsumerState<LessonListTile> createState() => _LessonListTileState();
 }
 
-class _LessonListTileState extends State<LessonListTile> {
+class _LessonListTileState extends ConsumerState<LessonListTile> {
   final DateFormat dateFormat = DateFormat('dd.MM.yyyy');
 
   bool _showNotExcusedHours() {
@@ -36,6 +38,14 @@ class _LessonListTileState extends State<LessonListTile> {
 
   @override
   Widget build(BuildContext context) {
+    final allowConversations = doesSessionSupportConversations(ref);
+    final teacherContacts = widget.lesson.teachers
+        .map(TeacherContact.fromLessonTeacher)
+        .toList();
+    final hasContactActions = teacherContacts.any(
+      (c) => c.hasAnyAction(allowConversations: allowConversations),
+    );
+
     return Badge(
       label: Text(
         '${widget.lesson.attendances?['fehlend'].toString() ?? ''} unentschuldigte Fehlstunden!',
@@ -118,6 +128,14 @@ class _LessonListTileState extends State<LessonListTile> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
+          onLongPress: hasContactActions
+              ? () => showTeacherContactSheet(
+                  context,
+                  courseTitle: widget.lesson.name,
+                  teachers: teacherContacts,
+                  allowConversations: allowConversations,
+                )
+              : null,
           onTap: () {
             if (widget.accountType == AccountType.parent) {
               context.push(
