@@ -40,6 +40,7 @@ class TeacherPlanContextBanner extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Expanded(
+              flex: 2,
               child: Text(
                 noticeText,
                 maxLines: 2,
@@ -52,10 +53,14 @@ class TeacherPlanContextBanner extends StatelessWidget {
             if (plan.validFromLabel != null &&
                 plan.validFromLabel!.trim().isNotEmpty) ...[
               const SizedBox(width: 8),
-              Text(
-                plan.validFromLabel!.trim(),
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: cs.onTertiaryContainer.withValues(alpha: 0.8),
+              Flexible(
+                child: Text(
+                  plan.validFromLabel!.trim(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: cs.onTertiaryContainer.withValues(alpha: 0.8),
+                  ),
                 ),
               ),
             ],
@@ -780,9 +785,11 @@ class TeacherEntryInspectorPanel extends StatelessWidget {
       weekBadgeLabel: l10n.timetableWeek,
     );
 
-    final weekdayIdx = selection.dayColumnIndex < plan.weekdayIndices.length
+    final weekdayIdx =
+        selection.dayColumnIndex >= 0 &&
+            selection.dayColumnIndex < plan.weekdayIndices.length
         ? plan.weekdayIndices[selection.dayColumnIndex]
-        : selection.dayColumnIndex;
+        : selection.dayColumnIndex.clamp(0, 6);
     final date = DateTime(
       weekStart.year,
       weekStart.month,
@@ -812,7 +819,8 @@ class TeacherEntryInspectorPanel extends StatelessWidget {
     );
 
     final siblings = <TeacherTimetableEntry>[];
-    if (selection.dayColumnIndex < plan.days.length &&
+    if (selection.dayColumnIndex >= 0 &&
+        selection.dayColumnIndex < plan.days.length &&
         !entry.isBreakSupervision) {
       for (final other in plan.days[selection.dayColumnIndex]) {
         if (other.id != entry.id &&
@@ -858,20 +866,25 @@ class TeacherEntryInspectorPanel extends StatelessWidget {
                   ),
                   if (cell.eyebrow != null || entry.isBreakSupervision) ...[
                     const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 7,
-                        vertical: 2.5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: heroAccent.tagBg,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        cell.eyebrow ?? l10n.teacherTimetablePause,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: heroAccent.tagFg,
-                          fontWeight: FontWeight.w700,
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 2.5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: heroAccent.tagBg,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          cell.eyebrow ?? l10n.teacherTimetablePause,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: heroAccent.tagFg,
+                                fontWeight: FontWeight.w700,
+                              ),
                         ),
                       ),
                     ),
@@ -1059,9 +1072,13 @@ class TeacherEntryInspectorPanel extends StatelessWidget {
                         ),
                         if (sc.eyebrow != null) ...[
                           const SizedBox(width: 6),
-                          Text(
-                            sc.eyebrow!,
-                            style: Theme.of(context).textTheme.labelSmall,
+                          Flexible(
+                            child: Text(
+                              sc.eyebrow!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.labelSmall,
+                            ),
                           ),
                         ],
                       ],

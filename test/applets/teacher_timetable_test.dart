@@ -258,5 +258,123 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.text('4b'), findsNothing);
     });
+
+    testWidgets('no overflow at 320px/1.5x in single-day strip, agenda eyebrow, KW+weekBadge header, context banner, and inspector', (tester) async {
+      final longBadge = 'VeryLongBadgeTextThatWouldOverflowNarrowContainers';
+      final plan = TeacherTimetablePlan(
+        category: TeacherTimetableCategory.teacher,
+        targetId: 'CAP',
+        title: 'CAP',
+        weekBadge: 'A',
+        noticeHtml: '<p>Hinweis</p>',
+        validFromLabel: 'ab 23.11.2026 ' * 10,
+        weekdayIndices: const [0, 1, 2, 3, 4],
+        hours: [_hour(1, 8, 0, 8, 45)],
+        days: [
+          [
+            _entry(id: 'e1', subject: 'Mathe', badge: longBadge),
+            _entry(id: 'e2', subject: 'Physik', badge: longBadge),
+          ],
+          const [],
+          const [],
+          const [],
+          const [],
+        ],
+      );
+      final overview = TeacherTimetableOverview(
+        teachers: const [],
+        classes: const [],
+        rooms: const [],
+        breakSupervisions: const [],
+        canViewOtherTeachers: false,
+      );
+
+      // 1. Single-day view (tabs + agenda eyebrow) at 320px, 1.5x text scale
+      await tester.pumpWidget(
+        _wrap(
+          TeacherTimetableGrid(
+            plan: plan,
+            weekStart: DateTime(2026, 11, 23),
+            singleDay: true,
+            compact: true,
+            onSelectEntry: (_, _) {},
+          ),
+          size: const Size(320, 640),
+          textScale: 1.5,
+        ),
+      );
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+
+      // 2. Week view KW + weekBadge header at 1280px, 1.5x text scale
+      await tester.pumpWidget(
+        _wrap(
+          TeacherTimetableGrid(
+            plan: plan,
+            weekStart: DateTime(2026, 11, 23),
+            selectedBadge: 'A',
+            onSelectEntry: (_, _) {},
+          ),
+          size: const Size(1280, 800),
+          textScale: 1.5,
+        ),
+      );
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+
+      // 3. Context banner with very long validFromLabel
+      await tester.pumpWidget(
+        _wrap(
+          TeacherPlanContextBanner(plan: plan),
+          size: const Size(320, 200),
+          textScale: 1.5,
+        ),
+      );
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+
+      // 4. Inspector with negative dayColumnIndex & long hero/sibling eyebrow
+      await tester.pumpWidget(
+        _wrap(
+          TeacherEntryInspectorPanel(
+            plan: plan,
+            overview: overview,
+            selection: TeacherEntrySelection(
+              dayColumnIndex: -1,
+              entry: plan.days[0].first,
+            ),
+            weekStart: DateTime(2026, 11, 23),
+            onOpenTarget: (_) {},
+            onSelectSibling: (_) {},
+            onClose: () {},
+          ),
+          size: const Size(252, 700),
+          textScale: 1.5,
+        ),
+      );
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+
+      await tester.pumpWidget(
+        _wrap(
+          TeacherEntryInspectorPanel(
+            plan: plan,
+            overview: overview,
+            selection: TeacherEntrySelection(
+              dayColumnIndex: 0,
+              entry: plan.days[0].first,
+            ),
+            weekStart: DateTime(2026, 11, 23),
+            onOpenTarget: (_) {},
+            onSelectSibling: (_) {},
+            onClose: () {},
+          ),
+          size: const Size(252, 700),
+          textScale: 1.5,
+        ),
+      );
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+    });
   });
 }

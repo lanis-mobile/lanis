@@ -270,20 +270,26 @@ class _SingleDayTabStrip extends StatelessWidget {
                 final isToday = isCurrentWeek && weekdayIdx == todayWeekday;
                 return Tab(
                   height: 44,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        DateFormat.E(locale).format(date),
-                        style: TextStyle(
-                          fontWeight: isToday ? FontWeight.w700 : null,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          DateFormat.E(locale).format(date),
+                          maxLines: 1,
+                          style: TextStyle(
+                            fontWeight: isToday ? FontWeight.w700 : null,
+                          ),
                         ),
-                      ),
-                      Text(
-                        date.format('dd.MM.'),
-                        style: Theme.of(context).textTheme.labelSmall,
-                      ),
-                    ],
+                        Text(
+                          date.format('dd.MM.'),
+                          maxLines: 1,
+                          style: Theme.of(context).textTheme.labelSmall,
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },
@@ -462,24 +468,28 @@ class _SingleDayAgendaList extends StatelessWidget {
                                 ),
                                 if (cell.eyebrow != null) ...[
                                   const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 6,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: style.badgeBg,
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      cell.eyebrow!,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .labelSmall
-                                          ?.copyWith(
-                                            color: style.badgeFg,
-                                            fontWeight: FontWeight.w700,
-                                          ),
+                                  Flexible(
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: style.badgeBg,
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        cell.eyebrow!,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelSmall
+                                            ?.copyWith(
+                                              color: style.badgeFg,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -555,25 +565,29 @@ class _HourRailColumn extends StatelessWidget {
         children: [
           SizedBox(
             height: _teacherHeaderHeight,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'KW ${timetableWeekNumber(weekStart)}',
-                  style: Theme.of(context).textTheme.labelMedium
-                      ?.copyWith(fontWeight: FontWeight.w600),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if (weekBadge != null && weekBadge!.trim().isNotEmpty)
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
                   Text(
-                    l10n.timetableWeek(weekBadge!.trim()),
-                    style: Theme.of(context).textTheme.labelSmall
-                        ?.copyWith(fontSize: 9.5, color: cs.onSurfaceVariant),
+                    'KW ${timetableWeekNumber(weekStart)}',
+                    style: Theme.of(context).textTheme.labelMedium
+                        ?.copyWith(fontWeight: FontWeight.w600),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-              ],
+                  if (weekBadge != null && weekBadge!.trim().isNotEmpty)
+                    Text(
+                      l10n.timetableWeek(weekBadge!.trim()),
+                      style: Theme.of(context).textTheme.labelSmall
+                          ?.copyWith(fontSize: 9.5, color: cs.onSurfaceVariant),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: _teacherRowGap),
