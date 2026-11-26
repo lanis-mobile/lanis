@@ -606,5 +606,69 @@
   "sendMessage": "Send message",
   "sendEmail": "Send email",
   "openInConversations": "Open in Conversations",
-  "contactTeacher": "Contact teacher"
+  "contactTeacher": "Contact teacher",
+  "teacherTimetableOwnPlan": "My timetable",
+  "teacherTimetablePlans": "Timetables",
+  "teacherTimetableSwitchPlan": "Switch timetable",
+  "teacherTimetableFilterPlans": "Filter timetables…",
+  "teacherTimetableTeachers": "Teachers",
+  "teacherTimetableClasses": "Classes",
+  "teacherTimetableRooms": "Rooms",
+  "teacherTimetableBreakSupervisions": "Break supervision",
+  "teacherTimetableFreeRooms": "Free rooms",
+  "teacherTimetableFreeRoomsCount": "{count, plural, =0{No free rooms} =1{1 free room} other{{count} free rooms}}",
+  "@teacherTimetableFreeRoomsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "teacherTimetableFreeRoomsHint": "Tap a room to open its timetable.",
+  "teacherTimetableFreeRoomsHintTablet": "Tap a room to open it in the center while keeping search open.",
+  "teacherTimetableWeekday": "Weekday",
+  "teacherTimetablePeriods": "Period(s)",
+  "teacherTimetableLessonDetails": "Lesson details",
+  "teacherTimetableRoomBooking": "Rooms & Media",
+  "teacherTimetableOpenInRumbs": "Open in Rooms & Media",
+  "teacherTimetableBookableInRumbs": "Bookable in Rooms & Media",
+  "teacherTimetableLinkedPlans": "Linked timetables",
+  "teacherTimetableOpenRoomPlan": "Open room timetable",
+  "teacherTimetableParallelInSlot": "Parallel in this period",
+  "teacherTimetablePauseBefore": "Break before {hour}",
+  "@teacherTimetablePauseBefore": {
+    "placeholders": {
+      "hour": {
+        "type": "String"
+      }
+    }
+  },
+  "teacherTimetablePause": "Break",
+  "teacherTimetableValidFrom": "Valid {label}",
+  "@teacherTimetableValidFrom": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "teacherTimetableRoomContact": "Contact: {contacts}",
+  "@teacherTimetableRoomContact": {
+    "placeholders": {
+      "contacts": {
+        "type": "String"
+      }
+    }
+  },
+  "teacherTimetableNoMatches": "No matches",
+  "teacherTimetableSelectHourPrompt": "Select at least one period.",
+  "teacherTimetableSubstitutionAdded": "Substitution",
+  "teacherTimetableSubstitutionChanged": "Change / Cancellation",
+  "teacherTimetableToggleCatalog": "Toggle timetable catalog",
+  "teacherTimetableDayView": "Day view",
+  "teacherTimetableWeekView": "Week view",
+  "teacherTimetableTypeTeacher": "Teacher",
+  "teacherTimetableTypeClass": "Class",
+  "teacherTimetableTypeRoom": "Room",
+  "teacherTimetableTypeBreakSupervision": "Break supervision"
 }

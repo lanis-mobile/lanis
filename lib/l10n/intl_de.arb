@@ -594,5 +594,69 @@
   "sendMessage": "Nachricht senden",
   "sendEmail": "E-Mail senden",
   "openInConversations": "In Unterhaltungen öffnen",
-  "contactTeacher": "Lehrkraft kontaktieren"
+  "contactTeacher": "Lehrkraft kontaktieren",
+  "teacherTimetableOwnPlan": "Mein Plan",
+  "teacherTimetablePlans": "Pläne",
+  "teacherTimetableSwitchPlan": "Plan wechseln",
+  "teacherTimetableFilterPlans": "Plan filtern…",
+  "teacherTimetableTeachers": "Lehrkräfte",
+  "teacherTimetableClasses": "Klassen",
+  "teacherTimetableRooms": "Räume",
+  "teacherTimetableBreakSupervisions": "Pausenaufsicht",
+  "teacherTimetableFreeRooms": "Freie Räume",
+  "teacherTimetableFreeRoomsCount": "{count, plural, =0{Keine freien Räume} =1{1 freier Raum} other{{count} freie Räume}}",
+  "@teacherTimetableFreeRoomsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "teacherTimetableFreeRoomsHint": "Raum antippen, um den Raumplan zu öffnen.",
+  "teacherTimetableFreeRoomsHintTablet": "Raum antippen → öffnet im Plan, Suche bleibt rechts aktiv.",
+  "teacherTimetableWeekday": "Wochentag",
+  "teacherTimetablePeriods": "Stunde(n)",
+  "teacherTimetableLessonDetails": "Stunden-Details",
+  "teacherTimetableRoomBooking": "Räume & Medien",
+  "teacherTimetableOpenInRumbs": "In Räume & Medien öffnen",
+  "teacherTimetableBookableInRumbs": "In Räume & Medien buchbar",
+  "teacherTimetableLinkedPlans": "Verknüpfte Pläne",
+  "teacherTimetableOpenRoomPlan": "Raumplan öffnen",
+  "teacherTimetableParallelInSlot": "Parallel in dieser Stunde",
+  "teacherTimetablePauseBefore": "Pause vor {hour}",
+  "@teacherTimetablePauseBefore": {
+    "placeholders": {
+      "hour": {
+        "type": "String"
+      }
+    }
+  },
+  "teacherTimetablePause": "Pause",
+  "teacherTimetableValidFrom": "Gültig {label}",
+  "@teacherTimetableValidFrom": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "teacherTimetableRoomContact": "Kontakt: {contacts}",
+  "@teacherTimetableRoomContact": {
+    "placeholders": {
+      "contacts": {
+        "type": "String"
+      }
+    }
+  },
+  "teacherTimetableNoMatches": "Keine Treffer",
+  "teacherTimetableSelectHourPrompt": "Mindestens eine Stunde auswählen.",
+  "teacherTimetableSubstitutionAdded": "Vertretung",
+  "teacherTimetableSubstitutionChanged": "Änderung / Entfall",
+  "teacherTimetableToggleCatalog": "Plan-Katalog ein-/ausblenden",
+  "teacherTimetableDayView": "Tagesansicht",
+  "teacherTimetableWeekView": "Wochenansicht",
+  "teacherTimetableTypeTeacher": "Lehrkraft",
+  "teacherTimetableTypeClass": "Klasse",
+  "teacherTimetableTypeRoom": "Raum",
+  "teacherTimetableTypeBreakSupervision": "Pausenaufsicht"
 }

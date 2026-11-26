@@ -178,7 +178,10 @@ class _SettingsScreenState extends ConsumerSettingsColoursState<SettingsScreen> 
           ),
         ],
       ),
-      if (_supports(Applets.calendar) || _supports(Applets.timetable))
+      if (_supports(Applets.calendar) ||
+          (_supports(Applets.timetable) &&
+              ref.read(activeAccountProvider)?.accountType !=
+                  AccountType.teacher))
         SettingsGroup(
           tiles: [
             if (_supports(Applets.calendar))
@@ -190,7 +193,9 @@ class _SettingsScreenState extends ConsumerSettingsColoursState<SettingsScreen> 
                 screen: (context) async =>
                     context.push(SettingsDeepLinks.calendarExport),
               ),
-            if (_supports(Applets.timetable))
+            if (_supports(Applets.timetable) &&
+                ref.read(activeAccountProvider)?.accountType !=
+                    AccountType.teacher)
               SettingsTile(
                 title: (context) =>
                     AppLocalizations.of(context).customizeTimetable,

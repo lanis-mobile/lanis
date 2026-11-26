@@ -6,6 +6,7 @@ import 'package:lanis/applets/file_distribution/file_distribution_view.dart';
 import 'package:lanis/applets/substitutions/substitutions_view.dart';
 import 'package:lanis/applets/timetable/parent/parent_timetable_view.dart';
 import 'package:lanis/applets/timetable/student/student_timetable_better_view.dart';
+import 'package:lanis/applets/timetable/teacher/teacher_timetable_view.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'cache_context.dart';
 import 'cached_data_source.dart';
@@ -101,6 +102,10 @@ class _OfflineAppletPageState extends State<OfflineAppletPage> {
                   widget.home.applet.appletPhpUrl ==
                       Applets.timetable.appletPhpUrl
             ? ParentTimetableView(offline: offline)
+            : offline.account.accountType == AccountType.teacher &&
+                  widget.home.applet.appletPhpUrl ==
+                      Applets.timetable.appletPhpUrl
+            ? TeacherTimetableView(offline: offline)
             : Scaffold(
                 appBar: AppBar(),
                 body: Center(

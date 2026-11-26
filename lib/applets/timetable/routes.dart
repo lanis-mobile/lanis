@@ -6,7 +6,11 @@ import 'package:lanis/widgets/applet_home_shell.dart';
 
 List<RouteBase> buildTimetableRoutes(AppletRouteContext ctx) {
   return [
-    for (final type in [AccountType.student, AccountType.parent])
+    for (final type in [
+      AccountType.student,
+      AccountType.parent,
+      AccountType.teacher,
+    ])
       GoRoute(
         path: '/${type.name}/timetable',
         redirect: (context, state) {

@@ -1,4 +1,5 @@
 import 'package:lanis/widgets/applet_app_bar_title.dart';
+
 import 'dart:async';
 
 import 'package:dart_date/dart_date.dart';
@@ -212,9 +213,8 @@ class _StudentTimetableBetterViewState
                                   PopupMenuItem(
                                     value: const TimetableWeekSelection.all(),
                                     child: Text(
-                                      AppLocalizations.of(
-                                        context,
-                                      ).timetableAllWeeks,
+                                      AppLocalizations.of(context)
+                                          .timetableAllWeeks,
                                     ),
                                   ),
                                   for (final badge in uniqueBadges)
@@ -223,9 +223,8 @@ class _StudentTimetableBetterViewState
                                         badge,
                                       ),
                                       child: Text(
-                                        AppLocalizations.of(
-                                          context,
-                                        ).timetableWeek(badge),
+                                        AppLocalizations.of(context)
+                                            .timetableWeek(badge),
                                       ),
                                     ),
                                 ],
@@ -235,13 +234,11 @@ class _StudentTimetableBetterViewState
                                     TimetableWeekMode.current =>
                                       AppLocalizations.of(context).currentWeek,
                                     TimetableWeekMode.all =>
-                                      AppLocalizations.of(
-                                        context,
-                                      ).timetableAllWeeks,
+                                      AppLocalizations.of(context)
+                                          .timetableAllWeeks,
                                     TimetableWeekMode.badge =>
-                                      AppLocalizations.of(
-                                        context,
-                                      ).timetableWeek(selectedBadge!),
+                                      AppLocalizations.of(context)
+                                          .timetableWeek(selectedBadge!),
                                   }),
                                 ),
                               ),
@@ -377,136 +374,98 @@ class TimeTableView extends StatelessWidget {
   Widget build(BuildContext context) {
     return RefreshIndicator(
       onRefresh: refresh ?? () async {},
-      child: SingleChildScrollView(
+      child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        child: Stack(
-          children: [
-            Row(
-              spacing: 4.0,
-              crossAxisAlignment: CrossAxisAlignment.start,
+        slivers: [
+          SliverToBoxAdapter(
+            child: Stack(
               children: [
-                Column(
-                  spacing: 8.0,
+                Row(
+                  spacing: 4.0,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(
-                      height: headerHeight,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text("KW ${timetableWeekNumber(weekStart)}"),
-                          if (data.weekBadge != null &&
-                              data.weekBadge!.isNotEmpty)
-                            Text(
-                              AppLocalizations.of(
-                                context,
-                              ).timetableWeek(data.weekBadge!),
-                              style: TextStyle(
-                                overflow: TextOverflow.ellipsis,
-                                fontSize: 10,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    for (var (row) in data.hours)
-                      Container(
-                        decoration: BoxDecoration(
-                          color: row.type == TimeTableRowType.lesson
-                              ? Theme.of(
-                                  context,
-                                ).colorScheme.surfaceContainerHighest
-                              : Theme.of(
-                                  context,
-                                ).colorScheme.surfaceContainerHigh,
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        width: hourWidth,
-                        height: row.type == TimeTableRowType.lesson
-                            ? itemHeight
-                            : pauseHeight,
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
+                    Column(
+                      spacing: 8.0,
+                      children: [
+                        SizedBox(
+                          height: headerHeight,
                           child: Column(
-                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text(row.label, style: TextStyle(fontSize: 12)),
-                              ...(row.type == TimeTableRowType.lesson
-                                  ? [
-                                      Text(
-                                        row.startTime.toFlutter().format(
-                                          context,
-                                        ),
-                                        style: TextStyle(fontSize: 10),
-                                      ),
-                                      Text(
-                                        row.endTime.toFlutter().format(context),
-                                        style: TextStyle(fontSize: 10),
-                                      ),
-                                    ]
-                                  : []),
+                              Text("KW ${timetableWeekNumber(weekStart)}"),
+                              if (data.weekBadge != null &&
+                                  data.weekBadge!.isNotEmpty)
+                                Text(
+                                  AppLocalizations.of(context)
+                                      .timetableWeek(data.weekBadge!),
+                                  style: TextStyle(
+                                    overflow: TextOverflow.ellipsis,
+                                    fontSize: 10,
+                                  ),
+                                ),
                             ],
                           ),
                         ),
-                      ),
-                  ],
-                ),
-                Expanded(
-                  child: Builder(
-                    builder: (context) {
-                      var days = _itemDays(context);
-
-                      if (!(settings['single-day'] ?? false)) {
-                        return Row(
-                          spacing: 4.0,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            for (final (i, dayWidget) in days.indexed)
-                              Expanded(
-                                child: Stack(
-                                  children: [
-                                    dayWidget,
-                                    TimeMarkerWidget(
-                                      data: data,
-                                      weekStart: weekStart,
-                                      timetable: timetable,
-                                      settings: settings,
-                                      day: data.weekdayIndices[i],
-                                    ),
-                                  ],
-                                ),
+                        for (var (row) in data.hours)
+                          Container(
+                            decoration: BoxDecoration(
+                              color: row.type == TimeTableRowType.lesson
+                                  ? Theme.of(context)
+                                        .colorScheme
+                                        .surfaceContainerHighest
+                                  : Theme.of(context)
+                                        .colorScheme
+                                        .surfaceContainerHigh,
+                              borderRadius: BorderRadius.circular(8.0),
+                            ),
+                            width: hourWidth,
+                            height: row.type == TimeTableRowType.lesson
+                                ? itemHeight
+                                : pauseHeight,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    row.label,
+                                    style: TextStyle(fontSize: 12),
+                                  ),
+                                  ...(row.type == TimeTableRowType.lesson
+                                      ? [
+                                          Text(
+                                            row.startTime.toFlutter().format(
+                                              context,
+                                            ),
+                                            style: TextStyle(fontSize: 10),
+                                          ),
+                                          Text(
+                                            row.endTime.toFlutter().format(
+                                              context,
+                                            ),
+                                            style: TextStyle(fontSize: 10),
+                                          ),
+                                        ]
+                                      : []),
+                                ],
                               ),
-                          ],
-                        );
-                      } else {
-                        if (days.isEmpty) {
-                          return const SizedBox.shrink();
-                        }
-                        final todayWeekday = (DateTime.now().weekday - 1) % 7;
-                        var initialIndex = data.weekdayIndices.indexOf(
-                          todayWeekday,
-                        );
-                        if (initialIndex == -1) {
-                          initialIndex = data.weekdayIndices.indexWhere(
-                            (d) => d > todayWeekday,
-                          );
-                          if (initialIndex == -1) {
-                            initialIndex = 0;
-                          }
-                        }
-                        return SizedBox(
-                          height: calculateColumnHeight(data.hours) + 48,
-                          child: DefaultTabController(
-                            length: days.length,
-                            initialIndex: initialIndex,
-                            child: TabBarView(
+                            ),
+                          ),
+                      ],
+                    ),
+                    Expanded(
+                      child: Builder(
+                        builder: (context) {
+                          var days = _itemDays(context);
+
+                          if (!(settings['single-day'] ?? false)) {
+                            return Row(
+                              spacing: 4.0,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
                                 for (final (i, dayWidget) in days.indexed)
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                      left: 4.0,
-                                      right: 8.0,
-                                    ),
+                                  Expanded(
                                     child: Stack(
                                       children: [
                                         dayWidget,
@@ -521,17 +480,64 @@ class TimeTableView extends StatelessWidget {
                                     ),
                                   ),
                               ],
-                            ),
-                          ),
-                        );
-                      }
-                    },
-                  ),
+                            );
+                          } else {
+                            if (days.isEmpty) {
+                              return const SizedBox.shrink();
+                            }
+                            final todayWeekday =
+                                (DateTime.now().weekday - 1) % 7;
+                            var initialIndex = data.weekdayIndices.indexOf(
+                              todayWeekday,
+                            );
+                            if (initialIndex == -1) {
+                              initialIndex = data.weekdayIndices.indexWhere(
+                                (d) => d > todayWeekday,
+                              );
+                              if (initialIndex == -1) {
+                                initialIndex = 0;
+                              }
+                            }
+                            return SizedBox(
+                              height: calculateColumnHeight(data.hours) + 48,
+                              child: DefaultTabController(
+                                length: days.length,
+                                initialIndex: initialIndex,
+                                child: TabBarView(
+                                  children: [
+                                    for (final (i, dayWidget) in days.indexed)
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          left: 4.0,
+                                          right: 8.0,
+                                        ),
+                                        child: Stack(
+                                          children: [
+                                            dayWidget,
+                                            TimeMarkerWidget(
+                                              data: data,
+                                              weekStart: weekStart,
+                                              timetable: timetable,
+                                              settings: settings,
+                                              day: data.weekdayIndices[i],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
