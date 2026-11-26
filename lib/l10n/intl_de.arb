@@ -560,5 +560,32 @@
   },
   "navigationResetOrder": "Auf Standard zurücksetzen",
   "navigationSettingsInfo": "Ziehe Applets, um ihre Reihenfolge anzupassen oder sie zwischen unterer Leiste und Seitenleiste zu verschieben. Änderungen werden pro Konto gespeichert und das erste Applet öffnet beim App-Start.",
-  "navigationSettingsTabletInfo": "Auf Tablets zeigt die Navigationsleiste alle Applets in dieser kombinierten Reihenfolge an. Die Aufteilung für die untere Leiste gilt auf Smartphones."
+  "navigationSettingsTabletInfo": "Auf Tablets zeigt die Navigationsleiste alle Applets in dieser kombinierten Reihenfolge an. Die Aufteilung für die untere Leiste gilt auf Smartphones.",
+  "dataStorageAll": "Alle",
+  "dataStorageNewFiles": "Neue Dateien",
+  "dataStorageEmptyFolder": "Dieser Ordner ist leer.",
+  "dataStoragePathTitle": "Pfad",
+  "dataStorageSubfolderCount": "{count, plural, =1{1 Ordner} other{{count} Ordner}}",
+  "@dataStorageSubfolderCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dataStorageFileCount": "{count, plural, =1{1 Datei} other{{count} Dateien}}",
+  "@dataStorageFileCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dataStorageSort": "Sortieren",
+  "dataStorageSortNameAsc": "Name (A–Z)",
+  "dataStorageSortNameDesc": "Name (Z–A)",
+  "dataStorageSortDateDesc": "Neueste zuerst",
+  "dataStorageSortDateAsc": "Älteste zuerst",
+  "dataStorageSortSizeDesc": "Größte zuerst",
+  "dataStorageSortSizeAsc": "Kleinste zuerst"
 }
