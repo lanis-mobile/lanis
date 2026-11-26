@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:liblanis/liblanis.dart';
 import 'package:lanis/utils/liblanis_ui.dart';
+import 'package:lanis/applets/calendar/calendar_category_filter.dart';
 import 'package:lanis/applets/calendar/calendar_event_card.dart';
 import 'package:lanis/applets/calendar/calendar_event_sheet.dart';
 import 'package:lanis/applets/calendar/calendar_fuzzy_search.dart';
@@ -35,7 +36,19 @@ class _CalendarViewState extends ConsumerState<CalendarView> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   List<CalendarEvent> eventList = [];
+  final Set<int> _selectedCategoryIds = {};
+  bool _includeUncategorized = false;
+  final GlobalKey _filterButtonKey = GlobalKey();
   SearchController searchController = SearchController();
+
+  bool get _hasActiveCategoryFilter =>
+      _selectedCategoryIds.isNotEmpty || _includeUncategorized;
+
+  List<CalendarEvent> get _filteredEvents => filterCalendarEvents(
+    eventList,
+    selectedCategoryIds: _selectedCategoryIds,
+    includeUncategorized: _includeUncategorized,
+  );
 
   KeyboardObserver keyboardObserver = KeyboardObserver();
   bool noTrigger = false;
@@ -79,7 +92,7 @@ class _CalendarViewState extends ConsumerState<CalendarView> {
   List<CalendarEvent> _getEventsForDay(DateTime day) {
     List<CalendarEvent> validEvents = [];
 
-    for (var event in eventList) {
+    for (var event in _filteredEvents) {
       // Compare only the date part of startTime and endTime
       bool isStartTimeOnDay =
           event.startTime.year == day.year &&
@@ -300,7 +313,165 @@ class _CalendarViewState extends ConsumerState<CalendarView> {
     );
   }
 
-  AppBar _calendarAppBar(BuildContext context) {
+  Widget _categoryColorDot(BuildContext context, int colorArgb) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final color = colorFromArgb(colorArgb);
+    return Container(
+      width: 12,
+      height: 12,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: color,
+        border:
+            (color.computeLuminance() - colorScheme.surface.computeLuminance())
+                    .abs() <
+                0.02
+            ? Border.all(color: colorScheme.onSurface, width: 0.75)
+            : null,
+      ),
+    );
+  }
+
+  void _applyFilterChange(VoidCallback update) {
+    setState(update);
+    _selectedEvents.value = _getEventsForDay(_selectedDay!);
+  }
+
+  Widget _buildFilterPopoverItem({
+    required BuildContext context,
+    required String label,
+    required bool selected,
+    required Widget leading,
+    required VoidCallback onTap,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          children: [
+            SizedBox(width: 18, child: Center(child: leading)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(
+              selected ? Icons.check_box : Icons.check_box_outline_blank,
+              size: 20,
+              color: selected
+                  ? colorScheme.primary
+                  : colorScheme.onSurfaceVariant,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openFilterPopover(BuildContext context) async {
+    final renderBox =
+        _filterButtonKey.currentContext?.findRenderObject() as RenderBox?;
+    final topOffset = renderBox != null
+        ? renderBox.localToGlobal(Offset.zero).dy + renderBox.size.height + 6
+        : MediaQuery.of(context).padding.top + kToolbarHeight + 6;
+
+    await Navigator.of(context, rootNavigator: true).push(
+      _CalendarFilterPopoverRoute(
+        top: topOffset,
+        builder: (popoverContext, setPopoverState) {
+          void applyChange(VoidCallback update) {
+            _applyFilterChange(update);
+            setPopoverState(() {});
+          }
+
+          return _buildFilterPopoverMenu(
+            popoverContext,
+            onApplyChange: applyChange,
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildFilterPopoverMenu(
+    BuildContext context, {
+    required void Function(VoidCallback) onApplyChange,
+  }) {
+    final categories = extractCalendarCategories(eventList);
+    final hasUncategorized = hasUncategorizedEvents(eventList);
+    final l10n = AppLocalizations.of(context);
+
+    return ConstrainedBox(
+      constraints: const BoxConstraints(
+        minWidth: 220,
+        maxWidth: 280,
+        maxHeight: 340,
+      ),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildFilterPopoverItem(
+              context: context,
+              label: l10n.calendarFilterAll,
+              selected: !_hasActiveCategoryFilter,
+              leading: const Icon(Icons.layers_outlined, size: 16),
+              onTap: () {
+                if (!_hasActiveCategoryFilter) return;
+                onApplyChange(() {
+                  _selectedCategoryIds.clear();
+                  _includeUncategorized = false;
+                });
+              },
+            ),
+            if (categories.isNotEmpty || hasUncategorized)
+              const Divider(height: 1),
+            for (final category in categories)
+              _buildFilterPopoverItem(
+                context: context,
+                label: _unescape.convert(category.name),
+                selected: _selectedCategoryIds.contains(category.id),
+                leading: _categoryColorDot(context, category.colorArgb),
+                onTap: () => onApplyChange(() {
+                  if (_selectedCategoryIds.contains(category.id)) {
+                    _selectedCategoryIds.remove(category.id);
+                  } else {
+                    _selectedCategoryIds.add(category.id);
+                  }
+                }),
+              ),
+            if (hasUncategorized)
+              _buildFilterPopoverItem(
+                context: context,
+                label: l10n.calendarFilterUncategorized,
+                selected: _includeUncategorized,
+                leading: const Icon(Icons.label_off_outlined, size: 16),
+                onTap: () => onApplyChange(() {
+                  _includeUncategorized = !_includeUncategorized;
+                }),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  int get _activeFilterCount =>
+      _selectedCategoryIds.length + (_includeUncategorized ? 1 : 0);
+
+  AppBar _calendarAppBar(BuildContext context, {bool showFilterAction = false}) {
+    final l10n = AppLocalizations.of(context);
     return AppBar(
       title: Text(calendarDefinition.label(context)),
       leading: widget.openDrawerCb != null
@@ -309,6 +480,19 @@ class _CalendarViewState extends ConsumerState<CalendarView> {
               onPressed: () => widget.openDrawerCb!(),
             )
           : null,
+      actions: [
+        if (showFilterAction)
+          IconButton(
+            key: _filterButtonKey,
+            tooltip: l10n.calendarFilterTitle,
+            icon: Badge.count(
+              count: _activeFilterCount,
+              isLabelVisible: _hasActiveCategoryFilter,
+              child: const Icon(Icons.filter_list),
+            ),
+            onPressed: () => _openFilterPopover(context),
+          ),
+      ],
     );
   }
 
@@ -339,7 +523,7 @@ class _CalendarViewState extends ConsumerState<CalendarView> {
     }
 
     return Scaffold(
-      appBar: _calendarAppBar(context),
+      appBar: _calendarAppBar(context, showFilterAction: true),
       body: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -382,7 +566,7 @@ class _CalendarViewState extends ConsumerState<CalendarView> {
                 },
                 suggestionsBuilder: (context, searchController) {
                   final results = fuzzySearchEventList(
-                    eventList,
+                    _filteredEvents,
                     searchController.text,
                   );
 
@@ -461,6 +645,69 @@ class _CalendarViewState extends ConsumerState<CalendarView> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _CalendarFilterPopoverRoute extends PopupRoute<void> {
+  final double top;
+  final Widget Function(BuildContext context, StateSetter setState) builder;
+
+  _CalendarFilterPopoverRoute({required this.top, required this.builder});
+
+  @override
+  Color? get barrierColor => Colors.transparent;
+
+  @override
+  bool get barrierDismissible => true;
+
+  @override
+  String? get barrierLabel => 'Dismiss';
+
+  @override
+  Duration get transitionDuration => const Duration(milliseconds: 180);
+
+  @override
+  Duration get reverseTransitionDuration => const Duration(milliseconds: 130);
+
+  @override
+  Widget buildPage(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+  ) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final curved = CurvedAnimation(
+      parent: animation,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
+    );
+
+    return Stack(
+      children: [
+        Positioned(
+          top: top,
+          right: 12,
+          left: 12,
+          child: Align(
+            alignment: Alignment.topRight,
+            child: FadeTransition(
+              opacity: curved,
+              child: ScaleTransition(
+                scale: Tween<double>(begin: 0.92, end: 1.0).animate(curved),
+                alignment: Alignment.topRight,
+                child: Material(
+                  elevation: 6,
+                  color: colorScheme.surfaceContainer,
+                  borderRadius: BorderRadius.circular(14),
+                  clipBehavior: Clip.antiAlias,
+                  child: StatefulBuilder(builder: builder),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

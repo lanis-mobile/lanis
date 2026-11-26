@@ -599,5 +599,8 @@
   "dataStorageSortDateDesc": "Newest first",
   "dataStorageSortDateAsc": "Oldest first",
   "dataStorageSortSizeDesc": "Largest first",
-  "dataStorageSortSizeAsc": "Smallest first"
+  "dataStorageSortSizeAsc": "Smallest first",
+  "calendarFilterAll": "All",
+  "calendarFilterUncategorized": "Uncategorized",
+  "calendarFilterTitle": "Filter categories"
 }
