@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lanis/applets/timetable/teacher/teacher_timetable_models.dart';
 import 'package:lanis/applets/timetable/timetable_version_button.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:liblanis/liblanis.dart';
@@ -92,6 +93,17 @@ void main() {
     expect(
       TimetableVersionButton.formatPillLabel(versions[1], compact: true),
       'ab 23.11.',
+    );
+  });
+
+  test('plainNoticeText strips hyperlink and button action labels', () {
+    const html =
+        '<b>Eine oder mehrere Lerngruppen sind noch nicht mit dem Stundenplan verknüpft. &nbsp;</b> '
+        '<a href="stundenplan.php?e=1&a=verknuepfen" class="btn btn-default">'
+        '<i class="fa fa-pencil"></i> hinterlegte Lerngruppen ändern</a>';
+    expect(
+      plainNoticeText(html),
+      'Eine oder mehrere Lerngruppen sind noch nicht mit dem Stundenplan verknüpft.',
     );
   });
 }

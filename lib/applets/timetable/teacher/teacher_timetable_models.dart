@@ -427,7 +427,13 @@ bool isRedundantLanisTooltip(String? tooltip) {
 /// Strips HTML tags cleanly for inline notice banners.
 String plainNoticeText(String noticeHtml) {
   final doc = html_parser.parseFragment(noticeHtml);
-  return (doc.text ?? '').replaceAll(RegExp(r'\s+'), ' ').trim();
+  for (final el in doc.querySelectorAll('a, button')) {
+    el.remove();
+  }
+  return (doc.text ?? '')
+      .replaceAll('\u00A0', ' ')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
 }
 
 /// Filters [entries] by an optional school-week badge (e.g. "A", "B").
