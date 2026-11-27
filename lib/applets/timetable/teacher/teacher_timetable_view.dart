@@ -7,6 +7,7 @@ import 'package:lanis/applets/timetable/student/timetable_week_selection.dart';
 import 'package:lanis/applets/timetable/teacher/teacher_timetable_grid.dart';
 import 'package:lanis/applets/timetable/teacher/teacher_timetable_models.dart';
 import 'package:lanis/applets/timetable/teacher/teacher_timetable_panels.dart';
+import 'package:lanis/applets/timetable/timetable_version_button.dart';
 import 'package:lanis/features/offline/cache_context.dart';
 import 'package:lanis/features/offline/cached_data_source.dart';
 import 'package:lanis/features/offline/foreground_connection_monitor.dart';
@@ -41,8 +42,11 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
 
   TeacherTimetableTarget? _activeTarget;
   String? _ownTeacherId;
+  String? _selectedVersionDate;
+  String? _defaultVersionDate;
   final Map<String, TeacherTimetablePlan> _loadedPlans = {};
   final Map<String, DateTime> _planFetchedAt = {};
+  TeacherTimetablePlan? _lastDisplayedPlan;
   bool _planLoading = false;
   Object? _planError;
   int _planRevision = 0;
@@ -298,15 +302,67 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
     });
   }
 
+  String _planCacheKey(TeacherTimetableTarget target, [String? versionDate]) =>
+      '${target.key}@${(versionDate != null && versionDate.isNotEmpty) ? versionDate : 'default'}';
+
+  TeacherTimetableReference _referenceForTarget(
+    TeacherTimetableTarget target, [
+    String? versionDate,
+  ]) => (versionDate != null && versionDate.isNotEmpty)
+      ? target.reference.withDate(versionDate)
+      : target.reference;
+
+  TeacherTimetablePlan? _planForTarget(TeacherTimetableTarget? target) {
+    if (target == null) return null;
+    final exact = _loadedPlans[_planCacheKey(target, _selectedVersionDate)];
+    if (exact != null) return exact;
+    if (_planLoading && _lastDisplayedPlan != null) {
+      return _lastDisplayedPlan;
+    }
+    return null;
+  }
+
+  DateTime? _fetchedAtForTarget(TeacherTimetableTarget? target) {
+    if (target == null) return null;
+    return _planFetchedAt[_planCacheKey(target, _selectedVersionDate)] ??
+        _planFetchedAt[_planCacheKey(target)];
+  }
+
+  void _onSelectVersion(TimetableVersion version) {
+    final target = _activeTarget;
+    if (target == null) return;
+    final nextDate = version.date.trim();
+    if (nextDate.isEmpty || nextDate == _selectedVersionDate) return;
+    setState(() {
+      _selectedVersionDate = nextDate;
+    });
+    unawaited(
+      _selectTarget(
+        target,
+        preserveFreeRoomsPane: _tabletRightMode == _TabletRightMode.freeRooms,
+      ),
+    );
+  }
+
   Future<void> _selectTarget(
     TeacherTimetableTarget target, {
     bool forceRefresh = false,
     bool preserveFreeRoomsPane = false,
   }) async {
     final rev = ++_planRevision;
-    final alreadyLoaded = _loadedPlans[target.key];
+    final versionDate = _selectedVersionDate;
+    final cacheKey = _planCacheKey(target, versionDate);
+    final requestRef = _referenceForTarget(target, versionDate);
+    final alreadyLoaded = _loadedPlans[cacheKey];
 
     setState(() {
+      final previousTarget = _activeTarget;
+      if (previousTarget != null) {
+        final prevPlan = _loadedPlans[_planCacheKey(previousTarget, versionDate)];
+        if (prevPlan != null) {
+          _lastDisplayedPlan = prevPlan;
+        }
+      }
       _activeTarget = target;
       _recordRecentTarget(target);
       if (!target.isOwn) {
@@ -320,6 +376,7 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
       }
       _planLoading = alreadyLoaded == null || forceRefresh;
       if (alreadyLoaded != null) {
+        _lastDisplayedPlan = alreadyLoaded;
         _validateWeekSelectionFor(alreadyLoaded);
       }
     });
@@ -329,11 +386,21 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
     }
 
     if (alreadyLoaded == null && !forceRefresh) {
-      final cached = await _tryReadCachedPlan(target.reference);
+      final cached = await _tryReadCachedPlan(requestRef);
       if (mounted && rev == _planRevision && cached != null) {
         setState(() {
-          _loadedPlans[target.key] = cached.data;
-          _planFetchedAt[target.key] = cached.fetchedAt;
+          _loadedPlans[cacheKey] = cached.data;
+          _planFetchedAt[cacheKey] = cached.fetchedAt;
+          if (versionDate == null &&
+              cached.data.planDate != null &&
+              cached.data.planDate!.isNotEmpty) {
+            _defaultVersionDate ??= cached.data.planDate;
+            _loadedPlans[_planCacheKey(target, cached.data.planDate)] =
+                cached.data;
+            _planFetchedAt[_planCacheKey(target, cached.data.planDate)] =
+                cached.fetchedAt;
+          }
+          _lastDisplayedPlan = cached.data;
           if (target.isOwn && cached.data.targetId.isNotEmpty) {
             _ownTeacherId = cached.data.targetId;
           }
@@ -344,13 +411,23 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
 
     try {
       final result = await _readPlan(
-        target.reference,
+        requestRef,
         forceRefresh: forceRefresh,
       );
       if (!mounted || rev != _planRevision) return;
       setState(() {
-        _loadedPlans[target.key] = result.data;
-        _planFetchedAt[target.key] = result.fetchedAt;
+        _loadedPlans[cacheKey] = result.data;
+        _planFetchedAt[cacheKey] = result.fetchedAt;
+        if (versionDate == null &&
+            result.data.planDate != null &&
+            result.data.planDate!.isNotEmpty) {
+          _defaultVersionDate ??= result.data.planDate;
+          _loadedPlans[_planCacheKey(target, result.data.planDate)] =
+              result.data;
+          _planFetchedAt[_planCacheKey(target, result.data.planDate)] =
+              result.fetchedAt;
+        }
+        _lastDisplayedPlan = result.data;
         if (target.isOwn && result.data.targetId.isNotEmpty) {
           _ownTeacherId = result.data.targetId;
         }
@@ -362,7 +439,7 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
       if (!mounted || rev != _planRevision) return;
       setState(() {
         _planLoading = false;
-        if (!_loadedPlans.containsKey(target.key)) {
+        if (!_loadedPlans.containsKey(cacheKey)) {
           _planError = error;
         }
       });
@@ -644,9 +721,7 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
       dayColumnIndex: dayColumnIndex,
       entry: entry,
     );
-    final activePlan = _activeTarget == null
-        ? null
-        : _loadedPlans[_activeTarget!.key];
+    final activePlan = _planForTarget(_activeTarget);
     setState(() {
       if (_tabletRightMode == _TabletRightMode.details &&
           _selectedEntry == next) {
@@ -737,7 +812,7 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
     required bool compactGrid,
   }) {
     final target = _activeTarget;
-    final plan = target == null ? null : _loadedPlans[target.key];
+    final plan = _planForTarget(target);
 
     if (_planError != null && plan == null) {
       final err = _planError;
@@ -787,8 +862,7 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
       return const Center(child: CircularProgressIndicator());
     }
 
-    final fetchedAt =
-        (target == null ? null : _planFetchedAt[target.key]) ?? DateTime.now();
+    final fetchedAt = _fetchedAtForTarget(target) ?? DateTime.now();
     final weekStart = timetableWeekStart(fetchedAt);
     final effectiveBadge = _weekSelection.resolveBadge(plan.weekBadge);
 
@@ -868,7 +942,10 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
         }
         final target = _activeTarget;
         if (target != null &&
-            (_planError != null || !_loadedPlans.containsKey(target.key))) {
+            (_planError != null ||
+                !_loadedPlans.containsKey(
+                  _planCacheKey(target, _selectedVersionDate),
+                ))) {
           unawaited(_selectTarget(target, forceRefresh: true));
         }
       });
@@ -929,9 +1006,7 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
         );
         _ensureInitialTargetLoaded(overview, l10n.teacherTimetableOwnPlan);
 
-        final activePlan = _activeTarget == null
-            ? null
-            : _loadedPlans[_activeTarget!.key];
+        final activePlan = _planForTarget(_activeTarget);
         final activeSubtitle = _formatPlanSubtitle(_activeTarget, l10n);
         final hasFreeRooms =
             overview.freeRoomsUrl != null && widget.offline == null;
@@ -993,6 +1068,17 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
           subtitle: activeSubtitle,
         ),
         actions: [
+          if (activePlan != null && activePlan.hasMultipleVersions)
+            Padding(
+              padding: const EdgeInsets.only(right: 4),
+              child: TimetableVersionButton(
+                versions: activePlan.availableVersions,
+                selectedDate: _selectedVersionDate ?? activePlan.planDate,
+                defaultDate: _defaultVersionDate,
+                compact: true,
+                onSelected: _onSelectVersion,
+              ),
+            ),
           if (activePlan != null) _buildWeekBadgeAction(context, activePlan),
           if (hasFreeRooms)
             IconButton(
@@ -1048,9 +1134,7 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
         (_tabletRightMode == _TabletRightMode.details &&
             _selectedEntry != null &&
             activePlan != null);
-    final fetchedAt =
-        (_activeTarget == null ? null : _planFetchedAt[_activeTarget!.key]) ??
-        DateTime.now();
+    final fetchedAt = _fetchedAtForTarget(_activeTarget) ?? DateTime.now();
     final weekStart = timetableWeekStart(fetchedAt);
 
     return Scaffold(
@@ -1198,23 +1282,38 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
                       actions: [
                         if (activePlan != null)
                           _buildWeekBadgeAction(context, activePlan),
-                        if (hasFreeRooms)
+                        if (activePlan != null &&
+                            activePlan.hasMultipleVersions)
+                          Padding(
+                            padding: EdgeInsets.only(
+                              right:
+                                  hasFreeRooms &&
+                                      _tabletRightMode !=
+                                          _TabletRightMode.freeRooms
+                                  ? 8
+                                  : 12,
+                            ),
+                            child: TimetableVersionButton(
+                              versions: activePlan.availableVersions,
+                              selectedDate:
+                                  _selectedVersionDate ?? activePlan.planDate,
+                              defaultDate: _defaultVersionDate,
+                              compact: compactCenter,
+                              onSelected: _onSelectVersion,
+                            ),
+                          ),
+                        if (hasFreeRooms &&
+                            _tabletRightMode != _TabletRightMode.freeRooms)
                           Padding(
                             padding: const EdgeInsets.only(right: 12),
                             child: FilterChip(
                               avatar: Icon(
                                 Icons.meeting_room_outlined,
                                 size: 16,
-                                color:
-                                    _tabletRightMode ==
-                                        _TabletRightMode.freeRooms
-                                    ? cs.onSecondaryContainer
-                                    : cs.onSurfaceVariant,
+                                color: cs.onSurfaceVariant,
                               ),
                               label: Text(l10n.teacherTimetableFreeRooms),
-                              selected:
-                                  _tabletRightMode ==
-                                  _TabletRightMode.freeRooms,
+                              selected: false,
                               showCheckmark: false,
                               onSelected: (_) => _toggleTabletFreeRooms(),
                             ),

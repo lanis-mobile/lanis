@@ -597,6 +597,7 @@
   "contactTeacher": "Lehrkraft kontaktieren",
   "teacherTimetableOwnPlan": "Mein Plan",
   "teacherTimetablePlans": "Pläne",
+  "timetableVersionTooltip": "Plan-Version",
   "teacherTimetableFilterPlans": "Plan filtern…",
   "teacherTimetableTeachers": "Lehrkräfte",
   "teacherTimetableClasses": "Klassen",

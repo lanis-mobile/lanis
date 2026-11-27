@@ -12,7 +12,10 @@ import 'package:lanis/applets/timetable/definition.dart';
 import 'package:lanis/applets/timetable/student/student_timetable_item.dart';
 import 'package:lanis/applets/timetable/student/timetable_helper.dart';
 import 'package:lanis/applets/timetable/student/timetable_week_selection.dart';
+import 'package:lanis/applets/timetable/timetable_version_button.dart';
+import 'package:lanis/features/offline/foreground_connection_monitor.dart';
 import 'package:lanis/generated/l10n.dart';
+import 'package:lanis/utils/responsive.dart';
 import 'package:lanis/widgets/combined_applet_builder.dart';
 
 final double itemHeight = 46;
@@ -29,6 +32,7 @@ class StudentTimetableBetterView extends ConsumerStatefulWidget {
   final bool showAppBar;
   final String? pupilName;
   final ValueChanged<AppBar>? onAppBarChanged;
+  final Future<MaybeCacheResult<TimeTable>> Function(String date)? loadVersion;
   const StudentTimetableBetterView({
     super.key,
     this.openDrawerCb,
@@ -39,6 +43,7 @@ class StudentTimetableBetterView extends ConsumerStatefulWidget {
     this.showAppBar = true,
     this.pupilName,
     this.onAppBarChanged,
+    this.loadVersion,
   });
 
   @override
@@ -48,6 +53,79 @@ class StudentTimetableBetterView extends ConsumerStatefulWidget {
 
 class _StudentTimetableBetterViewState
     extends ConsumerState<StudentTimetableBetterView> {
+  String? _selectedVersionDate;
+  String? _defaultVersionDate;
+  final Map<String, TimeTable> _versionPlans = {};
+  final Map<String, DateTime> _versionFetchedAt = {};
+  bool _versionLoading = false;
+  int _versionRevision = 0;
+
+  Future<MaybeCacheResult<TimeTable>> _fetchVersion(String date) {
+    final customLoader = widget.loadVersion;
+    if (customLoader != null) {
+      return customLoader(date);
+    }
+    final isOfflineNet = ref.read(networkInterfaceAvailableProvider) == false;
+    return ref
+        .read(timetableParserProvider)
+        .loadCachedTimetableForDate(
+          date,
+          policy: isOfflineNet
+              ? CacheReadPolicy.cacheOnly
+              : CacheReadPolicy.networkFirst,
+        );
+  }
+
+  Future<void> _selectVersion(
+    TimetableVersion version, {
+    bool forceRefresh = false,
+  }) async {
+    final date = version.date.trim();
+    if (date.isEmpty) return;
+    if (!forceRefresh && date == _defaultVersionDate) {
+      if (_selectedVersionDate != null || _versionLoading) {
+        _versionRevision++;
+        setState(() {
+          _selectedVersionDate = null;
+          _versionLoading = false;
+        });
+      }
+      return;
+    }
+    if (!forceRefresh &&
+        date == _selectedVersionDate &&
+        _versionPlans.containsKey(date)) {
+      return;
+    }
+
+    final previousDate = _selectedVersionDate;
+    final rev = ++_versionRevision;
+    final hasMemory = _versionPlans.containsKey(date);
+    setState(() {
+      _selectedVersionDate = date;
+      _versionLoading = !hasMemory || forceRefresh;
+    });
+    if (hasMemory && !forceRefresh) return;
+
+    try {
+      final result = await _fetchVersion(date);
+      if (!mounted || rev != _versionRevision) return;
+      setState(() {
+        _versionPlans[date] = result.data;
+        _versionFetchedAt[date] = result.fetchedAt;
+        _versionLoading = false;
+      });
+    } catch (_) {
+      if (!mounted || rev != _versionRevision) return;
+      setState(() {
+        _versionLoading = false;
+        if (!_versionPlans.containsKey(date)) {
+          _selectedVersionDate = previousDate;
+        }
+      });
+    }
+  }
+
   AppBar? _appBar(AppBar appBar) {
     if (widget.onAppBarChanged != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -130,12 +208,36 @@ class _StudentTimetableBetterViewState
       builder:
           (
             BuildContext context,
-            TimeTable timetable,
+            TimeTable baseTimetable,
             _,
             Map<String, dynamic> settings,
             updateSettings,
             Future<void> Function()? refresh,
           ) {
+            if (_defaultVersionDate == null &&
+                baseTimetable.planDate != null &&
+                baseTimetable.planDate!.isNotEmpty) {
+              _defaultVersionDate = baseTimetable.planDate;
+            }
+            final activeDate = _selectedVersionDate;
+            final timetable =
+                (activeDate != null && activeDate != _defaultVersionDate)
+                ? (_versionPlans[activeDate] ?? baseTimetable)
+                : baseTimetable;
+
+            Future<void> Function()? effectiveRefresh;
+            if (activeDate != null && activeDate != _defaultVersionDate) {
+              effectiveRefresh = () async {
+                await _selectVersion(
+                  TimetableVersion(date: activeDate, label: activeDate),
+                  forceRefresh: true,
+                );
+                await refresh?.call();
+              };
+            } else {
+              effectiveRefresh = refresh;
+            }
+
             TimeTableType selectedType =
                 settings['student-selected-type'] == 'TimeTableType.own'
                 ? TimeTableType.own
@@ -165,9 +267,11 @@ class _StudentTimetableBetterViewState
             }.toList()..sort();
             // Cached/offline badges belong to the fetched week too. Advance
             // the dates only when fresh server data supplies the new badge.
-            final weekStart = timetableWeekStart(
-              parser.latestResponse?.fetchedAt ?? DateTime.now(),
-            );
+            final fetchedAt =
+                (activeDate != null ? _versionFetchedAt[activeDate] : null) ??
+                parser.latestResponse?.fetchedAt ??
+                DateTime.now();
+            final weekStart = timetableWeekStart(fetchedAt);
 
             TimeTableData data = TimeTableData(
               filterCalendarWeekLessons(selectedPlan, weekStart),
@@ -175,6 +279,14 @@ class _StudentTimetableBetterViewState
               settings,
               selectedBadge,
             );
+
+            final showVersionPicker =
+                timetable.hasMultipleVersions ||
+                baseTimetable.hasMultipleVersions;
+            final versions = timetable.hasMultipleVersions
+                ? timetable.availableVersions
+                : baseTimetable.availableVersions;
+            final isTablet = Responsive.isTablet(context);
 
             final appBar = AppBar(
               title: AppletAppBarTitle(
@@ -188,14 +300,30 @@ class _StudentTimetableBetterViewState
                       onPressed: () => widget.openDrawerCb!(),
                     )
                   : null,
-              actions: data.hours.isEmpty
+              actions: (!showVersionPicker && data.hours.isEmpty)
                   ? null
                   : [
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
                         child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            if (uniqueBadges.isNotEmpty)
+                            if (showVersionPicker)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 4),
+                                child: TimetableVersionButton(
+                                  versions: versions,
+                                  selectedDate:
+                                      _selectedVersionDate ??
+                                      timetable.planDate,
+                                  defaultDate: _defaultVersionDate,
+                                  compact: !isTablet,
+                                  onSelected: (v) =>
+                                      unawaited(_selectVersion(v)),
+                                ),
+                              ),
+                            if (data.hours.isNotEmpty &&
+                                uniqueBadges.isNotEmpty)
                               PopupMenuButton<TimetableWeekSelection>(
                                 tooltip: AppLocalizations.of(context).week,
                                 onSelected: (selection) => updateSettings(
@@ -242,15 +370,16 @@ class _StudentTimetableBetterViewState
                                   }),
                                 ),
                               ),
-                            IconButton(
-                              onPressed: () => updateSettings(
-                                'single-day',
-                                !(settings['single-day'] ?? false),
+                            if (data.hours.isNotEmpty)
+                              IconButton(
+                                onPressed: () => updateSettings(
+                                  'single-day',
+                                  !(settings['single-day'] ?? false),
+                                ),
+                                icon: (settings['single-day'] ?? false)
+                                    ? Icon(Icons.calendar_today)
+                                    : Icon(Icons.calendar_today_outlined),
                               ),
-                              icon: (settings['single-day'] ?? false)
-                                  ? Icon(Icons.calendar_today)
-                                  : Icon(Icons.calendar_today_outlined),
-                            ),
                           ],
                         ),
                       ),
@@ -284,54 +413,73 @@ class _StudentTimetableBetterViewState
               return Scaffold(
                 appBar: _appBar(appBar),
                 floatingActionButton: switchPlanButton,
-                body: RefreshIndicator(
-                  notificationPredicate: refresh != null
-                      ? (_) => true
-                      : (_) => false,
-                  onRefresh: refresh ?? () async {},
-                  child: CustomScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    slivers: [
-                      SliverFillRemaining(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.max,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            const Spacer(),
-                            const Icon(Icons.sentiment_dissatisfied, size: 60),
-                            Padding(
-                              padding: const EdgeInsets.all(32),
-                              child: Text(
-                                AppLocalizations.of(context).noEntries,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                body: Column(
+                  children: [
+                    if (_versionLoading)
+                      const LinearProgressIndicator(minHeight: 2),
+                    Expanded(
+                      child: RefreshIndicator(
+                        notificationPredicate: effectiveRefresh != null
+                            ? (_) => true
+                            : (_) => false,
+                        onRefresh: effectiveRefresh ?? () async {},
+                        child: CustomScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          slivers: [
+                            SliverFillRemaining(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.max,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  const Spacer(),
+                                  const Icon(
+                                    Icons.sentiment_dissatisfied,
+                                    size: 60,
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(32),
+                                    child: Text(
+                                      AppLocalizations.of(context).noEntries,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                ],
                               ),
                             ),
-                            const Spacer(),
                           ],
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               );
             }
 
             return Scaffold(
               appBar: _appBar(appBar),
-              body: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                child: TimeTableView(
-                  data: data,
-                  weekStart: weekStart,
-                  timetable: timetable,
-                  settings: settings,
-                  updateSettings: updateSettings,
-                  refresh: refresh,
-                ),
+              body: Column(
+                children: [
+                  if (_versionLoading)
+                    const LinearProgressIndicator(minHeight: 2),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                      child: TimeTableView(
+                        data: data,
+                        weekStart: weekStart,
+                        timetable: timetable,
+                        settings: settings,
+                        updateSettings: updateSettings,
+                        refresh: effectiveRefresh,
+                      ),
+                    ),
+                  ),
+                ],
               ),
               floatingActionButton: switchPlanButton,
             );

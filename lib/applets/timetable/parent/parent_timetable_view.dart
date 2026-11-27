@@ -165,6 +165,31 @@ class _ParentTimetableViewState extends ConsumerState<ParentTimetableView>
         : _readCachedPlan(reference);
   }
 
+  Future<MaybeCacheResult<ParentTimetableLoaded>> _readPupilVersion(
+    String pupilId,
+    String date,
+  ) {
+    final offline = widget.offline;
+    if (offline != null) {
+      return _cache.readCacheFor(
+        accountId: offline.account.localId,
+        request: TimetableParentParserCacheRequests.getTimetableForPupil(
+          pupilId.trim(),
+          date.trim(),
+        ),
+      );
+    }
+    return ref
+        .read(timetableParentParserProvider)
+        .loadCachedTimetableForPupil(
+          pupilId,
+          date,
+          policy: ref.read(networkInterfaceAvailableProvider) == false
+              ? CacheReadPolicy.cacheOnly
+              : CacheReadPolicy.networkFirst,
+        );
+  }
+
   TypedSettings? get _settings =>
       widget.offline?.settings ?? ref.read(accountSpecificSettingsProvider);
 
@@ -248,6 +273,10 @@ class _ParentTimetableViewState extends ConsumerState<ParentTimetableView>
               ),
               readCache: () async => map(await _readCachedHome()),
               read: () async => map(await _readHome()),
+              loadVersion: (date) async => (await _readPupilVersion(
+                loaded.pupilId,
+                date,
+              )).map((value) => value.timetable),
             );
           case ParentTimetableSelection selection:
             _reportSinglePupil(
@@ -496,6 +525,9 @@ class _TimetableTabsState extends State<_TimetableTabs>
                       read: () async => (await widget.read(
                         reference,
                       )).map((value) => value.timetable),
+                      loadVersion: (date) async => (await widget.read(
+                        reference.withDate(date),
+                      )).map((value) => value.timetable),
                     )
                   : const SizedBox.shrink(),
             ),
@@ -509,6 +541,7 @@ class _PlanScreen extends StatefulWidget {
   final Future<MaybeCacheResult<TimeTable>> Function() read;
   final MaybeCacheResult<TimeTable>? initial;
   final Future<MaybeCacheResult<TimeTable>> Function()? readCache;
+  final Future<MaybeCacheResult<TimeTable>> Function(String date)? loadVersion;
   final TypedSettings? settings;
   final bool cacheOnly;
   final bool customize;
@@ -522,6 +555,7 @@ class _PlanScreen extends StatefulWidget {
     required this.read,
     this.initial,
     this.readCache,
+    this.loadVersion,
     this.settings,
     this.cacheOnly = false,
     this.customize = false,
@@ -592,6 +626,7 @@ class _PlanScreenState extends State<_PlanScreen>
       appBarBottom: widget.appBarBottom,
       showAppBar: widget.showAppBar,
       onAppBarChanged: widget.onAppBarChanged,
+      loadVersion: widget.loadVersion,
     );
   }
 }

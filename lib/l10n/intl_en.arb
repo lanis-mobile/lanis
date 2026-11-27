@@ -609,6 +609,7 @@
   "contactTeacher": "Contact teacher",
   "teacherTimetableOwnPlan": "My timetable",
   "teacherTimetablePlans": "Timetables",
+  "timetableVersionTooltip": "Timetable version",
   "teacherTimetableFilterPlans": "Filter timetables…",
   "teacherTimetableTeachers": "Teachers",
   "teacherTimetableClasses": "Classes",
