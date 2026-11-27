@@ -1386,7 +1386,6 @@ class TeacherFreeRoomsPanel extends StatelessWidget {
             children: [
               for (final room in rooms)
                 ActionChip(
-                  avatar: const Icon(Icons.meeting_room_outlined, size: 16),
                   label: Text(room.label),
                   onPressed: () =>
                       onOpenRoom(TeacherTimetableTarget(reference: room)),
