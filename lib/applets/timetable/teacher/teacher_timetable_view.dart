@@ -11,6 +11,7 @@ import 'package:lanis/applets/timetable/timetable_version_button.dart';
 import 'package:lanis/features/offline/cache_context.dart';
 import 'package:lanis/features/offline/cached_data_source.dart';
 import 'package:lanis/features/offline/foreground_connection_monitor.dart';
+import 'package:lanis/features/offline/session_reauth.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/utils/responsive.dart';
 import 'package:lanis/utils/root_nav.dart';
@@ -49,6 +50,7 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
   TeacherTimetablePlan? _lastDisplayedPlan;
   bool _planLoading = false;
   Object? _planError;
+  StackTrace? _planStackTrace;
   int _planRevision = 0;
 
   // UI view state
@@ -166,17 +168,21 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
 
   Future<MaybeCacheResult<TeacherTimetableOverview>> _readOverview() {
     final offline = widget.offline;
-    return offline == null
-        ? ref
-              .read(timetableTeacherParserProvider)
-              .cached
-              .getHome(
-                cachePolicy:
-                    ref.read(networkInterfaceAvailableProvider) == false
-                    ? CacheReadPolicy.cacheOnly
-                    : CacheReadPolicy.networkFirst,
-              )
-        : offline.read(TimetableTeacherParserCacheRequests.getHome());
+    if (offline != null) {
+      return offline.read(TimetableTeacherParserCacheRequests.getHome());
+    }
+    final isOfflineNet = ref.read(networkInterfaceAvailableProvider) == false;
+    final policy = isOfflineNet
+        ? CacheReadPolicy.cacheOnly
+        : CacheReadPolicy.networkFirst;
+    final session = isOfflineNet ? null : ref.read(sessionProvider).asData?.value;
+    return runWithSessionReauth(
+      session,
+      () => ref
+          .read(timetableTeacherParserProvider)
+          .cached
+          .getHome(cachePolicy: policy),
+    );
   }
 
   Future<MaybeCacheResult<TeacherTimetablePlan>> _readPlan(
@@ -191,15 +197,17 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
       );
     }
     final isOfflineNet = ref.read(networkInterfaceAvailableProvider) == false;
-    return ref
-        .read(timetableTeacherParserProvider)
-        .cached
-        .getTimetable(
-          reference,
-          cachePolicy: isOfflineNet
-              ? CacheReadPolicy.cacheOnly
-              : CacheReadPolicy.networkFirst,
-        );
+    final policy = isOfflineNet
+        ? CacheReadPolicy.cacheOnly
+        : CacheReadPolicy.networkFirst;
+    final session = isOfflineNet ? null : ref.read(sessionProvider).asData?.value;
+    return runWithSessionReauth(
+      session,
+      () => ref
+          .read(timetableTeacherParserProvider)
+          .cached
+          .getTimetable(reference, cachePolicy: policy),
+    );
   }
 
   Future<MaybeCacheResult<TeacherTimetablePlan>?> _tryReadCachedPlan(
@@ -368,6 +376,7 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
         _expandedCategories.add(target.category);
       }
       _planError = null;
+      _planStackTrace = null;
       _selectedEntry = null;
       if (!preserveFreeRoomsPane &&
           _tabletRightMode == _TabletRightMode.details) {
@@ -433,13 +442,15 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
         _validateWeekSelectionFor(result.data);
         _planLoading = false;
         _planError = null;
+        _planStackTrace = null;
       });
-    } catch (error) {
+    } catch (error, stack) {
       if (!mounted || rev != _planRevision) return;
       setState(() {
         _planLoading = false;
         if (!_loadedPlans.containsKey(cacheKey)) {
           _planError = error;
+          _planStackTrace = stack;
         }
       });
     }
@@ -485,12 +496,16 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
 
     try {
       final parser = ref.read(timetableTeacherParserProvider);
-      final result = useServerDefaults
-          ? await parser.getFreeRooms()
-          : await parser.getFreeRooms(
-              weekday: weekday ?? _freeRoomsWeekday,
-              hours: effectiveHours,
-            );
+      final session = ref.read(sessionProvider).asData?.value;
+      final result = await runWithSessionReauth(
+        session,
+        () => useServerDefaults
+            ? parser.getFreeRooms()
+            : parser.getFreeRooms(
+                weekday: weekday ?? _freeRoomsWeekday,
+                hours: effectiveHours,
+              ),
+      );
       if (!mounted || rev != _freeRoomsRevision) return;
       _updateFreeRoomsState(() {
         _freeRoomsInitialized = true;
@@ -820,6 +835,7 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
       }
       return AppletErrorView(
         error: err is Exception ? err : UnknownException(err.toString()),
+        stack: _planStackTrace,
         retry: target == null
             ? _refreshAll
             : () => _selectTarget(target, forceRefresh: true),
@@ -978,6 +994,7 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
                     error: error is Exception
                         ? error
                         : UnknownException(error.toString()),
+                    stack: response?.error?.stackTrace,
                     retry: () => _overviewSource.fetchData(forceRefresh: true),
                   ),
           );

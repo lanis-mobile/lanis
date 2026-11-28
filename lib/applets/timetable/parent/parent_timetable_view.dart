@@ -10,6 +10,7 @@ import 'package:liblanis/liblanis.dart';
 import 'package:lanis/features/offline/cache_context.dart';
 import 'package:lanis/features/offline/cached_data_source.dart';
 import 'package:lanis/features/offline/foreground_connection_monitor.dart';
+import 'package:lanis/features/offline/session_reauth.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/widgets/error_view.dart';
 import '../student/student_timetable_better_view.dart';
@@ -97,17 +98,21 @@ class _ParentTimetableViewState extends ConsumerState<ParentTimetableView>
 
   Future<MaybeCacheResult<ParentTimetableHome>> _readHome() {
     final offline = widget.offline;
-    return offline == null
-        ? ref
-              .read(timetableParentParserProvider)
-              .cached
-              .getHome(
-                cachePolicy:
-                    ref.read(networkInterfaceAvailableProvider) == false
-                    ? CacheReadPolicy.cacheOnly
-                    : CacheReadPolicy.networkFirst,
-              )
-        : offline.read(TimetableParentParserCacheRequests.getHome());
+    if (offline != null) {
+      return offline.read(TimetableParentParserCacheRequests.getHome());
+    }
+    final isOfflineNet = ref.read(networkInterfaceAvailableProvider) == false;
+    final policy = isOfflineNet
+        ? CacheReadPolicy.cacheOnly
+        : CacheReadPolicy.networkFirst;
+    final session = isOfflineNet ? null : ref.read(sessionProvider).asData?.value;
+    return runWithSessionReauth(
+      session,
+      () => ref
+          .read(timetableParentParserProvider)
+          .cached
+          .getHome(cachePolicy: policy),
+    );
   }
 
   @override
@@ -151,18 +156,19 @@ class _ParentTimetableViewState extends ConsumerState<ParentTimetableView>
     ParentTimetableReference reference,
   ) {
     final offline = widget.offline;
-    return offline == null
-        ? ref
-              .read(timetableParentParserProvider)
-              .cached
-              .getTimetable(
-                reference,
-                cachePolicy:
-                    ref.read(networkInterfaceAvailableProvider) == false
-                    ? CacheReadPolicy.cacheOnly
-                    : CacheReadPolicy.networkFirst,
-              )
-        : _readCachedPlan(reference);
+    if (offline != null) return _readCachedPlan(reference);
+    final isOfflineNet = ref.read(networkInterfaceAvailableProvider) == false;
+    final policy = isOfflineNet
+        ? CacheReadPolicy.cacheOnly
+        : CacheReadPolicy.networkFirst;
+    final session = isOfflineNet ? null : ref.read(sessionProvider).asData?.value;
+    return runWithSessionReauth(
+      session,
+      () => ref
+          .read(timetableParentParserProvider)
+          .cached
+          .getTimetable(reference, cachePolicy: policy),
+    );
   }
 
   Future<MaybeCacheResult<ParentTimetableLoaded>> _readPupilVersion(
@@ -179,15 +185,17 @@ class _ParentTimetableViewState extends ConsumerState<ParentTimetableView>
         ),
       );
     }
-    return ref
-        .read(timetableParentParserProvider)
-        .loadCachedTimetableForPupil(
-          pupilId,
-          date,
-          policy: ref.read(networkInterfaceAvailableProvider) == false
-              ? CacheReadPolicy.cacheOnly
-              : CacheReadPolicy.networkFirst,
-        );
+    final isOfflineNet = ref.read(networkInterfaceAvailableProvider) == false;
+    final policy = isOfflineNet
+        ? CacheReadPolicy.cacheOnly
+        : CacheReadPolicy.networkFirst;
+    final session = isOfflineNet ? null : ref.read(sessionProvider).asData?.value;
+    return runWithSessionReauth(
+      session,
+      () => ref
+          .read(timetableParentParserProvider)
+          .loadCachedTimetableForPupil(pupilId, date, policy: policy),
+    );
   }
 
   TypedSettings? get _settings =>
@@ -229,6 +237,7 @@ class _ParentTimetableViewState extends ConsumerState<ParentTimetableView>
                     error: error is Exception
                         ? error
                         : UnknownException(error.toString()),
+                    stack: response?.error?.stackTrace,
                     retry: () => _home.fetchData(forceRefresh: true),
                   ),
           );

@@ -14,6 +14,7 @@ import 'package:lanis/applets/timetable/student/timetable_helper.dart';
 import 'package:lanis/applets/timetable/student/timetable_week_selection.dart';
 import 'package:lanis/applets/timetable/timetable_version_button.dart';
 import 'package:lanis/features/offline/foreground_connection_monitor.dart';
+import 'package:lanis/features/offline/session_reauth.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/utils/responsive.dart';
 import 'package:lanis/widgets/combined_applet_builder.dart';
@@ -66,14 +67,16 @@ class _StudentTimetableBetterViewState
       return customLoader(date);
     }
     final isOfflineNet = ref.read(networkInterfaceAvailableProvider) == false;
-    return ref
-        .read(timetableParserProvider)
-        .loadCachedTimetableForDate(
-          date,
-          policy: isOfflineNet
-              ? CacheReadPolicy.cacheOnly
-              : CacheReadPolicy.networkFirst,
-        );
+    final policy = isOfflineNet
+        ? CacheReadPolicy.cacheOnly
+        : CacheReadPolicy.networkFirst;
+    final session = isOfflineNet ? null : ref.read(sessionProvider).asData?.value;
+    return runWithSessionReauth(
+      session,
+      () => ref
+          .read(timetableParserProvider)
+          .loadCachedTimetableForDate(date, policy: policy),
+    );
   }
 
   Future<void> _selectVersion(
