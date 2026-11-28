@@ -53,7 +53,6 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
 
   // UI view state
   bool _singleDayPhone = false;
-  bool _tabletDrawerOpen = true;
   _TabletRightMode _tabletRightMode = _TabletRightMode.none;
   _TabletRightMode _lastRightMode = _TabletRightMode.none;
   TeacherEntrySelection? _selectedEntry;
@@ -1141,9 +1140,9 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
       body: LayoutBuilder(
         builder: (context, constraints) {
           final totalW = constraints.maxWidth;
-          // Auto-adjust pane widths cleanly on narrower split-screen tablets
-          // while giving spacious 3-pane proportions on full iPad screens.
-          final showLeft = _tabletDrawerOpen && !(rightOpen && totalW < 840);
+          // Keep the left catalog always visible when there is room for it;
+          // only auto-collapse it on narrower tablets while the right pane is open.
+          final showLeft = !(rightOpen && totalW < 840);
           final leftWidth = totalW >= 1040 ? 276.0 : 248.0;
           final rightWidth = totalW >= 960 ? 286.0 : 252.0;
           final centerWidth =
@@ -1252,18 +1251,17 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
                   removeRight: true,
                   child: Scaffold(
                     appBar: AppBar(
-                      leading: IconButton(
-                        tooltip: l10n.teacherTimetableToggleCatalog,
-                        icon: Icon(
-                          _tabletDrawerOpen
-                              ? Icons.view_sidebar
-                              : Icons.view_sidebar_outlined,
-                          color: _tabletDrawerOpen ? cs.primary : null,
-                        ),
-                        onPressed: () => setState(
-                          () => _tabletDrawerOpen = !_tabletDrawerOpen,
-                        ),
-                      ),
+                      automaticallyImplyLeading: false,
+                      leading: showLeft
+                          ? null
+                          : IconButton(
+                              tooltip: l10n.teacherTimetableToggleCatalog,
+                              icon: const Icon(Icons.view_sidebar_outlined),
+                              onPressed: () => setState(() {
+                                _tabletRightMode = _TabletRightMode.none;
+                                _selectedEntry = null;
+                              }),
+                            ),
                       title: AnimatedSwitcher(
                         duration: const Duration(milliseconds: 200),
                         layoutBuilder: (currentChild, previousChildren) =>
