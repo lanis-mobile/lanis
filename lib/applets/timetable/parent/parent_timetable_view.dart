@@ -10,6 +10,7 @@ import 'package:liblanis/liblanis.dart';
 import 'package:lanis/features/offline/cache_context.dart';
 import 'package:lanis/features/offline/cached_data_source.dart';
 import 'package:lanis/features/offline/foreground_connection_monitor.dart';
+import 'package:lanis/features/offline/session_reauth.dart';
 import 'package:lanis/generated/l10n.dart';
 import 'package:lanis/widgets/error_view.dart';
 import '../student/student_timetable_better_view.dart';
@@ -97,17 +98,21 @@ class _ParentTimetableViewState extends ConsumerState<ParentTimetableView>
 
   Future<MaybeCacheResult<ParentTimetableHome>> _readHome() {
     final offline = widget.offline;
-    return offline == null
-        ? ref
-              .read(timetableParentParserProvider)
-              .cached
-              .getHome(
-                cachePolicy:
-                    ref.read(networkInterfaceAvailableProvider) == false
-                    ? CacheReadPolicy.cacheOnly
-                    : CacheReadPolicy.networkFirst,
-              )
-        : offline.read(TimetableParentParserCacheRequests.getHome());
+    if (offline != null) {
+      return offline.read(TimetableParentParserCacheRequests.getHome());
+    }
+    final isOfflineNet = ref.read(networkInterfaceAvailableProvider) == false;
+    final policy = isOfflineNet
+        ? CacheReadPolicy.cacheOnly
+        : CacheReadPolicy.networkFirst;
+    final session = isOfflineNet ? null : ref.read(sessionProvider).asData?.value;
+    return runWithSessionReauth(
+      session,
+      () => ref
+          .read(timetableParentParserProvider)
+          .cached
+          .getHome(cachePolicy: policy),
+    );
   }
 
   @override
@@ -138,12 +143,71 @@ class _ParentTimetableViewState extends ConsumerState<ParentTimetableView>
     super.dispose();
   }
 
+  int get _accountId =>
+      widget.offline?.account.localId ??
+      ref.read(activeAccountProvider)!.localId;
+
+  Future<Set<String>> _availableCachedPupilIds(
+    List<ParentTimetableReference> references,
+  ) async {
+    final requestToPupilId =
+        <CacheRequest<ParentTimetableLoaded>, String>{
+      for (final reference in references)
+        TimetableParentParserCacheRequests.getTimetable(reference):
+            reference.pupilId,
+    };
+    if (requestToPupilId.isEmpty) return const {};
+    final available = await _cache.availableRequestsFor(
+      accountId: _accountId,
+      requests: requestToPupilId.keys,
+    );
+    return {for (final req in available) requestToPupilId[req]!};
+  }
+
+  Future<Set<String>> _availableCachedPupilVersionDates(
+    String pupilId,
+    List<String> dates,
+  ) async {
+    final trimmedPupil = pupilId.trim();
+    final requestToDate = <CacheRequest<ParentTimetableLoaded>, String>{
+      for (final d in dates)
+        if (d.trim().isNotEmpty)
+          TimetableParentParserCacheRequests.getTimetableForPupil(
+            trimmedPupil,
+            d.trim(),
+          ): d.trim(),
+    };
+    if (requestToDate.isEmpty) return const {};
+    final available = await _cache.availableRequestsFor(
+      accountId: _accountId,
+      requests: requestToDate.keys,
+    );
+    return {for (final req in available) requestToDate[req]!};
+  }
+
+  Future<Set<String>> _availableCachedReferenceVersionDates(
+    ParentTimetableReference reference,
+    List<String> dates,
+  ) async {
+    final requestToDate = <CacheRequest<ParentTimetableLoaded>, String>{
+      for (final d in dates)
+        if (d.trim().isNotEmpty)
+          TimetableParentParserCacheRequests.getTimetable(
+            reference.withDate(d.trim()),
+          ): d.trim(),
+    };
+    if (requestToDate.isEmpty) return const {};
+    final available = await _cache.availableRequestsFor(
+      accountId: _accountId,
+      requests: requestToDate.keys,
+    );
+    return {for (final req in available) requestToDate[req]!};
+  }
+
   Future<MaybeCacheResult<ParentTimetableLoaded>> _readCachedPlan(
     ParentTimetableReference reference,
   ) => _cache.readCacheFor(
-    accountId:
-        widget.offline?.account.localId ??
-        ref.read(activeAccountProvider)!.localId,
+    accountId: _accountId,
     request: TimetableParentParserCacheRequests.getTimetable(reference),
   );
 
@@ -151,18 +215,46 @@ class _ParentTimetableViewState extends ConsumerState<ParentTimetableView>
     ParentTimetableReference reference,
   ) {
     final offline = widget.offline;
-    return offline == null
-        ? ref
-              .read(timetableParentParserProvider)
-              .cached
-              .getTimetable(
-                reference,
-                cachePolicy:
-                    ref.read(networkInterfaceAvailableProvider) == false
-                    ? CacheReadPolicy.cacheOnly
-                    : CacheReadPolicy.networkFirst,
-              )
-        : _readCachedPlan(reference);
+    if (offline != null) return _readCachedPlan(reference);
+    final isOfflineNet = ref.read(networkInterfaceAvailableProvider) == false;
+    final policy = isOfflineNet
+        ? CacheReadPolicy.cacheOnly
+        : CacheReadPolicy.networkFirst;
+    final session = isOfflineNet ? null : ref.read(sessionProvider).asData?.value;
+    return runWithSessionReauth(
+      session,
+      () => ref
+          .read(timetableParentParserProvider)
+          .cached
+          .getTimetable(reference, cachePolicy: policy),
+    );
+  }
+
+  Future<MaybeCacheResult<ParentTimetableLoaded>> _readPupilVersion(
+    String pupilId,
+    String date,
+  ) {
+    final offline = widget.offline;
+    if (offline != null) {
+      return _cache.readCacheFor(
+        accountId: offline.account.localId,
+        request: TimetableParentParserCacheRequests.getTimetableForPupil(
+          pupilId.trim(),
+          date.trim(),
+        ),
+      );
+    }
+    final isOfflineNet = ref.read(networkInterfaceAvailableProvider) == false;
+    final policy = isOfflineNet
+        ? CacheReadPolicy.cacheOnly
+        : CacheReadPolicy.networkFirst;
+    final session = isOfflineNet ? null : ref.read(sessionProvider).asData?.value;
+    return runWithSessionReauth(
+      session,
+      () => ref
+          .read(timetableParentParserProvider)
+          .loadCachedTimetableForPupil(pupilId, date, policy: policy),
+    );
   }
 
   TypedSettings? get _settings =>
@@ -204,6 +296,7 @@ class _ParentTimetableViewState extends ConsumerState<ParentTimetableView>
                     error: error is Exception
                         ? error
                         : UnknownException(error.toString()),
+                    stack: response?.error?.stackTrace,
                     retry: () => _home.fetchData(forceRefresh: true),
                   ),
           );
@@ -248,6 +341,12 @@ class _ParentTimetableViewState extends ConsumerState<ParentTimetableView>
               ),
               readCache: () async => map(await _readCachedHome()),
               read: () async => map(await _readHome()),
+              loadVersion: (date) async => (await _readPupilVersion(
+                loaded.pupilId,
+                date,
+              )).map((value) => value.timetable),
+              availableCachedVersionDates: (dates) =>
+                  _availableCachedPupilVersionDates(loaded.pupilId, dates),
             );
           case ParentTimetableSelection selection:
             _reportSinglePupil(
@@ -263,6 +362,9 @@ class _ParentTimetableViewState extends ConsumerState<ParentTimetableView>
               cacheOnly: widget.offline != null,
               read: _readPlan,
               readCache: _readCachedPlan,
+              availableCachedPupilIds: _availableCachedPupilIds,
+              availableCachedVersionDates:
+                  _availableCachedReferenceVersionDates,
             );
         }
       },
@@ -284,6 +386,13 @@ class _TimetableTabs extends StatefulWidget {
     ParentTimetableReference,
   )
   readCache;
+  final Future<Set<String>> Function(List<ParentTimetableReference>)
+  availableCachedPupilIds;
+  final Future<Set<String>> Function(
+    ParentTimetableReference,
+    List<String>,
+  )
+  availableCachedVersionDates;
   const _TimetableTabs({
     required this.selection,
     required this.settings,
@@ -292,6 +401,8 @@ class _TimetableTabs extends StatefulWidget {
     this.customize = false,
     required this.read,
     required this.readCache,
+    required this.availableCachedPupilIds,
+    required this.availableCachedVersionDates,
   });
   @override
   State<_TimetableTabs> createState() => _TimetableTabsState();
@@ -321,28 +432,40 @@ class _TimetableTabsState extends State<_TimetableTabs>
     _cacheReady = !widget.cacheOnly;
     _cachedPlans.clear();
     if (!widget.cacheOnly) return;
-    // Prepare only local data. Additional online requests remain lazy.
-    Future.wait([
-      for (final reference in _references)
-        widget
-            .readCache(reference)
-            .then<MapEntry<String, MaybeCacheResult<TimeTable>>?>(
-              (result) => MapEntry(
-                reference.pupilId,
-                result.map((value) => value.timetable),
-              ),
-              onError: (Object _, StackTrace _) => null,
-            ),
-    ]).then((entries) {
-      if (!mounted || revision != _cacheRevision) return;
-      setState(() {
-        _cachedPlans.addEntries(
-          entries.whereType<MapEntry<String, MaybeCacheResult<TimeTable>>>(),
-        );
-        _visited.addAll(_cachedPlans.keys);
-        _cacheReady = true;
-      });
-    });
+    // Batch-check cached pupils first in one metadata query, then load only
+    // the available cached entries. Additional online requests remain lazy.
+    unawaited(
+      () async {
+        Set<String> availableIds;
+        try {
+          availableIds = await widget.availableCachedPupilIds(_references);
+        } catch (_) {
+          availableIds = const {};
+        }
+        if (!mounted || revision != _cacheRevision) return;
+        final entries = await Future.wait([
+          for (final reference in _references)
+            if (availableIds.contains(reference.pupilId))
+              widget
+                  .readCache(reference)
+                  .then<MapEntry<String, MaybeCacheResult<TimeTable>>?>(
+                    (result) => MapEntry(
+                      reference.pupilId,
+                      result.map((value) => value.timetable),
+                    ),
+                    onError: (Object _, StackTrace _) => null,
+                  ),
+        ]);
+        if (!mounted || revision != _cacheRevision) return;
+        setState(() {
+          _cachedPlans.addEntries(
+            entries.whereType<MapEntry<String, MaybeCacheResult<TimeTable>>>(),
+          );
+          _visited.addAll(_cachedPlans.keys);
+          _cacheReady = true;
+        });
+      }(),
+    );
   }
 
   void _createTabs([String? selected]) {
@@ -496,6 +619,11 @@ class _TimetableTabsState extends State<_TimetableTabs>
                       read: () async => (await widget.read(
                         reference,
                       )).map((value) => value.timetable),
+                      loadVersion: (date) async => (await widget.read(
+                        reference.withDate(date),
+                      )).map((value) => value.timetable),
+                      availableCachedVersionDates: (dates) =>
+                          widget.availableCachedVersionDates(reference, dates),
                     )
                   : const SizedBox.shrink(),
             ),
@@ -509,6 +637,9 @@ class _PlanScreen extends StatefulWidget {
   final Future<MaybeCacheResult<TimeTable>> Function() read;
   final MaybeCacheResult<TimeTable>? initial;
   final Future<MaybeCacheResult<TimeTable>> Function()? readCache;
+  final Future<MaybeCacheResult<TimeTable>> Function(String date)? loadVersion;
+  final Future<Set<String>> Function(List<String> dates)?
+  availableCachedVersionDates;
   final TypedSettings? settings;
   final bool cacheOnly;
   final bool customize;
@@ -522,6 +653,8 @@ class _PlanScreen extends StatefulWidget {
     required this.read,
     this.initial,
     this.readCache,
+    this.loadVersion,
+    this.availableCachedVersionDates,
     this.settings,
     this.cacheOnly = false,
     this.customize = false,
@@ -592,6 +725,8 @@ class _PlanScreenState extends State<_PlanScreen>
       appBarBottom: widget.appBarBottom,
       showAppBar: widget.showAppBar,
       onAppBarChanged: widget.onAppBarChanged,
+      loadVersion: widget.loadVersion,
+      availableCachedVersionDates: widget.availableCachedVersionDates,
     );
   }
 }
