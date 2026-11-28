@@ -85,6 +85,11 @@ class _OfflineAppletPageState extends State<OfflineAppletPage> {
             ? StudentTimetableBetterView(
                 dataSource: _timetable,
                 settings: offline.settings,
+                loadVersion: (date) => offline.read(
+                  TimetableStudentParserCacheRequests.getTimetableForDate(
+                    date.trim(),
+                  ),
+                ),
               )
             : _substitutions != null
             ? SubstitutionsView(

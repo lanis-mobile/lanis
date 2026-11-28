@@ -12,7 +12,8 @@ Future<T> runWithSessionReauth<T>(
   try {
     return await action();
   } catch (error) {
-    if (error is CacheUnavailableException ||
+    if (error is! Exception ||
+        error is CacheUnavailableException ||
         error is ConfigurationException ||
         error is NotSupportedException ||
         CacheService.isTransportFailure(error)) {

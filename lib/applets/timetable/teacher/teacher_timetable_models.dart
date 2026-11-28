@@ -5,12 +5,17 @@ import 'package:liblanis/liblanis.dart';
 class TeacherTimetableTarget {
   final TeacherTimetableReference reference;
   final bool isOwn;
+  final String? displayLabel;
 
-  const TeacherTimetableTarget({required this.reference, this.isOwn = false});
+  const TeacherTimetableTarget({
+    required this.reference,
+    this.isOwn = false,
+    this.displayLabel,
+  });
 
   TeacherTimetableCategory get category => reference.category;
   String get id => reference.id;
-  String get label => reference.label;
+  String get label => displayLabel ?? reference.label;
 
   /// Stable key for caching and selection comparison.
   String get key => isOwn ? 'own' : '${reference.category.name}:${reference.id}';

@@ -123,7 +123,10 @@ class _StudentTimetableBetterViewState
       setState(() {
         _versionLoading = false;
         if (!_versionPlans.containsKey(date)) {
-          _selectedVersionDate = previousDate;
+          _selectedVersionDate =
+              (previousDate == null || _versionPlans.containsKey(previousDate))
+              ? previousDate
+              : null;
         }
       });
     }

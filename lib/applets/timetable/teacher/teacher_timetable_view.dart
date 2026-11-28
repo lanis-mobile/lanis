@@ -414,10 +414,10 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
     if (state == AppLifecycleState.resumed &&
         TickerMode.valuesOf(context).enabled) {
       _overviewSource.startAutoRefresh();
-      unawaited(_overviewSource.fetchData(forceRefresh: true));
-      final target = _activeTarget;
-      if (target != null && widget.offline == null) {
-        unawaited(_selectTarget(target, forceRefresh: true));
+      if (widget.offline == null) {
+        unawaited(_refreshAll());
+      } else {
+        unawaited(_overviewSource.fetchData(forceRefresh: true));
       }
     } else {
       _overviewSource.stopAutoRefresh();
@@ -440,10 +440,13 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
     if (url == null) return null;
     return TeacherTimetableTarget(
       isOwn: true,
+      displayLabel: ownLabel,
+      // Keep reference.label locale-independent so cached own plans stay
+      // reachable across app language changes.
       reference: TeacherTimetableReference(
         category: TeacherTimetableCategory.teacher,
         id: '',
-        label: ownLabel,
+        label: '',
         url: url,
       ),
     );
@@ -517,14 +520,19 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
     final target = _activeTarget;
     if (target == null) return;
     final nextDate = version.date.trim();
-    if (nextDate.isEmpty || nextDate == _selectedVersionDate) return;
+    final currentDate = _selectedVersionDate ?? _planForTarget(target)?.planDate;
+    if (nextDate.isEmpty || nextDate == currentDate) return;
+    final previousDate = _selectedVersionDate;
+    final normalizedNext = nextDate == _defaultVersionDate ? null : nextDate;
     setState(() {
-      _selectedVersionDate = nextDate;
+      _selectedVersionDate = normalizedNext;
     });
     unawaited(
       _selectTarget(
         target,
         preserveFreeRoomsPane: _tabletRightMode == _TabletRightMode.freeRooms,
+        rollbackVersionOnFailure: true,
+        previousVersionDate: previousDate,
       ),
     );
   }
@@ -533,6 +541,8 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
     TeacherTimetableTarget target, {
     bool forceRefresh = false,
     bool preserveFreeRoomsPane = false,
+    bool rollbackVersionOnFailure = false,
+    String? previousVersionDate,
   }) async {
     final rev = ++_planRevision;
     final versionDate = _selectedVersionDate;
@@ -607,7 +617,7 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
         if (versionDate == null &&
             result.data.planDate != null &&
             result.data.planDate!.isNotEmpty) {
-          _defaultVersionDate ??= result.data.planDate;
+          _defaultVersionDate = result.data.planDate;
           _loadedPlans[_planCacheKey(target, result.data.planDate)] =
               result.data;
           _planFetchedAt[_planCacheKey(target, result.data.planDate)] =
@@ -627,18 +637,51 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
       setState(() {
         _planLoading = false;
         if (!_loadedPlans.containsKey(cacheKey)) {
-          _planError = error;
-          _planStackTrace = stack;
+          if (rollbackVersionOnFailure &&
+              _loadedPlans.containsKey(
+                _planCacheKey(target, previousVersionDate),
+              )) {
+            _selectedVersionDate = previousVersionDate;
+          } else {
+            _planError = error;
+            _planStackTrace = stack;
+          }
         }
       });
     }
   }
 
+  TeacherTimetableTarget _rebindTargetFromOverview(
+    TeacherTimetableTarget current,
+    TeacherTimetableOverview overview,
+  ) {
+    if (current.isOwn) {
+      return _buildOwnTarget(overview, current.label) ?? current;
+    }
+    final list = switch (current.category) {
+      TeacherTimetableCategory.teacher => overview.teachers,
+      TeacherTimetableCategory.schoolClass => overview.classes,
+      TeacherTimetableCategory.room => overview.rooms,
+      TeacherTimetableCategory.breakSupervision => overview.breakSupervisions,
+    };
+    for (final ref in list) {
+      if (ref.id == current.id) {
+        return TeacherTimetableTarget(reference: ref);
+      }
+    }
+    return current;
+  }
+
   Future<void> _refreshAll() async {
     await _overviewSource.fetchData(forceRefresh: true);
+    if (!mounted) return;
     final active = _activeTarget;
     if (active != null) {
-      await _selectTarget(active, forceRefresh: true);
+      final freshOverview = _overviewSource.latestResponse.content;
+      final target = freshOverview != null
+          ? _rebindTargetFromOverview(active, freshOverview)
+          : active;
+      await _selectTarget(target, forceRefresh: true);
     }
   }
 
@@ -1377,9 +1420,10 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
               : _lastSelectedPlan;
 
           Widget rightContent;
-          if (hasFreeRooms &&
-              displayedRightMode == _TabletRightMode.freeRooms) {
-            rightContent = KeyedSubtree(
+          if (displayedRightMode == _TabletRightMode.freeRooms) {
+            rightContent = !hasFreeRooms
+                ? const SizedBox.shrink(key: ValueKey('right-empty'))
+                : KeyedSubtree(
               key: const ValueKey('right-free-rooms'),
               child: TeacherFreeRoomsPanel(
                 weekday: _freeRoomsWeekday,
