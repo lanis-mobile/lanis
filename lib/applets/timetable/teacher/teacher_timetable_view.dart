@@ -81,6 +81,12 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
   int _freeRoomsRevision = 0;
   final ValueNotifier<int> _freeRoomsNotifier = ValueNotifier<int>(0);
 
+  // Offline availability state (tracks which catalog targets & versions are cached)
+  Set<String> _offlineCachedTargetKeys = const {};
+  Set<String> _offlineCachedVersionDates = const {};
+  String? _offlineAvailabilitySignature;
+  int _offlineAvailabilityRevision = 0;
+
   @override
   void initState() {
     super.initState();
@@ -159,6 +165,140 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
   int get _accountId =>
       widget.offline?.account.localId ??
       ref.read(activeAccountProvider)!.localId;
+
+  bool get _isOfflineNow =>
+      widget.offline != null ||
+      ref.read(networkInterfaceAvailableProvider) == false ||
+      ref.read(connectionStatusProvider).asData?.value ==
+          ConnectionStatus.disconnected;
+
+  bool _watchIsOffline() =>
+      widget.offline != null ||
+      ref.watch(networkInterfaceAvailableProvider) == false ||
+      ref.watch(connectionStatusProvider).asData?.value ==
+          ConnectionStatus.disconnected;
+
+  bool _isTargetAvailableOffline(TeacherTimetableTarget target) {
+    if (target == _activeTarget && _planForTarget(target) != null) return true;
+    final cacheKey = _planCacheKey(target, _selectedVersionDate);
+    if (_loadedPlans.containsKey(cacheKey)) return true;
+    return _offlineCachedTargetKeys.contains(target.key);
+  }
+
+  bool _isVersionAvailableOffline(TimetableVersion version) {
+    final activeTarget = _activeTarget;
+    final activePlan = _planForTarget(activeTarget);
+    final currentDate = _selectedVersionDate ?? activePlan?.planDate;
+    if (currentDate != null && version.date == currentDate) return true;
+    if (activeTarget != null &&
+        _loadedPlans.containsKey(_planCacheKey(activeTarget, version.date))) {
+      return true;
+    }
+    return _offlineCachedVersionDates.contains(version.date);
+  }
+
+  void _scheduleOfflineAvailabilityCheck({
+    required bool isOffline,
+    required TeacherTimetableOverview overview,
+    required TeacherTimetableTarget? ownTarget,
+    required TeacherTimetablePlan? activePlan,
+  }) {
+    if (!isOffline) {
+      _offlineAvailabilitySignature = null;
+      return;
+    }
+    final activeTarget = _activeTarget;
+    final versions = activePlan?.availableVersions ?? const <TimetableVersion>[];
+    final signature =
+        '${identityHashCode(overview)}|${ownTarget?.key}|${activeTarget?.key}|'
+        '${_selectedVersionDate ?? ''}|${_defaultVersionDate ?? ''}|'
+        '${versions.map((v) => v.date).join(',')}';
+    if (_offlineAvailabilitySignature == signature) return;
+    _offlineAvailabilitySignature = signature;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(
+        _refreshOfflineAvailability(
+          overview: overview,
+          ownTarget: ownTarget,
+          activeTarget: activeTarget,
+          versions: versions,
+        ),
+      );
+    });
+  }
+
+  Future<void> _refreshOfflineAvailability({
+    required TeacherTimetableOverview overview,
+    required TeacherTimetableTarget? ownTarget,
+    required TeacherTimetableTarget? activeTarget,
+    required List<TimetableVersion> versions,
+  }) async {
+    final rev = ++_offlineAvailabilityRevision;
+    final cache = _cache;
+    final accountId = _accountId;
+    final versionDate = _selectedVersionDate;
+
+    final targets = <TeacherTimetableTarget>[
+      ?ownTarget,
+      for (final ref in overview.teachers)
+        TeacherTimetableTarget(reference: ref),
+      for (final ref in overview.classes)
+        TeacherTimetableTarget(reference: ref),
+      for (final ref in overview.rooms) TeacherTimetableTarget(reference: ref),
+      for (final ref in overview.breakSupervisions)
+        TeacherTimetableTarget(reference: ref),
+    ];
+
+    final cachedTargets = <String>{};
+    for (final target in targets) {
+      if (!mounted || rev != _offlineAvailabilityRevision) return;
+      final cacheKey = _planCacheKey(target, versionDate);
+      if (_loadedPlans.containsKey(cacheKey)) {
+        cachedTargets.add(target.key);
+        continue;
+      }
+      final requestRef = _referenceForTarget(target, versionDate);
+      try {
+        if (await cache.isCacheAvailableFor(
+          accountId: accountId,
+          request: TimetableTeacherParserCacheRequests.getTimetable(requestRef),
+        )) {
+          cachedTargets.add(target.key);
+        }
+      } catch (_) {}
+    }
+
+    final cachedVersions = <String>{};
+    if (activeTarget != null && versions.length >= 2) {
+      for (final version in versions) {
+        if (!mounted || rev != _offlineAvailabilityRevision) return;
+        final vDate = version.date.trim();
+        if (vDate.isEmpty) continue;
+        if (_loadedPlans.containsKey(_planCacheKey(activeTarget, vDate))) {
+          cachedVersions.add(vDate);
+          continue;
+        }
+        final requestRef = _referenceForTarget(activeTarget, vDate);
+        try {
+          if (await cache.isCacheAvailableFor(
+            accountId: accountId,
+            request: TimetableTeacherParserCacheRequests.getTimetable(
+              requestRef,
+            ),
+          )) {
+            cachedVersions.add(vDate);
+          }
+        } catch (_) {}
+      }
+    }
+
+    if (!mounted || rev != _offlineAvailabilityRevision) return;
+    setState(() {
+      _offlineCachedTargetKeys = cachedTargets;
+      _offlineCachedVersionDates = cachedVersions;
+    });
+  }
 
   Future<MaybeCacheResult<TeacherTimetableOverview>> _readCachedOverview() =>
       _cache.readCacheFor(
@@ -315,7 +455,9 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
   TeacherTimetableReference _referenceForTarget(
     TeacherTimetableTarget target, [
     String? versionDate,
-  ]) => (versionDate != null && versionDate.isNotEmpty)
+  ]) => (versionDate != null &&
+          versionDate.isNotEmpty &&
+          versionDate != _defaultVersionDate)
       ? target.reference.withDate(versionDate)
       : target.reference;
 
@@ -469,7 +611,7 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
     int? weekday,
     List<int>? hours,
   }) async {
-    if (widget.offline != null) {
+    if (_isOfflineNow) {
       _updateFreeRoomsState(() {
         _freeRoomsLoading = false;
         _freeRoomsError = AppLocalizations.of(context).offlineDataUnavailable;
@@ -568,8 +710,9 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
   void _openPhonePlanSwitcher(
     BuildContext context,
     TeacherTimetableOverview overview,
-    TeacherTimetableTarget? ownTarget,
-  ) {
+    TeacherTimetableTarget? ownTarget, {
+    required bool isOffline,
+  }) {
     showRootModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -593,6 +736,7 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
                   activeTarget: _activeTarget,
                   recentTargets: _resolveRecentTargets(overview),
                   expandedCategories: _expandedCategories,
+                  isTargetEnabled: isOffline ? _isTargetAvailableOffline : null,
                   onToggleCategory: (category) {
                     _toggleCatalogCategory(category);
                     setSheetState(() {});
@@ -611,6 +755,7 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
   }
 
   void _openPhoneFreeRoomsSheet(BuildContext context) {
+    if (_isOfflineNow) return;
     if (!_freeRoomsInitialized && !_freeRoomsLoading) {
       unawaited(_loadFreeRooms(useServerDefaults: true));
     }
@@ -709,6 +854,10 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
                 overview: overview,
                 selection: current,
                 weekStart: weekStart,
+                isTargetEnabled: _isOfflineNow
+                    ? _isTargetAvailableOffline
+                    : null,
+                isOffline: _isOfflineNow,
                 onSelectSibling: (sib) => setSheetState(
                   () => current = TeacherEntrySelection(
                     dayColumnIndex: dayColumnIndex,
@@ -969,6 +1118,7 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
     final l10n = AppLocalizations.of(context);
     final isNavRail = Responsive.isTablet(context);
     final isSplitView = Responsive.isSplitView(context);
+    final isOffline = _watchIsOffline();
 
     return StreamBuilder<FetcherResponse<TeacherTimetableOverview>>(
       stream: _overviewSource.stream,
@@ -1024,8 +1174,13 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
 
         final activePlan = _planForTarget(_activeTarget);
         final activeSubtitle = _formatPlanSubtitle(_activeTarget, l10n);
-        final hasFreeRooms =
-            overview.freeRoomsUrl != null && widget.offline == null;
+        final hasFreeRooms = overview.freeRoomsUrl != null && !isOffline;
+        _scheduleOfflineAvailabilityCheck(
+          isOffline: isOffline,
+          overview: overview,
+          ownTarget: ownTarget,
+          activePlan: activePlan,
+        );
 
         if (!isSplitView) {
           return _buildPhoneScaffold(
@@ -1035,6 +1190,7 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
             activePlan: activePlan,
             activeSubtitle: activeSubtitle,
             hasFreeRooms: hasFreeRooms,
+            isOffline: isOffline,
             showDrawerButton: !isNavRail && widget.openDrawerCb != null,
           );
         }
@@ -1046,6 +1202,7 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
           activePlan: activePlan,
           activeSubtitle: activeSubtitle,
           hasFreeRooms: hasFreeRooms,
+          isOffline: isOffline,
         );
       },
     );
@@ -1060,6 +1217,7 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
     required TeacherTimetablePlan? activePlan,
     required String? activeSubtitle,
     required bool hasFreeRooms,
+    required bool isOffline,
     required bool showDrawerButton,
   }) {
     final l10n = AppLocalizations.of(context);
@@ -1092,6 +1250,9 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
                 selectedDate: _selectedVersionDate ?? activePlan.planDate,
                 defaultDate: _defaultVersionDate,
                 compact: true,
+                isVersionEnabled: isOffline
+                    ? _isVersionAvailableOffline
+                    : null,
                 onSelected: _onSelectVersion,
               ),
             ),
@@ -1126,8 +1287,12 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
               heroTag: 'teacher-timetable-plan-fab',
               icon: const Icon(Icons.swap_horiz),
               label: Text(l10n.teacherTimetablePlans),
-              onPressed: () =>
-                  _openPhonePlanSwitcher(context, overview, ownTarget),
+              onPressed: () => _openPhonePlanSwitcher(
+                context,
+                overview,
+                ownTarget,
+                isOffline: isOffline,
+              ),
             )
           : null,
     );
@@ -1142,11 +1307,12 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
     required TeacherTimetablePlan? activePlan,
     required String? activeSubtitle,
     required bool hasFreeRooms,
+    required bool isOffline,
   }) {
     final l10n = AppLocalizations.of(context);
     final cs = Theme.of(context).colorScheme;
     final rightOpen =
-        _tabletRightMode == _TabletRightMode.freeRooms ||
+        (hasFreeRooms && _tabletRightMode == _TabletRightMode.freeRooms) ||
         (_tabletRightMode == _TabletRightMode.details &&
             _selectedEntry != null &&
             activePlan != null);
@@ -1175,7 +1341,8 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
               : _lastSelectedPlan;
 
           Widget rightContent;
-          if (displayedRightMode == _TabletRightMode.freeRooms) {
+          if (hasFreeRooms &&
+              displayedRightMode == _TabletRightMode.freeRooms) {
             rightContent = KeyedSubtree(
               key: const ValueKey('right-free-rooms'),
               child: TeacherFreeRoomsPanel(
@@ -1210,6 +1377,8 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
                 overview: overview,
                 selection: displayedSelection,
                 weekStart: weekStart,
+                isTargetEnabled: isOffline ? _isTargetAvailableOffline : null,
+                isOffline: isOffline,
                 onSelectSibling: (sib) => setState(() {
                   final next = TeacherEntrySelection(
                     dayColumnIndex: displayedSelection.dayColumnIndex,
@@ -1249,6 +1418,9 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
                       activeTarget: _activeTarget,
                       recentTargets: _resolveRecentTargets(overview),
                       expandedCategories: _expandedCategories,
+                      isTargetEnabled: isOffline
+                          ? _isTargetAvailableOffline
+                          : null,
                       onToggleCategory: _toggleCatalogCategory,
                       onSelectTarget: (target) => unawaited(
                         _selectTarget(
@@ -1314,6 +1486,9 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
                                   _selectedVersionDate ?? activePlan.planDate,
                               defaultDate: _defaultVersionDate,
                               compact: compactCenter,
+                              isVersionEnabled: isOffline
+                                  ? _isVersionAvailableOffline
+                                  : null,
                               onSelected: _onSelectVersion,
                             ),
                           ),

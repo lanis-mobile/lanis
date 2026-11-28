@@ -11,6 +11,7 @@ class TimetableVersionButton extends StatelessWidget {
   final String? selectedDate;
   final String? defaultDate;
   final bool compact;
+  final bool Function(TimetableVersion version)? isVersionEnabled;
   final ValueChanged<TimetableVersion> onSelected;
 
   const TimetableVersionButton({
@@ -19,6 +20,7 @@ class TimetableVersionButton extends StatelessWidget {
     required this.selectedDate,
     this.defaultDate,
     this.compact = false,
+    this.isVersionEnabled,
     required this.onSelected,
   });
 
@@ -83,20 +85,29 @@ class TimetableVersionButton extends StatelessWidget {
       ),
       menuChildren: [
         for (final version in versions)
-          MenuItemButton(
-            onPressed: () => onSelected(version),
-            leadingIcon: version.date == active.date
-                ? Icon(Icons.check, size: 18, color: cs.primary)
-                : const SizedBox(width: 18),
-            child: Text(
-              version.label,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: version.date == active.date
-                    ? FontWeight.w700
-                    : FontWeight.w400,
-                color: version.date == active.date ? cs.primary : cs.onSurface,
-              ),
-            ),
+          Builder(
+            builder: (context) {
+              final enabled = isVersionEnabled?.call(version) ?? true;
+              final isSelected = version.date == active.date;
+              final textColor = !enabled
+                  ? cs.onSurface.withValues(alpha: 0.38)
+                  : isSelected
+                  ? cs.primary
+                  : cs.onSurface;
+              return MenuItemButton(
+                onPressed: enabled ? () => onSelected(version) : null,
+                leadingIcon: isSelected
+                    ? Icon(Icons.check, size: 18, color: textColor)
+                    : const SizedBox(width: 18),
+                child: Text(
+                  version.label,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+                    color: textColor,
+                  ),
+                ),
+              );
+            },
           ),
       ],
       builder: (context, controller, child) {

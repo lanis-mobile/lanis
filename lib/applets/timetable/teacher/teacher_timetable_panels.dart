@@ -83,6 +83,7 @@ class TeacherPlanCatalogPanel extends StatefulWidget {
   final Set<TeacherTimetableCategory> expandedCategories;
   final ValueChanged<TeacherTimetableCategory> onToggleCategory;
   final ValueChanged<TeacherTimetableTarget> onSelectTarget;
+  final bool Function(TeacherTimetableTarget target)? isTargetEnabled;
   final ScrollController? scrollController;
 
   const TeacherPlanCatalogPanel({
@@ -95,6 +96,7 @@ class TeacherPlanCatalogPanel extends StatefulWidget {
     required this.expandedCategories,
     required this.onToggleCategory,
     required this.onSelectTarget,
+    this.isTargetEnabled,
     this.scrollController,
   });
 
@@ -238,6 +240,9 @@ class _TeacherPlanCatalogPanelState extends State<TeacherPlanCatalogPanel> {
     );
   }
 
+  bool _isEnabled(TeacherTimetableTarget target) =>
+      widget.isTargetEnabled?.call(target) ?? true;
+
   List<Widget> _buildQuickChips(TeacherTimetableTarget? own) {
     final chips = <Widget>[];
     if (own != null) {
@@ -246,6 +251,7 @@ class _TeacherPlanCatalogPanelState extends State<TeacherPlanCatalogPanel> {
           icon: Icons.person,
           label: own.label,
           selected: widget.activeTarget == own,
+          enabled: _isEnabled(own),
           onTap: () => widget.onSelectTarget(own),
         ),
       );
@@ -256,6 +262,7 @@ class _TeacherPlanCatalogPanelState extends State<TeacherPlanCatalogPanel> {
           icon: Icons.schedule,
           label: _shortChipLabel(recent),
           selected: widget.activeTarget == recent,
+          enabled: _isEnabled(recent),
           onTap: () => widget.onSelectTarget(recent),
         ),
       );
@@ -274,6 +281,7 @@ class _TeacherPlanCatalogPanelState extends State<TeacherPlanCatalogPanel> {
             icon: Icons.groups_outlined,
             label: _shortChipLabel(target),
             selected: widget.activeTarget == target,
+            enabled: _isEnabled(target),
             onTap: () => widget.onSelectTarget(target),
           ),
         );
@@ -353,6 +361,7 @@ class _TeacherPlanCatalogPanelState extends State<TeacherPlanCatalogPanel> {
                         child: _CatalogListItem(
                           target: own,
                           selected: widget.activeTarget == own,
+                          enabled: _isEnabled(own),
                           highlightQuery: trimmedQuery,
                           onTap: () => widget.onSelectTarget(own),
                         ),
@@ -370,6 +379,7 @@ class _TeacherPlanCatalogPanelState extends State<TeacherPlanCatalogPanel> {
                         onToggle: () =>
                             widget.onToggleCategory(section.category),
                         onSelectTarget: widget.onSelectTarget,
+                        isTargetEnabled: widget.isTargetEnabled,
                       ),
                   ],
                 ),
@@ -383,32 +393,37 @@ class _QuickAccessChip extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool selected;
+  final bool enabled;
   final VoidCallback onTap;
 
   const _QuickAccessChip({
     required this.icon,
     required this.label,
     required this.selected,
+    this.enabled = true,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final disabledFg = cs.onSurface.withValues(alpha: 0.38);
     return Material(
-      color: selected
+      color: !enabled
+          ? cs.surfaceContainerHighest.withValues(alpha: 0.35)
+          : selected
           ? cs.primaryContainer
           : cs.surfaceContainerHighest.withValues(alpha: 0.7),
       shape: StadiumBorder(
         side: BorderSide(
-          color: selected
+          color: enabled && selected
               ? cs.primary.withValues(alpha: 0.55)
               : Colors.transparent,
         ),
       ),
       child: InkWell(
         customBorder: const StadiumBorder(),
-        onTap: onTap,
+        onTap: enabled ? onTap : null,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
           child: Row(
@@ -417,7 +432,11 @@ class _QuickAccessChip extends StatelessWidget {
               Icon(
                 icon,
                 size: 14,
-                color: selected ? cs.onPrimaryContainer : cs.onSurfaceVariant,
+                color: !enabled
+                    ? disabledFg
+                    : selected
+                    ? cs.onPrimaryContainer
+                    : cs.onSurfaceVariant,
               ),
               const SizedBox(width: 5),
               ConstrainedBox(
@@ -428,7 +447,11 @@ class _QuickAccessChip extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
                     fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
-                    color: selected ? cs.onPrimaryContainer : cs.onSurface,
+                    color: !enabled
+                        ? disabledFg
+                        : selected
+                        ? cs.onPrimaryContainer
+                        : cs.onSurface,
                   ),
                 ),
               ),
@@ -447,6 +470,7 @@ class _CatalogAccordion extends StatelessWidget {
   final String highlightQuery;
   final VoidCallback onToggle;
   final ValueChanged<TeacherTimetableTarget> onSelectTarget;
+  final bool Function(TeacherTimetableTarget target)? isTargetEnabled;
 
   const _CatalogAccordion({
     required this.section,
@@ -455,6 +479,7 @@ class _CatalogAccordion extends StatelessWidget {
     required this.highlightQuery,
     required this.onToggle,
     required this.onSelectTarget,
+    this.isTargetEnabled,
   });
 
   @override
@@ -536,6 +561,8 @@ class _CatalogAccordion extends StatelessWidget {
                                   _CatalogListItem(
                                     target: target,
                                     selected: activeTarget == target,
+                                    enabled:
+                                        isTargetEnabled?.call(target) ?? true,
                                     highlightQuery: highlightQuery,
                                     onTap: () => onSelectTarget(target),
                                   ),
@@ -552,6 +579,8 @@ class _CatalogAccordion extends StatelessWidget {
                                   _CatalogWrapChip(
                                     target: target,
                                     selected: activeTarget == target,
+                                    enabled:
+                                        isTargetEnabled?.call(target) ?? true,
                                     highlightQuery: highlightQuery,
                                     onTap: () => onSelectTarget(target),
                                   ),
@@ -584,12 +613,14 @@ class _CatalogSection {
 class _CatalogListItem extends StatelessWidget {
   final TeacherTimetableTarget target;
   final bool selected;
+  final bool enabled;
   final String highlightQuery;
   final VoidCallback onTap;
 
   const _CatalogListItem({
     required this.target,
     required this.selected,
+    this.enabled = true,
     this.highlightQuery = '',
     required this.onTap,
   });
@@ -597,21 +628,26 @@ class _CatalogListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final disabledFg = cs.onSurface.withValues(alpha: 0.38);
     final baseStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
       fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-      color: selected ? cs.onPrimaryContainer : cs.onSurface,
+      color: !enabled
+          ? disabledFg
+          : selected
+          ? cs.onPrimaryContainer
+          : cs.onSurface,
     );
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 1),
       child: Material(
-        color: selected
+        color: enabled && selected
             ? cs.primaryContainer.withValues(alpha: 0.85)
             : Colors.transparent,
         borderRadius: BorderRadius.circular(10),
         child: InkWell(
           borderRadius: BorderRadius.circular(10),
-          onTap: onTap,
+          onTap: enabled ? onTap : null,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7.5),
             child: Row(
@@ -620,7 +656,11 @@ class _CatalogListItem extends StatelessWidget {
                   Icon(
                     Icons.person,
                     size: 16,
-                    color: selected ? cs.onPrimaryContainer : cs.primary,
+                    color: !enabled
+                        ? disabledFg
+                        : selected
+                        ? cs.onPrimaryContainer
+                        : cs.primary,
                   ),
                   const SizedBox(width: 6),
                 ],
@@ -629,7 +669,9 @@ class _CatalogListItem extends StatelessWidget {
                     text: target.label,
                     query: highlightQuery,
                     style: baseStyle,
-                    highlightBg: cs.primary.withValues(alpha: 0.22),
+                    highlightBg: cs.primary.withValues(
+                      alpha: enabled ? 0.22 : 0.1,
+                    ),
                   ),
                 ),
               ],
@@ -644,12 +686,14 @@ class _CatalogListItem extends StatelessWidget {
 class _CatalogWrapChip extends StatelessWidget {
   final TeacherTimetableTarget target;
   final bool selected;
+  final bool enabled;
   final String highlightQuery;
   final VoidCallback onTap;
 
   const _CatalogWrapChip({
     required this.target,
     required this.selected,
+    this.enabled = true,
     this.highlightQuery = '',
     required this.onTap,
   });
@@ -659,31 +703,39 @@ class _CatalogWrapChip extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final baseStyle = Theme.of(context).textTheme.labelLarge?.copyWith(
       fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-      color: selected ? cs.onPrimaryContainer : cs.onSurface,
+      color: !enabled
+          ? cs.onSurface.withValues(alpha: 0.38)
+          : selected
+          ? cs.onPrimaryContainer
+          : cs.onSurface,
     );
 
     return Material(
-      color: selected
+      color: !enabled
+          ? cs.surfaceContainerHighest.withValues(alpha: 0.3)
+          : selected
           ? cs.primaryContainer
           : cs.surfaceContainerHighest.withValues(alpha: 0.65),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
         side: BorderSide(
-          color: selected
+          color: !enabled
+              ? cs.outlineVariant.withValues(alpha: 0.3)
+              : selected
               ? cs.primary.withValues(alpha: 0.6)
               : cs.outlineVariant.withValues(alpha: 0.55),
         ),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
-        onTap: onTap,
+        onTap: enabled ? onTap : null,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           child: _HighlightedText(
             text: target.label,
             query: highlightQuery,
             style: baseStyle,
-            highlightBg: cs.primary.withValues(alpha: 0.22),
+            highlightBg: cs.primary.withValues(alpha: enabled ? 0.22 : 0.1),
           ),
         ),
       ),
@@ -757,6 +809,8 @@ class TeacherEntryInspectorPanel extends StatelessWidget {
   final DateTime weekStart;
   final ValueChanged<TeacherTimetableTarget> onOpenTarget;
   final ValueChanged<TeacherTimetableEntry> onSelectSibling;
+  final bool Function(TeacherTimetableTarget target)? isTargetEnabled;
+  final bool isOffline;
   final VoidCallback? onClose;
 
   const TeacherEntryInspectorPanel({
@@ -767,6 +821,8 @@ class TeacherEntryInspectorPanel extends StatelessWidget {
     required this.weekStart,
     required this.onOpenTarget,
     required this.onSelectSibling,
+    this.isTargetEnabled,
+    this.isOffline = false,
     this.onClose,
   });
 
@@ -972,7 +1028,9 @@ class TeacherEntryInspectorPanel extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(bottom: 6),
               child: FilledButton.tonal(
-                onPressed: () => onOpenTarget(link.target),
+                onPressed: (isTargetEnabled?.call(link.target) ?? true)
+                    ? () => onOpenTarget(link.target)
+                    : null,
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
@@ -1002,11 +1060,13 @@ class TeacherEntryInspectorPanel extends StatelessWidget {
         if (entry.externalUrl != null && entry.isRoomBooking) ...[
           const SizedBox(height: 6),
           FilledButton.icon(
-            onPressed: () => safeLaunchUrl(
-              entry.externalUrl!,
-              context: context,
-              mode: LaunchMode.externalApplication,
-            ),
+            onPressed: isOffline
+                ? null
+                : () => safeLaunchUrl(
+                    entry.externalUrl!,
+                    context: context,
+                    mode: LaunchMode.externalApplication,
+                  ),
             icon: const Icon(Icons.open_in_new, size: 16),
             label: Text(l10n.teacherTimetableOpenInRumbs),
           ),
