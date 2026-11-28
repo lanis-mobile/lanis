@@ -44,6 +44,7 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
   TeacherTimetableTarget? _activeTarget;
   String? _ownTeacherId;
   String? _selectedVersionDate;
+  String? _lastLoadedVersionDate;
   String? _defaultVersionDate;
   final Map<String, TeacherTimetablePlan> _loadedPlans = {};
   final Map<String, DateTime> _planFetchedAt = {};
@@ -522,7 +523,11 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
     final nextDate = version.date.trim();
     final currentDate = _selectedVersionDate ?? _planForTarget(target)?.planDate;
     if (nextDate.isEmpty || nextDate == currentDate) return;
-    final previousDate = _selectedVersionDate;
+    final rollbackDate = _loadedPlans.containsKey(
+      _planCacheKey(target, _selectedVersionDate),
+    )
+        ? _selectedVersionDate
+        : _lastLoadedVersionDate;
     final normalizedNext = nextDate == _defaultVersionDate ? null : nextDate;
     setState(() {
       _selectedVersionDate = normalizedNext;
@@ -532,7 +537,7 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
         target,
         preserveFreeRoomsPane: _tabletRightMode == _TabletRightMode.freeRooms,
         rollbackVersionOnFailure: true,
-        previousVersionDate: previousDate,
+        previousVersionDate: rollbackDate,
       ),
     );
   }
@@ -573,6 +578,7 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
       _planLoading = alreadyLoaded == null || forceRefresh;
       if (alreadyLoaded != null) {
         _lastDisplayedPlan = alreadyLoaded;
+        _lastLoadedVersionDate = versionDate;
         _validateWeekSelectionFor(alreadyLoaded);
       }
     });
@@ -597,6 +603,7 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
                 cached.fetchedAt;
           }
           _lastDisplayedPlan = cached.data;
+          _lastLoadedVersionDate = versionDate;
           if (target.isOwn && cached.data.targetId.isNotEmpty) {
             _ownTeacherId = cached.data.targetId;
           }
@@ -624,6 +631,7 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
               result.fetchedAt;
         }
         _lastDisplayedPlan = result.data;
+        _lastLoadedVersionDate = versionDate;
         if (target.isOwn && result.data.targetId.isNotEmpty) {
           _ownTeacherId = result.data.targetId;
         }
@@ -681,6 +689,17 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
       final target = freshOverview != null
           ? _rebindTargetFromOverview(active, freshOverview)
           : active;
+      final overviewDate = target.reference.url.queryParameters['date']?.trim();
+      if (overviewDate != null &&
+          overviewDate.isNotEmpty &&
+          overviewDate != _defaultVersionDate) {
+        setState(() {
+          _defaultVersionDate = overviewDate;
+          if (_selectedVersionDate == overviewDate) {
+            _selectedVersionDate = null;
+          }
+        });
+      }
       await _selectTarget(target, forceRefresh: true);
     }
   }
