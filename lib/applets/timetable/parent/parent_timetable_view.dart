@@ -143,12 +143,31 @@ class _ParentTimetableViewState extends ConsumerState<ParentTimetableView>
     super.dispose();
   }
 
+  int get _accountId =>
+      widget.offline?.account.localId ??
+      ref.read(activeAccountProvider)!.localId;
+
+  Future<Set<String>> _availableCachedPupilIds(
+    List<ParentTimetableReference> references,
+  ) async {
+    final requestToPupilId =
+        <CacheRequest<ParentTimetableLoaded>, String>{
+      for (final reference in references)
+        TimetableParentParserCacheRequests.getTimetable(reference):
+            reference.pupilId,
+    };
+    if (requestToPupilId.isEmpty) return const {};
+    final available = await _cache.availableRequestsFor(
+      accountId: _accountId,
+      requests: requestToPupilId.keys,
+    );
+    return {for (final req in available) requestToPupilId[req]!};
+  }
+
   Future<MaybeCacheResult<ParentTimetableLoaded>> _readCachedPlan(
     ParentTimetableReference reference,
   ) => _cache.readCacheFor(
-    accountId:
-        widget.offline?.account.localId ??
-        ref.read(activeAccountProvider)!.localId,
+    accountId: _accountId,
     request: TimetableParentParserCacheRequests.getTimetable(reference),
   );
 
@@ -301,6 +320,7 @@ class _ParentTimetableViewState extends ConsumerState<ParentTimetableView>
               cacheOnly: widget.offline != null,
               read: _readPlan,
               readCache: _readCachedPlan,
+              availableCachedPupilIds: _availableCachedPupilIds,
             );
         }
       },
@@ -322,6 +342,8 @@ class _TimetableTabs extends StatefulWidget {
     ParentTimetableReference,
   )
   readCache;
+  final Future<Set<String>> Function(List<ParentTimetableReference>)
+  availableCachedPupilIds;
   const _TimetableTabs({
     required this.selection,
     required this.settings,
@@ -330,6 +352,7 @@ class _TimetableTabs extends StatefulWidget {
     this.customize = false,
     required this.read,
     required this.readCache,
+    required this.availableCachedPupilIds,
   });
   @override
   State<_TimetableTabs> createState() => _TimetableTabsState();
@@ -359,28 +382,40 @@ class _TimetableTabsState extends State<_TimetableTabs>
     _cacheReady = !widget.cacheOnly;
     _cachedPlans.clear();
     if (!widget.cacheOnly) return;
-    // Prepare only local data. Additional online requests remain lazy.
-    Future.wait([
-      for (final reference in _references)
-        widget
-            .readCache(reference)
-            .then<MapEntry<String, MaybeCacheResult<TimeTable>>?>(
-              (result) => MapEntry(
-                reference.pupilId,
-                result.map((value) => value.timetable),
-              ),
-              onError: (Object _, StackTrace _) => null,
-            ),
-    ]).then((entries) {
-      if (!mounted || revision != _cacheRevision) return;
-      setState(() {
-        _cachedPlans.addEntries(
-          entries.whereType<MapEntry<String, MaybeCacheResult<TimeTable>>>(),
-        );
-        _visited.addAll(_cachedPlans.keys);
-        _cacheReady = true;
-      });
-    });
+    // Batch-check cached pupils first in one metadata query, then load only
+    // the available cached entries. Additional online requests remain lazy.
+    unawaited(
+      () async {
+        Set<String> availableIds;
+        try {
+          availableIds = await widget.availableCachedPupilIds(_references);
+        } catch (_) {
+          availableIds = const {};
+        }
+        if (!mounted || revision != _cacheRevision) return;
+        final entries = await Future.wait([
+          for (final reference in _references)
+            if (availableIds.contains(reference.pupilId))
+              widget
+                  .readCache(reference)
+                  .then<MapEntry<String, MaybeCacheResult<TimeTable>>?>(
+                    (result) => MapEntry(
+                      reference.pupilId,
+                      result.map((value) => value.timetable),
+                    ),
+                    onError: (Object _, StackTrace _) => null,
+                  ),
+        ]);
+        if (!mounted || revision != _cacheRevision) return;
+        setState(() {
+          _cachedPlans.addEntries(
+            entries.whereType<MapEntry<String, MaybeCacheResult<TimeTable>>>(),
+          );
+          _visited.addAll(_cachedPlans.keys);
+          _cacheReady = true;
+        });
+      }(),
+    );
   }
 
   void _createTabs([String? selected]) {
