@@ -164,6 +164,46 @@ class _ParentTimetableViewState extends ConsumerState<ParentTimetableView>
     return {for (final req in available) requestToPupilId[req]!};
   }
 
+  Future<Set<String>> _availableCachedPupilVersionDates(
+    String pupilId,
+    List<String> dates,
+  ) async {
+    final trimmedPupil = pupilId.trim();
+    final requestToDate = <CacheRequest<ParentTimetableLoaded>, String>{
+      for (final d in dates)
+        if (d.trim().isNotEmpty)
+          TimetableParentParserCacheRequests.getTimetableForPupil(
+            trimmedPupil,
+            d.trim(),
+          ): d.trim(),
+    };
+    if (requestToDate.isEmpty) return const {};
+    final available = await _cache.availableRequestsFor(
+      accountId: _accountId,
+      requests: requestToDate.keys,
+    );
+    return {for (final req in available) requestToDate[req]!};
+  }
+
+  Future<Set<String>> _availableCachedReferenceVersionDates(
+    ParentTimetableReference reference,
+    List<String> dates,
+  ) async {
+    final requestToDate = <CacheRequest<ParentTimetableLoaded>, String>{
+      for (final d in dates)
+        if (d.trim().isNotEmpty)
+          TimetableParentParserCacheRequests.getTimetable(
+            reference.withDate(d.trim()),
+          ): d.trim(),
+    };
+    if (requestToDate.isEmpty) return const {};
+    final available = await _cache.availableRequestsFor(
+      accountId: _accountId,
+      requests: requestToDate.keys,
+    );
+    return {for (final req in available) requestToDate[req]!};
+  }
+
   Future<MaybeCacheResult<ParentTimetableLoaded>> _readCachedPlan(
     ParentTimetableReference reference,
   ) => _cache.readCacheFor(
@@ -305,6 +345,8 @@ class _ParentTimetableViewState extends ConsumerState<ParentTimetableView>
                 loaded.pupilId,
                 date,
               )).map((value) => value.timetable),
+              availableCachedVersionDates: (dates) =>
+                  _availableCachedPupilVersionDates(loaded.pupilId, dates),
             );
           case ParentTimetableSelection selection:
             _reportSinglePupil(
@@ -321,6 +363,8 @@ class _ParentTimetableViewState extends ConsumerState<ParentTimetableView>
               read: _readPlan,
               readCache: _readCachedPlan,
               availableCachedPupilIds: _availableCachedPupilIds,
+              availableCachedVersionDates:
+                  _availableCachedReferenceVersionDates,
             );
         }
       },
@@ -344,6 +388,11 @@ class _TimetableTabs extends StatefulWidget {
   readCache;
   final Future<Set<String>> Function(List<ParentTimetableReference>)
   availableCachedPupilIds;
+  final Future<Set<String>> Function(
+    ParentTimetableReference,
+    List<String>,
+  )
+  availableCachedVersionDates;
   const _TimetableTabs({
     required this.selection,
     required this.settings,
@@ -353,6 +402,7 @@ class _TimetableTabs extends StatefulWidget {
     required this.read,
     required this.readCache,
     required this.availableCachedPupilIds,
+    required this.availableCachedVersionDates,
   });
   @override
   State<_TimetableTabs> createState() => _TimetableTabsState();
@@ -572,6 +622,8 @@ class _TimetableTabsState extends State<_TimetableTabs>
                       loadVersion: (date) async => (await widget.read(
                         reference.withDate(date),
                       )).map((value) => value.timetable),
+                      availableCachedVersionDates: (dates) =>
+                          widget.availableCachedVersionDates(reference, dates),
                     )
                   : const SizedBox.shrink(),
             ),
@@ -586,6 +638,8 @@ class _PlanScreen extends StatefulWidget {
   final MaybeCacheResult<TimeTable>? initial;
   final Future<MaybeCacheResult<TimeTable>> Function()? readCache;
   final Future<MaybeCacheResult<TimeTable>> Function(String date)? loadVersion;
+  final Future<Set<String>> Function(List<String> dates)?
+  availableCachedVersionDates;
   final TypedSettings? settings;
   final bool cacheOnly;
   final bool customize;
@@ -600,6 +654,7 @@ class _PlanScreen extends StatefulWidget {
     this.initial,
     this.readCache,
     this.loadVersion,
+    this.availableCachedVersionDates,
     this.settings,
     this.cacheOnly = false,
     this.customize = false,
@@ -671,6 +726,7 @@ class _PlanScreenState extends State<_PlanScreen>
       showAppBar: widget.showAppBar,
       onAppBarChanged: widget.onAppBarChanged,
       loadVersion: widget.loadVersion,
+      availableCachedVersionDates: widget.availableCachedVersionDates,
     );
   }
 }
