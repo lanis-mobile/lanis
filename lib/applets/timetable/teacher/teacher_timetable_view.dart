@@ -84,8 +84,10 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
   // Offline availability state (tracks which catalog targets & versions are cached)
   Set<String> _offlineCachedTargetKeys = const {};
   Set<String> _offlineCachedVersionDates = const {};
-  String? _offlineAvailabilitySignature;
-  int _offlineAvailabilityRevision = 0;
+  String? _offlineCatalogSignature;
+  String? _offlineVersionsSignature;
+  int _offlineCatalogRevision = 0;
+  int _offlineVersionsRevision = 0;
 
   @override
   void initState() {
@@ -204,41 +206,52 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
     required TeacherTimetablePlan? activePlan,
   }) {
     if (!isOffline) {
-      _offlineAvailabilitySignature = null;
+      _offlineCatalogSignature = null;
+      _offlineVersionsSignature = null;
       return;
     }
+
+    final catalogSignature =
+        '${identityHashCode(overview)}|${ownTarget?.key}|'
+        '${_selectedVersionDate ?? ''}|${_defaultVersionDate ?? ''}';
+    if (_offlineCatalogSignature != catalogSignature) {
+      _offlineCatalogSignature = catalogSignature;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        unawaited(
+          _refreshOfflineCatalogAvailability(
+            overview: overview,
+            ownTarget: ownTarget,
+          ),
+        );
+      });
+    }
+
     final activeTarget = _activeTarget;
     final versions = activePlan?.availableVersions ?? const <TimetableVersion>[];
-    final signature =
-        '${identityHashCode(overview)}|${ownTarget?.key}|${activeTarget?.key}|'
-        '${_selectedVersionDate ?? ''}|${_defaultVersionDate ?? ''}|'
+    final versionsSignature =
+        '${activeTarget?.key}|${_defaultVersionDate ?? ''}|'
         '${versions.map((v) => v.date).join(',')}';
-    if (_offlineAvailabilitySignature == signature) return;
-    _offlineAvailabilitySignature = signature;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      unawaited(
-        _refreshOfflineAvailability(
-          overview: overview,
-          ownTarget: ownTarget,
-          activeTarget: activeTarget,
-          versions: versions,
-        ),
-      );
-    });
+    if (_offlineVersionsSignature != versionsSignature) {
+      _offlineVersionsSignature = versionsSignature;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        unawaited(
+          _refreshOfflineVersionAvailability(
+            activeTarget: activeTarget,
+            versions: versions,
+          ),
+        );
+      });
+    }
   }
 
-  Future<void> _refreshOfflineAvailability({
+  Future<void> _refreshOfflineCatalogAvailability({
     required TeacherTimetableOverview overview,
     required TeacherTimetableTarget? ownTarget,
-    required TeacherTimetableTarget? activeTarget,
-    required List<TimetableVersion> versions,
   }) async {
-    final rev = ++_offlineAvailabilityRevision;
-    final cache = _cache;
-    final accountId = _accountId;
+    final rev = ++_offlineCatalogRevision;
     final versionDate = _selectedVersionDate;
-
     final targets = <TeacherTimetableTarget>[
       ?ownTarget,
       for (final ref in overview.teachers)
@@ -251,51 +264,74 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
     ];
 
     final cachedTargets = <String>{};
+    final requestToTargets =
+        <CacheRequest<TeacherTimetablePlan>, List<TeacherTimetableTarget>>{};
     for (final target in targets) {
-      if (!mounted || rev != _offlineAvailabilityRevision) return;
-      final cacheKey = _planCacheKey(target, versionDate);
-      if (_loadedPlans.containsKey(cacheKey)) {
+      if (_loadedPlans.containsKey(_planCacheKey(target, versionDate))) {
         cachedTargets.add(target.key);
         continue;
       }
-      final requestRef = _referenceForTarget(target, versionDate);
+      final request = TimetableTeacherParserCacheRequests.getTimetable(
+        _referenceForTarget(target, versionDate),
+      );
+      requestToTargets.putIfAbsent(request, () => []).add(target);
+    }
+
+    if (requestToTargets.isNotEmpty) {
       try {
-        if (await cache.isCacheAvailableFor(
-          accountId: accountId,
-          request: TimetableTeacherParserCacheRequests.getTimetable(requestRef),
-        )) {
-          cachedTargets.add(target.key);
+        final available = await _cache.availableRequestsFor(
+          accountId: _accountId,
+          requests: requestToTargets.keys,
+        );
+        for (final req in available) {
+          for (final target in requestToTargets[req]!) {
+            cachedTargets.add(target.key);
+          }
         }
       } catch (_) {}
     }
 
+    if (!mounted || rev != _offlineCatalogRevision) return;
+    setState(() {
+      _offlineCachedTargetKeys = cachedTargets;
+    });
+  }
+
+  Future<void> _refreshOfflineVersionAvailability({
+    required TeacherTimetableTarget? activeTarget,
+    required List<TimetableVersion> versions,
+  }) async {
+    final rev = ++_offlineVersionsRevision;
     final cachedVersions = <String>{};
     if (activeTarget != null && versions.length >= 2) {
+      final requestToDate = <CacheRequest<TeacherTimetablePlan>, String>{};
       for (final version in versions) {
-        if (!mounted || rev != _offlineAvailabilityRevision) return;
         final vDate = version.date.trim();
         if (vDate.isEmpty) continue;
         if (_loadedPlans.containsKey(_planCacheKey(activeTarget, vDate))) {
           cachedVersions.add(vDate);
           continue;
         }
-        final requestRef = _referenceForTarget(activeTarget, vDate);
+        final request = TimetableTeacherParserCacheRequests.getTimetable(
+          _referenceForTarget(activeTarget, vDate),
+        );
+        requestToDate[request] = vDate;
+      }
+      if (requestToDate.isNotEmpty) {
         try {
-          if (await cache.isCacheAvailableFor(
-            accountId: accountId,
-            request: TimetableTeacherParserCacheRequests.getTimetable(
-              requestRef,
-            ),
-          )) {
-            cachedVersions.add(vDate);
+          final available = await _cache.availableRequestsFor(
+            accountId: _accountId,
+            requests: requestToDate.keys,
+          );
+          for (final req in available) {
+            cachedVersions.add(requestToDate[req]!);
           }
         } catch (_) {}
       }
     }
 
-    if (!mounted || rev != _offlineAvailabilityRevision) return;
+    if (!mounted || rev != _offlineVersionsRevision) return;
     setState(() {
-      _offlineCachedTargetKeys = cachedTargets;
       _offlineCachedVersionDates = cachedVersions;
     });
   }
