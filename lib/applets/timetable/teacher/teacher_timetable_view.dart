@@ -695,6 +695,8 @@ class _TeacherTimetableViewState extends ConsumerState<TeacherTimetableView>
           overviewDate != _defaultVersionDate) {
         setState(() {
           _defaultVersionDate = overviewDate;
+          _loadedPlans.removeWhere((k, _) => k.endsWith('@default'));
+          _planFetchedAt.removeWhere((k, _) => k.endsWith('@default'));
           if (_selectedVersionDate == overviewDate) {
             _selectedVersionDate = null;
           }
